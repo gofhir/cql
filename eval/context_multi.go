@@ -82,7 +82,7 @@ func (c *Context) GetContextSubjectID() string {
 // ResolveRelatedContext allows querying data from a related context.
 // For example, from within a Patient context, query Practitioner data
 // using the patient's generalPractitioner reference.
-func (e *Evaluator) ResolveRelatedContext(targetType string, reference string) (fptypes.Value, error) {
+func (e *Evaluator) ResolveRelatedContext(targetType, reference string) (fptypes.Value, error) {
 	if e.ctx.DataProvider == nil {
 		return nil, nil
 	}

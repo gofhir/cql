@@ -12,17 +12,17 @@ package ast
 
 // Library is the root AST node representing a complete CQL library.
 type Library struct {
-	Identifier *LibraryIdentifier // nil if anonymous
-	Usings     []*UsingDef
-	Includes   []*IncludeDef
+	Identifier  *LibraryIdentifier // nil if anonymous
+	Usings      []*UsingDef
+	Includes    []*IncludeDef
 	CodeSystems []*CodeSystemDef
-	ValueSets  []*ValueSetDef
-	Codes      []*CodeDef
-	Concepts   []*ConceptDef
-	Parameters []*ParameterDef
-	Contexts   []*ContextDef
-	Statements []*ExpressionDef
-	Functions  []*FunctionDef
+	ValueSets   []*ValueSetDef
+	Codes       []*CodeDef
+	Concepts    []*ConceptDef
+	Parameters  []*ParameterDef
+	Contexts    []*ContextDef
+	Statements  []*ExpressionDef
+	Functions   []*FunctionDef
 }
 
 // LibraryIdentifier holds the library name and optional version.
@@ -51,9 +51,9 @@ type IncludeDef struct {
 
 // CodeSystemDef represents a 'codesystem' definition.
 type CodeSystemDef struct {
-	Name       string // identifier
-	ID         string // OID or URL
-	Version    string
+	Name        string // identifier
+	ID          string // OID or URL
+	Version     string
 	AccessLevel AccessLevel
 }
 
@@ -68,18 +68,18 @@ type ValueSetDef struct {
 
 // CodeDef represents a 'code' definition.
 type CodeDef struct {
-	Name       string
-	ID         string
-	System     string // codesystem identifier reference
-	Display    string
+	Name        string
+	ID          string
+	System      string // codesystem identifier reference
+	Display     string
 	AccessLevel AccessLevel
 }
 
 // ConceptDef represents a 'concept' definition.
 type ConceptDef struct {
-	Name    string
-	Codes   []string // code identifier references
-	Display string
+	Name        string
+	Codes       []string // code identifier references
+	Display     string
 	AccessLevel AccessLevel
 }
 
@@ -126,7 +126,7 @@ type OperandDef struct {
 type AccessLevel int
 
 const (
-	AccessPublic  AccessLevel = iota // default
+	AccessPublic AccessLevel = iota // default
 	AccessPrivate
 )
 
@@ -246,14 +246,14 @@ func (*Retrieve) expression() {}
 
 // Query represents a CQL query: from ... let ... with/without ... where ... return ... sort.
 type Query struct {
-	Sources    []*AliasedSource
-	Let        []*LetClause
-	With       []*WithClause
-	Without    []*WithoutClause
-	Where      Expression
-	Return     *ReturnClause
-	Aggregate  *AggregateClause
-	Sort       *SortClause
+	Sources   []*AliasedSource
+	Let       []*LetClause
+	With      []*WithClause
+	Without   []*WithoutClause
+	Where     Expression
+	Return    *ReturnClause
+	Aggregate *AggregateClause
+	Sort      *SortClause
 }
 
 func (*Query) expression() {}
@@ -301,7 +301,7 @@ type AggregateClause struct {
 // SortClause specifies query result ordering.
 type SortClause struct {
 	ByItems   []*SortByItem // non-empty if 'sort by ...'
-	Direction SortDirection  // used when 'sort asc/desc' without 'by'
+	Direction SortDirection // used when 'sort asc/desc' without 'by'
 }
 
 // SortByItem is an individual sort key.
@@ -314,7 +314,7 @@ type SortByItem struct {
 type SortDirection int
 
 const (
-	SortAsc  SortDirection = iota
+	SortAsc SortDirection = iota
 	SortDesc
 )
 
@@ -424,9 +424,9 @@ func (*CastExpression) expression() {}
 
 // ConvertExpression represents 'convert expression to TypeSpec/unit'.
 type ConvertExpression struct {
-	Operand  Expression
-	ToType   TypeSpecifier // non-nil if converting to type
-	ToUnit   string        // non-empty if converting to unit
+	Operand Expression
+	ToType  TypeSpecifier // non-nil if converting to type
+	ToUnit  string        // non-empty if converting to unit
 }
 
 func (*ConvertExpression) expression() {}
@@ -435,9 +435,9 @@ func (*ConvertExpression) expression() {}
 
 // BooleanTestExpression represents 'expression is [not] (null|true|false)'.
 type BooleanTestExpression struct {
-	Operand  Expression
+	Operand   Expression
 	TestValue string // "null", "true", or "false"
-	Not      bool    // true if 'is not'
+	Not       bool   // true if 'is not'
 }
 
 func (*BooleanTestExpression) expression() {}
@@ -596,9 +596,9 @@ func (*MemberAccess) expression() {}
 
 // FunctionCall represents a function invocation: expr.func(args...) or func(args...).
 type FunctionCall struct {
-	Source   Expression   // nil for standalone calls
+	Source   Expression // nil for standalone calls
 	Name     string
-	Library  string       // optional library qualifier
+	Library  string // optional library qualifier
 	Operands []Expression
 }
 
@@ -647,7 +647,7 @@ func (*InstanceExpression) expression() {}
 
 // ListExpression represents '{ expr, expr, ... }' or 'List<Type> { ... }'.
 type ListExpression struct {
-	TypeSpec TypeSpecifier  // optional type annotation
+	TypeSpec TypeSpecifier // optional type annotation
 	Elements []Expression
 }
 
@@ -700,7 +700,7 @@ func (*TotalExpression) expression() {}
 
 // SetAggregateExpression represents 'expand expr per ...' or 'collapse expr per ...'.
 type SetAggregateExpression struct {
-	Kind    string     // "expand" or "collapse"
+	Kind    string // "expand" or "collapse"
 	Operand Expression
 	Per     Expression // optional 'per' clause
 }

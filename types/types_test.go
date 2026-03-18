@@ -171,7 +171,7 @@ func TestCodeRef(t *testing.T) {
 	}
 
 	// Equal always returns false (deferred ref)
-	if cr.Equal(cr) {
+	if cr.Equal(cr) { //nolint:gocritic // intentional self-equality test
 		t.Error("CodeRef.Equal should always be false")
 	}
 }
@@ -205,7 +205,7 @@ func TestValueSetRef(t *testing.T) {
 		t.Errorf("string = %s, want ValueSetRef(Lib1.Diabetes)", vsr2.String())
 	}
 
-	if vsr.Equal(vsr) {
+	if vsr.Equal(vsr) { //nolint:gocritic // intentional self-equality test
 		t.Error("ValueSetRef.Equal should always be false")
 	}
 }

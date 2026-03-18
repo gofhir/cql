@@ -10,9 +10,9 @@ import (
 // Interval represents a CQL Interval<T> with closed/open boundaries.
 // T must be an ordered type (Integer, Decimal, DateTime, Date, Time, Quantity).
 type Interval struct {
-	Low       fptypes.Value
-	High      fptypes.Value
-	LowClosed bool
+	Low        fptypes.Value
+	High       fptypes.Value
+	LowClosed  bool
 	HighClosed bool
 }
 
@@ -65,9 +65,9 @@ func (i Interval) String() string {
 	if !i.LowClosed {
 		open = "("
 	}
-	close := "]"
+	cl := "]"
 	if !i.HighClosed {
-		close = ")"
+		cl = ")"
 	}
 	low := "null"
 	if i.Low != nil {
@@ -77,7 +77,7 @@ func (i Interval) String() string {
 	if i.High != nil {
 		high = i.High.String()
 	}
-	return fmt.Sprintf("Interval%s%s, %s%s", open, low, high, close)
+	return fmt.Sprintf("Interval%s%s, %s%s", open, low, high, cl)
 }
 
 // IsEmpty returns false for Interval.
@@ -158,7 +158,7 @@ func (i Interval) Overlaps(other Interval) (bool, error) {
 }
 
 // containsBound checks if a boundary point is within this interval.
-func (i Interval) containsBound(val fptypes.Value, closed bool, isLow bool) (bool, error) {
+func (i Interval) containsBound(val fptypes.Value, closed, isLow bool) (bool, error) { //nolint:gocyclo // inherent interval boundary logic
 	if val == nil {
 		if isLow {
 			return i.Low == nil, nil

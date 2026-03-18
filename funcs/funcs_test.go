@@ -3,10 +3,10 @@ package funcs
 import (
 	"testing"
 
-	fptypes "github.com/gofhir/fhirpath/types"
 	"github.com/shopspring/decimal"
 
 	cqltypes "github.com/gofhir/cql/types"
+	fptypes "github.com/gofhir/fhirpath/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -502,7 +502,7 @@ func assertBool(t *testing.T, v fptypes.Value, expected bool, label string) {
 	}
 }
 
-func assertString(t *testing.T, v fptypes.Value, expected string, label string) {
+func assertString(t *testing.T, v fptypes.Value, expected, label string) {
 	t.Helper()
 	if v == nil {
 		t.Fatalf("%s: got nil", label)
@@ -516,7 +516,7 @@ func assertString(t *testing.T, v fptypes.Value, expected string, label string) 
 	}
 }
 
-func assertDecimalString(t *testing.T, v fptypes.Value, expected string, label string) {
+func assertDecimalString(t *testing.T, v fptypes.Value, expected, label string) {
 	t.Helper()
 	if v == nil {
 		t.Fatalf("%s: got nil", label)

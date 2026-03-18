@@ -4,8 +4,9 @@ import (
 	"math"
 	"sort"
 
-	fptypes "github.com/gofhir/fhirpath/types"
 	"github.com/shopspring/decimal"
+
+	fptypes "github.com/gofhir/fhirpath/types"
 )
 
 // Flatten takes a collection of collections and flattens into a single collection.
@@ -142,7 +143,7 @@ func First(c fptypes.Collection) fptypes.Value {
 	if c.Empty() {
 		return nil
 	}
-	return c[0]
+	return c[0] //nolint:gosec // bounds checked by Empty()
 }
 
 // Last returns the last element of a collection.
@@ -201,5 +202,5 @@ func Tail(c fptypes.Collection) fptypes.Collection {
 	if c.Count() <= 1 {
 		return nil
 	}
-	return c[1:]
+	return c[1:] //nolint:gosec // bounds checked by Count()
 }

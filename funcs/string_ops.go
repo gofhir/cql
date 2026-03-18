@@ -211,11 +211,11 @@ type listValue struct {
 	items fptypes.Collection
 }
 
-func (l listValue) Type() string            { return "List" }
-func (l listValue) Equal(o fptypes.Value) bool { return false }
+func (l listValue) Type() string                    { return "List" }
+func (l listValue) Equal(o fptypes.Value) bool      { return false }
 func (l listValue) Equivalent(o fptypes.Value) bool { return false }
-func (l listValue) String() string           { return "List" }
-func (l listValue) IsEmpty() bool            { return len(l.items) == 0 }
+func (l listValue) String() string                  { return "List" }
+func (l listValue) IsEmpty() bool                   { return len(l.items) == 0 }
 
 func collectionToList(c fptypes.Collection) fptypes.Value {
 	return listValue{items: c}

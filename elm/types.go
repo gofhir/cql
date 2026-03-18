@@ -74,10 +74,10 @@ type ParameterDefs struct {
 
 // ParameterDef represents a library parameter.
 type ParameterDef struct {
-	Name           string          `json:"name,omitempty"`
-	AccessLevel    string          `json:"accessLevel,omitempty"`
-	ParameterType  *TypeSpecifier  `json:"parameterTypeSpecifier,omitempty"`
-	Default        *ExpressionNode `json:"default,omitempty"`
+	Name          string          `json:"name,omitempty"`
+	AccessLevel   string          `json:"accessLevel,omitempty"`
+	ParameterType *TypeSpecifier  `json:"parameterTypeSpecifier,omitempty"`
+	Default       *ExpressionNode `json:"default,omitempty"`
 }
 
 // CodeSystemDefs wraps the list of code system definitions.
@@ -114,11 +114,11 @@ type CodeDefs struct {
 
 // CodeDef represents a code definition.
 type CodeDef struct {
-	Name        string          `json:"name,omitempty"`
-	ID          string          `json:"id,omitempty"`
-	Display     string          `json:"display,omitempty"`
-	AccessLevel string          `json:"accessLevel,omitempty"`
-	CodeSystem  *CodeSystemRef  `json:"codeSystem,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	ID          string         `json:"id,omitempty"`
+	Display     string         `json:"display,omitempty"`
+	AccessLevel string         `json:"accessLevel,omitempty"`
+	CodeSystem  *CodeSystemRef `json:"codeSystem,omitempty"`
 }
 
 // ConceptDefs wraps the list of concept definitions.
@@ -170,8 +170,8 @@ type FunctionDef struct {
 
 // OperandDef represents a function operand definition.
 type OperandDef struct {
-	Name            string         `json:"name,omitempty"`
-	OperandType     *TypeSpecifier `json:"operandTypeSpecifier,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	OperandType *TypeSpecifier `json:"operandTypeSpecifier,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -180,13 +180,13 @@ type OperandDef struct {
 
 // TypeSpecifier represents an ELM type specifier with a discriminator.
 type TypeSpecifier struct {
-	Type        string          `json:"type"` // discriminator: NamedTypeSpecifier, ListTypeSpecifier, etc.
-	Namespace   string          `json:"namespace,omitempty"`
-	Name        string          `json:"name,omitempty"`
-	ElementType *TypeSpecifier  `json:"elementType,omitempty"` // for ListTypeSpecifier
-	PointType   *TypeSpecifier  `json:"pointType,omitempty"`   // for IntervalTypeSpecifier
-	Element     []*TupleElement `json:"element,omitempty"`     // for TupleTypeSpecifier
-	Choice      []*TypeSpecifier `json:"choice,omitempty"`     // for ChoiceTypeSpecifier
+	Type        string           `json:"type"` // discriminator: NamedTypeSpecifier, ListTypeSpecifier, etc.
+	Namespace   string           `json:"namespace,omitempty"`
+	Name        string           `json:"name,omitempty"`
+	ElementType *TypeSpecifier   `json:"elementType,omitempty"` // for ListTypeSpecifier
+	PointType   *TypeSpecifier   `json:"pointType,omitempty"`   // for IntervalTypeSpecifier
+	Element     []*TupleElement  `json:"element,omitempty"`     // for TupleTypeSpecifier
+	Choice      []*TypeSpecifier `json:"choice,omitempty"`      // for ChoiceTypeSpecifier
 }
 
 // TupleElement is a single element in a tuple type specifier.
@@ -201,19 +201,19 @@ type TupleElement struct {
 
 // CodeSystemRef references a code system by name.
 type CodeSystemRef struct {
-	Name       string `json:"name,omitempty"`
+	Name        string `json:"name,omitempty"`
 	LibraryName string `json:"libraryName,omitempty"`
 }
 
 // CodeRef references a code definition by name.
 type CodeRef struct {
-	Name       string `json:"name,omitempty"`
+	Name        string `json:"name,omitempty"`
 	LibraryName string `json:"libraryName,omitempty"`
 }
 
 // ValueSetRef references a value set definition.
 type ValueSetRef struct {
-	Name       string `json:"name,omitempty"`
+	Name        string `json:"name,omitempty"`
 	LibraryName string `json:"libraryName,omitempty"`
 }
 
@@ -230,7 +230,7 @@ type ExpressionNode struct {
 	Type string `json:"type"`
 
 	// -- Shared metadata --
-	ResultTypeName    string         `json:"resultTypeName,omitempty"`
+	ResultTypeName      string         `json:"resultTypeName,omitempty"`
 	ResultTypeSpecifier *TypeSpecifier `json:"resultTypeSpecifier,omitempty"`
 
 	// -- Literal --
@@ -256,7 +256,7 @@ type ExpressionNode struct {
 	DateRange      *ExpressionNode `json:"dateRange,omitempty"`
 
 	// -- Unary / Binary operands --
-	Operand  interface{}     `json:"operand,omitempty"`  // *ExpressionNode or []*ExpressionNode
+	Operand interface{} `json:"operand,omitempty"` // *ExpressionNode or []*ExpressionNode
 
 	// -- If/Then/Else --
 	Condition *ExpressionNode `json:"condition,omitempty"`
@@ -292,9 +292,9 @@ type ExpressionNode struct {
 	FunctionName string `json:"functionName,omitempty"`
 
 	// -- Code/Concept constructors --
-	CodeValue   string          `json:"code,omitempty"`
-	System      *ExpressionNode `json:"system,omitempty"`
-	Display     string          `json:"display,omitempty"`
+	CodeValue string          `json:"code,omitempty"`
+	System    *ExpressionNode `json:"system,omitempty"`
+	Display   string          `json:"display,omitempty"`
 
 	// -- Type operations --
 	IsTypeSpecifier *TypeSpecifier `json:"isTypeSpecifier,omitempty"`
@@ -343,10 +343,10 @@ type LetClause struct {
 
 // RelationshipClause represents a with/without clause in a query.
 type RelationshipClause struct {
-	Type       string              `json:"type"`  // "With" or "Without"
-	Expression *ExpressionNode     `json:"expression,omitempty"`
-	Alias      string              `json:"alias,omitempty"`
-	SuchThat   *ExpressionNode     `json:"suchThat,omitempty"`
+	Type       string          `json:"type"` // "With" or "Without"
+	Expression *ExpressionNode `json:"expression,omitempty"`
+	Alias      string          `json:"alias,omitempty"`
+	SuchThat   *ExpressionNode `json:"suchThat,omitempty"`
 }
 
 // ReturnClause specifies what a query returns.
@@ -374,4 +374,3 @@ type AggregateClause struct {
 	Starting   *ExpressionNode `json:"starting,omitempty"`
 	Expression *ExpressionNode `json:"expression,omitempty"`
 }
-

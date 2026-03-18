@@ -3,10 +3,10 @@ package funcs
 import (
 	"sort"
 
-	fptypes "github.com/gofhir/fhirpath/types"
 	"github.com/shopspring/decimal"
 
 	cqltypes "github.com/gofhir/cql/types"
+	fptypes "github.com/gofhir/fhirpath/types"
 )
 
 // IntervalSize returns the number of points in the interval (for integer intervals).
@@ -130,14 +130,15 @@ func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error
 		if sorted[j].Low == nil {
 			return false
 		}
-		cmp, _ := compareVals(sorted[i].Low, sorted[j].Low)
+		cmp, cmpErr := compareVals(sorted[i].Low, sorted[j].Low)
+		_ = cmpErr
 		return cmp < 0
 	})
 
 	result := []cqltypes.Interval{sorted[0]}
 	for _, iv := range sorted[1:] {
 		last := &result[len(result)-1]
-		overlaps, _ := last.Overlaps(iv)
+		overlaps, _ := last.Overlaps(iv) //nolint:errcheck // best-effort merge
 		meets := false
 		if last.High != nil && iv.Low != nil {
 			meets = last.High.Equal(iv.Low)
@@ -153,7 +154,7 @@ func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error
 		if overlaps || meets {
 			// Merge
 			if iv.High != nil && last.High != nil {
-				cmp, _ := compareVals(iv.High, last.High)
+				cmp, _ := compareVals(iv.High, last.High) //nolint:errcheck // best-effort merge
 				if cmp > 0 {
 					last.High = iv.High
 					last.HighClosed = iv.HighClosed

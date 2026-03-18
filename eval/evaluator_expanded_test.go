@@ -695,8 +695,8 @@ func TestEval_ConvertExpression_IntToString(t *testing.T) {
 	ev := NewEvaluator(ctx)
 
 	expr := &ast.ConvertExpression{
-		Operand:    &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"},
-		ToType: &ast.NamedType{Name: "String"},
+		Operand: &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"},
+		ToType:  &ast.NamedType{Name: "String"},
 	}
 	val, err := ev.Eval(expr)
 	if err != nil {

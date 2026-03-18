@@ -6,7 +6,7 @@
 package model
 
 // ModelInfo provides type metadata about the FHIR model for CQL evaluation.
-type ModelInfo interface {
+type ModelInfo interface { //nolint:revive // stuttering name kept for API clarity
 	// TypeInfo returns the type information for a FHIR type name.
 	TypeInfo(typeName string) (*TypeInfo, bool)
 
@@ -39,22 +39,22 @@ type TypeInfo struct {
 
 // ElementInfo describes a single element within a type.
 type ElementInfo struct {
-	Name       string // Element name (e.g., "birthDate")
-	Type       string // CQL type name (e.g., "System.Date", "FHIR.HumanName")
-	IsList     bool   // True if max cardinality > 1
-	IsChoice   bool   // True if element is [x] choice type
+	Name        string   // Element name (e.g., "birthDate")
+	Type        string   // CQL type name (e.g., "System.Date", "FHIR.HumanName")
+	IsList      bool     // True if max cardinality > 1
+	IsChoice    bool     // True if element is [x] choice type
 	ChoiceTypes []string // Possible types for choice elements
 }
 
 // StaticModelInfo is a simple in-memory implementation of ModelInfo
 // populated from StructureDefinitions or hardcoded data.
 type StaticModelInfo struct {
-	version       string
-	types         map[string]*TypeInfo
-	elementTypes  map[string]string // "Patient.birthDate" → "System.Date"
-	choiceTypes   map[string]bool
-	contextTypes  map[string]string
-	codePaths     map[string]string // resource type → primary code path
+	version      string
+	types        map[string]*TypeInfo
+	elementTypes map[string]string // "Patient.birthDate" → "System.Date"
+	choiceTypes  map[string]bool
+	contextTypes map[string]string
+	codePaths    map[string]string // resource type → primary code path
 }
 
 // NewStaticModelInfo creates a new static model info.

@@ -3,8 +3,9 @@ package funcs
 import (
 	"math"
 
-	fptypes "github.com/gofhir/fhirpath/types"
 	"github.com/shopspring/decimal"
+
+	fptypes "github.com/gofhir/fhirpath/types"
 )
 
 // Count returns the number of elements in a collection.
@@ -166,6 +167,9 @@ func numericVal(v fptypes.Value) decimal.Decimal {
 }
 
 func decimalToValue(d decimal.Decimal) fptypes.Value {
-	v, _ := fptypes.NewDecimal(d.String())
+	v, err := fptypes.NewDecimal(d.String())
+	if err != nil {
+		return nil
+	}
 	return v
 }

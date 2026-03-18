@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	fptypes "github.com/gofhir/fhirpath/types"
 	"github.com/shopspring/decimal"
 
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/funcs"
 	cqltypes "github.com/gofhir/cql/types"
+	fptypes "github.com/gofhir/fhirpath/types"
 )
 
 // Evaluator interprets CQL AST nodes.
@@ -225,7 +225,7 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 // Identifier resolution
 // ---------------------------------------------------------------------------
 
-func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, error) {
+func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
 	val, ok := e.ctx.ResolveIdentifier(n.Name)
 	if ok {
 		return val, nil
@@ -759,7 +759,7 @@ func (e *Evaluator) evalCast(n *ast.CastExpression) (fptypes.Value, error) {
 	return operand, nil
 }
 
-func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
+func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
 	if n.Type == nil {
 		return nil, nil
 	}
@@ -1557,7 +1557,7 @@ func (e *Evaluator) evalListExpr(n *ast.ListExpression) (fptypes.Value, error) {
 	return cqltypes.NewList(values), nil
 }
 
-func (e *Evaluator) evalCodeExpr(n *ast.CodeExpression) (fptypes.Value, error) {
+func (e *Evaluator) evalCodeExpr(n *ast.CodeExpression) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
 	system := n.System
 	// Resolve system name to URL if it's a codesystem reference
 	if cs, ok := e.ctx.CodeSystems[system]; ok {
@@ -1580,7 +1580,7 @@ func (e *Evaluator) evalConceptExpr(n *ast.ConceptExpression) (fptypes.Value, er
 	return cqltypes.NewConcept(codes, n.Display), nil
 }
 
-func (e *Evaluator) evalExternalConstant(n *ast.ExternalConstant) (fptypes.Value, error) {
+func (e *Evaluator) evalExternalConstant(n *ast.ExternalConstant) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
 	if val, ok := e.ctx.Parameters[n.Name]; ok {
 		return val, nil
 	}
@@ -1943,7 +1943,10 @@ func isDecimal(v fptypes.Value) bool {
 
 // newDecimalFromD creates a fptypes.Value from a decimal.Decimal.
 func newDecimalFromD(d decimal.Decimal) fptypes.Value {
-	v, _ := fptypes.NewDecimal(d.String())
+	v, err := fptypes.NewDecimal(d.String())
+	if err != nil {
+		return nil
+	}
 	return v
 }
 

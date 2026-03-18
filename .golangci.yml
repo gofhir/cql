@@ -1,0 +1,157 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    # Default linters
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Additional linters
+    - bodyclose
+    - dogsled
+    - dupl
+    - copyloopvar
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - goprintffuncname
+    - gosec
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - prealloc
+    - revive
+    - rowserrcheck
+    - unconvert
+    - unparam
+    - whitespace
+
+  settings:
+    errcheck:
+      check-type-assertions: false
+      check-blank: true
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+
+    gocyclo:
+      min-complexity: 15
+
+    dupl:
+      threshold: 150
+
+    goconst:
+      min-len: 5
+      min-occurrences: 4
+
+    misspell:
+      locale: US
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam
+        - rangeValCopy
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+      - legacy
+    rules:
+      - path: _test\.go
+        linters:
+          - dupl
+          - gosec
+          - goconst
+          - errcheck
+          - gocyclo
+
+      - path: doc\.go
+        linters:
+          - staticcheck
+
+      # ANTLR-generated parser code
+      - path: "parser/grammar/.*\\.go"
+        linters:
+          - gocyclo
+          - dupl
+          - gocritic
+          - revive
+          - govet
+          - errcheck
+          - unused
+          - staticcheck
+
+      # Exclude gochecknoinits from funcs package (init functions for registration)
+      - path: "funcs/.*\\.go"
+        linters:
+          - gochecknoinits
+
+      # Exclude gocyclo from evaluator
+      - path: "eval/evaluator\\.go"
+        linters:
+          - gocyclo
+
+      # Exclude gocyclo from compiler
+      - path: "compiler/.*\\.go"
+        linters:
+          - gocyclo
+
+      # Exclude gocyclo from ELM translator
+      - path: "elm/.*\\.go"
+        linters:
+          - gocyclo
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/gofhir
+
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 10

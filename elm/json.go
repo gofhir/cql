@@ -22,55 +22,55 @@ func UnmarshalLibrary(data []byte) (*Library, error) {
 // expressionNodeJSON is the raw JSON representation used for marshaling/unmarshaling.
 // It mirrors ExpressionNode but uses json.RawMessage for the polymorphic Operand field.
 type expressionNodeJSON struct {
-	Type              string             `json:"type"`
-	ResultTypeName    string             `json:"resultTypeName,omitempty"`
-	ResultTypeSpecifier *TypeSpecifier   `json:"resultTypeSpecifier,omitempty"`
-	ValueType         string             `json:"valueType,omitempty"`
-	Value             string             `json:"value,omitempty"`
-	Name              string             `json:"name,omitempty"`
-	LibraryName       string             `json:"libraryName,omitempty"`
-	Path              string             `json:"path,omitempty"`
-	Source            *ExpressionNode    `json:"source,omitempty"`
-	Scope             string             `json:"scope,omitempty"`
-	DataType          string             `json:"dataType,omitempty"`
-	TemplateID        string             `json:"templateId,omitempty"`
-	CodeProperty      string             `json:"codeProperty,omitempty"`
-	CodeComparator    string             `json:"codeComparator,omitempty"`
-	Codes             *ExpressionNode    `json:"codes,omitempty"`
-	DateProperty      string             `json:"dateProperty,omitempty"`
-	DateRange         *ExpressionNode    `json:"dateRange,omitempty"`
-	Operand           json.RawMessage    `json:"operand,omitempty"`
-	Condition         *ExpressionNode    `json:"condition,omitempty"`
-	Then              *ExpressionNode    `json:"then,omitempty"`
-	Else              *ExpressionNode    `json:"else,omitempty"`
-	Comparand         *ExpressionNode    `json:"comparand,omitempty"`
-	CaseItem          []*CaseItem        `json:"caseItem,omitempty"`
-	SourceClause      []*AliasedQuerySource `json:"sourceClause,omitempty"`
-	Let               []*LetClause       `json:"let,omitempty"`
-	Relationship      []*RelationshipClause `json:"relationship,omitempty"`
-	Where             *ExpressionNode    `json:"where,omitempty"`
-	Return            *ReturnClause      `json:"return,omitempty"`
-	Sort              *SortClause        `json:"sort,omitempty"`
-	Aggregate         *AggregateClause   `json:"aggregate,omitempty"`
-	Low               *ExpressionNode    `json:"low,omitempty"`
-	High              *ExpressionNode    `json:"high,omitempty"`
-	LowClosed         *bool              `json:"lowClosed,omitempty"`
-	HighClosed        *bool              `json:"highClosed,omitempty"`
-	Element           []*ExpressionNode  `json:"element,omitempty"`
-	ClassType         string             `json:"classType,omitempty"`
-	FunctionName      string             `json:"functionName,omitempty"`
-	CodeValue         string             `json:"code,omitempty"`
-	System            *ExpressionNode    `json:"system,omitempty"`
-	Display           string             `json:"display,omitempty"`
-	IsTypeSpecifier   *TypeSpecifier     `json:"isTypeSpecifier,omitempty"`
-	AsTypeSpecifier   *TypeSpecifier     `json:"asTypeSpecifier,omitempty"`
-	Strict            bool               `json:"strict,omitempty"`
-	ToType            *TypeSpecifier     `json:"toTypeSpecifier,omitempty"`
-	Precision         string             `json:"precision,omitempty"`
-	Per               *ExpressionNode    `json:"per,omitempty"`
-	TestValue         string             `json:"testValue,omitempty"`
-	IsNot             bool               `json:"isNot,omitempty"`
-	Extent            string             `json:"extent,omitempty"`
+	Type                string                `json:"type"`
+	ResultTypeName      string                `json:"resultTypeName,omitempty"`
+	ResultTypeSpecifier *TypeSpecifier        `json:"resultTypeSpecifier,omitempty"`
+	ValueType           string                `json:"valueType,omitempty"`
+	Value               string                `json:"value,omitempty"`
+	Name                string                `json:"name,omitempty"`
+	LibraryName         string                `json:"libraryName,omitempty"`
+	Path                string                `json:"path,omitempty"`
+	Source              *ExpressionNode       `json:"source,omitempty"`
+	Scope               string                `json:"scope,omitempty"`
+	DataType            string                `json:"dataType,omitempty"`
+	TemplateID          string                `json:"templateId,omitempty"`
+	CodeProperty        string                `json:"codeProperty,omitempty"`
+	CodeComparator      string                `json:"codeComparator,omitempty"`
+	Codes               *ExpressionNode       `json:"codes,omitempty"`
+	DateProperty        string                `json:"dateProperty,omitempty"`
+	DateRange           *ExpressionNode       `json:"dateRange,omitempty"`
+	Operand             json.RawMessage       `json:"operand,omitempty"`
+	Condition           *ExpressionNode       `json:"condition,omitempty"`
+	Then                *ExpressionNode       `json:"then,omitempty"`
+	Else                *ExpressionNode       `json:"else,omitempty"`
+	Comparand           *ExpressionNode       `json:"comparand,omitempty"`
+	CaseItem            []*CaseItem           `json:"caseItem,omitempty"`
+	SourceClause        []*AliasedQuerySource `json:"sourceClause,omitempty"`
+	Let                 []*LetClause          `json:"let,omitempty"`
+	Relationship        []*RelationshipClause `json:"relationship,omitempty"`
+	Where               *ExpressionNode       `json:"where,omitempty"`
+	Return              *ReturnClause         `json:"return,omitempty"`
+	Sort                *SortClause           `json:"sort,omitempty"`
+	Aggregate           *AggregateClause      `json:"aggregate,omitempty"`
+	Low                 *ExpressionNode       `json:"low,omitempty"`
+	High                *ExpressionNode       `json:"high,omitempty"`
+	LowClosed           *bool                 `json:"lowClosed,omitempty"`
+	HighClosed          *bool                 `json:"highClosed,omitempty"`
+	Element             []*ExpressionNode     `json:"element,omitempty"`
+	ClassType           string                `json:"classType,omitempty"`
+	FunctionName        string                `json:"functionName,omitempty"`
+	CodeValue           string                `json:"code,omitempty"`
+	System              *ExpressionNode       `json:"system,omitempty"`
+	Display             string                `json:"display,omitempty"`
+	IsTypeSpecifier     *TypeSpecifier        `json:"isTypeSpecifier,omitempty"`
+	AsTypeSpecifier     *TypeSpecifier        `json:"asTypeSpecifier,omitempty"`
+	Strict              bool                  `json:"strict,omitempty"`
+	ToType              *TypeSpecifier        `json:"toTypeSpecifier,omitempty"`
+	Precision           string                `json:"precision,omitempty"`
+	Per                 *ExpressionNode       `json:"per,omitempty"`
+	TestValue           string                `json:"testValue,omitempty"`
+	IsNot               bool                  `json:"isNot,omitempty"`
+	Extent              string                `json:"extent,omitempty"`
 }
 
 // MarshalJSON implements custom JSON marshaling for ExpressionNode.
@@ -78,54 +78,54 @@ type expressionNodeJSON struct {
 // (for unary ops) or []*ExpressionNode (for binary/N-ary ops).
 func (e *ExpressionNode) MarshalJSON() ([]byte, error) {
 	raw := expressionNodeJSON{
-		Type:              e.Type,
-		ResultTypeName:    e.ResultTypeName,
+		Type:                e.Type,
+		ResultTypeName:      e.ResultTypeName,
 		ResultTypeSpecifier: e.ResultTypeSpecifier,
-		ValueType:         e.ValueType,
-		Value:             e.Value,
-		Name:              e.Name,
-		LibraryName:       e.LibraryName,
-		Path:              e.Path,
-		Source:            e.Source,
-		Scope:             e.Scope,
-		DataType:          e.DataType,
-		TemplateID:        e.TemplateID,
-		CodeProperty:      e.CodeProperty,
-		CodeComparator:    e.CodeComparator,
-		Codes:             e.Codes,
-		DateProperty:      e.DateProperty,
-		DateRange:         e.DateRange,
-		Condition:         e.Condition,
-		Then:              e.Then,
-		Else:              e.Else,
-		Comparand:         e.Comparand,
-		CaseItem:          e.CaseItem,
-		SourceClause:      e.SourceClause,
-		Let:               e.Let,
-		Relationship:      e.Relationship,
-		Where:             e.Where,
-		Return:            e.Return,
-		Sort:              e.Sort,
-		Aggregate:         e.Aggregate,
-		Low:               e.Low,
-		High:              e.High,
-		LowClosed:         e.LowClosed,
-		HighClosed:        e.HighClosed,
-		Element:           e.Element,
-		ClassType:         e.ClassType,
-		FunctionName:      e.FunctionName,
-		CodeValue:         e.CodeValue,
-		System:            e.System,
-		Display:           e.Display,
-		IsTypeSpecifier:   e.IsTypeSpecifier,
-		AsTypeSpecifier:   e.AsTypeSpecifier,
-		Strict:            e.Strict,
-		ToType:            e.ToType,
-		Precision:         e.Precision,
-		Per:               e.Per,
-		TestValue:         e.TestValue,
-		IsNot:             e.IsNot,
-		Extent:            e.Extent,
+		ValueType:           e.ValueType,
+		Value:               e.Value,
+		Name:                e.Name,
+		LibraryName:         e.LibraryName,
+		Path:                e.Path,
+		Source:              e.Source,
+		Scope:               e.Scope,
+		DataType:            e.DataType,
+		TemplateID:          e.TemplateID,
+		CodeProperty:        e.CodeProperty,
+		CodeComparator:      e.CodeComparator,
+		Codes:               e.Codes,
+		DateProperty:        e.DateProperty,
+		DateRange:           e.DateRange,
+		Condition:           e.Condition,
+		Then:                e.Then,
+		Else:                e.Else,
+		Comparand:           e.Comparand,
+		CaseItem:            e.CaseItem,
+		SourceClause:        e.SourceClause,
+		Let:                 e.Let,
+		Relationship:        e.Relationship,
+		Where:               e.Where,
+		Return:              e.Return,
+		Sort:                e.Sort,
+		Aggregate:           e.Aggregate,
+		Low:                 e.Low,
+		High:                e.High,
+		LowClosed:           e.LowClosed,
+		HighClosed:          e.HighClosed,
+		Element:             e.Element,
+		ClassType:           e.ClassType,
+		FunctionName:        e.FunctionName,
+		CodeValue:           e.CodeValue,
+		System:              e.System,
+		Display:             e.Display,
+		IsTypeSpecifier:     e.IsTypeSpecifier,
+		AsTypeSpecifier:     e.AsTypeSpecifier,
+		Strict:              e.Strict,
+		ToType:              e.ToType,
+		Precision:           e.Precision,
+		Per:                 e.Per,
+		TestValue:           e.TestValue,
+		IsNot:               e.IsNot,
+		Extent:              e.Extent,
 	}
 
 	// Marshal the polymorphic Operand field

@@ -620,9 +620,9 @@ func translateBetween(b *ast.BetweenExpression) *ExpressionNode {
 		Operand: []*ExpressionNode{
 			TranslateExpression(b.Operand),
 			{
-				Type: "Interval",
-				Low:  TranslateExpression(b.Low),
-				High: TranslateExpression(b.High),
+				Type:       "Interval",
+				Low:        TranslateExpression(b.Low),
+				High:       TranslateExpression(b.High),
 				LowClosed:  boolPtr(true),
 				HighClosed: boolPtr(true),
 			},

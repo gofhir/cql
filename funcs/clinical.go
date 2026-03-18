@@ -96,7 +96,7 @@ func referenceDate(asOf fptypes.Value) time.Time {
 	return time.Now().UTC()
 }
 
-func toTime(v fptypes.Value) (time.Time, error) {
+func toTime(v fptypes.Value) (time.Time, error) { //nolint:unparam // error kept for future format additions
 	if v == nil {
 		return time.Time{}, nil
 	}

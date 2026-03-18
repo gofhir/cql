@@ -78,12 +78,12 @@ func DateConstructor(year, month, day fptypes.Value) (fptypes.Value, error) {
 }
 
 // DateTimeConstructor creates a DateTime from components.
-func DateTimeConstructor(year, month, day, hour, minute, second, millisecond fptypes.Value, tzOffset fptypes.Value) (fptypes.Value, error) {
+func DateTimeConstructor(year, month, day, hour, minute, second, millisecond, tzOffset fptypes.Value) (fptypes.Value, error) {
 	y := intVal(year)
 	m := intVal(month)
 	d := intVal(day)
 	h := intVal(hour)
-	min := intVal(minute)
+	mn := intVal(minute)
 	sec := intVal(second)
 	ms := intVal(millisecond)
 
@@ -91,7 +91,7 @@ func DateTimeConstructor(year, month, day, hour, minute, second, millisecond fpt
 		return nil, nil
 	}
 
-	s := fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02d.%03d", y, m, d, h, min, sec, ms)
+	s := fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02d.%03d", y, m, d, h, mn, sec, ms)
 	if tzOffset != nil {
 		if sv, ok := tzOffset.(fptypes.String); ok {
 			s += sv.Value()
@@ -105,10 +105,10 @@ func DateTimeConstructor(year, month, day, hour, minute, second, millisecond fpt
 // TimeConstructor creates a Time from hour, minute, second, millisecond.
 func TimeConstructor(hour, minute, second, millisecond fptypes.Value) (fptypes.Value, error) {
 	h := intVal(hour)
-	min := intVal(minute)
+	mn := intVal(minute)
 	sec := intVal(second)
 	ms := intVal(millisecond)
-	return fptypes.NewTime(fmt.Sprintf("%02d:%02d:%02d.%03d", h, min, sec, ms))
+	return fptypes.NewTime(fmt.Sprintf("%02d:%02d:%02d.%03d", h, mn, sec, ms))
 }
 
 // DurationBetween calculates the duration between two date/time values at a given precision.

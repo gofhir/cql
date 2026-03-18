@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/antlr4-go/antlr/v4"
+
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/parser/grammar"
 )
