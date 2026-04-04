@@ -115,7 +115,7 @@ func parseDateTimeOrDate(s string) (fptypes.Value, error) {
 	if strings.Contains(s, "T") {
 		// DateTime. Strip trailing 'T' if no time component follows.
 		// e.g., "2014T" -> "2014", "2014-01-01T" -> "2014-01-01"
-		cleaned := strings.TrimRight(s, "T")
+		cleaned := strings.TrimSuffix(s, "T")
 		// But only strip trailing T if it's truly a bare T (no digits after).
 		// "2014-01-01T10:00:00" should stay as-is.
 		// The regex: if the string ends with 'T' followed by nothing, strip it.
