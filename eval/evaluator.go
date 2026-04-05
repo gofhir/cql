@@ -1326,6 +1326,80 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return nil, nil
 
+	// Math functions
+	case "round":
+		precision := 0
+		if len(n.Operands) > 0 {
+			pv, err := e.Eval(n.Operands[0])
+			if err != nil {
+				return nil, err
+			}
+			if pi, ok := pv.(fptypes.Integer); ok {
+				precision = int(pi.Value())
+			}
+		}
+		return funcs.Round(source, precision)
+
+	case "floor":
+		return funcs.Floor(source)
+
+	case "ceiling":
+		return funcs.Ceiling(source)
+
+	case "truncate":
+		return funcs.Truncate(source)
+
+	case "ln":
+		return funcs.Ln(source)
+
+	case "log":
+		if len(n.Operands) < 1 {
+			return nil, fmt.Errorf("Log requires a base argument")
+		}
+		base, err := e.Eval(n.Operands[0])
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Log(source, base)
+
+	case "exp":
+		return funcs.Exp(source)
+
+	case "power":
+		if len(n.Operands) < 1 {
+			return nil, fmt.Errorf("Power requires an exponent argument")
+		}
+		exp, err := e.Eval(n.Operands[0])
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Power(source, exp)
+
+	case "precision":
+		return funcs.Precision(source)
+
+	case "highboundary":
+		var prec fptypes.Value
+		if len(n.Operands) > 0 {
+			var err error
+			prec, err = e.Eval(n.Operands[0])
+			if err != nil {
+				return nil, err
+			}
+		}
+		return funcs.HighBoundary(source, prec)
+
+	case "lowboundary":
+		var prec fptypes.Value
+		if len(n.Operands) > 0 {
+			var err error
+			prec, err = e.Eval(n.Operands[0])
+			if err != nil {
+				return nil, err
+			}
+		}
+		return funcs.LowBoundary(source, prec)
+
 	default:
 		return nil, fmt.Errorf("unknown function: %s", n.Name)
 	}
