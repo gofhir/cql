@@ -8,9 +8,15 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
-// Count returns the number of elements in a collection.
+// Count returns the number of non-null elements in a collection.
 func Count(c fptypes.Collection) fptypes.Value {
-	return fptypes.NewInteger(int64(c.Count()))
+	count := int64(0)
+	for _, item := range c {
+		if item != nil {
+			count++
+		}
+	}
+	return fptypes.NewInteger(count)
 }
 
 // Sum returns the sum of all numeric values in a collection (skipping nulls).
@@ -169,7 +175,7 @@ func PopulationStdDev(c fptypes.Collection) fptypes.Value {
 	}
 	v := numericVal(variance)
 	f, _ := v.Float64()
-	return fptypes.NewDecimalFromFloat(math.Sqrt(f))
+	return decimalToValue(decimal.NewFromFloat(math.Sqrt(f)).Round(8))
 }
 
 // Variance computes the sample variance.
@@ -195,7 +201,7 @@ func StdDev(c fptypes.Collection) fptypes.Value {
 	}
 	val := numericVal(v)
 	f, _ := val.Float64()
-	return fptypes.NewDecimalFromFloat(math.Sqrt(f))
+	return decimalToValue(decimal.NewFromFloat(math.Sqrt(f)).Round(8))
 }
 
 func numericVal(v fptypes.Value) decimal.Decimal {

@@ -438,6 +438,23 @@ var smallDecimalStep, _ = decimal.NewFromString("0.00000001")
 
 // IntervalMeets checks if interval a meets interval b (a.high = b.low or a.low = b.high).
 func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
+	// If any bound involved in the meets check is null, result is null
+	// (we need both endpoints that could touch to be known)
+	if a.High == nil && a.Low == nil {
+		return nil, nil
+	}
+	if b.High == nil && b.Low == nil {
+		return nil, nil
+	}
+	// For a meets b: a.High meets b.Low (need both non-null)
+	// For b meets a: b.High meets a.Low (need both non-null)
+	aCanMeetB := a.High != nil && b.Low != nil
+	bCanMeetA := b.High != nil && a.Low != nil
+	if !aCanMeetB && !bCanMeetA {
+		// Cannot determine meets relationship with null bounds
+		return nil, nil
+	}
+
 	// Check if they overlap first - if they overlap, they don't meet
 	overlaps, err := a.Overlaps(b)
 	if err != nil {
@@ -449,10 +466,10 @@ func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if overlaps {
 		return fptypes.NewBoolean(false), nil
 	}
-	if intervalEndMeetsStart(a.High, a.HighClosed, b.Low, b.LowClosed) {
+	if aCanMeetB && intervalEndMeetsStart(a.High, a.HighClosed, b.Low, b.LowClosed) {
 		return fptypes.NewBoolean(true), nil
 	}
-	if intervalEndMeetsStart(b.High, b.HighClosed, a.Low, a.LowClosed) {
+	if bCanMeetA && intervalEndMeetsStart(b.High, b.HighClosed, a.Low, a.LowClosed) {
 		return fptypes.NewBoolean(true), nil
 	}
 	return fptypes.NewBoolean(false), nil

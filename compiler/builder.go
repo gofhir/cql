@@ -1172,6 +1172,10 @@ func (b *builder) VisitSetAggregateExpressionTerm(ctx *grammar.SetAggregateExpre
 	}
 	if len(exprs) > 1 {
 		sa.Per = b.visitExpression(exprs[1])
+	} else if dtpCtx := ctx.DateTimePrecision(); dtpCtx != nil {
+		// 'per hour', 'per minute', etc. — create a Quantity(1, unit) literal
+		unit := strings.ToLower(dtpCtx.GetText())
+		sa.Per = &ast.Literal{ValueType: ast.LiteralQuantity, Value: "1 '" + unit + "'"}
 	}
 	return sa
 }

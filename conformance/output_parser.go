@@ -82,6 +82,12 @@ func parseExpectedOutput(raw string) (fptypes.Value, error) {
 	// String literal: 'hello'
 	if strings.HasPrefix(s, "'") && strings.HasSuffix(s, "'") && len(s) >= 2 {
 		inner := s[1 : len(s)-1]
+		// Unescape \' → ' and \\ → \ and \" → "
+		inner = strings.ReplaceAll(inner, "\\'", "'")
+		inner = strings.ReplaceAll(inner, "\\\"", "\"")
+		// Handle Unicode escape sequences \uXXXX
+		inner = unescapeUnicode(inner)
+		inner = strings.ReplaceAll(inner, "\\\\", "\\")
 		return fptypes.NewString(inner), nil
 	}
 
@@ -104,6 +110,20 @@ func parseExpectedOutput(raw string) (fptypes.Value, error) {
 	}
 
 	return nil, fmt.Errorf("unrecognized output format: %q", s)
+}
+
+var unicodeEscape = regexp.MustCompile(`\\u([0-9a-fA-F]{4})`)
+
+// unescapeUnicode replaces \uXXXX sequences with the corresponding Unicode character.
+func unescapeUnicode(s string) string {
+	return unicodeEscape.ReplaceAllStringFunc(s, func(match string) string {
+		hex := match[2:] // strip \u
+		code, err := strconv.ParseInt(hex, 16, 32)
+		if err != nil {
+			return match
+		}
+		return string(rune(code))
+	})
 }
 
 var (

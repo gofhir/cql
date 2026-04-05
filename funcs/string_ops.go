@@ -190,9 +190,13 @@ func ReplaceMatches(s, pattern, replacement fptypes.Value) fptypes.Value {
 	if err != nil {
 		return s
 	}
-	// Use ReplaceAllLiteralString to avoid Go regex back-reference interpretation of $
-	// CQL ReplaceMatches uses literal replacement strings
-	return fptypes.NewString(re.ReplaceAllLiteralString(sv.Value(), rv.Value()))
+	// CQL follows Java regex replacement semantics:
+	// \$ in replacement means literal $, \\ means literal \
+	// Convert to Go replacement semantics: $$ means literal $
+	repl := rv.Value()
+	repl = strings.ReplaceAll(repl, "\\$", "$$")
+	repl = strings.ReplaceAll(repl, "\\\\", "\\")
+	return fptypes.NewString(re.ReplaceAllString(sv.Value(), repl))
 }
 
 // PositionOf returns the 0-based index of the first occurrence of pattern in string.

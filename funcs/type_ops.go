@@ -107,7 +107,11 @@ func ToDateTime(v fptypes.Value) (fptypes.Value, error) {
 		// CQL: converting Date to DateTime preserves date precision (no time component)
 		return fptypes.NewDateTime(val.String())
 	case fptypes.String:
-		return fptypes.NewDateTime(val.Value())
+		dt, err := fptypes.NewDateTime(val.Value())
+		if err != nil {
+			return nil, nil // CQL: failed conversions return null
+		}
+		return dt, nil
 	default:
 		return nil, nil
 	}
@@ -204,7 +208,27 @@ func ToTime(v fptypes.Value) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("cannot convert %s to Time", v.Type())
 	}
-	return fptypes.NewTime(s.Value())
+	sv := s.Value()
+	// Strip timezone suffix (Z, +HH:MM, -HH:MM) from time strings
+	sv = stripTimeZone(sv)
+	t, err := fptypes.NewTime(sv)
+	if err != nil {
+		return nil, nil // CQL: failed conversions return null
+	}
+	return t, nil
+}
+
+// stripTimeZone removes timezone suffixes (Z, +HH:MM, -HH:MM) from a time string.
+func stripTimeZone(s string) string {
+	// Remove trailing Z
+	if strings.HasSuffix(s, "Z") {
+		return s[:len(s)-1]
+	}
+	// Remove trailing +HH:MM or -HH:MM
+	if idx := strings.LastIndexAny(s, "+-"); idx > 0 && strings.Contains(s[idx:], ":") {
+		return s[:idx]
+	}
+	return s
 }
 
 // ToConcept converts a value to a Concept.
@@ -217,6 +241,23 @@ func ToConcept(v fptypes.Value) (fptypes.Value, error) {
 	}
 	if c, ok := v.(cqltypes.Code); ok {
 		return cqltypes.NewConcept([]cqltypes.Code{c}, ""), nil
+	}
+	// Handle Tuple with TypeOverride="Code" (from instance expressions like Code { code: '...' })
+	if t, ok := v.(cqltypes.Tuple); ok && strings.EqualFold(t.Type(), "Code") {
+		code := ""
+		system := ""
+		display := ""
+		if cv, ok := t.Get("code"); ok && cv != nil {
+			code = cv.String()
+		}
+		if sv, ok := t.Get("system"); ok && sv != nil {
+			system = sv.String()
+		}
+		if dv, ok := t.Get("display"); ok && dv != nil {
+			display = dv.String()
+		}
+		c := cqltypes.NewCode(system, code, display)
+		return cqltypes.NewConcept([]cqltypes.Code{c}, display), nil
 	}
 	return nil, fmt.Errorf("cannot convert %s to Concept", v.Type())
 }

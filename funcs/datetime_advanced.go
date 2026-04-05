@@ -559,8 +559,67 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 			return nil, fmt.Errorf("date addition results in year %d which is out of range [1, 9999]", result.Year())
 		}
 		return result, nil
+	case fptypes.Time:
+		// Handle Time type natively to preserve precision
+		h, m, s, ms := t.Hour(), t.Minute(), t.Second(), t.Millisecond()
+		prec := t.Precision()
+		switch precision {
+		case "hour", "hours":
+			h += amount
+		case "minute", "minutes":
+			m += amount
+		case "second", "seconds":
+			s += amount
+		case "millisecond", "milliseconds":
+			ms += amount
+		default:
+			h += amount
+		}
+		// Normalize milliseconds -> seconds -> minutes -> hours
+		if ms < 0 || ms >= 1000 {
+			s += ms / 1000
+			ms = ms % 1000
+			if ms < 0 {
+				ms += 1000
+				s--
+			}
+		}
+		if s < 0 || s >= 60 {
+			m += s / 60
+			s = s % 60
+			if s < 0 {
+				s += 60
+				m--
+			}
+		}
+		if m < 0 || m >= 60 {
+			h += m / 60
+			m = m % 60
+			if m < 0 {
+				m += 60
+				h--
+			}
+		}
+		// Wrap hours into 0-23
+		h = h % 24
+		if h < 0 {
+			h += 24
+		}
+		// Build time string at the original precision
+		var timeStr string
+		switch prec {
+		case fptypes.HourPrecision:
+			timeStr = fmt.Sprintf("%02d", h)
+		case fptypes.MinutePrecision:
+			timeStr = fmt.Sprintf("%02d:%02d", h, m)
+		case fptypes.SecondPrecision:
+			timeStr = fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+		default:
+			timeStr = fmt.Sprintf("%02d:%02d:%02d.%03d", h, m, s, ms)
+		}
+		return fptypes.NewTime(timeStr)
 	default:
-		// For Time or unknown types, fall back to time.Time approach
+		// For unknown types, fall back to time.Time approach
 		tt, err := toTime(operand)
 		if err != nil || tt.IsZero() {
 			return nil, nil

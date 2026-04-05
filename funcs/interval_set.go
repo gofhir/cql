@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/shopspring/decimal"
@@ -65,6 +66,17 @@ func IntervalWidth(interval cqltypes.Interval) (fptypes.Value, error) {
 		}
 	}
 
+	// DateTime/Date/Time intervals: width is not defined
+	if _, ok := low.(fptypes.DateTime); ok {
+		return nil, fmt.Errorf("width is not defined for DateTime intervals")
+	}
+	if _, ok := low.(fptypes.Date); ok {
+		return nil, fmt.Errorf("width is not defined for Date intervals")
+	}
+	if _, ok := low.(fptypes.Time); ok {
+		return nil, fmt.Errorf("width is not defined for Time intervals")
+	}
+
 	return nil, nil
 }
 
@@ -111,7 +123,16 @@ func IntervalMeetsBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 }
 
 // IntervalMeetsAfter checks if interval a starts exactly at the end of b.
+// "a meets after b" means a starts immediately after b ends.
 func IntervalMeetsAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
+	// If a.High and b.Low are both known and a.High < b.Low, intervals are clearly separated
+	// in the wrong direction for "a meets after b" → false
+	if a.High != nil && b.Low != nil {
+		cmp, err := compareVals(a.High, b.Low)
+		if err == nil && cmp < 0 {
+			return fptypes.NewBoolean(false), nil
+		}
+	}
 	return IntervalMeetsBefore(b, a)
 }
 
@@ -451,13 +472,22 @@ func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal,
 		return nil, nil
 	}
 
+	// Truncate interval bounds to per-unit precision for Time values
+	low := truncateTemporalToPrecision(interval.Low, unit)
+	high := truncateTemporalToPrecision(interval.High, unit)
+	// Adjust high bound closure: if truncation changed the value, open becomes closed
+	highClosed := interval.HighClosed
+	if !highClosed && high != nil && interval.High != nil && !high.Equal(interval.High) {
+		highClosed = true
+	}
+
 	var result fptypes.Collection
-	cur := interval.Low
+	cur := low
 	for i := 0; i < 10001; i++ {
 		if cur == nil {
 			break
 		}
-		inBounds, err := isInBounds(cur, interval.High, interval.LowClosed, interval.HighClosed, i == 0)
+		inBounds, err := isInBounds(cur, high, interval.LowClosed, highClosed, i == 0)
 		if err != nil || !inBounds {
 			break
 		}
@@ -489,13 +519,22 @@ func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decim
 		return nil, nil
 	}
 
+	// Truncate interval bounds to per-unit precision for Time values
+	low := truncateTemporalToPrecision(interval.Low, unit)
+	high := truncateTemporalToPrecision(interval.High, unit)
+	// Adjust high bound closure: if truncation changed the value, open becomes closed
+	highClosed := interval.HighClosed
+	if !highClosed && high != nil && interval.High != nil && !high.Equal(interval.High) {
+		highClosed = true
+	}
+
 	var result fptypes.Collection
-	cur := interval.Low
+	cur := low
 	for i := 0; i < 10001; i++ {
 		if cur == nil {
 			break
 		}
-		inBounds, err := isInBounds(cur, interval.High, interval.LowClosed, interval.HighClosed, i == 0)
+		inBounds, err := isInBounds(cur, high, interval.LowClosed, highClosed, i == 0)
 		if err != nil || !inBounds {
 			break
 		}
@@ -510,9 +549,9 @@ func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decim
 		}
 		// Clamp end to the interval high
 		if end != nil {
-			cmp, cmpErr := compareVals(end, interval.High)
+			cmp, cmpErr := compareVals(end, high)
 			if cmpErr == nil && cmp > 0 {
-				end = interval.High
+				end = high
 			}
 		}
 		result = append(result, cqltypes.NewInterval(cur, end, true, true))
@@ -531,6 +570,62 @@ func isInBounds(val, high fptypes.Value, lowClosed, highClosed, isFirst bool) (b
 		return cmp <= 0, nil
 	}
 	return cmp < 0, nil
+}
+
+// truncateTemporalToPrecision truncates a Time value to the given unit precision.
+// For example, truncating @T10:30 to "hour" gives @T10.
+// Non-Time values or cases where no truncation is needed are returned as-is.
+func truncateTemporalToPrecision(v fptypes.Value, unit string) fptypes.Value {
+	if v == nil {
+		return nil
+	}
+	t, ok := v.(fptypes.Time)
+	if !ok {
+		return v // only truncate Time values for now
+	}
+	targetPrec := unitToTimePrecision(unit)
+	if targetPrec < 0 || fptypes.TimePrecision(targetPrec) >= t.Precision() {
+		return v // already at or below target precision
+	}
+	// Build truncated time string
+	h := t.Hour()
+	switch fptypes.TimePrecision(targetPrec) {
+	case fptypes.HourPrecision:
+		newT, err := fptypes.NewTime(fmt.Sprintf("%02d", h))
+		if err != nil {
+			return v
+		}
+		return newT
+	case fptypes.MinutePrecision:
+		newT, err := fptypes.NewTime(fmt.Sprintf("%02d:%02d", h, t.Minute()))
+		if err != nil {
+			return v
+		}
+		return newT
+	case fptypes.SecondPrecision:
+		newT, err := fptypes.NewTime(fmt.Sprintf("%02d:%02d:%02d", h, t.Minute(), t.Second()))
+		if err != nil {
+			return v
+		}
+		return newT
+	}
+	return v
+}
+
+// unitToTimePrecision maps a temporal unit name to a TimePrecision value.
+// Returns -1 for units that don't map to Time precision (year, month, etc.).
+func unitToTimePrecision(unit string) int {
+	switch unit {
+	case "hour":
+		return int(fptypes.HourPrecision)
+	case "minute":
+		return int(fptypes.MinutePrecision)
+	case "second":
+		return int(fptypes.SecondPrecision)
+	case "millisecond":
+		return int(fptypes.MillisPrecision)
+	}
+	return -1
 }
 
 // defaultTemporalUnit returns the default unit for expand based on the value type and precision.

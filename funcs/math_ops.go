@@ -104,8 +104,11 @@ func Ln(v fptypes.Value) (fptypes.Value, error) {
 		return nil, fmt.Errorf("Ln: expected numeric, got %s", v.Type())
 	}
 	f, _ := d.Float64()
-	if f <= 0 {
-		return nil, nil // CQL: Ln of non-positive value returns null
+	if d.IsZero() {
+		return nil, fmt.Errorf("Ln: undefined for zero (results in negative infinity)")
+	}
+	if f < 0 {
+		return nil, nil // CQL: Ln of negative value returns null
 	}
 	result := math.Log(f)
 	return decimalToValue(decimal.NewFromFloat(result)), nil
@@ -318,7 +321,7 @@ func temporalHighBoundary(s string, targetDigits int, kind string) (fptypes.Valu
 	maxParts := map[string]string{
 		"datetime": "9999-12-31T23:59:59.999",
 		"date":     "9999-12-31",
-		"time":     "T23:59:59.999",
+		"time":     "23:59:59.999",
 	}
 	maxStr := maxParts[kind]
 
@@ -355,7 +358,7 @@ func temporalLowBoundary(s string, targetDigits int, kind string) (fptypes.Value
 	minParts := map[string]string{
 		"datetime": "0001-01-01T00:00:00.000",
 		"date":     "0001-01-01",
-		"time":     "T00:00:00.000",
+		"time":     "00:00:00.000",
 	}
 	minStr := minParts[kind]
 

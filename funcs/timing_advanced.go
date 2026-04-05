@@ -21,12 +21,30 @@ func OverlapsBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if a.Low == nil || b.Low == nil {
 		return nil, nil
 	}
+	// For integer types, compare effective bounds (accounting for open boundaries)
+	if ai, ok := a.Low.(fptypes.Integer); ok {
+		if bi, ok := b.Low.(fptypes.Integer); ok {
+			aEff := ai.Value()
+			if !a.LowClosed {
+				aEff++
+			}
+			bEff := bi.Value()
+			if !b.LowClosed {
+				bEff++
+			}
+			return fptypes.NewBoolean(aEff < bEff), nil
+		}
+	}
 	cmp, err := compareVals(a.Low, b.Low)
 	if err != nil {
 		if isAmbiguousComparisonErr(err) {
 			return nil, nil
 		}
 		return nil, err
+	}
+	// If values are equal, check open/closed: a is "before" if b has an open bound (higher effective start)
+	if cmp == 0 {
+		return fptypes.NewBoolean(a.LowClosed && !b.LowClosed), nil
 	}
 	return fptypes.NewBoolean(cmp < 0), nil
 }
@@ -46,12 +64,30 @@ func OverlapsAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if a.High == nil || b.High == nil {
 		return nil, nil
 	}
+	// For integer types, compare effective bounds (accounting for open boundaries)
+	if ai, ok := a.High.(fptypes.Integer); ok {
+		if bi, ok := b.High.(fptypes.Integer); ok {
+			aEff := ai.Value()
+			if !a.HighClosed {
+				aEff--
+			}
+			bEff := bi.Value()
+			if !b.HighClosed {
+				bEff--
+			}
+			return fptypes.NewBoolean(aEff > bEff), nil
+		}
+	}
 	cmp, err := compareVals(a.High, b.High)
 	if err != nil {
 		if isAmbiguousComparisonErr(err) {
 			return nil, nil
 		}
 		return nil, err
+	}
+	// If values are equal, check open/closed: a is "after" if b has an open bound (lower effective end)
+	if cmp == 0 {
+		return fptypes.NewBoolean(a.HighClosed && !b.HighClosed), nil
 	}
 	return fptypes.NewBoolean(cmp > 0), nil
 }

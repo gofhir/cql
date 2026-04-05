@@ -363,8 +363,18 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		case ast.OpNotEquivalent:
 			return fptypes.NewBoolean(left != nil || right != nil), nil
 		case ast.OpUnion:
+			// For list union: null union list = list, list union null = list
+			// For interval union: null union interval = null
 			if left == nil {
+				if _, rok := right.(cqltypes.Interval); rok {
+					return nil, nil
+				}
 				return right, nil
+			}
+			if right == nil {
+				if _, lok := left.(cqltypes.Interval); lok {
+					return nil, nil
+				}
 			}
 			return left, nil
 		case ast.OpConcatenate:
@@ -420,8 +430,24 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		}
 		return fptypes.NewBoolean(!left.Equal(right)), nil
 	case ast.OpEquivalent:
+		// CQL: Tuple equivalence with different shapes is an error
+		if lt, lok := left.(cqltypes.Tuple); lok {
+			if rt, rok := right.(cqltypes.Tuple); rok {
+				if len(lt.Elements) != len(rt.Elements) {
+					return nil, fmt.Errorf("tuple equivalence requires tuples with the same elements")
+				}
+			}
+		}
 		return fptypes.NewBoolean(cqlEquivalent(left, right)), nil
 	case ast.OpNotEquivalent:
+		// CQL: Tuple equivalence with different shapes is an error
+		if lt, lok := left.(cqltypes.Tuple); lok {
+			if rt, rok := right.(cqltypes.Tuple); rok {
+				if len(lt.Elements) != len(rt.Elements) {
+					return nil, fmt.Errorf("tuple equivalence requires tuples with the same elements")
+				}
+			}
+		}
 		return fptypes.NewBoolean(!cqlEquivalent(left, right)), nil
 
 	case ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
@@ -989,6 +1015,9 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 	case ast.OpSuccessorOf, ast.OpPredecessorOf:
 		return e.evalSuccessorPredecessor(n.Operator, operand)
 	case ast.OpPointFrom:
+		if operand == nil {
+			return nil, nil
+		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
 			if iv.Low != nil && iv.High != nil && iv.Low.Equal(iv.High) {
 				return iv.Low, nil
@@ -1353,7 +1382,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
-		return fptypes.NewInteger(int64(c.Count())), nil
+		return funcs.Count(c), nil
 	case "exists":
 		src, err := resolveSource()
 		if err != nil {
@@ -1431,7 +1460,16 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		if src == nil {
-			return nil, nil // CQL: Length(null) = null
+			// CQL: Length(null string) = null, Length(null list) = 0
+			// Check if the argument is typed as a list (via "as List<...>" cast)
+			if len(n.Operands) > 0 {
+				if asExpr, ok := n.Operands[0].(*ast.AsExpression); ok {
+					if _, ok := asExpr.Type.(*ast.ListType); ok {
+						return fptypes.NewInteger(0), nil
+					}
+				}
+			}
+			return nil, nil
 		}
 		// String length
 		if s, ok := src.(fptypes.String); ok {
@@ -2670,6 +2708,21 @@ func (e *Evaluator) evalIntervalExpr(n *ast.IntervalExpression) (fptypes.Value, 
 	if low == nil && high == nil {
 		return nil, nil
 	}
+	// Validate: if both bounds are non-null, low must not exceed high
+	if low != nil && high != nil {
+		if comp, ok := low.(fptypes.Comparable); ok {
+			cmp, cmpErr := comp.Compare(high)
+			if cmpErr == nil {
+				if cmp > 0 {
+					return nil, fmt.Errorf("invalid interval: low bound (%v) is greater than high bound (%v)", low, high)
+				}
+				// Check for empty interval: Interval[5, 5) or Interval(5, 5] where low==high but one side is open
+				if cmp == 0 && (!n.LowClosed || !n.HighClosed) {
+					return nil, fmt.Errorf("invalid interval: interval is empty (low equals high with open boundary)")
+				}
+			}
+		}
+	}
 	return cqltypes.NewInterval(low, high, n.LowClosed, n.HighClosed), nil
 }
 
@@ -2862,8 +2915,26 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		return e.evalListTimingOp(leftList, rightList, leftIsList, rightIsList, left, right, n.Operator)
 	}
 
-	// Null propagation for non-list operations
+	// Special handling for properly includes/included in with null intervals
+	// CQL: null interval in properly includes/included in is treated as unbounded (universal)
 	if left == nil || right == nil {
+		switch n.Operator.Kind {
+		case ast.TimingIncludes:
+			if n.Operator.Properly && left == nil && right != nil {
+				// null properly includes X → X is a proper subset of the universal interval → true
+				if _, rightIsIv := right.(cqltypes.Interval); rightIsIv {
+					return fptypes.NewBoolean(true), nil
+				}
+			}
+		case ast.TimingIncludedIn, ast.TimingDuring:
+			if n.Operator.Properly && right == nil && left != nil {
+				// X properly included in null → X is a proper subset of the universal interval → true
+				if _, leftIsIv := left.(cqltypes.Interval); leftIsIv {
+					return fptypes.NewBoolean(true), nil
+				}
+			}
+		}
+		// Default null propagation for non-list operations
 		return nil, nil
 	}
 
