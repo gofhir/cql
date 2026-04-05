@@ -51,9 +51,39 @@ func main() {
 }
 ```
 
+## Conformance
+
+**1731/1731 (100%)** — passes all official [cqframework/cql-tests](https://github.com/cqframework/cql-tests) conformance suites.
+
+| Suite | Tests | Status |
+|---|---|---|
+| Aggregate Functions | 50/50 | :white_check_mark: |
+| Aggregate Operator | 9/9 | :white_check_mark: |
+| Arithmetic Functions | 212/212 | :white_check_mark: |
+| Comparison Operators | 223/223 | :white_check_mark: |
+| Conditional Operators | 9/9 | :white_check_mark: |
+| DateTime Operators | 317/317 | :white_check_mark: |
+| Errors and Messaging | 4/4 | :white_check_mark: |
+| Interval Operators | 412/412 | :white_check_mark: |
+| List Operators | 212/212 | :white_check_mark: |
+| Logical Operators | 39/39 | :white_check_mark: |
+| Nullological Operators | 22/22 | :white_check_mark: |
+| Query Expressions | 12/12 | :white_check_mark: |
+| String Operators | 81/81 | :white_check_mark: |
+| Type Operators | 35/35 | :white_check_mark: |
+| Types | 28/28 | :white_check_mark: |
+| Value Literals & Selectors | 66/66 | :white_check_mark: |
+
+Run conformance tests locally:
+
+```bash
+go test ./conformance/... -v
+```
+
 ## Features
 
 - Full CQL parsing via ANTLR4 grammar
+- 100% conformance with the official CQL test suite
 - Expression evaluation with FHIR R4 context
 - Pluggable data and terminology providers
 - Compiled expression caching
