@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	fptypes "github.com/gofhir/fhirpath/types"
+
+	cqltypes "github.com/gofhir/cql/types"
 )
 
 // regexCache caches compiled regular expressions to avoid repeated compilation.
@@ -25,7 +27,11 @@ func getOrCompileRegex(pattern string) (*regexp.Regexp, error) {
 }
 
 // Combine joins a collection of strings with a separator.
+// Returns null if the input is null or empty.
 func Combine(c fptypes.Collection, separator string) fptypes.Value {
+	if c == nil || c.Empty() {
+		return nil
+	}
 	parts := make([]string, 0, c.Count())
 	for _, item := range c {
 		if item != nil {
@@ -49,13 +55,21 @@ func Split(s fptypes.Value, separator string) fptypes.Value {
 	for _, p := range parts {
 		result = append(result, fptypes.NewString(p))
 	}
-	return collectionToList(result)
+	return cqltypes.NewList(result)
 }
 
-// Length returns the length of a string.
+// SplitNull handles Split with null separator — returns single-element list.
+func SplitNull(s fptypes.Value) fptypes.Value {
+	if s == nil {
+		return nil
+	}
+	return cqltypes.NewList(fptypes.Collection{s})
+}
+
+// Length returns the length of a string. Returns null for null input.
 func Length(s fptypes.Value) fptypes.Value {
 	if s == nil {
-		return fptypes.NewInteger(0)
+		return nil
 	}
 	if sv, ok := s.(fptypes.String); ok {
 		return fptypes.NewInteger(int64(len(sv.Value())))
@@ -176,7 +190,9 @@ func ReplaceMatches(s, pattern, replacement fptypes.Value) fptypes.Value {
 	if err != nil {
 		return s
 	}
-	return fptypes.NewString(re.ReplaceAllString(sv.Value(), rv.Value()))
+	// Use ReplaceAllLiteralString to avoid Go regex back-reference interpretation of $
+	// CQL ReplaceMatches uses literal replacement strings
+	return fptypes.NewString(re.ReplaceAllLiteralString(sv.Value(), rv.Value()))
 }
 
 // PositionOf returns the 0-based index of the first occurrence of pattern in string.

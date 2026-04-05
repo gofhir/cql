@@ -16,6 +16,12 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
+// isAmbiguousComparisonErr returns true if the error is an ambiguous temporal comparison.
+// In CQL, ambiguous comparisons should return null, not error.
+func isAmbiguousComparisonErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "ambiguous comparison")
+}
+
 // Evaluator interprets CQL AST nodes.
 type Evaluator struct {
 	ctx   *Context
@@ -200,6 +206,10 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid integer: %s", n.Value)
 		}
+		// CQL integers are 32-bit: valid range is -2^31 to 2^31-1
+		if v < math.MinInt32 || v > math.MaxInt32 {
+			return nil, fmt.Errorf("integer overflow: %s", n.Value)
+		}
 		return fptypes.NewInteger(v), nil
 	case ast.LiteralLong:
 		v, err := strconv.ParseInt(n.Value, 10, 64)
@@ -208,13 +218,25 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 		}
 		return fptypes.NewInteger(v), nil
 	case ast.LiteralDecimal:
+		// CQL decimal validation: max 28 digits before decimal, max 8 digits after
+		if err := validateCQLDecimal(n.Value); err != nil {
+			return nil, err
+		}
 		return fptypes.NewDecimal(n.Value)
 	case ast.LiteralDate:
 		return fptypes.NewDate(n.Value)
 	case ast.LiteralDateTime:
 		return fptypes.NewDateTime(n.Value)
 	case ast.LiteralTime:
-		return fptypes.NewTime(n.Value)
+		t, err := fptypes.NewTime(n.Value)
+		if err != nil {
+			return nil, err
+		}
+		// Validate time component ranges
+		if t.Hour() > 23 || t.Minute() > 59 || t.Second() > 59 || t.Millisecond() > 999 {
+			return nil, fmt.Errorf("invalid time: %s", n.Value)
+		}
+		return t, nil
 	case ast.LiteralQuantity:
 		return fptypes.NewQuantity(n.Value)
 	default:
@@ -354,6 +376,15 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				rs = right.String()
 			}
 			return fptypes.NewString(ls + rs), nil
+		case ast.OpExcept:
+			// list except null = list
+			if left != nil && right == nil {
+				return left, nil
+			}
+			return nil, nil
+		case ast.OpIntersect:
+			// list intersect null = null
+			return nil, nil
 		default:
 			return nil, nil
 		}
@@ -407,6 +438,9 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		}
 		cmp, err := lc.Compare(right)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil // CQL: ambiguous temporal comparison → null
+			}
 			return nil, err
 		}
 		switch n.Operator {
@@ -646,6 +680,9 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 		if interval, ok := right.(cqltypes.Interval); ok {
 			result, err := interval.Contains(left)
 			if err != nil {
+				if isAmbiguousComparisonErr(err) {
+					return nil, nil
+				}
 				return nil, err
 			}
 			return fptypes.NewBoolean(result), nil
@@ -657,6 +694,9 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 	if interval, ok := left.(cqltypes.Interval); ok {
 		result, err := interval.Contains(right)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return fptypes.NewBoolean(result), nil
@@ -776,17 +816,25 @@ func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Val
 		}
 		return newDecimalFromD(d.Sub(epsilon)), nil
 	}
-	// DateTime successor/predecessor: add/subtract 1 millisecond
+	// DateTime successor/predecessor: add/subtract 1 unit at the datetime's precision
 	if dt, ok := operand.(fptypes.DateTime); ok {
-		t := dt.ToTime()
+		unit := funcs.TemporalUnit(dt.Precision())
 		if op == ast.OpSuccessorOf {
-			t = t.Add(time.Millisecond)
-		} else {
-			t = t.Add(-time.Millisecond)
+			result := dt.AddDuration(1, unit)
+			// Check for overflow (year > 9999)
+			if result.Year() > 9999 {
+				return nil, fmt.Errorf("successor overflow: DateTime exceeds maximum")
+			}
+			return result, nil
 		}
-		return fptypes.NewDateTime(t.Format("2006-01-02T15:04:05.000Z07:00"))
+		result := dt.SubtractDuration(1, unit)
+		// Check for underflow
+		if result.Year() < 1 {
+			return nil, fmt.Errorf("predecessor underflow: DateTime below minimum")
+		}
+		return result, nil
 	}
-	// Date successor/predecessor: add/subtract 1 day
+	// Date successor/predecessor: add/subtract 1 unit at the date's precision
 	if dt, ok := operand.(fptypes.Date); ok {
 		t := dt.ToTime()
 		if op == ast.OpSuccessorOf {
@@ -796,27 +844,31 @@ func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Val
 		}
 		return fptypes.NewDate(t.Format("2006-01-02"))
 	}
-	// Time successor/predecessor: add/subtract 1 millisecond
-	if _, ok := operand.(fptypes.Time); ok {
-		s := operand.String()
-		// Parse time and adjust by 1ms
-		t, err := time.Parse("15:04:05.000", s)
-		if err != nil {
-			t, err = time.Parse("15:04:05", s)
-			if err != nil {
-				return nil, fmt.Errorf("successor/predecessor: cannot parse Time %s", s)
+	// Time successor/predecessor: add/subtract 1 unit at time's precision
+	if tv, ok := operand.(fptypes.Time); ok {
+		delta := 1
+		if op != ast.OpSuccessorOf {
+			delta = -1
+		}
+		result := funcs.AdjustTime(tv, delta)
+		// Check for overflow/underflow
+		if resultTime, ok := result.(fptypes.Time); ok {
+			if op == ast.OpSuccessorOf && resultTime.Hour() < tv.Hour() {
+				return nil, fmt.Errorf("successor overflow: Time exceeds maximum")
+			}
+			if op != ast.OpSuccessorOf && resultTime.Hour() > tv.Hour() {
+				return nil, fmt.Errorf("predecessor underflow: Time below minimum")
 			}
 		}
-		if op == ast.OpSuccessorOf {
-			t = t.Add(time.Millisecond)
-		} else {
-			t = t.Add(-time.Millisecond)
-		}
-		return fptypes.NewTime(t.Format("15:04:05.000"))
+		return result, nil
 	}
-	// Quantity: not supported yet, return null
-	if _, ok := operand.(fptypes.Quantity); ok {
-		return nil, nil
+	// Quantity successor/predecessor
+	if q, ok := operand.(fptypes.Quantity); ok {
+		epsilon, _ := decimal.NewFromString("0.00000001")
+		if op == ast.OpSuccessorOf {
+			return fptypes.NewQuantityFromDecimal(q.Value().Add(epsilon), q.Unit()), nil
+		}
+		return fptypes.NewQuantityFromDecimal(q.Value().Sub(epsilon), q.Unit()), nil
 	}
 	return nil, fmt.Errorf("successor/predecessor not supported for %s", operand.Type())
 }
@@ -977,7 +1029,7 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { /
 		case "time":
 			return fptypes.NewTime("00:00:00.000")
 		case "boolean":
-			return fptypes.NewBoolean(false), nil
+			return nil, fmt.Errorf("minimum is not defined for Boolean")
 		default:
 			return nil, nil
 		}
@@ -997,7 +1049,7 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { /
 	case "time":
 		return fptypes.NewTime("23:59:59.999")
 	case "boolean":
-		return fptypes.NewBoolean(true), nil
+		return nil, fmt.Errorf("maximum is not defined for Boolean")
 	default:
 		return nil, nil
 	}
@@ -1144,16 +1196,16 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		if src != nil {
-			// String length
-			if s, ok := src.(fptypes.String); ok {
-				return fptypes.NewInteger(int64(len(s.Value()))), nil
-			}
-			// List length
-			c := toCollection(src)
-			return fptypes.NewInteger(int64(c.Count())), nil
+		if src == nil {
+			return nil, nil // CQL: Length(null) = null
 		}
-		return fptypes.NewInteger(0), nil
+		// String length
+		if s, ok := src.(fptypes.String); ok {
+			return fptypes.NewInteger(int64(len(s.Value()))), nil
+		}
+		// List length
+		c := toCollection(src)
+		return fptypes.NewInteger(int64(c.Count())), nil
 	case "coalesce":
 		// Coalesce checks source first (for fluent), then all operands.
 		// If given a single list argument, iterate its items.
@@ -1413,6 +1465,9 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
+		if src == nil {
+			return nil, nil
+		}
 		c := toCollection(src)
 		sep := ""
 		if len(operands) > 0 {
@@ -1438,6 +1493,8 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if sep != nil {
 				return funcs.Split(src, sep.String()), nil
 			}
+			// null separator → return list with source as single element
+			return funcs.SplitNull(src), nil
 		}
 		return src, nil
 
@@ -1577,6 +1634,9 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
+		if src == nil {
+			return nil, nil
+		}
 		c := toCollection(src)
 		return cqltypes.NewList(funcs.Tail(c)), nil
 	case "take":
@@ -1584,10 +1644,16 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
+		if src == nil {
+			return nil, nil
+		}
 		if len(operands) > 0 {
 			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
+			}
+			if arg == nil {
+				return cqltypes.NewList(fptypes.Collection{}), nil
 			}
 			if ai, ok := arg.(fptypes.Integer); ok {
 				c := toCollection(src)
@@ -1599,6 +1665,9 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		src, err := resolveSource()
 		if err != nil {
 			return nil, err
+		}
+		if src == nil {
+			return nil, nil
 		}
 		if len(operands) > 0 {
 			arg, err := e.Eval(operands[0])
@@ -1834,8 +1903,18 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 			if ai, ok := arg.(fptypes.Integer); ok {
+				idx := int(ai.Value())
+				// String indexer: return character at index
+				if sv, ok := src.(fptypes.String); ok {
+					str := sv.Value()
+					if idx < 0 || idx >= len(str) {
+						return nil, nil
+					}
+					return fptypes.NewString(string(str[idx])), nil
+				}
+				// Collection indexer
 				c := toCollection(src)
-				return funcs.Indexer(c, int(ai.Value())), nil
+				return funcs.Indexer(c, idx), nil
 			}
 		}
 		return nil, nil
@@ -1893,6 +1972,47 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		return funcs.ToConcept(src)
+
+	// Message(source, condition, code, severity, message) — returns the first argument
+	case "message":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		// Evaluate remaining operands
+		var condition fptypes.Value
+		var severity, msg string
+		for i, op := range operands {
+			val, err := e.Eval(op)
+			if err != nil {
+				return nil, err
+			}
+			switch i {
+			case 0:
+				condition = val
+			case 2:
+				if s, ok := val.(fptypes.String); ok {
+					severity = s.Value()
+				}
+			case 3:
+				if s, ok := val.(fptypes.String); ok {
+					msg = s.Value()
+				}
+			}
+		}
+		// If condition is true and severity is Error, raise an error
+		if isTrue(condition) && strings.EqualFold(severity, "Error") {
+			return nil, fmt.Errorf("CQL Message error: %s", msg)
+		}
+		return src, nil
+
+	// Product aggregate
+	case "product":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return e.evalAggregateProduct(src)
 
 	default:
 		return nil, fmt.Errorf("unknown function: %s", n.Name)
@@ -2417,6 +2537,9 @@ func (e *Evaluator) evalBetween(n *ast.BetweenExpression) (fptypes.Value, error)
 	interval := cqltypes.NewInterval(low, high, !n.Properly, !n.Properly)
 	result, err := interval.Contains(operand)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(result), nil
@@ -2563,6 +2686,9 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		result, err := leftIv.Includes(rightIv)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return fptypes.NewBoolean(result), nil
@@ -2572,6 +2698,9 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		result, err := rightIv.Includes(leftIv)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return fptypes.NewBoolean(result), nil
@@ -3015,6 +3144,31 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 	return result, nil
 }
 
+func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, error) {
+	c := toCollection(source)
+	if c.Empty() {
+		return nil, nil
+	}
+	allInt := true
+	product := decimal.NewFromInt(1)
+	for _, item := range c {
+		if item == nil {
+			return nil, nil
+		}
+		if i, ok := item.(fptypes.Integer); ok {
+			product = product.Mul(decimal.NewFromInt(i.Value()))
+		} else {
+			allInt = false
+			d := toDecimal(item)
+			product = product.Mul(d)
+		}
+	}
+	if allInt {
+		return fptypes.NewInteger(product.IntPart()), nil
+	}
+	return newDecimalFromD(product), nil
+}
+
 func (e *Evaluator) evalAbs(source fptypes.Value) (fptypes.Value, error) {
 	if source == nil {
 		return nil, nil
@@ -3025,6 +3179,13 @@ func (e *Evaluator) evalAbs(source fptypes.Value) (fptypes.Value, error) {
 			v = -v
 		}
 		return fptypes.NewInteger(v), nil
+	}
+	if q, ok := source.(fptypes.Quantity); ok {
+		v := q.Value()
+		if v.IsNegative() {
+			v = v.Neg()
+		}
+		return fptypes.NewQuantityFromDecimal(v, q.Unit()), nil
 	}
 	d := toDecimal(source)
 	return newDecimalFromD(d.Abs()), nil
@@ -3047,6 +3208,21 @@ func (e *Evaluator) getPatientBirthDate() fptypes.Value {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+// validateCQLDecimal checks that a decimal literal is within CQL limits:
+// max 28 integer digits and max 8 fractional digits.
+func validateCQLDecimal(s string) error {
+	clean := strings.TrimLeft(s, "+-")
+	parts := strings.Split(clean, ".")
+	intPart := parts[0]
+	if len(intPart) > 28 {
+		return fmt.Errorf("decimal overflow: too many integer digits in %s", s)
+	}
+	if len(parts) == 2 && len(parts[1]) > 8 {
+		return fmt.Errorf("decimal overflow: too many fractional digits in %s", s)
+	}
+	return nil
+}
 
 func isTrue(v fptypes.Value) bool {
 	if v == nil {
@@ -3240,7 +3416,7 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 		case fptypes.String:
 			i, err := strconv.ParseInt(val.Value(), 10, 64)
 			if err != nil {
-				return nil, err
+				return nil, nil // CQL: invalid string to integer conversion returns null
 			}
 			return fptypes.NewInteger(i), nil
 		case fptypes.Boolean:
@@ -3272,6 +3448,40 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 			}
 		case fptypes.Integer:
 			return fptypes.NewBoolean(val.Value() != 0), nil
+		}
+	case "quantity":
+		if q, ok := v.(fptypes.Quantity); ok {
+			return q, nil
+		}
+	case "datetime":
+		if dt, ok := v.(fptypes.DateTime); ok {
+			return dt, nil
+		}
+		if s, ok := v.(fptypes.String); ok {
+			return fptypes.NewDateTime(s.Value())
+		}
+	case "date":
+		if d, ok := v.(fptypes.Date); ok {
+			return d, nil
+		}
+		if s, ok := v.(fptypes.String); ok {
+			return fptypes.NewDate(s.Value())
+		}
+	case "time":
+		if t, ok := v.(fptypes.Time); ok {
+			return t, nil
+		}
+		if s, ok := v.(fptypes.String); ok {
+			str := s.Value()
+			// Strip leading T if present
+			if strings.HasPrefix(str, "T") {
+				str = str[1:]
+			}
+			// Strip timezone offset for parsing
+			if idx := strings.LastIndexAny(str, "+-"); idx > 0 && strings.Contains(str[idx:], ":") {
+				str = str[:idx]
+			}
+			return fptypes.NewTime(str)
 		}
 	}
 	return nil, fmt.Errorf("cannot convert %s to %s", v.Type(), typeName)

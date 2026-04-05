@@ -78,6 +78,9 @@ func IntervalPointFrom(interval cqltypes.Interval) (fptypes.Value, error) {
 func IntervalProperlyIncludes(a, b cqltypes.Interval) (fptypes.Value, error) {
 	includes, err := a.Includes(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if !includes {
@@ -96,29 +99,7 @@ func IntervalMeetsBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if a.High == nil || b.Low == nil {
 		return nil, nil
 	}
-	if a.High.Equal(b.Low) && a.HighClosed != b.LowClosed {
-		return fptypes.NewBoolean(true), nil
-	}
-	// Check successor relationship for integer intervals
-	if ai, ok := a.High.(fptypes.Integer); ok {
-		if bi, ok := b.Low.(fptypes.Integer); ok {
-			if a.HighClosed && b.LowClosed && ai.Value()+1 == bi.Value() {
-				return fptypes.NewBoolean(true), nil
-			}
-		}
-	}
-	// Check successor relationship for decimal intervals
-	if ad, ok := a.High.(fptypes.Decimal); ok {
-		if bd, ok := b.Low.(fptypes.Decimal); ok {
-			if a.HighClosed && b.LowClosed {
-				diff := bd.Value().Sub(ad.Value())
-				if diff.IsPositive() && diff.LessThanOrEqual(smallDecimalStep) {
-					return fptypes.NewBoolean(true), nil
-				}
-			}
-		}
-	}
-	return fptypes.NewBoolean(false), nil
+	return fptypes.NewBoolean(intervalEndMeetsStart(a.High, a.HighClosed, b.Low, b.LowClosed)), nil
 }
 
 // IntervalMeetsAfter checks if interval a starts exactly at the end of b.
@@ -150,18 +131,7 @@ func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error
 	for _, iv := range sorted[1:] {
 		last := &result[len(result)-1]
 		overlaps, _ := last.Overlaps(iv) //nolint:errcheck // best-effort merge
-		meets := false
-		if last.High != nil && iv.Low != nil {
-			meets = last.High.Equal(iv.Low)
-			// Also check integer successor
-			if li, ok := last.High.(fptypes.Integer); ok {
-				if ri, ok := iv.Low.(fptypes.Integer); ok {
-					if li.Value()+1 == ri.Value() {
-						meets = true
-					}
-				}
-			}
-		}
+		meets := intervalEndMeetsStart(last.High, last.HighClosed, iv.Low, iv.LowClosed)
 		if overlaps || meets {
 			// Merge
 			if iv.High != nil && last.High != nil {

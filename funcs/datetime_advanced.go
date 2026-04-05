@@ -136,9 +136,12 @@ func DateConstructor(year, month, day fptypes.Value) (fptypes.Value, error) {
 // DateTimeConstructor creates a DateTime from components.
 // Produces a precision-aware DateTime based on which components are provided.
 func DateTimeConstructor(year, month, day, hour, minute, second, millisecond, tzOffset fptypes.Value) (fptypes.Value, error) {
-	y := intVal(year)
-	if y == 0 {
+	if year == nil {
 		return nil, nil
+	}
+	y := intVal(year)
+	if y < 1 || y > 9999 {
+		return nil, fmt.Errorf("invalid DateTime year: %d", y)
 	}
 
 	// Build the string representation with only the components that are specified

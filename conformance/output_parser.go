@@ -64,9 +64,14 @@ func parseExpectedOutput(raw string) (fptypes.Value, error) {
 		return parseDateTimeOrDate(s[1:]) // strip '@'
 	}
 
-	// Long literal (e.g., "1L", "3L") — skip for now
+	// Long literal (e.g., "1L", "3L") — parse as Integer (fits in int64)
 	if longPattern.MatchString(s) {
-		return nil, fmt.Errorf("long literals not supported: %s", s)
+		numStr := s[:len(s)-1] // strip trailing 'L'
+		v, err := strconv.ParseInt(numStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parsing long %q: %w", s, err)
+		}
+		return fptypes.NewInteger(v), nil
 	}
 
 	// Quantity: number followed by single-quoted unit (e.g., 5.0'g', 19.99 '[lb_av]')

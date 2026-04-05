@@ -10,6 +10,9 @@ import (
 func OverlapsBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	overlap, err := a.Overlaps(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if !overlap {
@@ -20,6 +23,9 @@ func OverlapsBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.Low, b.Low)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(cmp < 0), nil
@@ -29,6 +35,9 @@ func OverlapsBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 func OverlapsAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 	overlap, err := a.Overlaps(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if !overlap {
@@ -39,6 +48,9 @@ func OverlapsAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.High, b.High)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(cmp > 0), nil
@@ -56,6 +68,9 @@ func SameOrBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.High, b.Low)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(cmp <= 0), nil
@@ -68,6 +83,9 @@ func SameOrAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.Low, b.High)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(cmp >= 0), nil
@@ -80,15 +98,20 @@ func Starts(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmpLow, err := compareVals(a.Low, b.Low)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if cmpLow != 0 {
 		return fptypes.NewBoolean(false), nil
 	}
-	// a must end within or at b
 	if a.High != nil && b.High != nil {
 		cmpHigh, err := compareVals(a.High, b.High)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return fptypes.NewBoolean(cmpHigh <= 0), nil
@@ -103,15 +126,20 @@ func Ends(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmpHigh, err := compareVals(a.High, b.High)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if cmpHigh != 0 {
 		return fptypes.NewBoolean(false), nil
 	}
-	// a must start within or at b
 	if a.Low != nil && b.Low != nil {
 		cmpLow, err := compareVals(a.Low, b.Low)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return fptypes.NewBoolean(cmpLow >= 0), nil

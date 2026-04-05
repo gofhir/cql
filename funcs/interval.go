@@ -1,6 +1,9 @@
 package funcs
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/shopspring/decimal"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -8,10 +11,18 @@ import (
 	cqltypes "github.com/gofhir/cql/types"
 )
 
+// isAmbiguousComparisonErr returns true if the error is an ambiguous temporal comparison.
+func isAmbiguousComparisonErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "ambiguous comparison")
+}
+
 // IntervalContains checks if an interval contains a point.
 func IntervalContains(interval cqltypes.Interval, point fptypes.Value) (fptypes.Value, error) {
 	result, err := interval.Contains(point)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(result), nil
@@ -21,6 +32,9 @@ func IntervalContains(interval cqltypes.Interval, point fptypes.Value) (fptypes.
 func IntervalIncludes(a, b cqltypes.Interval) (fptypes.Value, error) {
 	result, err := a.Includes(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(result), nil
@@ -35,6 +49,9 @@ func IntervalIncludedIn(a, b cqltypes.Interval) (fptypes.Value, error) {
 func IntervalOverlaps(a, b cqltypes.Interval) (fptypes.Value, error) {
 	result, err := a.Overlaps(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(result), nil
@@ -56,40 +73,15 @@ func IntervalUnion(a, b cqltypes.Interval) (fptypes.Value, error) {
 	// Check if intervals overlap or are adjacent (meet)
 	overlaps, err := a.Overlaps(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	meets := false
 	if !overlaps {
-		// Check meets: a.High == b.Low or b.High == a.Low (considering successors for closed boundaries)
-		if a.High != nil && b.Low != nil {
-			if a.High.Equal(b.Low) {
-				meets = true
-			}
-			// Check adjacency for integers: e.g., Interval[1,10] meets Interval[11,20]
-			if !meets {
-				if ai, ok := a.High.(fptypes.Integer); ok {
-					if bi, ok := b.Low.(fptypes.Integer); ok {
-						if a.HighClosed && b.LowClosed && ai.Value()+1 == bi.Value() {
-							meets = true
-						}
-					}
-				}
-			}
-		}
-		if !meets && b.High != nil && a.Low != nil {
-			if b.High.Equal(a.Low) {
-				meets = true
-			}
-			if !meets {
-				if bi, ok := b.High.(fptypes.Integer); ok {
-					if ai, ok := a.Low.(fptypes.Integer); ok {
-						if b.HighClosed && a.LowClosed && bi.Value()+1 == ai.Value() {
-							meets = true
-						}
-					}
-				}
-			}
-		}
+		meets = intervalEndMeetsStart(a.High, a.HighClosed, b.Low, b.LowClosed) ||
+			intervalEndMeetsStart(b.High, b.HighClosed, a.Low, a.LowClosed)
 	}
 	if !overlaps && !meets {
 		return nil, nil // Non-overlapping, non-adjacent intervals → null
@@ -131,40 +123,70 @@ func IntervalUnion(a, b cqltypes.Interval) (fptypes.Value, error) {
 
 // IntervalIntersect returns the intersection of two intervals.
 func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
-	// Take max low, min high
+	// Take max low — if either is null (unknown), result low is null (unknown)
 	low := a.Low
 	lowClosed := a.LowClosed
 	if a.Low != nil && b.Low != nil {
 		cmp, err := compareVals(a.Low, b.Low)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		if cmp < 0 {
 			low = b.Low
 			lowClosed = b.LowClosed
 		}
+	} else if a.Low == nil {
+		low = nil
+		lowClosed = a.LowClosed
+	} else {
+		// b.Low is nil
+		low = nil
+		lowClosed = b.LowClosed
 	}
+
+	// Take min high — if either is null (unknown), result high is null (unknown)
 	high := a.High
 	highClosed := a.HighClosed
 	if a.High != nil && b.High != nil {
 		cmp, err := compareVals(a.High, b.High)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		if cmp > 0 {
 			high = b.High
 			highClosed = b.HighClosed
 		}
+	} else if a.High == nil {
+		high = nil
+		highClosed = a.HighClosed
+	} else {
+		// b.High is nil
+		high = nil
+		highClosed = b.HighClosed
 	}
+
 	// Check if result is valid (low <= high)
 	if low != nil && high != nil {
 		cmp, err := compareVals(low, high)
 		if err != nil {
+			if isAmbiguousComparisonErr(err) {
+				return nil, nil
+			}
 			return nil, err
 		}
 		if cmp > 0 {
 			return nil, nil // empty intersection
 		}
+	}
+	// If both bounds are null, return null
+	if low == nil && high == nil {
+		return nil, nil
 	}
 	return cqltypes.NewInterval(low, high, lowClosed, highClosed), nil
 }
@@ -182,6 +204,18 @@ func intervalPredecessor(v fptypes.Value) (fptypes.Value, bool) {
 			return result, true
 		}
 	}
+	if dt, ok := v.(fptypes.DateTime); ok {
+		unit := TemporalUnit(dt.Precision())
+		return dt.SubtractDuration(1, unit), true
+	}
+	if t, ok := v.(fptypes.Time); ok {
+		return AdjustTime(t, -1), true
+	}
+	if q, ok := v.(fptypes.Quantity); ok {
+		pred := q.Value().Sub(smallDecimalStep)
+		newQ := fptypes.NewQuantityFromDecimal(pred, q.Unit())
+		return newQ, true
+	}
 	return v, false
 }
 
@@ -198,13 +232,107 @@ func intervalSuccessor(v fptypes.Value) (fptypes.Value, bool) {
 			return result, true
 		}
 	}
+	if dt, ok := v.(fptypes.DateTime); ok {
+		unit := TemporalUnit(dt.Precision())
+		return dt.AddDuration(1, unit), true
+	}
+	if t, ok := v.(fptypes.Time); ok {
+		return AdjustTime(t, 1), true
+	}
+	if q, ok := v.(fptypes.Quantity); ok {
+		succ := q.Value().Add(smallDecimalStep)
+		newQ := fptypes.NewQuantityFromDecimal(succ, q.Unit())
+		return newQ, true
+	}
 	return v, false
+}
+
+// TemporalUnit maps DateTime precision to a duration unit string.
+func TemporalUnit(prec fptypes.DateTimePrecision) string {
+	switch prec {
+	case fptypes.DTYearPrecision:
+		return "year"
+	case fptypes.DTMonthPrecision:
+		return "month"
+	case fptypes.DTDayPrecision:
+		return "day"
+	case fptypes.DTHourPrecision:
+		return "hour"
+	case fptypes.DTMinutePrecision:
+		return "minute"
+	case fptypes.DTSecondPrecision:
+		return "second"
+	case fptypes.DTMillisPrecision:
+		return "millisecond"
+	default:
+		return "day"
+	}
+}
+
+// AdjustTime adds delta units at the Time's precision (e.g., +1 ms, -1 second).
+func AdjustTime(t fptypes.Time, delta int) fptypes.Value {
+	h, m, s, ms := t.Hour(), t.Minute(), t.Second(), t.Millisecond()
+	prec := t.Precision()
+	switch prec {
+	case fptypes.MillisPrecision:
+		ms += delta
+	case fptypes.SecondPrecision:
+		s += delta
+	case fptypes.MinutePrecision:
+		m += delta
+	case fptypes.HourPrecision:
+		h += delta
+	default:
+		ms += delta
+	}
+	// Carry/borrow
+	if ms < 0 {
+		ms += 1000
+		s--
+	} else if ms >= 1000 {
+		ms -= 1000
+		s++
+	}
+	if s < 0 {
+		s += 60
+		m--
+	} else if s >= 60 {
+		s -= 60
+		m++
+	}
+	if m < 0 {
+		m += 60
+		h--
+	} else if m >= 60 {
+		m -= 60
+		h++
+	}
+	// Construct time string based on precision
+	var str string
+	switch prec {
+	case fptypes.HourPrecision:
+		str = fmt.Sprintf("T%02d", h)
+	case fptypes.MinutePrecision:
+		str = fmt.Sprintf("T%02d:%02d", h, m)
+	case fptypes.SecondPrecision:
+		str = fmt.Sprintf("T%02d:%02d:%02d", h, m, s)
+	default:
+		str = fmt.Sprintf("T%02d:%02d:%02d.%03d", h, m, s, ms)
+	}
+	result, err := fptypes.NewTime(str)
+	if err != nil {
+		return t // fallback to original
+	}
+	return result
 }
 
 // IntervalExcept returns a minus b for intervals.
 func IntervalExcept(a, b cqltypes.Interval) (fptypes.Value, error) {
 	overlap, err := a.Overlaps(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if !overlap {
@@ -285,19 +413,10 @@ func intervalEndMeetsStart(aHigh fptypes.Value, aHighClosed bool, bLow fptypes.V
 	}
 	if aHighClosed && bLowClosed {
 		// Both closed: successor of a.High should equal b.Low
-		if ai, ok := aHigh.(fptypes.Integer); ok {
-			if bi, ok := bLow.(fptypes.Integer); ok {
-				return ai.Value()+1 == bi.Value()
-			}
+		succ, ok := intervalSuccessor(aHigh)
+		if ok {
+			return succ.Equal(bLow)
 		}
-		if ad, ok := aHigh.(fptypes.Decimal); ok {
-			if bd, ok := bLow.(fptypes.Decimal); ok {
-				// For decimals, check if they are adjacent within precision
-				diff := bd.Value().Sub(ad.Value())
-				return diff.IsPositive() && diff.LessThanOrEqual(smallDecimalStep)
-			}
-		}
-		// For DateTime/Date/Time, check if b.Low is successor of a.High
 		return aHigh.Equal(bLow)
 	}
 	if aHighClosed && !bLowClosed {
@@ -318,6 +437,9 @@ func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
 	// Check if they overlap first - if they overlap, they don't meet
 	overlaps, err := a.Overlaps(b)
 	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if overlaps {
@@ -333,6 +455,9 @@ func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
 }
 
 func compareVals(a, b fptypes.Value) (int, error) {
+	if a == nil || b == nil {
+		return 0, nil // treat nil comparisons as equal (callers handle nil separately)
+	}
 	if ac, ok := a.(fptypes.Comparable); ok {
 		return ac.Compare(b)
 	}

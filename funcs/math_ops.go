@@ -23,6 +23,7 @@ func toDecimalVal(v fptypes.Value) (decimal.Decimal, bool) {
 }
 
 // Round rounds a decimal value to the given precision (number of decimal places).
+// CQL uses "round half away from zero" semantics: -1.5 rounds to -1, 1.5 rounds to 2.
 // If the value is nil, returns nil.
 func Round(v fptypes.Value, precision int) (fptypes.Value, error) {
 	if v == nil {
@@ -32,8 +33,21 @@ func Round(v fptypes.Value, precision int) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Round: expected numeric, got %s", v.Type())
 	}
-	rounded := d.Round(int32(precision))
-	return decimalToValue(rounded), nil
+	// CQL rounding: round half towards positive infinity (round half up)
+	// For negative numbers: -1.5 → -1, -0.5 → 0
+	// decimal.Round uses banker's rounding, so we need custom logic
+	shift := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(precision)))
+	shifted := d.Mul(shift)
+	// Add 0.5 and floor for positive, subtract 0.5 and ceil for negative
+	half := decimal.NewFromFloat(0.5)
+	var rounded decimal.Decimal
+	if d.IsNegative() {
+		rounded = shifted.Sub(half).Ceil()
+	} else {
+		rounded = shifted.Add(half).Floor()
+	}
+	result := rounded.Div(shift)
+	return decimalToValue(result), nil
 }
 
 // Floor returns the largest integer less than or equal to the value.
@@ -96,7 +110,7 @@ func Ln(v fptypes.Value) (fptypes.Value, error) {
 	}
 	f, _ := d.Float64()
 	if f <= 0 {
-		return nil, nil // CQL: undefined for non-positive values
+		return nil, fmt.Errorf("Ln: undefined for non-positive value %v", d)
 	}
 	result := math.Log(f)
 	return decimalToValue(decimal.NewFromFloat(result)), nil
@@ -136,7 +150,7 @@ func Exp(v fptypes.Value) (fptypes.Value, error) {
 	f, _ := d.Float64()
 	result := math.Exp(f)
 	if math.IsInf(result, 0) || math.IsNaN(result) {
-		return nil, nil
+		return nil, fmt.Errorf("Exp: overflow for value %v", d)
 	}
 	return decimalToValue(decimal.NewFromFloat(result)), nil
 }
@@ -169,7 +183,9 @@ func Power(v fptypes.Value, exp fptypes.Value) (fptypes.Value, error) {
 	return decimalToValue(decimal.NewFromFloat(result)), nil
 }
 
-// Precision returns the number of digits of precision in the decimal representation.
+// Precision returns the number of digits of precision in the value's representation.
+// For Decimal: number of digits after decimal point (trailing zeros preserved).
+// For DateTime/Date/Time: number of digits in the string representation.
 func Precision(v fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
@@ -181,19 +197,43 @@ func Precision(v fptypes.Value) (fptypes.Value, error) {
 		s = strings.TrimLeft(s, "-")
 		return fptypes.NewInteger(int64(len(s))), nil
 	case fptypes.Decimal:
-		d := val.Value()
-		s := d.String()
-		// Remove sign
+		// CQL Precision for decimal: count digits after decimal point including trailing zeros
+		s := val.String()
 		s = strings.TrimLeft(s, "-")
-		// Count digits after decimal point
 		parts := strings.Split(s, ".")
 		if len(parts) == 2 {
 			return fptypes.NewInteger(int64(len(parts[1]))), nil
 		}
 		return fptypes.NewInteger(0), nil
+	case fptypes.DateTime:
+		// Precision = number of digits in the datetime string representation
+		s := val.String()
+		count := 0
+		for _, c := range s {
+			if c >= '0' && c <= '9' {
+				count++
+			}
+		}
+		return fptypes.NewInteger(int64(count)), nil
+	case fptypes.Date:
+		s := val.String()
+		count := 0
+		for _, c := range s {
+			if c >= '0' && c <= '9' {
+				count++
+			}
+		}
+		return fptypes.NewInteger(int64(count)), nil
+	case fptypes.Time:
+		s := val.String()
+		count := 0
+		for _, c := range s {
+			if c >= '0' && c <= '9' {
+				count++
+			}
+		}
+		return fptypes.NewInteger(int64(count)), nil
 	default:
-		// For date/time types, precision could mean the number of specified components
-		// Return null for unsupported types
 		return nil, nil
 	}
 }
@@ -203,22 +243,26 @@ func HighBoundary(v fptypes.Value, precision fptypes.Value) (fptypes.Value, erro
 	if v == nil {
 		return nil, nil
 	}
+	prec := int64(8)
+	if precision != nil {
+		if pi, ok := precision.(fptypes.Integer); ok {
+			prec = pi.Value()
+		}
+	}
 	switch val := v.(type) {
 	case fptypes.Decimal:
-		prec := int32(8) // default precision
-		if precision != nil {
-			if pi, ok := precision.(fptypes.Integer); ok {
-				prec = int32(pi.Value())
-			}
-		}
+		// High boundary: fill remaining precision digits with 9
 		d := val.Value()
-		// The high boundary is the value + half of the last precision digit
-		increment := decimal.New(5, -prec-1)
-		result := d.Add(increment)
-		return decimalToValue(result.Truncate(prec)), nil
+		s := d.StringFixed(int32(prec))
+		return fptypes.NewDecimal(s)
 	case fptypes.Integer:
-		// For integers, high boundary is value + 0.5, but we return the integer itself
 		return val, nil
+	case fptypes.DateTime:
+		return temporalHighBoundary(val.String(), int(prec), "datetime")
+	case fptypes.Date:
+		return temporalHighBoundary(val.String(), int(prec), "date")
+	case fptypes.Time:
+		return temporalHighBoundary(val.String(), int(prec), "time")
 	default:
 		return nil, nil
 	}
@@ -229,22 +273,133 @@ func LowBoundary(v fptypes.Value, precision fptypes.Value) (fptypes.Value, error
 	if v == nil {
 		return nil, nil
 	}
+	prec := int64(8)
+	if precision != nil {
+		if pi, ok := precision.(fptypes.Integer); ok {
+			prec = pi.Value()
+		}
+	}
 	switch val := v.(type) {
 	case fptypes.Decimal:
-		prec := int32(8) // default precision
-		if precision != nil {
-			if pi, ok := precision.(fptypes.Integer); ok {
-				prec = int32(pi.Value())
-			}
-		}
 		d := val.Value()
-		// The low boundary is the value - half of the last precision digit
-		decrement := decimal.New(5, -prec-1)
-		result := d.Sub(decrement)
-		return decimalToValue(result.Truncate(prec)), nil
+		s := d.StringFixed(int32(prec))
+		return fptypes.NewDecimal(s)
 	case fptypes.Integer:
 		return val, nil
+	case fptypes.DateTime:
+		return temporalLowBoundary(val.String(), int(prec), "datetime")
+	case fptypes.Date:
+		return temporalLowBoundary(val.String(), int(prec), "date")
+	case fptypes.Time:
+		return temporalLowBoundary(val.String(), int(prec), "time")
 	default:
 		return nil, nil
 	}
+}
+
+// temporalHighBoundary fills in missing components of a temporal value with maximum values.
+func temporalHighBoundary(s string, targetDigits int, kind string) (fptypes.Value, error) {
+	// Max components: for datetime "9999-12-31T23:59:59.999", date "9999-12-31", time "23:59:59.999"
+	maxParts := map[string]string{
+		"datetime": "9999-12-31T23:59:59.999",
+		"date":     "9999-12-31",
+		"time":     "T23:59:59.999",
+	}
+	maxStr := maxParts[kind]
+
+	// Count current digits
+	currentDigits := countDigits(s)
+	if currentDigits >= targetDigits {
+		// Already at or beyond target precision
+		switch kind {
+		case "datetime":
+			return fptypes.NewDateTime(s)
+		case "date":
+			return fptypes.NewDate(s)
+		case "time":
+			return fptypes.NewTime(s)
+		}
+		return nil, nil
+	}
+
+	// Build result by taking the existing value and filling remaining from max
+	result := fillTemporalBoundary(s, maxStr, targetDigits)
+	switch kind {
+	case "datetime":
+		return fptypes.NewDateTime(result)
+	case "date":
+		return fptypes.NewDate(result)
+	case "time":
+		return fptypes.NewTime(result)
+	}
+	return nil, nil
+}
+
+// temporalLowBoundary fills in missing components with minimum values.
+func temporalLowBoundary(s string, targetDigits int, kind string) (fptypes.Value, error) {
+	minParts := map[string]string{
+		"datetime": "0001-01-01T00:00:00.000",
+		"date":     "0001-01-01",
+		"time":     "T00:00:00.000",
+	}
+	minStr := minParts[kind]
+
+	currentDigits := countDigits(s)
+	if currentDigits >= targetDigits {
+		switch kind {
+		case "datetime":
+			return fptypes.NewDateTime(s)
+		case "date":
+			return fptypes.NewDate(s)
+		case "time":
+			return fptypes.NewTime(s)
+		}
+		return nil, nil
+	}
+
+	result := fillTemporalBoundary(s, minStr, targetDigits)
+	switch kind {
+	case "datetime":
+		return fptypes.NewDateTime(result)
+	case "date":
+		return fptypes.NewDate(result)
+	case "time":
+		return fptypes.NewTime(result)
+	}
+	return nil, nil
+}
+
+// countDigits counts the number of digit characters in a string.
+func countDigits(s string) int {
+	count := 0
+	for _, c := range s {
+		if c >= '0' && c <= '9' {
+			count++
+		}
+	}
+	return count
+}
+
+// fillTemporalBoundary takes the existing temporal string and appends from the
+// boundary string until we reach the target number of digits.
+func fillTemporalBoundary(existing, boundary string, targetDigits int) string {
+	// We need to extend 'existing' by appending characters from 'boundary' at the same positions.
+	if len(existing) >= len(boundary) {
+		return existing
+	}
+	result := existing + boundary[len(existing):]
+	// Trim result to targetDigits worth of digits
+	digits := 0
+	cutoff := len(result)
+	for i, c := range result {
+		if c >= '0' && c <= '9' {
+			digits++
+			if digits == targetDigits {
+				cutoff = i + 1
+				break
+			}
+		}
+	}
+	// Include any trailing non-digit separators
+	return result[:cutoff]
 }

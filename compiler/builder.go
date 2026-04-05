@@ -2,6 +2,8 @@ package compiler
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
@@ -103,8 +105,19 @@ func unquoteString(s string) string {
 	s = strings.ReplaceAll(s, "\\n", "\n")
 	s = strings.ReplaceAll(s, "\\r", "\r")
 	s = strings.ReplaceAll(s, "\\t", "\t")
+	// Handle Unicode escape sequences \uXXXX
+	s = unicodeEscapePattern.ReplaceAllStringFunc(s, func(match string) string {
+		hex := match[2:] // strip \u
+		code, err := strconv.ParseInt(hex, 16, 32)
+		if err != nil {
+			return match
+		}
+		return string(rune(code))
+	})
 	return s
 }
+
+var unicodeEscapePattern = regexp.MustCompile(`\\u[0-9a-fA-F]{4}`)
 
 func identifierText(ctx grammar.IIdentifierContext) string {
 	if ctx == nil {
@@ -568,9 +581,13 @@ func (b *builder) VisitBooleanExpression(ctx *grammar.BooleanExpressionContext) 
 func (b *builder) VisitTypeExpression(ctx *grammar.TypeExpressionContext) interface{} {
 	expr := b.visitExpression(ctx.Expression())
 	ts := b.visitTypeSpecifier(ctx.TypeSpecifier())
-	text := ctx.GetText()
-	if strings.Contains(text, " is ") || strings.HasPrefix(text, "is ") {
-		return &ast.IsExpression{Operand: expr, Type: ts}
+	// Check for 'is' keyword in the children tokens
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		if term, ok := ctx.GetChild(i).(antlr.TerminalNode); ok {
+			if term.GetText() == "is" {
+				return &ast.IsExpression{Operand: expr, Type: ts}
+			}
+		}
 	}
 	return &ast.AsExpression{Operand: expr, Type: ts}
 }
@@ -1102,26 +1119,21 @@ func (b *builder) VisitIfThenElseExpressionTerm(ctx *grammar.IfThenElseExpressio
 func (b *builder) VisitCaseExpressionTerm(ctx *grammar.CaseExpressionTermContext) interface{} {
 	ce := &ast.CaseExpression{}
 	exprs := ctx.AllExpression()
-	// If there's an odd number of expressions, the first is the comparand and the last is 'else'
-	// If there's only one expression, it's the 'else' (no comparand)
-	items := ctx.AllCaseExpressionItem()
-	// Check if there's a comparand (expression before first 'when')
-	exprIdx := 0
-	if len(exprs) > len(items)*2+1 {
-		// comparand present
+	// Grammar: 'case' expression? caseExpressionItem+ 'else' expression 'end'
+	// AllExpression() returns top-level expressions: optional comparand + else expression
+	// If 2 expressions: first is comparand, second is else
+	// If 1 expression: no comparand, just else
+	if len(exprs) == 2 {
 		ce.Comparand = b.visitExpression(exprs[0])
-		exprIdx = 1
+		ce.Else = b.visitExpression(exprs[1])
+	} else if len(exprs) == 1 {
+		ce.Else = b.visitExpression(exprs[0])
 	}
-	_ = exprIdx
-	for _, item := range items {
+	for _, item := range ctx.AllCaseExpressionItem() {
 		result := b.Visit(item)
 		if ci, ok := result.(*ast.CaseItem); ok {
 			ce.Items = append(ce.Items, ci)
 		}
-	}
-	// Last expression is the 'else'
-	if len(exprs) > 0 {
-		ce.Else = b.visitExpression(exprs[len(exprs)-1])
 	}
 	return ce
 }
