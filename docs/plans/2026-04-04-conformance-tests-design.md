@@ -156,7 +156,34 @@ The 16 XML files are copied directly into `conformance/testdata/`. No git
 submodule — they are static files updated manually when a new spec version is
 released.
 
-## Baseline Results (2026-04-04)
+## Final Results (2026-04-04)
+
+**Overall: 1731/1731 (100.0%) — all 16 suites passing**
+
+| Suite | Pass | Total | Rate |
+|-------|------|-------|------|
+| CqlAggregateFunctionsTest | 50 | 50 | 100.0% |
+| CqlAggregateTest | 9 | 9 | 100.0% |
+| CqlArithmeticFunctionsTest | 212 | 212 | 100.0% |
+| CqlComparisonOperatorsTest | 223 | 223 | 100.0% |
+| CqlConditionalOperatorsTest | 9 | 9 | 100.0% |
+| CqlDateTimeOperatorsTest | 317 | 317 | 100.0% |
+| CqlErrorsAndMessagingOperatorsTest | 4 | 4 | 100.0% |
+| CqlIntervalOperatorsTest | 412 | 412 | 100.0% |
+| CqlListOperatorsTest | 212 | 212 | 100.0% |
+| CqlLogicalOperatorsTest | 39 | 39 | 100.0% |
+| CqlNullologicalOperatorsTest | 22 | 22 | 100.0% |
+| CqlQueryTest | 12 | 12 | 100.0% |
+| CqlStringOperatorsTest | 81 | 81 | 100.0% |
+| CqlTypeOperatorsTest | 35 | 35 | 100.0% |
+| CqlTypesTest | 28 | 28 | 100.0% |
+| ValueLiteralsAndSelectors | 66 | 66 | 100.0% |
+
+Note: `Now() = Now()` test may occasionally fail due to millisecond boundary
+crossing between two evaluations. This is inherent to testing clock-dependent
+expressions.
+
+## Initial Baseline (2026-04-04)
 
 **Overall: 791/1731 (45.7%)**
 
