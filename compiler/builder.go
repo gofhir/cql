@@ -848,12 +848,32 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			}
 		case *grammar.IncludesIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingIncludes
+			text := strings.ToLower(phrase.GetText())
+			if strings.Contains(text, "properly") {
+				op.Properly = true
+			}
 		case *grammar.IncludedInIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingIncludedIn
+			text := strings.ToLower(phrase.GetText())
+			if strings.Contains(text, "properly") {
+				op.Properly = true
+			}
 		case *grammar.MeetsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingMeets
+			text := strings.ToLower(phrase.GetText())
+			if strings.Contains(text, "before") {
+				op.Before = true
+			} else if strings.Contains(text, "after") {
+				op.After = true
+			}
 		case *grammar.OverlapsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingOverlaps
+			text := strings.ToLower(phrase.GetText())
+			if strings.Contains(text, "before") {
+				op.Before = true
+			} else if strings.Contains(text, "after") {
+				op.After = true
+			}
 		case *grammar.StartsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingStarts
 		case *grammar.EndsIntervalOperatorPhraseContext:

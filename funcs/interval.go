@@ -1,6 +1,8 @@
 package funcs
 
 import (
+	"github.com/shopspring/decimal"
+
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	cqltypes "github.com/gofhir/cql/types"
@@ -49,11 +51,51 @@ func IntervalEndOf(interval cqltypes.Interval) fptypes.Value {
 }
 
 // IntervalUnion returns the union of two intervals.
+// Returns null if the intervals do not overlap or meet.
 func IntervalUnion(a, b cqltypes.Interval) (fptypes.Value, error) {
-	if a.Low == nil && b.Low == nil {
-		return cqltypes.NewInterval(nil, nil, true, true), nil
+	// Check if intervals overlap or are adjacent (meet)
+	overlaps, err := a.Overlaps(b)
+	if err != nil {
+		return nil, err
 	}
-	// Simple union: take min low, max high
+	meets := false
+	if !overlaps {
+		// Check meets: a.High == b.Low or b.High == a.Low (considering successors for closed boundaries)
+		if a.High != nil && b.Low != nil {
+			if a.High.Equal(b.Low) {
+				meets = true
+			}
+			// Check adjacency for integers: e.g., Interval[1,10] meets Interval[11,20]
+			if !meets {
+				if ai, ok := a.High.(fptypes.Integer); ok {
+					if bi, ok := b.Low.(fptypes.Integer); ok {
+						if a.HighClosed && b.LowClosed && ai.Value()+1 == bi.Value() {
+							meets = true
+						}
+					}
+				}
+			}
+		}
+		if !meets && b.High != nil && a.Low != nil {
+			if b.High.Equal(a.Low) {
+				meets = true
+			}
+			if !meets {
+				if bi, ok := b.High.(fptypes.Integer); ok {
+					if ai, ok := a.Low.(fptypes.Integer); ok {
+						if b.HighClosed && a.LowClosed && bi.Value()+1 == ai.Value() {
+							meets = true
+						}
+					}
+				}
+			}
+		}
+	}
+	if !overlaps && !meets {
+		return nil, nil // Non-overlapping, non-adjacent intervals → null
+	}
+
+	// Take min low, max high
 	low := a.Low
 	lowClosed := a.LowClosed
 	if a.Low != nil && b.Low != nil {
@@ -127,6 +169,38 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 	return cqltypes.NewInterval(low, high, lowClosed, highClosed), nil
 }
 
+// intervalPredecessor returns the predecessor for discrete types, adjusting the boundary
+// to be closed. For types without a known step, returns (val, false) with open boundary.
+func intervalPredecessor(v fptypes.Value) (fptypes.Value, bool) {
+	if iv, ok := v.(fptypes.Integer); ok {
+		return fptypes.NewInteger(iv.Value() - 1), true
+	}
+	if dv, ok := v.(fptypes.Decimal); ok {
+		pred := dv.Value().Sub(smallDecimalStep)
+		result := decimalToValue(pred)
+		if result != nil {
+			return result, true
+		}
+	}
+	return v, false
+}
+
+// intervalSuccessor returns the successor for discrete types, adjusting the boundary
+// to be closed. For types without a known step, returns (val, false) with open boundary.
+func intervalSuccessor(v fptypes.Value) (fptypes.Value, bool) {
+	if iv, ok := v.(fptypes.Integer); ok {
+		return fptypes.NewInteger(iv.Value() + 1), true
+	}
+	if dv, ok := v.(fptypes.Decimal); ok {
+		succ := dv.Value().Add(smallDecimalStep)
+		result := decimalToValue(succ)
+		if result != nil {
+			return result, true
+		}
+	}
+	return v, false
+}
+
 // IntervalExcept returns a minus b for intervals.
 func IntervalExcept(a, b cqltypes.Interval) (fptypes.Value, error) {
 	overlap, err := a.Overlaps(b)
@@ -151,8 +225,12 @@ func IntervalExcept(a, b cqltypes.Interval) (fptypes.Value, error) {
 			return nil, err
 		}
 		if cmpLow <= 0 && b.High != nil {
-			// b covers the low end → result is (b.High, a.High]
-			return cqltypes.NewInterval(b.High, a.High, !b.HighClosed, a.HighClosed), nil
+			// b covers the low end → result starts after b.High
+			newLow, isClosed := intervalSuccessor(b.High)
+			if !isClosed {
+				return cqltypes.NewInterval(newLow, a.High, !b.HighClosed, a.HighClosed), nil
+			}
+			return cqltypes.NewInterval(newLow, a.High, true, a.HighClosed), nil
 		}
 	}
 	// If b overlaps the high end of a, return the lower portion
@@ -162,11 +240,16 @@ func IntervalExcept(a, b cqltypes.Interval) (fptypes.Value, error) {
 			return nil, err
 		}
 		if cmpHigh >= 0 && b.Low != nil {
-			// b covers the high end → result is [a.Low, b.Low)
-			return cqltypes.NewInterval(a.Low, b.Low, a.LowClosed, !b.LowClosed), nil
+			// b covers the high end → result ends before b.Low
+			newHigh, isClosed := intervalPredecessor(b.Low)
+			if !isClosed {
+				return cqltypes.NewInterval(a.Low, newHigh, a.LowClosed, !b.LowClosed), nil
+			}
+			return cqltypes.NewInterval(a.Low, newHigh, a.LowClosed, true), nil
 		}
 	}
-	return a, nil
+	// b is entirely inside a — would split a into two disjoint intervals, which is null in CQL
+	return nil, nil
 }
 
 // IntervalBefore checks if interval a ends before interval b starts.
@@ -193,12 +276,57 @@ func IntervalAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 	return fptypes.NewBoolean(cmp > 0), nil
 }
 
+// intervalEndMeetsStart checks if the end of interval a meets the start of interval b.
+// For closed boundaries, the successor of a.High must equal b.Low (e.g., [1,10] meets [11,20] for integers).
+// For open/closed boundaries, equality is checked directly.
+func intervalEndMeetsStart(aHigh fptypes.Value, aHighClosed bool, bLow fptypes.Value, bLowClosed bool) bool {
+	if aHigh == nil || bLow == nil {
+		return false
+	}
+	if aHighClosed && bLowClosed {
+		// Both closed: successor of a.High should equal b.Low
+		if ai, ok := aHigh.(fptypes.Integer); ok {
+			if bi, ok := bLow.(fptypes.Integer); ok {
+				return ai.Value()+1 == bi.Value()
+			}
+		}
+		if ad, ok := aHigh.(fptypes.Decimal); ok {
+			if bd, ok := bLow.(fptypes.Decimal); ok {
+				// For decimals, check if they are adjacent within precision
+				diff := bd.Value().Sub(ad.Value())
+				return diff.IsPositive() && diff.LessThanOrEqual(smallDecimalStep)
+			}
+		}
+		// For DateTime/Date/Time, check if b.Low is successor of a.High
+		return aHigh.Equal(bLow)
+	}
+	if aHighClosed && !bLowClosed {
+		// a.High closed, b.Low open: they meet if a.High == b.Low
+		return aHigh.Equal(bLow)
+	}
+	if !aHighClosed && bLowClosed {
+		// a.High open, b.Low closed: they meet if a.High == b.Low
+		return aHigh.Equal(bLow)
+	}
+	return false
+}
+
+var smallDecimalStep, _ = decimal.NewFromString("0.00000001")
+
 // IntervalMeets checks if interval a meets interval b (a.high = b.low or a.low = b.high).
 func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
-	if a.High != nil && b.Low != nil && a.High.Equal(b.Low) {
+	// Check if they overlap first - if they overlap, they don't meet
+	overlaps, err := a.Overlaps(b)
+	if err != nil {
+		return nil, err
+	}
+	if overlaps {
+		return fptypes.NewBoolean(false), nil
+	}
+	if intervalEndMeetsStart(a.High, a.HighClosed, b.Low, b.LowClosed) {
 		return fptypes.NewBoolean(true), nil
 	}
-	if a.Low != nil && b.High != nil && a.Low.Equal(b.High) {
+	if intervalEndMeetsStart(b.High, b.HighClosed, a.Low, a.LowClosed) {
 		return fptypes.NewBoolean(true), nil
 	}
 	return fptypes.NewBoolean(false), nil

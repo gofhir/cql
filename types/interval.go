@@ -144,6 +144,17 @@ func (i Interval) Overlaps(other Interval) (bool, error) {
 		if cmp > 0 || (cmp == 0 && (!i.LowClosed || !other.HighClosed)) {
 			return false, nil
 		}
+		// For integer types, check effective boundaries:
+		// i.Low (open) means effective = i.Low + 1, other.High (open) means effective = other.High - 1
+		if cmp == -1 {
+			if _, isInt := i.Low.(fptypes.Integer); isInt {
+				iLowEff := effectiveIntLow(i.Low, i.LowClosed)
+				oHighEff := effectiveIntHigh(other.High, other.HighClosed)
+				if iLowEff > oHighEff {
+					return false, nil
+				}
+			}
+		}
 	}
 	if i.High != nil && other.Low != nil {
 		cmp, err := compareValues(i.High, other.Low)
@@ -153,8 +164,40 @@ func (i Interval) Overlaps(other Interval) (bool, error) {
 		if cmp < 0 || (cmp == 0 && (!i.HighClosed || !other.LowClosed)) {
 			return false, nil
 		}
+		// For integer types, check effective boundaries
+		if cmp == 1 {
+			if _, isInt := i.High.(fptypes.Integer); isInt {
+				iHighEff := effectiveIntHigh(i.High, i.HighClosed)
+				oLowEff := effectiveIntLow(other.Low, other.LowClosed)
+				if iHighEff < oLowEff {
+					return false, nil
+				}
+			}
+		}
 	}
 	return true, nil
+}
+
+func effectiveIntLow(v fptypes.Value, closed bool) int64 {
+	iv, ok := v.(fptypes.Integer)
+	if !ok {
+		return 0
+	}
+	if closed {
+		return iv.Value()
+	}
+	return iv.Value() + 1
+}
+
+func effectiveIntHigh(v fptypes.Value, closed bool) int64 {
+	iv, ok := v.(fptypes.Integer)
+	if !ok {
+		return 0
+	}
+	if closed {
+		return iv.Value()
+	}
+	return iv.Value() - 1
 }
 
 // containsBound checks if a boundary point is within this interval.

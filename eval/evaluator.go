@@ -430,10 +430,28 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		return fptypes.NewBoolean(isTrue(left) != isTrue(right)), nil
 
 	case ast.OpUnion:
+		// Interval union: if both are intervals, compute interval union
+		if lIv, lok := left.(cqltypes.Interval); lok {
+			if rIv, rok := right.(cqltypes.Interval); rok {
+				return funcs.IntervalUnion(lIv, rIv)
+			}
+		}
 		return e.evalSetOp(n.Operator, left, right)
 	case ast.OpIntersect:
+		// Interval intersect
+		if lIv, lok := left.(cqltypes.Interval); lok {
+			if rIv, rok := right.(cqltypes.Interval); rok {
+				return funcs.IntervalIntersect(lIv, rIv)
+			}
+		}
 		return e.evalSetOp(n.Operator, left, right)
 	case ast.OpExcept:
+		// Interval except
+		if lIv, lok := left.(cqltypes.Interval); lok {
+			if rIv, rok := right.(cqltypes.Interval); rok {
+				return funcs.IntervalExcept(lIv, rIv)
+			}
+		}
 		return e.evalSetOp(n.Operator, left, right)
 
 	case ast.OpIn, ast.OpContains:
@@ -758,6 +776,48 @@ func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Val
 		}
 		return newDecimalFromD(d.Sub(epsilon)), nil
 	}
+	// DateTime successor/predecessor: add/subtract 1 millisecond
+	if dt, ok := operand.(fptypes.DateTime); ok {
+		t := dt.ToTime()
+		if op == ast.OpSuccessorOf {
+			t = t.Add(time.Millisecond)
+		} else {
+			t = t.Add(-time.Millisecond)
+		}
+		return fptypes.NewDateTime(t.Format("2006-01-02T15:04:05.000Z07:00"))
+	}
+	// Date successor/predecessor: add/subtract 1 day
+	if dt, ok := operand.(fptypes.Date); ok {
+		t := dt.ToTime()
+		if op == ast.OpSuccessorOf {
+			t = t.AddDate(0, 0, 1)
+		} else {
+			t = t.AddDate(0, 0, -1)
+		}
+		return fptypes.NewDate(t.Format("2006-01-02"))
+	}
+	// Time successor/predecessor: add/subtract 1 millisecond
+	if _, ok := operand.(fptypes.Time); ok {
+		s := operand.String()
+		// Parse time and adjust by 1ms
+		t, err := time.Parse("15:04:05.000", s)
+		if err != nil {
+			t, err = time.Parse("15:04:05", s)
+			if err != nil {
+				return nil, fmt.Errorf("successor/predecessor: cannot parse Time %s", s)
+			}
+		}
+		if op == ast.OpSuccessorOf {
+			t = t.Add(time.Millisecond)
+		} else {
+			t = t.Add(-time.Millisecond)
+		}
+		return fptypes.NewTime(t.Format("15:04:05.000"))
+	}
+	// Quantity: not supported yet, return null
+	if _, ok := operand.(fptypes.Quantity); ok {
+		return nil, nil
+	}
 	return nil, fmt.Errorf("successor/predecessor not supported for %s", operand.Type())
 }
 
@@ -905,8 +965,19 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { /
 		switch typeName {
 		case "integer":
 			return fptypes.NewInteger(int64(math.MinInt32)), nil
+		case "long":
+			return fptypes.NewInteger(int64(math.MinInt64)), nil
 		case "decimal":
-			return fptypes.NewDecimalFromFloat(-1e28), nil
+			d, _ := decimal.NewFromString("-99999999999999999999.99999999")
+			return fptypes.NewDecimal(d.String())
+		case "datetime":
+			return fptypes.NewDateTime("0001-01-01T00:00:00.000")
+		case "date":
+			return fptypes.NewDate("0001-01-01")
+		case "time":
+			return fptypes.NewTime("00:00:00.000")
+		case "boolean":
+			return fptypes.NewBoolean(false), nil
 		default:
 			return nil, nil
 		}
@@ -914,8 +985,19 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { /
 	switch typeName {
 	case "integer":
 		return fptypes.NewInteger(int64(math.MaxInt32)), nil
+	case "long":
+		return fptypes.NewInteger(int64(math.MaxInt64)), nil
 	case "decimal":
-		return fptypes.NewDecimalFromFloat(1e28), nil
+		d, _ := decimal.NewFromString("99999999999999999999.99999999")
+		return fptypes.NewDecimal(d.String())
+	case "datetime":
+		return fptypes.NewDateTime("9999-12-31T23:59:59.999")
+	case "date":
+		return fptypes.NewDate("9999-12-31")
+	case "time":
+		return fptypes.NewTime("23:59:59.999")
+	case "boolean":
+		return fptypes.NewBoolean(true), nil
 	default:
 		return nil, nil
 	}
@@ -966,27 +1048,55 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 	}
 
-	switch name {
-	case "count":
-		c := toCollection(source)
-		return fptypes.NewInteger(int64(c.Count())), nil
-	case "exists":
-		if len(n.Operands) > 0 {
-			val, err := e.Eval(n.Operands[0])
+	// resolveSource returns the effective first argument and the remaining operands.
+	// For fluent calls (x.func()), source is x and operands are n.Operands.
+	// For standalone calls (func(x, ...)), source is nil, so we use Operands[0] as
+	// the effective source and Operands[1:] as the remaining operands.
+	operands := n.Operands
+	resolveSource := func() (fptypes.Value, error) {
+		if source != nil {
+			return source, nil
+		}
+		if len(operands) > 0 {
+			val, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
-			c := toCollection(val)
-			return fptypes.NewBoolean(!c.Empty()), nil
+			operands = operands[1:]
+			return val, nil
 		}
-		c := toCollection(source)
+		return nil, nil
+	}
+
+	switch name {
+	case "count":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
+		return fptypes.NewInteger(int64(c.Count())), nil
+	case "exists":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return fptypes.NewBoolean(!c.Empty()), nil
 	case "first":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		v, _ := c.First()
 		return v, nil
 	case "last":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		v, _ := c.Last()
 		return v, nil
 	case "where":
@@ -994,39 +1104,80 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 	case "select":
 		return e.evalSelect(source, n.Operands)
 	case "tostring":
-		if source != nil {
-			return fptypes.NewString(source.String()), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src != nil {
+			return fptypes.NewString(src.String()), nil
 		}
 		return nil, nil
 	case "tointeger":
-		if source != nil {
-			return convertToType(source, "Integer")
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src != nil {
+			return convertToType(src, "Integer")
 		}
 		return nil, nil
 	case "todecimal":
-		if source != nil {
-			return convertToType(source, "Decimal")
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src != nil {
+			return convertToType(src, "Decimal")
 		}
 		return nil, nil
 	case "not":
-		if source == nil {
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
 			return nil, nil
 		}
-		return fptypes.NewBoolean(!isTrue(source)), nil
+		return fptypes.NewBoolean(!isTrue(src)), nil
 	case "length":
-		if source != nil {
-			if s, ok := source.(fptypes.String); ok {
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src != nil {
+			// String length
+			if s, ok := src.(fptypes.String); ok {
 				return fptypes.NewInteger(int64(len(s.Value()))), nil
 			}
+			// List length
+			c := toCollection(src)
+			return fptypes.NewInteger(int64(c.Count())), nil
 		}
 		return fptypes.NewInteger(0), nil
 	case "coalesce":
+		// Coalesce checks source first (for fluent), then all operands.
+		// If given a single list argument, iterate its items.
+		if source != nil {
+			return source, nil
+		}
 		for _, arg := range n.Operands {
 			val, err := e.Eval(arg)
 			if err != nil {
 				return nil, err
 			}
 			if val != nil {
+				// If the single argument is a list, iterate its items
+				if len(n.Operands) == 1 {
+					c := toCollection(val)
+					if c != nil {
+						for _, item := range c {
+							if item != nil {
+								return item, nil
+							}
+						}
+						return nil, nil
+					}
+				}
 				return val, nil
 			}
 		}
@@ -1038,19 +1189,47 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		today := time.Now().UTC()
 		return fptypes.NewDate(today.Format("2006-01-02"))
 	case "sum":
-		return e.evalAggregateSum(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return e.evalAggregateSum(src)
 	case "avg":
-		return e.evalAggregateAvg(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return e.evalAggregateAvg(src)
 	case "min":
-		return e.evalAggregateMinMax(source, true)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return e.evalAggregateMinMax(src, true)
 	case "max":
-		return e.evalAggregateMinMax(source, false)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return e.evalAggregateMinMax(src, false)
 	case "abs":
-		return e.evalAbs(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return e.evalAbs(src)
 	case "flatten":
-		return e.evalFlatten(source), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return e.evalFlatten(src), nil
 	case "distinct":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return cqltypes.NewList(c.Distinct()), nil
 
 	// Clinical functions
@@ -1139,63 +1318,105 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 
 	// String functions
 	case "upper":
-		return funcs.Upper(source), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Upper(src), nil
 	case "lower":
-		return funcs.Lower(source), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Lower(src), nil
 	case "startswith":
-		if len(n.Operands) > 0 {
-			arg, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
-			return funcs.StartsWith(source, arg), nil
+			return funcs.StartsWith(src, arg), nil
 		}
 		return fptypes.NewBoolean(false), nil
 	case "endswith":
-		if len(n.Operands) > 0 {
-			arg, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
-			return funcs.EndsWith(source, arg), nil
+			return funcs.EndsWith(src, arg), nil
 		}
 		return fptypes.NewBoolean(false), nil
 	case "indexof":
-		if len(n.Operands) > 0 {
-			arg, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
-			return funcs.IndexOf(source, arg), nil
+			// If source is a list/collection, do list IndexOf
+			if _, isList := src.(cqltypes.List); isList {
+				c := toCollection(src)
+				for i, item := range c {
+					if item != nil && arg != nil && item.Equal(arg) {
+						return fptypes.NewInteger(int64(i)), nil
+					}
+				}
+				return fptypes.NewInteger(-1), nil
+			}
+			return funcs.IndexOf(src, arg), nil
 		}
 		return fptypes.NewInteger(-1), nil
 	case "matches":
-		if len(n.Operands) > 0 {
-			arg, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
-			return funcs.Matches(source, arg), nil
+			return funcs.Matches(src, arg), nil
 		}
 		return fptypes.NewBoolean(false), nil
 	case "replacematches":
-		if len(n.Operands) >= 2 {
-			pat, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			rep, err := e.Eval(n.Operands[1])
-			if err != nil {
-				return nil, err
-			}
-			return funcs.ReplaceMatches(source, pat, rep), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
 		}
-		return source, nil
+		if len(operands) >= 2 {
+			pat, err := e.Eval(operands[0])
+			if err != nil {
+				return nil, err
+			}
+			rep, err := e.Eval(operands[1])
+			if err != nil {
+				return nil, err
+			}
+			return funcs.ReplaceMatches(src, pat, rep), nil
+		}
+		return src, nil
 	case "combine":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		sep := ""
-		if len(n.Operands) > 0 {
-			s, err := e.Eval(n.Operands[0])
+		if len(operands) > 0 {
+			s, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
@@ -1205,35 +1426,63 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return funcs.Combine(c, sep), nil
 	case "split":
-		if len(n.Operands) > 0 {
-			sep, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			sep, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
 			if sep != nil {
-				return funcs.Split(source, sep.String()), nil
+				return funcs.Split(src, sep.String()), nil
 			}
 		}
-		return source, nil
+		return src, nil
 
 	// Statistical aggregate functions
 	case "alltrue":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.AllTrue(c), nil
 	case "anytrue":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.AnyTrue(c), nil
 	case "populationstddev":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.PopulationStdDev(c), nil
 	case "populationvariance":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.PopulationVariance(c), nil
 	case "stddev":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.StdDev(c), nil
 	case "variance":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.Variance(c), nil
 
 	// Temporal functions
@@ -1242,34 +1491,52 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 
 	// Advanced string functions
 	case "positionof":
-		if len(n.Operands) > 0 {
-			pattern, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			pattern, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
-			return funcs.PositionOf(pattern, source), nil
+			return funcs.PositionOf(src, pattern), nil
 		}
 		return fptypes.NewInteger(-1), nil
 	case "lastpositionof":
-		if len(n.Operands) > 0 {
-			pattern, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			pattern, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
-			return funcs.LastPositionOf(pattern, source), nil
+			return funcs.LastPositionOf(src, pattern), nil
 		}
 		return fptypes.NewInteger(-1), nil
 	case "substring":
-		if len(n.Operands) > 0 {
-			start, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			start, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
+			if start == nil {
+				return nil, nil // null start index → null
+			}
 			length := -1
-			if len(n.Operands) > 1 {
-				l, err := e.Eval(n.Operands[1])
+			if len(operands) > 1 {
+				l, err := e.Eval(operands[1])
 				if err != nil {
 					return nil, err
+				}
+				if l == nil {
+					return nil, nil // null length → null
 				}
 				if li, ok := l.(fptypes.Integer); ok {
 					length = int(li.Value())
@@ -1279,55 +1546,91 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if si, ok := start.(fptypes.Integer); ok {
 				startIdx = int(si.Value())
 			}
-			return funcs.Substring(source, startIdx, length), nil
+			return funcs.Substring(src, startIdx, length), nil
 		}
-		return source, nil
+		return src, nil
 
 	// Advanced list functions
 	case "mode":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.Mode(c), nil
 	case "median":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.Median(c), nil
 	case "geometricmean":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return funcs.GeometricMean(c), nil
 	case "tail":
-		c := toCollection(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		c := toCollection(src)
 		return cqltypes.NewList(funcs.Tail(c)), nil
 	case "take":
-		if len(n.Operands) > 0 {
-			arg, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
 			if ai, ok := arg.(fptypes.Integer); ok {
-				c := toCollection(source)
+				c := toCollection(src)
 				return cqltypes.NewList(funcs.Take(c, int(ai.Value()))), nil
 			}
 		}
-		return source, nil
+		return src, nil
 	case "skip":
-		if len(n.Operands) > 0 {
-			arg, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
 			if ai, ok := arg.(fptypes.Integer); ok {
-				c := toCollection(source)
+				c := toCollection(src)
 				return cqltypes.NewList(funcs.Skip(c, int(ai.Value()))), nil
 			}
 		}
-		return source, nil
+		return src, nil
 
 	// Null operators
 	case "isnull":
-		return IsNull(source), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return IsNull(src), nil
 	case "istrue":
-		return IsTrue(source), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return IsTrue(src), nil
 	case "isfalse":
-		return IsFalse(source), nil
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return IsFalse(src), nil
 
 	// DateTime construction
 	case "date":
@@ -1385,21 +1688,33 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 
 	// Interval functions
 	case "width":
-		if iv, ok := source.(cqltypes.Interval); ok {
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if iv, ok := src.(cqltypes.Interval); ok {
 			return funcs.IntervalWidth(iv)
 		}
 		return nil, nil
 	case "size":
-		if iv, ok := source.(cqltypes.Interval); ok {
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if iv, ok := src.(cqltypes.Interval); ok {
 			return funcs.IntervalSize(iv)
 		}
 		return nil, nil
 
 	// Math functions
 	case "round":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
 		precision := 0
-		if len(n.Operands) > 0 {
-			pv, err := e.Eval(n.Operands[0])
+		if len(operands) > 0 {
+			pv, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
@@ -1407,77 +1722,119 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				precision = int(pi.Value())
 			}
 		}
-		return funcs.Round(source, precision)
+		return funcs.Round(src, precision)
 
 	case "floor":
-		return funcs.Floor(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Floor(src)
 
 	case "ceiling":
-		return funcs.Ceiling(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Ceiling(src)
 
 	case "truncate":
-		return funcs.Truncate(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Truncate(src)
 
 	case "ln":
-		return funcs.Ln(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Ln(src)
 
 	case "log":
-		if len(n.Operands) < 1 {
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
 			return nil, fmt.Errorf("Log requires a base argument")
 		}
-		base, err := e.Eval(n.Operands[0])
+		base, err := e.Eval(operands[0])
 		if err != nil {
 			return nil, err
 		}
-		return funcs.Log(source, base)
+		return funcs.Log(src, base)
 
 	case "exp":
-		return funcs.Exp(source)
-
-	case "power":
-		if len(n.Operands) < 1 {
-			return nil, fmt.Errorf("Power requires an exponent argument")
-		}
-		exp, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
 		if err != nil {
 			return nil, err
 		}
-		return funcs.Power(source, exp)
+		return funcs.Exp(src)
+
+	case "power":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("Power requires an exponent argument")
+		}
+		exp, err := e.Eval(operands[0])
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Power(src, exp)
 
 	case "precision":
-		return funcs.Precision(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.Precision(src)
 
 	case "highboundary":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
 		var prec fptypes.Value
-		if len(n.Operands) > 0 {
-			var err error
-			prec, err = e.Eval(n.Operands[0])
+		if len(operands) > 0 {
+			prec, err = e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
 		}
-		return funcs.HighBoundary(source, prec)
+		return funcs.HighBoundary(src, prec)
 
 	case "lowboundary":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
 		var prec fptypes.Value
-		if len(n.Operands) > 0 {
-			var err error
-			prec, err = e.Eval(n.Operands[0])
+		if len(operands) > 0 {
+			prec, err = e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
 		}
-		return funcs.LowBoundary(source, prec)
+		return funcs.LowBoundary(src, prec)
 
 	// Indexer
 	case "indexer":
-		if len(n.Operands) > 0 {
-			arg, err := e.Eval(n.Operands[0])
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) > 0 {
+			arg, err := e.Eval(operands[0])
 			if err != nil {
 				return nil, err
 			}
 			if ai, ok := arg.(fptypes.Integer); ok {
-				c := toCollection(source)
+				c := toCollection(src)
 				return funcs.Indexer(c, int(ai.Value())), nil
 			}
 		}
@@ -1507,15 +1864,35 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 
 	// Conversion functions
 	case "todatetime":
-		return funcs.ToDateTime(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.ToDateTime(src)
 	case "totime":
-		return funcs.ToTime(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.ToTime(src)
 	case "toboolean":
-		return funcs.ToBoolean(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.ToBoolean(src)
 	case "toquantity":
-		return funcs.ToQuantity(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.ToQuantity(src)
 	case "toconcept":
-		return funcs.ToConcept(source)
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.ToConcept(src)
 
 	default:
 		return nil, fmt.Errorf("unknown function: %s", n.Name)
@@ -1714,17 +2091,74 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 		}
 
 		// Apply return clause or use the item directly
-		if n.Return != nil {
-			val, err := childEval.Eval(n.Return.Expression)
+		if n.Aggregate == nil {
+			if n.Return != nil {
+				val, err := childEval.Eval(n.Return.Expression)
+				if err != nil {
+					return nil, err
+				}
+				if val != nil {
+					results = append(results, val)
+				}
+			} else {
+				results = append(results, item)
+			}
+		}
+	}
+
+	// Handle aggregate clause - reduction over filtered items
+	if n.Aggregate != nil {
+		// Evaluate the starting value
+		var accumulator fptypes.Value
+		if n.Aggregate.Starting != nil {
+			var err error
+			accumulator, err = e.Eval(n.Aggregate.Starting)
 			if err != nil {
 				return nil, err
 			}
-			if val != nil {
-				results = append(results, val)
-			}
-		} else {
-			results = append(results, item)
 		}
+
+		// Collect items after filtering (re-process with where/with/without)
+		filteredItems := toCollection(source)
+		if n.Aggregate.Distinct {
+			filteredItems = filteredItems.Distinct()
+		}
+
+		for i, item := range filteredItems {
+			child := e.ctx.ChildScope()
+			child.Aliases[n.Sources[0].Alias] = item
+			child.This = item
+			child.Index = i
+			child.Aliases[n.Aggregate.Identifier] = accumulator
+
+			// Process let bindings
+			childEval := e.withContext(child)
+			for _, let := range n.Let {
+				val, err := childEval.Eval(let.Expression)
+				if err != nil {
+					return nil, err
+				}
+				child.LetBindings[let.Identifier] = val
+			}
+
+			// Apply where filter
+			if n.Where != nil {
+				cond, err := childEval.Eval(n.Where)
+				if err != nil {
+					return nil, err
+				}
+				if !isTrue(cond) {
+					continue
+				}
+			}
+
+			val, err := childEval.Eval(n.Aggregate.Expression)
+			if err != nil {
+				return nil, err
+			}
+			accumulator = val
+		}
+		return accumulator, nil
 	}
 
 	// Apply distinct if specified
@@ -1950,8 +2384,16 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 	if err != nil {
 		return nil, err
 	}
+	// Null propagation: null in X or X contains null → null
 	if n.Operator == "in" {
+		if left == nil {
+			return nil, nil
+		}
 		return e.evalInContains(ast.OpIn, left, right)
+	}
+	// contains: if right (the element) is null → null
+	if right == nil {
+		return nil, nil
 	}
 	return e.evalInContains(ast.OpContains, left, right)
 }
@@ -2021,6 +2463,25 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	if err != nil {
 		return nil, err
 	}
+	// For includes/includedIn/contains/in with lists, don't short-circuit on nil
+	// because null can be a valid list element. For other operations, nil propagates.
+	if left == nil || right == nil {
+		switch n.Operator.Kind {
+		case ast.TimingIncludes, ast.TimingIncludedIn, ast.TimingDuring:
+			// Allow null through for list operations
+		default:
+			return nil, nil
+		}
+	}
+
+	// Handle list-based operations (includes, includedIn, union, intersect, except, etc.)
+	leftList, leftIsList := left.(cqltypes.List)
+	rightList, rightIsList := right.(cqltypes.List)
+	if leftIsList || rightIsList {
+		return e.evalListTimingOp(leftList, rightList, leftIsList, rightIsList, left, right, n.Operator)
+	}
+
+	// After list handling, null-propagate if we haven't already
 	if left == nil || right == nil {
 		return nil, nil
 	}
@@ -2073,6 +2534,17 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 	}
 
+	// Handle scalar vs interval for non-temporal types (e.g., 9 before Interval[11, 20])
+	if !leftOk && rightOk {
+		// Promote scalar to point interval [x, x]
+		leftIv = cqltypes.NewInterval(left, left, true, true)
+		leftOk = true
+	}
+	if leftOk && !rightOk {
+		// Promote scalar to point interval [x, x]
+		rightIv = cqltypes.NewInterval(right, right, true, true)
+		rightOk = true
+	}
 	if !leftOk || !rightOk {
 		return nil, nil
 	}
@@ -2086,12 +2558,18 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		return fptypes.NewBoolean(leftIv.Equal(rightIv)), nil
 	case ast.TimingIncludes:
+		if n.Operator.Properly {
+			return funcs.IntervalProperlyIncludes(leftIv, rightIv)
+		}
 		result, err := leftIv.Includes(rightIv)
 		if err != nil {
 			return nil, err
 		}
 		return fptypes.NewBoolean(result), nil
 	case ast.TimingIncludedIn, ast.TimingDuring:
+		if n.Operator.Properly {
+			return funcs.IntervalProperlyIncludedIn(leftIv, rightIv)
+		}
 		result, err := rightIv.Includes(leftIv)
 		if err != nil {
 			return nil, err
@@ -2103,8 +2581,20 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		return funcs.IntervalAfter(leftIv, rightIv)
 	case ast.TimingMeets:
+		if n.Operator.Before {
+			return funcs.IntervalMeetsBefore(leftIv, rightIv)
+		}
+		if n.Operator.After {
+			return funcs.IntervalMeetsAfter(leftIv, rightIv)
+		}
 		return funcs.IntervalMeets(leftIv, rightIv)
 	case ast.TimingOverlaps:
+		if n.Operator.Before {
+			return funcs.OverlapsBefore(leftIv, rightIv)
+		}
+		if n.Operator.After {
+			return funcs.OverlapsAfter(leftIv, rightIv)
+		}
 		return funcs.IntervalOverlaps(leftIv, rightIv)
 	case ast.TimingStarts:
 		return funcs.Starts(leftIv, rightIv)
@@ -2112,6 +2602,102 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		return funcs.Ends(leftIv, rightIv)
 	case ast.TimingWithin:
 		return funcs.During(leftIv, rightIv)
+	default:
+		return nil, nil
+	}
+}
+
+// listContainsValue checks if a collection contains a value (including nil/null).
+func listContainsValue(c fptypes.Collection, val fptypes.Value) bool {
+	if val == nil {
+		for _, item := range c {
+			if item == nil {
+				return true
+			}
+		}
+		return false
+	}
+	return c.Contains(val)
+}
+
+// evalListTimingOp handles timing operations when one or both operands are lists.
+func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsList, rightIsList bool, left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
+	lc := toCollection(left)
+	rc := toCollection(right)
+
+	switch op.Kind {
+	case ast.TimingIncludes:
+		if leftIsList && !rightIsList {
+			// list includes scalar (properly contains / contains)
+			found := listContainsValue(lc, right)
+			if op.Properly {
+				return fptypes.NewBoolean(found && lc.Count() > 1), nil
+			}
+			return fptypes.NewBoolean(found), nil
+		}
+		if op.Properly {
+			if rc.Count() >= lc.Count() {
+				return fptypes.NewBoolean(false), nil
+			}
+			for _, item := range rc {
+				if !listContainsValue(lc, item) {
+					return fptypes.NewBoolean(false), nil
+				}
+			}
+			return fptypes.NewBoolean(true), nil
+		}
+		for _, item := range rc {
+			if !listContainsValue(lc, item) {
+				return fptypes.NewBoolean(false), nil
+			}
+		}
+		return fptypes.NewBoolean(true), nil
+
+	case ast.TimingIncludedIn, ast.TimingDuring:
+		if rightIsList && !leftIsList {
+			// scalar included in list (properly in / in)
+			found := listContainsValue(rc, left)
+			if op.Properly {
+				return fptypes.NewBoolean(found && rc.Count() > 1), nil
+			}
+			return fptypes.NewBoolean(found), nil
+		}
+		if op.Properly {
+			if lc.Count() >= rc.Count() {
+				return fptypes.NewBoolean(false), nil
+			}
+			for _, item := range lc {
+				if !listContainsValue(rc, item) {
+					return fptypes.NewBoolean(false), nil
+				}
+			}
+			return fptypes.NewBoolean(true), nil
+		}
+		for _, item := range lc {
+			if !listContainsValue(rc, item) {
+				return fptypes.NewBoolean(false), nil
+			}
+		}
+		return fptypes.NewBoolean(true), nil
+
+	case ast.TimingBeforeOrAfter:
+		return nil, nil
+
+	case ast.TimingSameAs:
+		if lc.Count() != rc.Count() {
+			return fptypes.NewBoolean(false), nil
+		}
+		for _, item := range lc {
+			if !listContainsValue(rc, item) {
+				return fptypes.NewBoolean(false), nil
+			}
+		}
+		return fptypes.NewBoolean(true), nil
+
+	case ast.TimingOverlaps:
+		inter := lc.Intersect(rc)
+		return fptypes.NewBoolean(len(inter) > 0), nil
+
 	default:
 		return nil, nil
 	}

@@ -99,11 +99,22 @@ func IntervalMeetsBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if a.High.Equal(b.Low) && a.HighClosed != b.LowClosed {
 		return fptypes.NewBoolean(true), nil
 	}
-	// Also check successor relationship for integer intervals
+	// Check successor relationship for integer intervals
 	if ai, ok := a.High.(fptypes.Integer); ok {
 		if bi, ok := b.Low.(fptypes.Integer); ok {
-			if ai.Value()+1 == bi.Value() {
+			if a.HighClosed && b.LowClosed && ai.Value()+1 == bi.Value() {
 				return fptypes.NewBoolean(true), nil
+			}
+		}
+	}
+	// Check successor relationship for decimal intervals
+	if ad, ok := a.High.(fptypes.Decimal); ok {
+		if bd, ok := b.Low.(fptypes.Decimal); ok {
+			if a.HighClosed && b.LowClosed {
+				diff := bd.Value().Sub(ad.Value())
+				if diff.IsPositive() && diff.LessThanOrEqual(smallDecimalStep) {
+					return fptypes.NewBoolean(true), nil
+				}
 			}
 		}
 	}
@@ -193,7 +204,47 @@ func IntervalExpand(interval cqltypes.Interval, per decimal.Decimal) ([]fptypes.
 			}
 			var result []fptypes.Value
 			for v := lo; v <= hi; v += step {
-				result = append(result, fptypes.NewInteger(v))
+				end := v + step - 1
+				if end > hi {
+					end = hi
+				}
+				result = append(result, cqltypes.NewInterval(fptypes.NewInteger(v), fptypes.NewInteger(end), true, true))
+			}
+			return result, nil
+		}
+	}
+
+	// Decimal intervals
+	if ld, ok := interval.Low.(fptypes.Decimal); ok {
+		if hd, ok := interval.High.(fptypes.Decimal); ok {
+			step := decimal.NewFromFloat(1.0)
+			if !per.IsZero() {
+				step = per
+			}
+			lo := ld.Value()
+			hi := hd.Value()
+			if !interval.LowClosed {
+				lo = lo.Add(step)
+			}
+			if !interval.HighClosed {
+				hi = hi.Sub(step)
+			}
+			var result []fptypes.Value
+			for v := lo; v.LessThanOrEqual(hi); v = v.Add(step) {
+				end := v.Add(step).Sub(decimal.NewFromFloat(0.00000001))
+				if end.GreaterThan(hi) {
+					end = hi
+				}
+				lowVal := decimalToValue(v)
+				highVal := decimalToValue(end)
+				if lowVal == nil || highVal == nil {
+					break
+				}
+				result = append(result, cqltypes.NewInterval(lowVal, highVal, true, true))
+				// Safety: limit to reasonable count
+				if len(result) > 10000 {
+					break
+				}
 			}
 			return result, nil
 		}

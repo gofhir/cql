@@ -122,7 +122,7 @@ func Substring(s fptypes.Value, start, length int) fptypes.Value {
 	}
 	str := sv.Value()
 	if start < 0 || start >= len(str) {
-		return fptypes.NewString("")
+		return nil // CQL: out of range returns null
 	}
 	end := start + length
 	if length <= 0 || end > len(str) {

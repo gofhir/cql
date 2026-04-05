@@ -449,13 +449,23 @@ func TestIntervalBefore(t *testing.T) {
 }
 
 func TestIntervalMeets(t *testing.T) {
-	a := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(5), true, true)
-	b := cqltypes.NewInterval(fptypes.NewInteger(5), fptypes.NewInteger(10), true, true)
+	// [1,10] meets [11,20] — integer successor adjacency
+	a := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(10), true, true)
+	b := cqltypes.NewInterval(fptypes.NewInteger(11), fptypes.NewInteger(20), true, true)
 	result, err := IntervalMeets(a, b)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	assertBool(t, result, true, "IntervalMeets")
+	assertBool(t, result, true, "IntervalMeets [1,10] meets [11,20]")
+
+	// [1,5] and [5,10] overlap at 5, so they do NOT meet
+	c := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(5), true, true)
+	d := cqltypes.NewInterval(fptypes.NewInteger(5), fptypes.NewInteger(10), true, true)
+	result, err = IntervalMeets(c, d)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBool(t, result, false, "IntervalMeets [1,5] does not meet [5,10] (they overlap)")
 }
 
 func TestIntervalStartOf(t *testing.T) {
@@ -885,10 +895,19 @@ func TestIntervalExpand(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(result) != 5 {
-		t.Fatalf("expected 5 expanded points, got %d", len(result))
+		t.Fatalf("expected 5 expanded unit intervals, got %d", len(result))
 	}
-	assertInteger(t, result[0], 1, "Expand[0]")
-	assertInteger(t, result[4], 5, "Expand[4]")
+	// Each result should be a unit interval [n, n]
+	for i, r := range result {
+		ri, ok := r.(cqltypes.Interval)
+		if !ok {
+			t.Fatalf("Expand[%d]: expected Interval, got %T", i, r)
+		}
+		expected := int64(i + 1)
+		if li, ok := ri.Low.(fptypes.Integer); !ok || li.Value() != expected {
+			t.Fatalf("Expand[%d].Low: expected %d, got %v", i, expected, ri.Low)
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
