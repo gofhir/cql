@@ -63,11 +63,9 @@ func TestConformance(t *testing.T) {
 		t.Run(suiteName, func(t *testing.T) {
 			t.Parallel()
 			for _, group := range suite.Groups {
-				group := group
 				t.Run(group.Name, func(t *testing.T) {
 					t.Parallel()
 					for _, tc := range group.Tests {
-						tc := tc
 						testName := tc.Name
 						if testName == "" {
 							testName = strings.TrimSpace(tc.Expression.Value)

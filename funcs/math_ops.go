@@ -115,7 +115,7 @@ func Ln(v fptypes.Value) (fptypes.Value, error) {
 }
 
 // Log returns the logarithm of value with the given base.
-func Log(v fptypes.Value, base fptypes.Value) (fptypes.Value, error) {
+func Log(v, base fptypes.Value) (fptypes.Value, error) {
 	if v == nil || base == nil {
 		return nil, nil
 	}
@@ -154,7 +154,7 @@ func Exp(v fptypes.Value) (fptypes.Value, error) {
 }
 
 // Power returns value raised to the exponent power.
-func Power(v fptypes.Value, exp fptypes.Value) (fptypes.Value, error) {
+func Power(v, exp fptypes.Value) (fptypes.Value, error) {
 	if v == nil || exp == nil {
 		return nil, nil
 	}
@@ -237,7 +237,7 @@ func Precision(v fptypes.Value) (fptypes.Value, error) {
 }
 
 // HighBoundary returns the high boundary of a value at the given precision.
-func HighBoundary(v fptypes.Value, precision fptypes.Value) (fptypes.Value, error) {
+func HighBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -287,7 +287,7 @@ func HighBoundary(v fptypes.Value, precision fptypes.Value) (fptypes.Value, erro
 }
 
 // LowBoundary returns the low boundary of a value at the given precision.
-func LowBoundary(v fptypes.Value, precision fptypes.Value) (fptypes.Value, error) {
+func LowBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}

@@ -196,7 +196,7 @@ var bareKeyValuePattern = regexp.MustCompile(`^\s*[A-Za-z_][A-Za-z0-9_]*\s*:`)
 
 // looksLikeBareTuple checks if the inner content of braces looks like a bare tuple
 // (all top-level elements are key: value pairs, not nested braces).
-func looksLikeBareTuple(inner string, elements []string) bool {
+func looksLikeBareTuple(_ string, elements []string) bool {
 	for _, elem := range elements {
 		e := strings.TrimSpace(elem)
 		if !bareKeyValuePattern.MatchString(e) {
@@ -214,7 +214,7 @@ func parseList(s string) (fptypes.Value, error) {
 		return cqltypes.NewList(fptypes.Collection{}), nil
 	}
 
-	elements, err := splitTopLevel(inner, ',')
+	elements, err := splitTopLevel(inner)
 	if err != nil {
 		return nil, fmt.Errorf("splitting list elements: %w", err)
 	}
@@ -280,7 +280,7 @@ func parseInterval(s string) (fptypes.Value, error) {
 	inner := rest[1 : len(rest)-1]
 
 	// Split on comma at the top level
-	parts, err := splitTopLevel(inner, ',')
+	parts, err := splitTopLevel(inner)
 	if err != nil {
 		return nil, fmt.Errorf("splitting interval bounds: %w", err)
 	}
@@ -315,7 +315,7 @@ func parseTuple(s string) (fptypes.Value, error) {
 		return cqltypes.NewTuple(map[string]fptypes.Value{}), nil
 	}
 
-	parts, err := splitTopLevel(inner, ',')
+	parts, err := splitTopLevel(inner)
 	if err != nil {
 		return nil, fmt.Errorf("splitting tuple elements: %w", err)
 	}
@@ -342,7 +342,8 @@ func parseTuple(s string) (fptypes.Value, error) {
 // splitTopLevel splits a string by the given delimiter, but only at the top
 // level — ignoring delimiters inside nested braces, brackets, parentheses,
 // or single-quoted strings.
-func splitTopLevel(s string, delim byte) ([]string, error) {
+func splitTopLevel(s string) ([]string, error) {
+	const delim byte = ','
 	var parts []string
 	depth := 0
 	inQuote := false
@@ -390,7 +391,7 @@ func parseConcept(s string) (fptypes.Value, error) {
 	}
 	inner := strings.TrimSpace(rest[1 : len(rest)-1])
 	// Parse as key:value pairs using splitTopLevel
-	parts, err := splitTopLevel(inner, ',')
+	parts, err := splitTopLevel(inner)
 	if err != nil {
 		return nil, fmt.Errorf("splitting Concept elements: %w", err)
 	}
@@ -440,7 +441,7 @@ func parseCode(s string) (fptypes.Value, error) {
 		return nil, fmt.Errorf("invalid Code format: %q", s)
 	}
 	inner := strings.TrimSpace(rest[1 : len(rest)-1])
-	parts, err := splitTopLevel(inner, ',')
+	parts, err := splitTopLevel(inner)
 	if err != nil {
 		return nil, fmt.Errorf("splitting Code elements: %w", err)
 	}

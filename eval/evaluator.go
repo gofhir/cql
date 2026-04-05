@@ -231,11 +231,8 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 	case ast.LiteralDate:
 		return fptypes.NewDate(n.Value)
 	case ast.LiteralDateTime:
-		// Strip trailing 'T' when no time component follows (e.g., "2015-02-10T" → "2015-02-10")
-		dtVal := n.Value
-		if strings.HasSuffix(dtVal, "T") {
-			dtVal = strings.TrimSuffix(dtVal, "T")
-		}
+		// Strip trailing 'T' when no time component follows (e.g., "2015-02-10T" -> "2015-02-10")
+		dtVal := strings.TrimSuffix(n.Value, "T")
 		return fptypes.NewDateTime(dtVal)
 	case ast.LiteralTime:
 		// Validate millisecond digits before parsing: CQL allows at most 3 fractional digits.
@@ -832,9 +829,10 @@ func decimalEquivalent(a, b decimal.Decimal) bool {
 	if bDec < minDec {
 		minDec = bDec
 	}
-	// Truncate both to the minimum precision and compare
-	aRound := a.Truncate(int32(minDec))
-	bRound := b.Truncate(int32(minDec))
+	// Truncate both to the minimum precision and compare.
+	// minDec is bounded by string decimal place count so it fits in int32.
+	aRound := a.Truncate(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
+	bRound := b.Truncate(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
 	return aRound.Equal(bRound)
 }
 
@@ -1132,7 +1130,7 @@ func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Val
 	}
 	// Quantity successor/predecessor
 	if q, ok := operand.(fptypes.Quantity); ok {
-		epsilon, _ := decimal.NewFromString("0.00000001")
+		epsilon := decimal.RequireFromString("0.00000001")
 		if op == ast.OpSuccessorOf {
 			return fptypes.NewQuantityFromDecimal(q.Value().Add(epsilon), q.Unit()), nil
 		}
@@ -1287,7 +1285,7 @@ func (e *Evaluator) evalCast(n *ast.CastExpression) (fptypes.Value, error) {
 	return operand, nil
 }
 
-func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
+func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 	if n.Type == nil {
 		return nil, nil
 	}
@@ -1299,7 +1297,7 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { /
 		case "long":
 			return fptypes.NewInteger(int64(math.MinInt64)), nil
 		case "decimal":
-			d, _ := decimal.NewFromString("-99999999999999999999.99999999")
+			d := decimal.RequireFromString("-99999999999999999999.99999999")
 			return fptypes.NewDecimal(d.String())
 		case "datetime":
 			return fptypes.NewDateTime("0001-01-01T00:00:00.000")
@@ -1319,7 +1317,7 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) { /
 	case "long":
 		return fptypes.NewInteger(int64(math.MaxInt64)), nil
 	case "decimal":
-		d, _ := decimal.NewFromString("99999999999999999999.99999999")
+		d := decimal.RequireFromString("99999999999999999999.99999999")
 		return fptypes.NewDecimal(d.String())
 	case "datetime":
 		return fptypes.NewDateTime("9999-12-31T23:59:59.999")
@@ -1716,7 +1714,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			// CQL: IndexOf(list, null) = null
+			// CQL spec: IndexOf with a null argument returns null
 			if arg == nil {
 				return nil, nil
 			}
@@ -2130,7 +2128,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		if len(operands) < 1 {
-			return nil, fmt.Errorf("Log requires a base argument")
+			return nil, fmt.Errorf("log requires a base argument")
 		}
 		base, err := e.Eval(operands[0])
 		if err != nil {
@@ -2151,7 +2149,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		if len(operands) < 1 {
-			return nil, fmt.Errorf("Power requires an exponent argument")
+			return nil, fmt.Errorf("power requires an exponent argument")
 		}
 		exp, err := e.Eval(operands[0])
 		if err != nil {
@@ -2556,7 +2554,8 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 
 		// Apply return clause or use the item directly
 		if n.Aggregate == nil {
-			if n.Return != nil {
+			switch {
+			case n.Return != nil:
 				val, err := childEval.Eval(n.Return.Expression)
 				if err != nil {
 					return nil, err
@@ -2564,14 +2563,14 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 				if val != nil {
 					results = append(results, val)
 				}
-			} else if len(n.Sources) > 1 {
+			case len(n.Sources) > 1:
 				// Multi-source query without return: produce a Tuple with all aliases
 				tupleElems := make(map[string]fptypes.Value, len(n.Sources))
 				for _, src := range n.Sources {
 					tupleElems[src.Alias] = c.aliases[src.Alias]
 				}
 				results = append(results, cqltypes.NewTuple(tupleElems))
-			} else {
+			default:
 				results = append(results, child.This)
 			}
 		}
@@ -3427,7 +3426,7 @@ func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fp
 
 // listContainsValueTriState checks membership with tri-state logic:
 // returns (true, false) if found, (false, false) if not found, (false, true) if ambiguous.
-func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found bool, ambiguous bool) {
+func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found, ambiguous bool) {
 	if val == nil {
 		for _, item := range c {
 			if item == nil {
@@ -3455,7 +3454,7 @@ func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found b
 }
 
 // evalListTimingOp handles timing operations when one or both operands are lists.
-func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsList, rightIsList bool, left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
+func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList bool, left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
 	lc := toCollection(left)
 	rc := toCollection(right)
 
@@ -3615,7 +3614,7 @@ func (e *Evaluator) evalTemporalComparison(left, right fptypes.Value, op ast.Tim
 // from a temporal value. Returns the components and the maximum valid precision index.
 // Precision indices: 0=year, 1=month, 2=day, 3=hour, 4=minute, 5=second, 6=millisecond
 // For DateTime values with timezone info, normalizes to UTC first.
-func temporalComponents(v fptypes.Value) ([]int, int) {
+func temporalComponents(v fptypes.Value) (components []int, maxPrec int) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		maxPrec := int(t.Precision())
@@ -4342,11 +4341,7 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 			return t, nil
 		}
 		if s, ok := v.(fptypes.String); ok {
-			str := s.Value()
-			// Strip leading T if present
-			if strings.HasPrefix(str, "T") {
-				str = str[1:]
-			}
+			str := strings.TrimPrefix(s.Value(), "T")
 			// Strip timezone offset for parsing
 			if idx := strings.LastIndexAny(str, "+-"); idx > 0 && strings.Contains(str[idx:], ":") {
 				str = str[:idx]

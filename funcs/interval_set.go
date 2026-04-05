@@ -178,7 +178,7 @@ func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error
 }
 
 // expandGetStep extracts the step amount and unit from a per value (Quantity or Integer/Decimal).
-func expandGetStep(perVal fptypes.Value) (decimal.Decimal, string) {
+func expandGetStep(perVal fptypes.Value) (amount decimal.Decimal, unit string) {
 	if perVal == nil {
 		return decimal.Zero, ""
 	}
@@ -561,7 +561,7 @@ func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decim
 }
 
 // isInBounds checks if a value is within the interval bounds.
-func isInBounds(val, high fptypes.Value, lowClosed, highClosed, isFirst bool) (bool, error) {
+func isInBounds(val, high fptypes.Value, _, highClosed, _ bool) (bool, error) {
 	cmp, err := compareVals(val, high)
 	if err != nil {
 		return false, err
@@ -698,8 +698,6 @@ func IntervalExpand(interval cqltypes.Interval, per decimal.Decimal) ([]fptypes.
 		return nil, err
 	}
 	vals := make([]fptypes.Value, len(result))
-	for i, v := range result {
-		vals[i] = v
-	}
+	copy(vals, result)
 	return vals, nil
 }

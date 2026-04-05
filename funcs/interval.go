@@ -126,7 +126,8 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 	// Take max low — if either is null (unknown), result low is null (unknown)
 	low := a.Low
 	lowClosed := a.LowClosed
-	if a.Low != nil && b.Low != nil {
+	switch {
+	case a.Low != nil && b.Low != nil:
 		cmp, err := compareVals(a.Low, b.Low)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
@@ -138,10 +139,10 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 			low = b.Low
 			lowClosed = b.LowClosed
 		}
-	} else if a.Low == nil {
+	case a.Low == nil:
 		low = nil
 		lowClosed = a.LowClosed
-	} else {
+	default:
 		// b.Low is nil
 		low = nil
 		lowClosed = b.LowClosed
@@ -150,7 +151,8 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 	// Take min high — if either is null (unknown), result high is null (unknown)
 	high := a.High
 	highClosed := a.HighClosed
-	if a.High != nil && b.High != nil {
+	switch {
+	case a.High != nil && b.High != nil:
 		cmp, err := compareVals(a.High, b.High)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
@@ -162,10 +164,10 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 			high = b.High
 			highClosed = b.HighClosed
 		}
-	} else if a.High == nil {
+	case a.High == nil:
 		high = nil
 		highClosed = a.HighClosed
-	} else {
+	default:
 		// b.High is nil
 		high = nil
 		highClosed = b.HighClosed
@@ -434,7 +436,7 @@ func intervalEndMeetsStart(aHigh fptypes.Value, aHighClosed bool, bLow fptypes.V
 	return false
 }
 
-var smallDecimalStep, _ = decimal.NewFromString("0.00000001")
+var smallDecimalStep = decimal.RequireFromString("0.00000001")
 
 // IntervalMeets checks if interval a meets interval b (a.high = b.low or a.low = b.high).
 func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {

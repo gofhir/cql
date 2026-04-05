@@ -187,20 +187,21 @@ func DateTimeConstructor(year, month, day, hour, minute, second, millisecond, tz
 	}
 
 	if tzOffset != nil {
-		if sv, ok := tzOffset.(fptypes.String); ok {
-			s += sv.Value()
-		} else if di, ok := tzOffset.(fptypes.Decimal); ok {
+		switch tz := tzOffset.(type) {
+		case fptypes.String:
+			s += tz.Value()
+		case fptypes.Decimal:
 			// Handle decimal timezone offset (e.g., -6.0 -> "-06:00")
-			f, _ := di.Value().Float64()
+			f, _ := tz.Value().Float64()
 			hours := int(f)
 			mins := int((f - float64(hours)) * 60)
 			if mins < 0 {
 				mins = -mins
 			}
 			s += fmt.Sprintf("%+03d:%02d", hours, mins)
-		} else if ii, ok := tzOffset.(fptypes.Integer); ok {
+		case fptypes.Integer:
 			// Handle integer timezone offset (e.g., 1 -> "+01:00")
-			hours := int(ii.Value())
+			hours := int(tz.Value())
 			s += fmt.Sprintf("%+03d:00", hours)
 		}
 	}
@@ -313,7 +314,7 @@ func valuePrecisionIndex(v fptypes.Value) int {
 
 // durationBetweenUncertain computes the min/max range of the duration
 // when one or both operands have insufficient precision.
-func durationBetweenUncertain(low, high fptypes.Value, precision string, precIdx int) (fptypes.Value, error) {
+func durationBetweenUncertain(low, high fptypes.Value, precision string, _ int) (fptypes.Value, error) {
 	// Compute the earliest and latest possible time.Time for each operand
 	lowEarliest, lowLatest := temporalRange(low)
 	highEarliest, highLatest := temporalRange(high)
@@ -358,7 +359,7 @@ func durationBetweenUncertain(low, high fptypes.Value, precision string, precIdx
 }
 
 // temporalRange returns the earliest and latest possible time.Time for a temporal value.
-func temporalRange(v fptypes.Value) (time.Time, time.Time) {
+func temporalRange(v fptypes.Value) (earliest, latest time.Time) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		earliest := t.ToTime()
@@ -415,23 +416,23 @@ func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value
 
 	switch precision {
 	case "year", "years":
-		lComps, _ := nominalComponents(low)
-		hComps, _ := nominalComponents(high)
+		lComps := nominalComponents(low)
+		hComps := nominalComponents(high)
 		if lComps == nil || hComps == nil {
 			return nil, nil
 		}
 		return fptypes.NewInteger(int64(hComps[0] - lComps[0])), nil
 	case "month", "months":
-		lComps, _ := nominalComponents(low)
-		hComps, _ := nominalComponents(high)
+		lComps := nominalComponents(low)
+		hComps := nominalComponents(high)
 		if lComps == nil || hComps == nil {
 			return nil, nil
 		}
 		months := (hComps[0]-lComps[0])*12 + hComps[1] - lComps[1]
 		return fptypes.NewInteger(int64(months)), nil
 	case "week", "weeks":
-		lComps, _ := nominalComponents(low)
-		hComps, _ := nominalComponents(high)
+		lComps := nominalComponents(low)
+		hComps := nominalComponents(high)
 		if lComps == nil || hComps == nil {
 			return nil, nil
 		}
@@ -441,8 +442,8 @@ func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value
 		weeks := days / 7
 		return fptypes.NewInteger(int64(weeks)), nil
 	case "day", "days":
-		lComps, _ := nominalComponents(low)
-		hComps, _ := nominalComponents(high)
+		lComps := nominalComponents(low)
+		hComps := nominalComponents(high)
 		if lComps == nil || hComps == nil {
 			return nil, nil
 		}
@@ -489,7 +490,7 @@ func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value
 
 // nominalComponents extracts the nominal (stated) year, month, day, hour, minute, second, millis
 // from a temporal value without timezone normalization.
-func nominalComponents(v fptypes.Value) ([]int, int) {
+func nominalComponents(v fptypes.Value) []int {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		m := t.Month()
@@ -500,7 +501,7 @@ func nominalComponents(v fptypes.Value) ([]int, int) {
 		if d == 0 {
 			d = 1
 		}
-		return []int{t.Year(), m, d, t.Hour(), t.Minute(), t.Second(), t.Millisecond()}, int(t.Precision())
+		return []int{t.Year(), m, d, t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
 	case fptypes.Date:
 		m := t.Month()
 		if m == 0 {
@@ -510,11 +511,11 @@ func nominalComponents(v fptypes.Value) ([]int, int) {
 		if d == 0 {
 			d = 1
 		}
-		return []int{t.Year(), m, d, 0, 0, 0, 0}, int(t.Precision())
+		return []int{t.Year(), m, d, 0, 0, 0, 0}
 	case fptypes.Time:
-		return []int{0, 0, 0, t.Hour(), t.Minute(), t.Second(), t.Millisecond()}, int(t.Precision()) + 3
+		return []int{0, 0, 0, t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
 	default:
-		return nil, -1
+		return nil
 	}
 }
 
@@ -530,7 +531,10 @@ func toGoTime(v fptypes.Value) time.Time {
 		return time.Date(0, 1, 1, t.Hour(), t.Minute(), t.Second(), t.Millisecond()*1e6, time.UTC)
 	default:
 		// Fall back to string parsing
-		tt, _ := toTime(v)
+		tt, err := toTime(v)
+		if err != nil {
+			return time.Time{}
+		}
 		return tt
 	}
 }
@@ -599,7 +603,7 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 		// Normalize milliseconds -> seconds -> minutes -> hours
 		if ms < 0 || ms >= 1000 {
 			s += ms / 1000
-			ms = ms % 1000
+			ms %= 1000
 			if ms < 0 {
 				ms += 1000
 				s--
@@ -607,7 +611,7 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 		}
 		if s < 0 || s >= 60 {
 			m += s / 60
-			s = s % 60
+			s %= 60
 			if s < 0 {
 				s += 60
 				m--
@@ -615,14 +619,14 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 		}
 		if m < 0 || m >= 60 {
 			h += m / 60
-			m = m % 60
+			m %= 60
 			if m < 0 {
 				m += 60
 				h--
 			}
 		}
 		// Wrap hours into 0-23
-		h = h % 24
+		h %= 24
 		if h < 0 {
 			h += 24
 		}
@@ -674,7 +678,7 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 // when the unit is finer than the operand's precision.
 // For DateTime: precIdx 0=year,1=month,2=day,3=hour,4=minute,5=second,6=millis
 // For Date: precIdx 0=year,1=month,2=day
-func convertToMatchPrecision(amount int, unit string, precIdx int, isDateTime bool) (int, string) {
+func convertToMatchPrecision(amount int, unit string, precIdx int, isDateTime bool) (converted int, convertedUnit string) {
 	unitIdx := unitPrecisionIndex(unit, isDateTime)
 	if unitIdx < 0 || unitIdx <= precIdx {
 		return amount, unit // unit is at or above operand precision — no conversion needed

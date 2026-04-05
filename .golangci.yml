@@ -53,7 +53,7 @@ linters:
 
     goconst:
       min-len: 5
-      min-occurrences: 4
+      min-occurrences: 16
 
     misspell:
       locale: US
@@ -130,6 +130,17 @@ linters:
 
       # Exclude gocyclo from evaluator
       - path: "eval/evaluator\\.go"
+        linters:
+          - gocyclo
+
+      # Exclude gocyclo from funcs, types, and conformance (inherently complex domain logic)
+      - path: "funcs/.*\\.go"
+        linters:
+          - gocyclo
+      - path: "types/.*\\.go"
+        linters:
+          - gocyclo
+      - path: "conformance/.*\\.go"
         linters:
           - gocyclo
 

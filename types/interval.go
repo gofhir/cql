@@ -201,7 +201,7 @@ func effectiveIntHigh(v fptypes.Value, closed bool) int64 {
 }
 
 // containsBound checks if a boundary point is within this interval.
-func (i Interval) containsBound(val fptypes.Value, closed, isLow bool) (bool, error) { //nolint:gocyclo // inherent interval boundary logic
+func (i Interval) containsBound(val fptypes.Value, closed, isLow bool) (bool, error) {
 	if val == nil {
 		if isLow {
 			return i.Low == nil, nil
