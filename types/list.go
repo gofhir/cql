@@ -44,7 +44,7 @@ func (l List) Equal(other fptypes.Value) bool {
 	return true
 }
 
-// Equivalent checks equivalence.
+// Equivalent checks equivalence (order-independent for lists).
 func (l List) Equivalent(other fptypes.Value) bool {
 	o, ok := other.(List)
 	if !ok {
@@ -53,8 +53,21 @@ func (l List) Equivalent(other fptypes.Value) bool {
 	if len(l.Values) != len(o.Values) {
 		return false
 	}
-	for i, v := range l.Values {
-		if !valuesEquivalent(v, o.Values[i]) {
+	// Order-independent: every element in l must match an element in o and vice versa
+	used := make([]bool, len(o.Values))
+	for _, v := range l.Values {
+		found := false
+		for j, ov := range o.Values {
+			if used[j] {
+				continue
+			}
+			if valuesEquivalent(v, ov) {
+				used[j] = true
+				found = true
+				break
+			}
+		}
+		if !found {
 			return false
 		}
 	}
@@ -68,7 +81,11 @@ func (l List) String() string {
 	}
 	parts := make([]string, len(l.Values))
 	for i, v := range l.Values {
-		parts[i] = v.String()
+		if v == nil {
+			parts[i] = "null"
+		} else {
+			parts[i] = v.String()
+		}
 	}
 	return "{" + strings.Join(parts, ", ") + "}"
 }

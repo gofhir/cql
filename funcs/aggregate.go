@@ -13,37 +13,55 @@ func Count(c fptypes.Collection) fptypes.Value {
 	return fptypes.NewInteger(int64(c.Count()))
 }
 
-// Sum returns the sum of all numeric values in a collection.
+// Sum returns the sum of all numeric values in a collection (skipping nulls).
 func Sum(c fptypes.Collection) fptypes.Value {
 	if c.Empty() {
 		return nil
 	}
 	sum := decimal.Zero
 	for _, item := range c {
+		if item == nil {
+			continue
+		}
 		sum = sum.Add(numericVal(item))
 	}
 	return decimalToValue(sum)
 }
 
-// Avg returns the average of all numeric values in a collection.
+// Avg returns the average of all numeric values in a collection (skipping nulls).
 func Avg(c fptypes.Collection) fptypes.Value {
 	if c.Empty() {
 		return nil
 	}
 	sum := decimal.Zero
+	count := int64(0)
 	for _, item := range c {
+		if item == nil {
+			continue
+		}
 		sum = sum.Add(numericVal(item))
+		count++
 	}
-	return decimalToValue(sum.Div(decimal.NewFromInt(int64(c.Count()))))
+	if count == 0 {
+		return nil
+	}
+	return decimalToValue(sum.Div(decimal.NewFromInt(count)))
 }
 
-// Min returns the minimum value in a collection.
+// Min returns the minimum value in a collection (skipping nulls).
 func Min(c fptypes.Collection) fptypes.Value {
 	if c.Empty() {
 		return nil
 	}
-	result := c[0]
-	for _, item := range c[1:] {
+	var result fptypes.Value
+	for _, item := range c {
+		if item == nil {
+			continue
+		}
+		if result == nil {
+			result = item
+			continue
+		}
 		comp, ok := result.(fptypes.Comparable)
 		if !ok {
 			continue
@@ -59,13 +77,20 @@ func Min(c fptypes.Collection) fptypes.Value {
 	return result
 }
 
-// Max returns the maximum value in a collection.
+// Max returns the maximum value in a collection (skipping nulls).
 func Max(c fptypes.Collection) fptypes.Value {
 	if c.Empty() {
 		return nil
 	}
-	result := c[0]
-	for _, item := range c[1:] {
+	var result fptypes.Value
+	for _, item := range c {
+		if item == nil {
+			continue
+		}
+		if result == nil {
+			result = item
+			continue
+		}
 		comp, ok := result.(fptypes.Comparable)
 		if !ok {
 			continue
@@ -81,9 +106,13 @@ func Max(c fptypes.Collection) fptypes.Value {
 	return result
 }
 
-// AllTrue returns true if all items in the collection are true.
+// AllTrue returns true if all non-null items in the collection are true.
+// CQL: null values are ignored.
 func AllTrue(c fptypes.Collection) fptypes.Value {
 	for _, item := range c {
+		if item == nil {
+			continue // CQL: ignore nulls
+		}
 		b, ok := item.(fptypes.Boolean)
 		if !ok || !b.Bool() {
 			return fptypes.NewBoolean(false)
@@ -95,6 +124,9 @@ func AllTrue(c fptypes.Collection) fptypes.Value {
 // AnyTrue returns true if any item in the collection is true.
 func AnyTrue(c fptypes.Collection) fptypes.Value {
 	for _, item := range c {
+		if item == nil {
+			continue
+		}
 		b, ok := item.(fptypes.Boolean)
 		if ok && b.Bool() {
 			return fptypes.NewBoolean(true)
@@ -103,18 +135,30 @@ func AnyTrue(c fptypes.Collection) fptypes.Value {
 	return fptypes.NewBoolean(false)
 }
 
+// nonNullItems filters out nil elements from a collection.
+func nonNullItems(c fptypes.Collection) fptypes.Collection {
+	result := make(fptypes.Collection, 0, len(c))
+	for _, item := range c {
+		if item != nil {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
 // PopulationVariance computes the population variance.
 func PopulationVariance(c fptypes.Collection) fptypes.Value {
-	if c.Count() < 2 {
+	nn := nonNullItems(c)
+	if nn.Count() < 2 {
 		return nil
 	}
-	mean := numericVal(Avg(c))
+	mean := numericVal(Avg(nn))
 	sumSq := decimal.Zero
-	for _, item := range c {
+	for _, item := range nn {
 		diff := numericVal(item).Sub(mean)
 		sumSq = sumSq.Add(diff.Mul(diff))
 	}
-	return decimalToValue(sumSq.Div(decimal.NewFromInt(int64(c.Count()))))
+	return decimalToValue(sumSq.Div(decimal.NewFromInt(int64(nn.Count()))))
 }
 
 // PopulationStdDev computes the population standard deviation.
@@ -130,16 +174,17 @@ func PopulationStdDev(c fptypes.Collection) fptypes.Value {
 
 // Variance computes the sample variance.
 func Variance(c fptypes.Collection) fptypes.Value {
-	if c.Count() < 2 {
+	nn := nonNullItems(c)
+	if nn.Count() < 2 {
 		return nil
 	}
-	mean := numericVal(Avg(c))
+	mean := numericVal(Avg(nn))
 	sumSq := decimal.Zero
-	for _, item := range c {
+	for _, item := range nn {
 		diff := numericVal(item).Sub(mean)
 		sumSq = sumSq.Add(diff.Mul(diff))
 	}
-	return decimalToValue(sumSq.Div(decimal.NewFromInt(int64(c.Count() - 1))))
+	return decimalToValue(sumSq.Div(decimal.NewFromInt(int64(nn.Count() - 1))))
 }
 
 // StdDev computes the sample standard deviation.

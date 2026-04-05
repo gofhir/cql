@@ -1633,7 +1633,13 @@ func (b *builder) VisitAggregateClause(ctx *grammar.AggregateClauseContext) inte
 		if expr := sc.Expression(); expr != nil {
 			ac.Starting = b.visitExpression(expr)
 		} else if sl := sc.SimpleLiteral(); sl != nil {
-			ac.Starting = &ast.Literal{ValueType: ast.LiteralString, Value: sl.GetText()}
+			txt := sl.GetText()
+			// Determine literal type
+			if strings.Contains(txt, ".") {
+				ac.Starting = &ast.Literal{ValueType: ast.LiteralDecimal, Value: txt}
+			} else {
+				ac.Starting = &ast.Literal{ValueType: ast.LiteralInteger, Value: txt}
+			}
 		}
 	}
 	if expr := ctx.Expression(); expr != nil {

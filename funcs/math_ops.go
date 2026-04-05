@@ -23,7 +23,7 @@ func toDecimalVal(v fptypes.Value) (decimal.Decimal, bool) {
 }
 
 // Round rounds a decimal value to the given precision (number of decimal places).
-// CQL uses "round half away from zero" semantics: -1.5 rounds to -1, 1.5 rounds to 2.
+// CQL uses "round half up" (towards positive infinity): -1.5 → -1, -0.5 → 0, 0.5 → 1, 1.5 → 2.
 // If the value is nil, returns nil.
 func Round(v fptypes.Value, precision int) (fptypes.Value, error) {
 	if v == nil {
@@ -33,19 +33,14 @@ func Round(v fptypes.Value, precision int) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Round: expected numeric, got %s", v.Type())
 	}
-	// CQL rounding: round half towards positive infinity (round half up)
-	// For negative numbers: -1.5 → -1, -0.5 → 0
-	// decimal.Round uses banker's rounding, so we need custom logic
+	// CQL rounding: round half towards positive infinity
+	// floor(x + 0.5) works for all cases:
+	// 0.5 → floor(1.0) = 1, -0.5 → floor(0.0) = 0
+	// 1.5 → floor(2.0) = 2, -1.5 → floor(-1.0) = -1
 	shift := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(precision)))
 	shifted := d.Mul(shift)
-	// Add 0.5 and floor for positive, subtract 0.5 and ceil for negative
 	half := decimal.NewFromFloat(0.5)
-	var rounded decimal.Decimal
-	if d.IsNegative() {
-		rounded = shifted.Sub(half).Ceil()
-	} else {
-		rounded = shifted.Add(half).Floor()
-	}
+	rounded := shifted.Add(half).Floor()
 	result := rounded.Div(shift)
 	return decimalToValue(result), nil
 }
@@ -110,7 +105,7 @@ func Ln(v fptypes.Value) (fptypes.Value, error) {
 	}
 	f, _ := d.Float64()
 	if f <= 0 {
-		return nil, fmt.Errorf("Ln: undefined for non-positive value %v", d)
+		return nil, nil // CQL: Ln of non-positive value returns null
 	}
 	result := math.Log(f)
 	return decimalToValue(decimal.NewFromFloat(result)), nil
@@ -251,10 +246,30 @@ func HighBoundary(v fptypes.Value, precision fptypes.Value) (fptypes.Value, erro
 	}
 	switch val := v.(type) {
 	case fptypes.Decimal:
-		// High boundary: fill remaining precision digits with 9
+		// High boundary: keep existing digits, fill remaining precision positions with 9
 		d := val.Value()
-		s := d.StringFixed(int32(prec))
-		return fptypes.NewDecimal(s)
+		s := d.String()
+		// Find current number of decimal digits
+		dotIdx := strings.IndexByte(s, '.')
+		currentDecimals := 0
+		if dotIdx >= 0 {
+			currentDecimals = len(s) - dotIdx - 1
+		}
+		if int64(currentDecimals) >= prec {
+			// Already at or beyond target precision, just format
+			return fptypes.NewDecimal(d.StringFixed(int32(prec)))
+		}
+		// Fill remaining digits with 9
+		result := d.StringFixed(int32(prec))
+		// Replace trailing zeros (after current precision) with 9s
+		runes := []byte(result)
+		resultDotIdx := strings.IndexByte(result, '.')
+		if resultDotIdx >= 0 {
+			for i := resultDotIdx + 1 + currentDecimals; i < len(runes); i++ {
+				runes[i] = '9'
+			}
+		}
+		return fptypes.NewDecimal(string(runes))
 	case fptypes.Integer:
 		return val, nil
 	case fptypes.DateTime:

@@ -14,6 +14,10 @@ func ToString(v fptypes.Value) fptypes.Value {
 	if v == nil {
 		return nil
 	}
+	// CQL: ToString(Quantity) returns "value 'unit'"
+	if q, ok := v.(fptypes.Quantity); ok {
+		return fptypes.NewString(fmt.Sprintf("%s '%s'", q.Value().String(), q.Unit()))
+	}
 	return fptypes.NewString(v.String())
 }
 
@@ -96,13 +100,14 @@ func ToDateTime(v fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}
-	switch v.(type) {
+	switch val := v.(type) {
 	case fptypes.DateTime:
-		return v, nil
+		return val, nil
 	case fptypes.Date:
-		return fptypes.NewDateTime(v.String() + "T00:00:00")
+		// CQL: converting Date to DateTime preserves date precision (no time component)
+		return fptypes.NewDateTime(val.String())
 	case fptypes.String:
-		return fptypes.NewDateTime(v.String())
+		return fptypes.NewDateTime(val.Value())
 	default:
 		return nil, nil
 	}

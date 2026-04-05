@@ -385,6 +385,12 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		case ast.OpIntersect:
 			// list intersect null = null
 			return nil, nil
+		case ast.OpIn, ast.OpContains:
+			// CQL: null in/contains needs special handling — pass through to evalInContains
+			return e.evalInContains(n.Operator, left, right)
+		case ast.OpAdd:
+			// CQL: string + null = null (null propagation for string concat too)
+			return nil, nil
 		default:
 			return nil, nil
 		}
@@ -392,13 +398,31 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 
 	switch n.Operator {
 	case ast.OpEqual:
+		// CQL: Tuple equality returns null if any element comparison involves null
+		if lt, lok := left.(cqltypes.Tuple); lok {
+			if rt, rok := right.(cqltypes.Tuple); rok {
+				return tupleEqual(lt, rt)
+			}
+		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
 	case ast.OpNotEqual:
+		if lt, lok := left.(cqltypes.Tuple); lok {
+			if rt, rok := right.(cqltypes.Tuple); rok {
+				eq, err := tupleEqual(lt, rt)
+				if err != nil {
+					return nil, err
+				}
+				if eq == nil {
+					return nil, nil
+				}
+				return fptypes.NewBoolean(!isTrue(eq)), nil
+			}
+		}
 		return fptypes.NewBoolean(!left.Equal(right)), nil
 	case ast.OpEquivalent:
-		return fptypes.NewBoolean(left.Equivalent(right)), nil
+		return fptypes.NewBoolean(cqlEquivalent(left, right)), nil
 	case ast.OpNotEquivalent:
-		return fptypes.NewBoolean(!left.Equivalent(right)), nil
+		return fptypes.NewBoolean(!cqlEquivalent(left, right)), nil
 
 	case ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
 		// Handle uncertainty intervals: Interval compared to scalar
@@ -665,19 +689,169 @@ func (e *Evaluator) evalSetOp(op ast.BinaryOp, left, right fptypes.Value) (fptyp
 	rc := toCollection(right)
 	switch op {
 	case ast.OpUnion:
-		return cqltypes.NewList(lc.Union(rc)), nil
+		return cqltypes.NewList(nullSafeUnion(lc, rc)), nil
 	case ast.OpIntersect:
-		return cqltypes.NewList(lc.Intersect(rc)), nil
+		return cqltypes.NewList(nullSafeIntersect(lc, rc)), nil
 	case ast.OpExcept:
-		return cqltypes.NewList(lc.Exclude(rc)), nil
+		return cqltypes.NewList(nullSafeExclude(lc, rc)), nil
 	}
 	return nil, nil
+}
+
+// nullSafeUnion performs union that handles nil elements properly.
+func nullSafeUnion(lc, rc fptypes.Collection) fptypes.Collection {
+	result := make(fptypes.Collection, 0, len(lc)+len(rc))
+	result = append(result, lc...)
+	for _, item := range rc {
+		if !nullSafeContains(result, item) {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+// nullSafeIntersect performs intersect that handles nil elements properly.
+func nullSafeIntersect(lc, rc fptypes.Collection) fptypes.Collection {
+	var result fptypes.Collection
+	for _, item := range lc {
+		if nullSafeContains(rc, item) && !nullSafeContains(result, item) {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+// nullSafeExclude performs except that handles nil elements properly.
+func nullSafeExclude(lc, rc fptypes.Collection) fptypes.Collection {
+	var result fptypes.Collection
+	for _, item := range lc {
+		if !nullSafeContains(rc, item) {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+// nullSafeContains checks if collection contains value, handling nil properly.
+func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
+	if v == nil {
+		for _, item := range c {
+			if item == nil {
+				return true
+			}
+		}
+		return false
+	}
+	for _, item := range c {
+		if item != nil && item.Equal(v) {
+			return true
+		}
+	}
+	return false
+}
+
+// cqlEquivalent implements CQL equivalence with precision-aware decimal comparison.
+func cqlEquivalent(left, right fptypes.Value) bool {
+	// Decimal equivalence: compare at the least precision (after stripping trailing zeros)
+	if ld, ok := left.(fptypes.Decimal); ok {
+		if rd, ok := right.(fptypes.Decimal); ok {
+			return decimalEquivalent(ld.Value(), rd.Value())
+		}
+		if ri, ok := right.(fptypes.Integer); ok {
+			return decimalEquivalent(ld.Value(), decimal.NewFromInt(ri.Value()))
+		}
+	}
+	if li, ok := left.(fptypes.Integer); ok {
+		if rd, ok := right.(fptypes.Decimal); ok {
+			return decimalEquivalent(decimal.NewFromInt(li.Value()), rd.Value())
+		}
+	}
+	return left.Equivalent(right)
+}
+
+// decimalEquivalent compares two decimals at the least precision after stripping trailing zeros.
+func decimalEquivalent(a, b decimal.Decimal) bool {
+	// Strip trailing zeros by converting to string and back
+	as := a.String()
+	bs := b.String()
+	// Count significant decimal places (after stripping trailing zeros)
+	aDec := decimalPlaces(as)
+	bDec := decimalPlaces(bs)
+	// Use the lesser precision
+	minDec := aDec
+	if bDec < minDec {
+		minDec = bDec
+	}
+	// Truncate both to the minimum precision and compare
+	aRound := a.Truncate(int32(minDec))
+	bRound := b.Truncate(int32(minDec))
+	return aRound.Equal(bRound)
+}
+
+// decimalPlaces returns the number of significant decimal places (after removing trailing zeros).
+func decimalPlaces(s string) int {
+	dotIdx := strings.IndexByte(s, '.')
+	if dotIdx < 0 {
+		return 0
+	}
+	frac := s[dotIdx+1:]
+	// Strip trailing zeros
+	frac = strings.TrimRight(frac, "0")
+	return len(frac)
+}
+
+// tupleEqual compares two tuples with CQL null semantics:
+// If a field is null on both sides, it's treated as matching.
+// If a field is null on one side but not the other, the whole comparison returns null.
+// If any non-null fields differ, returns false.
+func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
+	if len(a.Elements) != len(b.Elements) {
+		return fptypes.NewBoolean(false), nil
+	}
+	hasAsymmetricNull := false
+	for k, av := range a.Elements {
+		bv, exists := b.Elements[k]
+		if !exists {
+			return fptypes.NewBoolean(false), nil
+		}
+		if av == nil && bv == nil {
+			continue // both null → matching
+		}
+		if av == nil || bv == nil {
+			hasAsymmetricNull = true // one null, one not → indeterminate
+			continue
+		}
+		if !av.Equal(bv) {
+			return fptypes.NewBoolean(false), nil
+		}
+	}
+	if hasAsymmetricNull {
+		return nil, nil
+	}
+	return fptypes.NewBoolean(true), nil
+}
+
+// nullSafeDistinct removes duplicates from a collection, handling nil properly.
+func nullSafeDistinct(c fptypes.Collection) fptypes.Collection {
+	if len(c) <= 1 {
+		return c
+	}
+	result := make(fptypes.Collection, 0, len(c))
+	for _, item := range c {
+		if !nullSafeContains(result, item) {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
 	if op == ast.OpIn {
 		// left in right: check if left is in the right collection/interval
 		if interval, ok := right.(cqltypes.Interval); ok {
+			if left == nil {
+				return nil, nil // CQL: null in Interval → null
+			}
 			result, err := interval.Contains(left)
 			if err != nil {
 				if isAmbiguousComparisonErr(err) {
@@ -688,10 +862,30 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 			return fptypes.NewBoolean(result), nil
 		}
 		rc := toCollection(right)
-		return fptypes.NewBoolean(rc.Contains(left)), nil
+		// CQL: null in {1, null} = true; null in {} = false; null in {1,2} = null
+		if left == nil {
+			hasNull := false
+			for _, item := range rc {
+				if item == nil {
+					hasNull = true
+					break
+				}
+			}
+			if len(rc) == 0 {
+				return fptypes.NewBoolean(false), nil
+			}
+			if hasNull {
+				return fptypes.NewBoolean(true), nil
+			}
+			return nil, nil
+		}
+		return fptypes.NewBoolean(listContainsValue(rc, left)), nil
 	}
 	// contains: right in left
 	if interval, ok := left.(cqltypes.Interval); ok {
+		if right == nil {
+			return nil, nil // CQL: Interval contains null → null
+		}
 		result, err := interval.Contains(right)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
@@ -702,7 +896,21 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 		return fptypes.NewBoolean(result), nil
 	}
 	lc := toCollection(left)
-	return fptypes.NewBoolean(lc.Contains(right)), nil
+	// CQL: {1, null} contains null = true; {} contains null = null
+	if right == nil {
+		hasNull := false
+		for _, item := range lc {
+			if item == nil {
+				hasNull = true
+				break
+			}
+		}
+		if hasNull {
+			return fptypes.NewBoolean(true), nil
+		}
+		return nil, nil
+	}
+	return fptypes.NewBoolean(listContainsValue(lc, right)), nil
 }
 
 // ---------------------------------------------------------------------------
@@ -726,7 +934,13 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 			return fptypes.NewBoolean(false), nil
 		}
 		if list, ok := operand.(cqltypes.List); ok {
-			return fptypes.NewBoolean(!list.IsEmpty()), nil
+			// CQL: Exists returns true if collection has any non-null elements
+			for _, v := range list.Values {
+				if v != nil {
+					return fptypes.NewBoolean(true), nil
+				}
+			}
+			return fptypes.NewBoolean(false), nil
 		}
 		return fptypes.NewBoolean(true), nil
 	case ast.OpNegate:
@@ -745,7 +959,7 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		return operand, nil
 	case ast.OpDistinct:
 		c := toCollection(operand)
-		return cqltypes.NewList(c.Distinct()), nil
+		return cqltypes.NewList(nullSafeDistinct(c)), nil
 	case ast.OpFlatten:
 		return e.evalFlatten(operand), nil
 	case ast.OpSingletonFrom:
@@ -789,6 +1003,10 @@ func (e *Evaluator) evalFlatten(val fptypes.Value) fptypes.Value {
 	c := toCollection(val)
 	result := make(fptypes.Collection, 0, len(c))
 	for _, item := range c {
+		if item == nil {
+			result = append(result, nil)
+			continue
+		}
 		if list, ok := item.(cqltypes.List); ok {
 			result = append(result, list.Values...)
 		} else {
@@ -851,14 +1069,11 @@ func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Val
 			delta = -1
 		}
 		result := funcs.AdjustTime(tv, delta)
-		// Check for overflow/underflow
-		if resultTime, ok := result.(fptypes.Time); ok {
-			if op == ast.OpSuccessorOf && resultTime.Hour() < tv.Hour() {
+		if result == nil {
+			if op == ast.OpSuccessorOf {
 				return nil, fmt.Errorf("successor overflow: Time exceeds maximum")
 			}
-			if op != ast.OpSuccessorOf && resultTime.Hour() > tv.Hour() {
-				return nil, fmt.Errorf("predecessor underflow: Time below minimum")
-			}
+			return nil, fmt.Errorf("predecessor underflow: Time below minimum")
 		}
 		return result, nil
 	}
@@ -933,7 +1148,18 @@ func (e *Evaluator) evalIs(n *ast.IsExpression) (fptypes.Value, error) {
 	if !ok {
 		return fptypes.NewBoolean(false), nil
 	}
-	return fptypes.NewBoolean(strings.EqualFold(operand.Type(), nt.Name)), nil
+	typeName := nt.Name
+	operandType := operand.Type()
+	if strings.EqualFold(operandType, typeName) {
+		return fptypes.NewBoolean(true), nil
+	}
+	// CQL: Vocabulary is a supertype of ValueSet and CodeSystem
+	if strings.EqualFold(typeName, "Vocabulary") {
+		if strings.EqualFold(operandType, "ValueSet") || strings.EqualFold(operandType, "CodeSystem") {
+			return fptypes.NewBoolean(true), nil
+		}
+	}
+	return fptypes.NewBoolean(false), nil
 }
 
 func (e *Evaluator) evalAs(n *ast.AsExpression) (fptypes.Value, error) {
@@ -1133,8 +1359,19 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		c := toCollection(src)
-		return fptypes.NewBoolean(!c.Empty()), nil
+		if src == nil {
+			return fptypes.NewBoolean(false), nil
+		}
+		// CQL: Exists returns true if collection has any non-null elements
+		if list, ok := src.(cqltypes.List); ok {
+			for _, v := range list.Values {
+				if v != nil {
+					return fptypes.NewBoolean(true), nil
+				}
+			}
+			return fptypes.NewBoolean(false), nil
+		}
+		return fptypes.NewBoolean(true), nil
 	case "first":
 		src, err := resolveSource()
 		if err != nil {
@@ -1160,10 +1397,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		if src != nil {
-			return fptypes.NewString(src.String()), nil
-		}
-		return nil, nil
+		return funcs.ToString(src), nil
 	case "tointeger":
 		src, err := resolveSource()
 		if err != nil {
@@ -1203,7 +1437,10 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if s, ok := src.(fptypes.String); ok {
 			return fptypes.NewInteger(int64(len(s.Value()))), nil
 		}
-		// List length
+		// List length — count all elements including nulls
+		if list, ok := src.(cqltypes.List); ok {
+			return fptypes.NewInteger(int64(len(list.Values))), nil
+		}
 		c := toCollection(src)
 		return fptypes.NewInteger(int64(c.Count())), nil
 	case "coalesce":
@@ -1282,7 +1519,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
-		return cqltypes.NewList(c.Distinct()), nil
+		return cqltypes.NewList(nullSafeDistinct(c)), nil
 
 	// Clinical functions
 	case "ageinyears":
@@ -1417,11 +1654,15 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
+			// CQL: IndexOf(list, null) = null
+			if arg == nil {
+				return nil, nil
+			}
 			// If source is a list/collection, do list IndexOf
 			if _, isList := src.(cqltypes.List); isList {
 				c := toCollection(src)
 				for i, item := range c {
-					if item != nil && arg != nil && item.Equal(arg) {
+					if item != nil && item.Equal(arg) {
 						return fptypes.NewInteger(int64(i)), nil
 					}
 				}
@@ -2147,6 +2388,7 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	if err != nil {
 		return nil, err
 	}
+	_, sourceIsList := source.(cqltypes.List)
 	items := toCollection(source)
 
 	// Process each item
@@ -2241,7 +2483,7 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 		// Collect items after filtering (re-process with where/with/without)
 		filteredItems := toCollection(source)
 		if n.Aggregate.Distinct {
-			filteredItems = filteredItems.Distinct()
+			filteredItems = nullSafeDistinct(filteredItems)
 		}
 
 		for i, item := range filteredItems {
@@ -2283,7 +2525,7 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 
 	// Apply distinct if specified
 	if n.Return != nil && n.Return.Distinct {
-		results = results.Distinct()
+		results = nullSafeDistinct(results)
 	}
 
 	// Apply sort clause
@@ -2327,6 +2569,10 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 		}
 	}
 
+	// CQL: if the source was a single scalar value (not a list), return a scalar
+	if !sourceIsList && len(n.Sources) == 1 && len(results) == 1 {
+		return results[0], nil
+	}
 	return cqltypes.NewList(results), nil
 }
 
@@ -2420,6 +2666,10 @@ func (e *Evaluator) evalIntervalExpr(n *ast.IntervalExpression) (fptypes.Value, 
 	if err != nil {
 		return nil, err
 	}
+	// CQL: Interval[null, null] evaluates to null
+	if low == nil && high == nil {
+		return nil, nil
+	}
 	return cqltypes.NewInterval(low, high, n.LowClosed, n.HighClosed), nil
 }
 
@@ -2444,7 +2694,12 @@ func (e *Evaluator) evalInstanceExpr(n *ast.InstanceExpression) (fptypes.Value, 
 		}
 		elements[elem.Name] = val
 	}
-	return cqltypes.NewTuple(elements), nil
+	t := cqltypes.NewTuple(elements)
+	// Preserve the instance type name (e.g., "ValueSet", "CodeSystem")
+	if n.Type != nil && n.Type.Name != "" {
+		t.TypeOverride = n.Type.Name
+	}
+	return t, nil
 }
 
 func (e *Evaluator) evalListExpr(n *ast.ListExpression) (fptypes.Value, error) {
@@ -2454,9 +2709,8 @@ func (e *Evaluator) evalListExpr(n *ast.ListExpression) (fptypes.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		if val != nil {
-			values = append(values, val)
-		}
+		// CQL lists preserve null elements
+		values = append(values, val)
 	}
 	return cqltypes.NewList(values), nil
 }
@@ -2504,16 +2758,9 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 	if err != nil {
 		return nil, err
 	}
-	// Null propagation: null in X or X contains null → null
+	// Pass through to evalInContains which handles null properly
 	if n.Operator == "in" {
-		if left == nil {
-			return nil, nil
-		}
 		return e.evalInContains(ast.OpIn, left, right)
-	}
-	// contains: if right (the element) is null → null
-	if right == nil {
-		return nil, nil
 	}
 	return e.evalInContains(ast.OpContains, left, right)
 }
@@ -2587,24 +2834,35 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		return nil, err
 	}
 	// For includes/includedIn/contains/in with lists, don't short-circuit on nil
-	// because null can be a valid list element. For other operations, nil propagates.
-	if left == nil || right == nil {
-		switch n.Operator.Kind {
-		case ast.TimingIncludes, ast.TimingIncludedIn, ast.TimingDuring:
-			// Allow null through for list operations
-		default:
-			return nil, nil
-		}
-	}
-
-	// Handle list-based operations (includes, includedIn, union, intersect, except, etc.)
+	// Handle list-based operations first (before null propagation)
 	leftList, leftIsList := left.(cqltypes.List)
 	rightList, rightIsList := right.(cqltypes.List)
 	if leftIsList || rightIsList {
+		// For includes/includedIn: null scalar with list needs special handling
+		switch n.Operator.Kind {
+		case ast.TimingIncludes:
+			if leftIsList && !rightIsList {
+				// list includes null-scalar: check if null is in the list
+				return e.evalListTimingOp(leftList, rightList, leftIsList, rightIsList, left, right, n.Operator)
+			}
+			if !leftIsList && left == nil {
+				// null includes list → null
+				return nil, nil
+			}
+		case ast.TimingIncludedIn, ast.TimingDuring:
+			if rightIsList && !leftIsList {
+				// null-scalar included in list: check if null is in the list
+				return e.evalListTimingOp(leftList, rightList, leftIsList, rightIsList, left, right, n.Operator)
+			}
+			if !rightIsList && right == nil {
+				// list included in null → null
+				return nil, nil
+			}
+		}
 		return e.evalListTimingOp(leftList, rightList, leftIsList, rightIsList, left, right, n.Operator)
 	}
 
-	// After list handling, null-propagate if we haven't already
+	// Null propagation for non-list operations
 	if left == nil || right == nil {
 		return nil, nil
 	}
@@ -2738,15 +2996,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 
 // listContainsValue checks if a collection contains a value (including nil/null).
 func listContainsValue(c fptypes.Collection, val fptypes.Value) bool {
-	if val == nil {
-		for _, item := range c {
-			if item == nil {
-				return true
-			}
-		}
-		return false
-	}
-	return c.Contains(val)
+	return nullSafeContains(c, val)
 }
 
 // evalListTimingOp handles timing operations when one or both operands are lists.
@@ -2758,6 +3008,27 @@ func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsLi
 	case ast.TimingIncludes:
 		if leftIsList && !rightIsList {
 			// list includes scalar (properly contains / contains)
+			if right == nil {
+				hasNull := false
+				for _, item := range lc {
+					if item == nil {
+						hasNull = true
+						break
+					}
+				}
+				if hasNull {
+					if op.Properly {
+						return fptypes.NewBoolean(lc.Count() > 1), nil
+					}
+					return fptypes.NewBoolean(true), nil
+				}
+				// CQL: for "properly includes null" when null not in list → false
+				// For regular "includes null" when null not in list → null
+				if op.Properly {
+					return fptypes.NewBoolean(false), nil
+				}
+				return nil, nil
+			}
 			found := listContainsValue(lc, right)
 			if op.Properly {
 				return fptypes.NewBoolean(found && lc.Count() > 1), nil
@@ -2785,6 +3056,27 @@ func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsLi
 	case ast.TimingIncludedIn, ast.TimingDuring:
 		if rightIsList && !leftIsList {
 			// scalar included in list (properly in / in)
+			if left == nil {
+				hasNull := false
+				for _, item := range rc {
+					if item == nil {
+						hasNull = true
+						break
+					}
+				}
+				if hasNull {
+					if op.Properly {
+						return fptypes.NewBoolean(rc.Count() > 1), nil
+					}
+					return fptypes.NewBoolean(true), nil
+				}
+				// CQL: for "null properly included in list" when null not in list → false
+				// For regular "null included in list" when null not in list → null
+				if op.Properly {
+					return fptypes.NewBoolean(false), nil
+				}
+				return nil, nil
+			}
 			found := listContainsValue(rc, left)
 			if op.Properly {
 				return fptypes.NewBoolean(found && rc.Count() > 1), nil
@@ -2824,7 +3116,7 @@ func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsLi
 		return fptypes.NewBoolean(true), nil
 
 	case ast.TimingOverlaps:
-		inter := lc.Intersect(rc)
+		inter := nullSafeIntersect(lc, rc)
 		return fptypes.NewBoolean(len(inter) > 0), nil
 
 	default:
@@ -3003,28 +3295,57 @@ func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Val
 	if operand == nil {
 		return nil, nil
 	}
-	c := toCollection(operand)
+
+	// Evaluate per quantity if present
+	var perVal fptypes.Value
+	if n.Per != nil {
+		perVal, err = e.Eval(n.Per)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	switch n.Kind {
 	case "expand":
-		// Expand intervals into point lists
+		// Two overloads:
+		// 1. expand Interval[a, b] → returns list of point values
+		// 2. expand { Interval[a, b] } → returns list of unit intervals
+		if iv, ok := operand.(cqltypes.Interval); ok {
+			// Single interval overload — returns point values
+			points, err := funcs.IntervalExpandPoints(iv, perVal)
+			if err != nil {
+				return nil, err
+			}
+			return cqltypes.NewList(points), nil
+		}
+		// List-of-intervals overload — returns unit intervals
+		c := toCollection(operand)
 		var result fptypes.Collection
 		for _, item := range c {
 			if iv, ok := item.(cqltypes.Interval); ok {
-				points, err := funcs.IntervalExpand(iv, decimal.Zero)
+				intervals, err := funcs.IntervalExpandIntervals(iv, perVal)
 				if err != nil {
 					return nil, err
 				}
-				result = append(result, points...)
+				result = append(result, intervals...)
 			}
 		}
 		return cqltypes.NewList(result), nil
 	case "collapse":
 		// Collapse overlapping intervals
+		c := toCollection(operand)
 		var intervals []cqltypes.Interval
 		for _, item := range c {
 			if iv, ok := item.(cqltypes.Interval); ok {
+				// CQL: Interval(null, null) is excluded from collapse
+				if iv.Low == nil && iv.High == nil {
+					continue
+				}
 				intervals = append(intervals, iv)
 			}
+		}
+		if len(intervals) == 0 {
+			return cqltypes.NewList(nil), nil
 		}
 		collapsed, err := funcs.IntervalCollapse(intervals)
 		if err != nil {
@@ -3097,14 +3418,53 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 	if c.Empty() {
 		return nil, nil
 	}
-	sum := decimal.Zero
+	// Check if we have Quantity values
+	var firstQ fptypes.Quantity
+	hasQ := false
 	for _, item := range c {
+		if item == nil {
+			continue
+		}
+		if q, ok := item.(fptypes.Quantity); ok {
+			firstQ = q
+			hasQ = true
+			break
+		}
+	}
+	if hasQ {
+		sum := firstQ.Value()
+		unit := firstQ.Unit()
+		first := true
+		for _, item := range c {
+			if item == nil {
+				continue
+			}
+			if q, ok := item.(fptypes.Quantity); ok {
+				if first {
+					first = false
+					continue
+				}
+				sum = sum.Add(q.Value())
+			}
+		}
+		return fptypes.NewQuantityFromDecimal(sum, unit), nil
+	}
+	sum := decimal.Zero
+	allInt := true
+	for _, item := range c {
+		if item == nil {
+			continue
+		}
 		if i, ok := item.(fptypes.Integer); ok {
 			sum = sum.Add(decimal.NewFromInt(i.Value()))
 		} else {
+			allInt = false
 			d := toDecimal(item)
 			sum = sum.Add(d)
 		}
+	}
+	if allInt {
+		return fptypes.NewInteger(sum.IntPart()), nil
 	}
 	return newDecimalFromD(sum), nil
 }
@@ -3115,11 +3475,19 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 		return nil, nil
 	}
 	sum := decimal.Zero
+	count := int64(0)
 	for _, item := range c {
+		if item == nil {
+			continue
+		}
 		d := toDecimal(item)
 		sum = sum.Add(d)
+		count++
 	}
-	return newDecimalFromD(sum.Div(decimal.NewFromInt(int64(c.Count())))), nil
+	if count == 0 {
+		return nil, nil
+	}
+	return newDecimalFromD(sum.Div(decimal.NewFromInt(count))), nil
 }
 
 func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptypes.Value, error) {
@@ -3127,8 +3495,15 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 	if c.Empty() {
 		return nil, nil
 	}
-	result := c[0]
-	for _, item := range c[1:] {
+	var result fptypes.Value
+	for _, item := range c {
+		if item == nil {
+			continue
+		}
+		if result == nil {
+			result = item
+			continue
+		}
 		comp, ok := result.(fptypes.Comparable)
 		if !ok {
 			continue
@@ -3153,7 +3528,7 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 	product := decimal.NewFromInt(1)
 	for _, item := range c {
 		if item == nil {
-			return nil, nil
+			continue
 		}
 		if i, ok := item.(fptypes.Integer); ok {
 			product = product.Mul(decimal.NewFromInt(i.Value()))

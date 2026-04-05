@@ -307,6 +307,10 @@ func AdjustTime(t fptypes.Time, delta int) fptypes.Value {
 		m -= 60
 		h++
 	}
+	// Detect overflow/underflow
+	if h >= 24 || h < 0 {
+		return nil // signal overflow/underflow
+	}
 	// Construct time string based on precision
 	var str string
 	switch prec {

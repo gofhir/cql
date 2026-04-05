@@ -10,7 +10,8 @@ import (
 
 // Tuple represents a CQL Tuple — an ordered set of named elements.
 type Tuple struct {
-	Elements map[string]fptypes.Value
+	Elements     map[string]fptypes.Value
+	TypeOverride string // optional type name for instance expressions (e.g., "ValueSet")
 }
 
 // NewTuple creates a new Tuple from a map of named values.
@@ -21,12 +22,17 @@ func NewTuple(elements map[string]fptypes.Value) Tuple {
 	return Tuple{Elements: elements}
 }
 
-// Type returns "Tuple".
+// Type returns "Tuple" or the overridden type name for instance expressions.
 func (t Tuple) Type() string {
+	if t.TypeOverride != "" {
+		return t.TypeOverride
+	}
 	return "Tuple"
 }
 
 // Equal checks exact equality: same keys, same values.
+// Returns false if structurally different, but note that CQL equality
+// with null fields should return null — this is handled at the evaluator level.
 func (t Tuple) Equal(other fptypes.Value) bool {
 	o, ok := other.(Tuple)
 	if !ok {
