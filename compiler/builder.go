@@ -793,13 +793,80 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 	if len(exprs) < 2 {
 		return nil
 	}
-	// For Phase 1, capture timing as a simplified AST node
+	left := b.visitExpression(exprs[0])
+	right := b.visitExpression(exprs[1])
+
+	op := ast.TimingOp{Kind: ast.TimingSameAs}
+
+	// Parse the IntervalOperatorPhrase to determine the actual operator
+	iop := ctx.IntervalOperatorPhrase()
+	if iop != nil {
+		switch phrase := iop.(type) {
+		case *grammar.ConcurrentWithIntervalOperatorPhraseContext:
+			// 'same [precision] (as | or before | or after)'
+			op.Kind = ast.TimingSameAs
+			if dtp := phrase.DateTimePrecision(); dtp != nil {
+				op.Precision = strings.ToLower(dtp.GetText())
+			}
+			if rq := phrase.RelativeQualifier(); rq != nil {
+				text := strings.ToLower(rq.GetText())
+				if strings.Contains(text, "before") {
+					op.Before = true // same or before
+				} else if strings.Contains(text, "after") {
+					op.After = true // same or after
+				}
+			}
+		case *grammar.BeforeOrAfterIntervalOperatorPhraseContext:
+			// '[starts|ends|occurs] [quantityOffset] temporalRelationship [dateTimePrecisionSpecifier]'
+			// temporalRelationship: ['on or'] ('before'|'after') | ('before'|'after') ['or on']
+			if tr := phrase.TemporalRelationship(); tr != nil {
+				text := strings.ToLower(tr.GetText())
+				hasOnOr := strings.Contains(text, "on or") || strings.Contains(text, "or on")
+				if hasOnOr {
+					// "on or before" / "on or after" / "before or on" / "after or on"
+					// These are same-or-before / same-or-after semantics
+					op.Kind = ast.TimingSameAs
+					if strings.Contains(text, "before") {
+						op.Before = true
+					} else if strings.Contains(text, "after") {
+						op.After = true
+					}
+				} else {
+					// plain "before" / "after"
+					op.Kind = ast.TimingBeforeOrAfter
+					if strings.Contains(text, "before") {
+						op.Before = true
+					} else if strings.Contains(text, "after") {
+						op.After = true
+					}
+				}
+			}
+			if dtps := phrase.DateTimePrecisionSpecifier(); dtps != nil {
+				if dtp := dtps.DateTimePrecision(); dtp != nil {
+					op.Precision = strings.ToLower(dtp.GetText())
+				}
+			}
+		case *grammar.IncludesIntervalOperatorPhraseContext:
+			op.Kind = ast.TimingIncludes
+		case *grammar.IncludedInIntervalOperatorPhraseContext:
+			op.Kind = ast.TimingIncludedIn
+		case *grammar.MeetsIntervalOperatorPhraseContext:
+			op.Kind = ast.TimingMeets
+		case *grammar.OverlapsIntervalOperatorPhraseContext:
+			op.Kind = ast.TimingOverlaps
+		case *grammar.StartsIntervalOperatorPhraseContext:
+			op.Kind = ast.TimingStarts
+		case *grammar.EndsIntervalOperatorPhraseContext:
+			op.Kind = ast.TimingEnds
+		case *grammar.WithinIntervalOperatorPhraseContext:
+			op.Kind = ast.TimingWithin
+		}
+	}
+
 	return &ast.TimingExpression{
-		Left:  b.visitExpression(exprs[0]),
-		Right: b.visitExpression(exprs[1]),
-		Operator: ast.TimingOp{
-			Kind: ast.TimingSameAs, // simplified for Phase 1
-		},
+		Left:     left,
+		Right:    right,
+		Operator: op,
 	}
 }
 

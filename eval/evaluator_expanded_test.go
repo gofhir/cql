@@ -458,6 +458,309 @@ func TestEval_Query_EmptySource(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Sort clause
+// ---------------------------------------------------------------------------
+
+func TestEval_Query_SortAsc(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	// from {3, 1, 4, 1, 5} X sort asc
+	expr := &ast.Query{
+		Sources: []*ast.AliasedSource{
+			{
+				Source: &ast.ListExpression{
+					Elements: []ast.Expression{
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "3"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "4"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "5"},
+					},
+				},
+				Alias: "X",
+			},
+		},
+		Sort: &ast.SortClause{
+			Direction: ast.SortAsc,
+		},
+	}
+	val, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	list, ok := val.(cqltypes.List)
+	if !ok {
+		t.Fatalf("expected List, got %T", val)
+	}
+	expected := []int64{1, 1, 3, 4, 5}
+	if list.Values.Count() != len(expected) {
+		t.Fatalf("expected %d items, got %d", len(expected), list.Values.Count())
+	}
+	for i, exp := range expected {
+		assertInteger(t, list.Values[i], exp)
+	}
+}
+
+func TestEval_Query_SortDesc(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	// from {3, 1, 4, 1, 5} X sort desc
+	expr := &ast.Query{
+		Sources: []*ast.AliasedSource{
+			{
+				Source: &ast.ListExpression{
+					Elements: []ast.Expression{
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "3"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "4"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "5"},
+					},
+				},
+				Alias: "X",
+			},
+		},
+		Sort: &ast.SortClause{
+			Direction: ast.SortDesc,
+		},
+	}
+	val, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	list, ok := val.(cqltypes.List)
+	if !ok {
+		t.Fatalf("expected List, got %T", val)
+	}
+	expected := []int64{5, 4, 3, 1, 1}
+	if list.Values.Count() != len(expected) {
+		t.Fatalf("expected %d items, got %d", len(expected), list.Values.Count())
+	}
+	for i, exp := range expected {
+		assertInteger(t, list.Values[i], exp)
+	}
+}
+
+func TestEval_Query_SortByExpression(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	// from {5, 2, 8, 1, 9} X sort by X asc
+	expr := &ast.Query{
+		Sources: []*ast.AliasedSource{
+			{
+				Source: &ast.ListExpression{
+					Elements: []ast.Expression{
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "5"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "2"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "8"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "9"},
+					},
+				},
+				Alias: "X",
+			},
+		},
+		Sort: &ast.SortClause{
+			ByItems: []*ast.SortByItem{
+				{
+					Expression: &ast.IdentifierRef{Name: "X"},
+					Direction:  ast.SortAsc,
+				},
+			},
+		},
+	}
+	val, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	list, ok := val.(cqltypes.List)
+	if !ok {
+		t.Fatalf("expected List, got %T", val)
+	}
+	expected := []int64{1, 2, 5, 8, 9}
+	if list.Values.Count() != len(expected) {
+		t.Fatalf("expected %d items, got %d", len(expected), list.Values.Count())
+	}
+	for i, exp := range expected {
+		assertInteger(t, list.Values[i], exp)
+	}
+}
+
+func TestEval_Query_SortByExpressionDesc(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	// from {5, 2, 8, 1, 9} X sort by X desc
+	expr := &ast.Query{
+		Sources: []*ast.AliasedSource{
+			{
+				Source: &ast.ListExpression{
+					Elements: []ast.Expression{
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "5"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "2"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "8"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "9"},
+					},
+				},
+				Alias: "X",
+			},
+		},
+		Sort: &ast.SortClause{
+			ByItems: []*ast.SortByItem{
+				{
+					Expression: &ast.IdentifierRef{Name: "X"},
+					Direction:  ast.SortDesc,
+				},
+			},
+		},
+	}
+	val, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	list, ok := val.(cqltypes.List)
+	if !ok {
+		t.Fatalf("expected List, got %T", val)
+	}
+	expected := []int64{9, 8, 5, 2, 1}
+	if list.Values.Count() != len(expected) {
+		t.Fatalf("expected %d items, got %d", len(expected), list.Values.Count())
+	}
+	for i, exp := range expected {
+		assertInteger(t, list.Values[i], exp)
+	}
+}
+
+func TestEval_Query_SortByStringAsc(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	// from {'banana', 'apple', 'cherry'} X sort by X asc
+	expr := &ast.Query{
+		Sources: []*ast.AliasedSource{
+			{
+				Source: &ast.ListExpression{
+					Elements: []ast.Expression{
+						&ast.Literal{ValueType: ast.LiteralString, Value: "banana"},
+						&ast.Literal{ValueType: ast.LiteralString, Value: "apple"},
+						&ast.Literal{ValueType: ast.LiteralString, Value: "cherry"},
+					},
+				},
+				Alias: "X",
+			},
+		},
+		Sort: &ast.SortClause{
+			ByItems: []*ast.SortByItem{
+				{
+					Expression: &ast.IdentifierRef{Name: "X"},
+					Direction:  ast.SortAsc,
+				},
+			},
+		},
+	}
+	val, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	list, ok := val.(cqltypes.List)
+	if !ok {
+		t.Fatalf("expected List, got %T", val)
+	}
+	expectedStrs := []string{"apple", "banana", "cherry"}
+	if list.Values.Count() != len(expectedStrs) {
+		t.Fatalf("expected %d items, got %d", len(expectedStrs), list.Values.Count())
+	}
+	for i, exp := range expectedStrs {
+		s, ok := list.Values[i].(fptypes.String)
+		if !ok {
+			t.Fatalf("item %d: expected String, got %T", i, list.Values[i])
+		}
+		if s.Value() != exp {
+			t.Errorf("item %d: expected %q, got %q", i, exp, s.Value())
+		}
+	}
+}
+
+func TestEval_Query_SortEmptyList(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	expr := &ast.Query{
+		Sources: []*ast.AliasedSource{
+			{
+				Source: &ast.ListExpression{Elements: nil},
+				Alias:  "X",
+			},
+		},
+		Sort: &ast.SortClause{
+			Direction: ast.SortAsc,
+		},
+	}
+	val, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	list, ok := val.(cqltypes.List)
+	if !ok {
+		t.Fatalf("expected List, got %T", val)
+	}
+	if list.Values.Count() != 0 {
+		t.Errorf("expected empty list, got %d items", list.Values.Count())
+	}
+}
+
+func TestEval_Query_SortStableOrder(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	// from {3, 1, 4, 1, 5, 9, 2, 6, 5, 3} X sort asc
+	// Verifies stable sort: equal elements maintain original relative order
+	expr := &ast.Query{
+		Sources: []*ast.AliasedSource{
+			{
+				Source: &ast.ListExpression{
+					Elements: []ast.Expression{
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "3"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "4"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "5"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "9"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "2"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "6"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "5"},
+						&ast.Literal{ValueType: ast.LiteralInteger, Value: "3"},
+					},
+				},
+				Alias: "X",
+			},
+		},
+		Sort: &ast.SortClause{
+			Direction: ast.SortAsc,
+		},
+	}
+	val, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	list, ok := val.(cqltypes.List)
+	if !ok {
+		t.Fatalf("expected List, got %T", val)
+	}
+	expected := []int64{1, 1, 2, 3, 3, 4, 5, 5, 6, 9}
+	if list.Values.Count() != len(expected) {
+		t.Fatalf("expected %d items, got %d", len(expected), list.Values.Count())
+	}
+	for i, exp := range expected {
+		assertInteger(t, list.Values[i], exp)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Division by zero (CQL spec: returns null)
 // ---------------------------------------------------------------------------
 

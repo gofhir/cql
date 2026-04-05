@@ -370,6 +370,26 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		return fptypes.NewBoolean(!left.Equivalent(right)), nil
 
 	case ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
+		// Handle uncertainty intervals: Interval compared to scalar
+		if iv, ok := left.(cqltypes.Interval); ok {
+			return compareIntervalWithScalar(iv, right, n.Operator)
+		}
+		if iv, ok := right.(cqltypes.Interval); ok {
+			// Flip the comparison direction
+			flipped := n.Operator
+			switch flipped {
+			case ast.OpLess:
+				flipped = ast.OpGreater
+			case ast.OpLessOrEqual:
+				flipped = ast.OpGreaterOrEqual
+			case ast.OpGreater:
+				flipped = ast.OpLess
+			case ast.OpGreaterOrEqual:
+				flipped = ast.OpLessOrEqual
+			}
+			return compareIntervalWithScalar(iv, left, flipped)
+		}
+
 		// Promote Decimal to Quantity (unit "1") when comparing with Quantity
 		if _, lIsQ := left.(fptypes.Quantity); lIsQ {
 			if rd, rIsD := right.(fptypes.Decimal); rIsD {
@@ -428,6 +448,22 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 // ---------------------------------------------------------------------------
 
 func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
+	// Handle uncertainty intervals: Interval op scalar → apply op to both bounds
+	leftIsIv, _ := left.(cqltypes.Interval)
+	rightIsIv, _ := right.(cqltypes.Interval)
+	_, leftIsInterval := left.(cqltypes.Interval)
+	_, rightIsInterval := right.(cqltypes.Interval)
+	if leftIsInterval || rightIsInterval {
+		// div and mod are not supported on uncertainty intervals
+		if op == ast.OpDiv || op == ast.OpMod {
+			return nil, fmt.Errorf("integer division (div/mod) is not supported on uncertainty intervals")
+		}
+		if leftIsInterval {
+			return intervalArithmetic(e, leftIsIv, right, op, false)
+		}
+		return intervalArithmetic(e, rightIsIv, left, op, true)
+	}
+
 	// Try integer arithmetic first
 	li, liOk := left.(fptypes.Integer)
 	ri, riOk := right.(fptypes.Integer)
@@ -1333,6 +1369,19 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return funcs.DateTimeConstructor(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
 		}
 		return nil, nil
+	case "time":
+		if len(n.Operands) >= 1 {
+			args := make([]fptypes.Value, 4)
+			for i := 0; i < len(n.Operands) && i < 4; i++ {
+				var err error
+				args[i], err = e.Eval(n.Operands[i])
+				if err != nil {
+					return nil, err
+				}
+			}
+			return funcs.TimeConstructor(args[0], args[1], args[2], args[3])
+		}
+		return nil, nil
 
 	// Interval functions
 	case "width":
@@ -1972,13 +2021,69 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	if err != nil {
 		return nil, err
 	}
+	if left == nil || right == nil {
+		return nil, nil
+	}
+
+	// Handle scalar temporal types (DateTime, Date, Time) with precision-aware comparison
+	if isTemporalType(left) && isTemporalType(right) {
+		return e.evalTemporalComparison(left, right, n.Operator)
+	}
+
 	leftIv, leftOk := left.(cqltypes.Interval)
 	rightIv, rightOk := right.(cqltypes.Interval)
+
+	// Handle Interval vs scalar DateTime for timing operations
+	if leftOk && !rightOk && isTemporalType(right) {
+		switch n.Operator.Kind {
+		case ast.TimingBeforeOrAfter:
+			if n.Operator.Before {
+				// Interval before scalar: interval.High before scalar
+				return e.evalTemporalComparison(leftIv.High, right, n.Operator)
+			}
+			// Interval after scalar: interval.Low after scalar
+			return e.evalTemporalComparison(leftIv.Low, right, n.Operator)
+		case ast.TimingSameAs:
+			if n.Operator.Before {
+				// Interval same or before scalar: interval.High same or before scalar
+				return e.evalTemporalComparison(leftIv.High, right, n.Operator)
+			}
+			if n.Operator.After {
+				// Interval same or after scalar: interval.Low same or after scalar
+				return e.evalTemporalComparison(leftIv.Low, right, n.Operator)
+			}
+		}
+	}
+	if !leftOk && rightOk && isTemporalType(left) {
+		switch n.Operator.Kind {
+		case ast.TimingBeforeOrAfter:
+			if n.Operator.Before {
+				// scalar before Interval: scalar before interval.Low
+				return e.evalTemporalComparison(left, rightIv.Low, n.Operator)
+			}
+			// scalar after Interval: scalar after interval.High
+			return e.evalTemporalComparison(left, rightIv.High, n.Operator)
+		case ast.TimingSameAs:
+			if n.Operator.Before {
+				return e.evalTemporalComparison(left, rightIv.Low, n.Operator)
+			}
+			if n.Operator.After {
+				return e.evalTemporalComparison(left, rightIv.High, n.Operator)
+			}
+		}
+	}
+
 	if !leftOk || !rightOk {
 		return nil, nil
 	}
 	switch n.Operator.Kind {
 	case ast.TimingSameAs:
+		if n.Operator.Before {
+			return funcs.SameOrBefore(leftIv, rightIv)
+		}
+		if n.Operator.After {
+			return funcs.SameOrAfter(leftIv, rightIv)
+		}
 		return fptypes.NewBoolean(leftIv.Equal(rightIv)), nil
 	case ast.TimingIncludes:
 		result, err := leftIv.Includes(rightIv)
@@ -2010,6 +2115,169 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	default:
 		return nil, nil
 	}
+}
+
+// evalTemporalComparison handles precision-aware comparison of scalar temporal values.
+func (e *Evaluator) evalTemporalComparison(left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
+	precision := op.Precision
+
+	switch op.Kind {
+	case ast.TimingSameAs:
+		if op.Before {
+			// same [precision] or before
+			return temporalSameOrBefore(left, right, precision)
+		}
+		if op.After {
+			// same [precision] or after
+			return temporalSameOrAfter(left, right, precision)
+		}
+		// same [precision] as
+		return temporalSameAs(left, right, precision)
+	case ast.TimingBeforeOrAfter:
+		if op.Before {
+			return temporalBefore(left, right, precision)
+		}
+		return temporalAfter(left, right, precision)
+	default:
+		return nil, nil
+	}
+}
+
+// temporalComponents extracts year, month, day, hour, minute, second, millisecond
+// from a temporal value. Returns the components and the maximum valid precision index.
+// Precision indices: 0=year, 1=month, 2=day, 3=hour, 4=minute, 5=second, 6=millisecond
+// For DateTime values with timezone info, normalizes to UTC first.
+func temporalComponents(v fptypes.Value) ([]int, int) {
+	switch t := v.(type) {
+	case fptypes.DateTime:
+		maxPrec := int(t.Precision())
+		if maxPrec > 6 {
+			maxPrec = 6
+		}
+		// If the DateTime has a timezone, normalize to UTC for comparison
+		if t.HasTZ() {
+			utc := t.ToTime().UTC()
+			comps := []int{utc.Year(), int(utc.Month()), utc.Day(), utc.Hour(), utc.Minute(), utc.Second(), utc.Nanosecond() / 1e6}
+			return comps, maxPrec
+		}
+		comps := []int{t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
+		return comps, maxPrec
+	case fptypes.Date:
+		comps := []int{t.Year(), t.Month(), t.Day(), 0, 0, 0, 0}
+		maxPrec := int(t.Precision()) // YearPrecision=0, MonthPrecision=1, DayPrecision=2
+		return comps, maxPrec
+	case fptypes.Time:
+		comps := []int{0, 0, 0, t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
+		maxPrec := int(t.Precision()) + 3 // HourPrecision=0->3, MinutePrecision=1->4, etc.
+		if maxPrec > 6 {
+			maxPrec = 6
+		}
+		return comps, maxPrec
+	default:
+		return nil, -1
+	}
+}
+
+// precisionIndex maps a precision string to a component index.
+func precisionIndex(precision string) int {
+	switch strings.ToLower(precision) {
+	case "year":
+		return 0
+	case "month":
+		return 1
+	case "day":
+		return 2
+	case "hour":
+		return 3
+	case "minute":
+		return 4
+	case "second":
+		return 5
+	case "millisecond":
+		return 6
+	default:
+		return -1
+	}
+}
+
+// temporalCompareAtPrecision compares two temporal values up to the given precision.
+// Returns -1, 0, or 1. If the comparison is uncertain (one operand doesn't have
+// enough precision), returns (0, false).
+func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (int, bool) {
+	lComps, lMaxPrec := temporalComponents(left)
+	rComps, rMaxPrec := temporalComponents(right)
+	if lComps == nil || rComps == nil {
+		return 0, false
+	}
+
+	targetPrec := precisionIndex(precision)
+	if targetPrec < 0 {
+		// No precision specified: use minimum of both precisions
+		targetPrec = lMaxPrec
+		if rMaxPrec < targetPrec {
+			targetPrec = rMaxPrec
+		}
+	}
+
+	// For Date types, start comparison at the appropriate index
+	startIdx := 0
+	if _, ok := left.(fptypes.Time); ok {
+		startIdx = 3
+	}
+
+	for i := startIdx; i <= targetPrec; i++ {
+		// If either operand doesn't have this component, the result is uncertain
+		if i > lMaxPrec || i > rMaxPrec {
+			return 0, false
+		}
+		if lComps[i] < rComps[i] {
+			return -1, true
+		}
+		if lComps[i] > rComps[i] {
+			return 1, true
+		}
+	}
+	return 0, true // equal at this precision
+}
+
+func temporalSameAs(left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+	if !certain {
+		return nil, nil
+	}
+	return fptypes.NewBoolean(cmp == 0), nil
+}
+
+func temporalBefore(left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+	if !certain {
+		return nil, nil
+	}
+	return fptypes.NewBoolean(cmp < 0), nil
+}
+
+func temporalAfter(left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+	if !certain {
+		return nil, nil
+	}
+	return fptypes.NewBoolean(cmp > 0), nil
+}
+
+func temporalSameOrBefore(left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+	if !certain {
+		return nil, nil
+	}
+	return fptypes.NewBoolean(cmp <= 0), nil
+}
+
+func temporalSameOrAfter(left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+	if !certain {
+		return nil, nil
+	}
+	return fptypes.NewBoolean(cmp >= 0), nil
 }
 
 func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Value, error) {
@@ -2251,6 +2519,116 @@ func isTemporalType(v fptypes.Value) bool {
 func isDecimal(v fptypes.Value) bool {
 	_, ok := v.(fptypes.Decimal)
 	return ok
+}
+
+// intervalArithmetic applies a binary arithmetic op to an uncertainty interval and a value.
+// If scalarIsLeft is true, the scalar is the left operand (e.g., scalar + Interval).
+// When the other operand is also an interval, computes all combinations and returns min/max.
+func intervalArithmetic(e *Evaluator, iv cqltypes.Interval, other fptypes.Value, op ast.BinaryOp, scalarIsLeft bool) (fptypes.Value, error) {
+	// Collect the bounds of both operands
+	leftBounds := []fptypes.Value{iv.Low, iv.High}
+	var rightBounds []fptypes.Value
+	if iv2, ok := other.(cqltypes.Interval); ok {
+		rightBounds = []fptypes.Value{iv2.Low, iv2.High}
+	} else {
+		rightBounds = []fptypes.Value{other}
+	}
+
+	// Compute all combinations
+	var results []fptypes.Value
+	for _, lb := range leftBounds {
+		for _, rb := range rightBounds {
+			var r fptypes.Value
+			var err error
+			if scalarIsLeft {
+				r, err = e.evalArithmetic(op, rb, lb)
+			} else {
+				r, err = e.evalArithmetic(op, lb, rb)
+			}
+			if err != nil {
+				return nil, err
+			}
+			if r != nil {
+				results = append(results, r)
+			}
+		}
+	}
+	if len(results) == 0 {
+		return nil, nil
+	}
+
+	// Find min and max
+	minVal := results[0]
+	maxVal := results[0]
+	for _, r := range results[1:] {
+		if rc, ok := r.(fptypes.Comparable); ok {
+			if cmp, err := rc.Compare(minVal); err == nil && cmp < 0 {
+				minVal = r
+			}
+			if cmp, err := rc.Compare(maxVal); err == nil && cmp > 0 {
+				maxVal = r
+			}
+		}
+	}
+
+	if minVal.Equal(maxVal) {
+		return minVal, nil
+	}
+	return cqltypes.NewInterval(minVal, maxVal, true, true), nil
+}
+
+// compareIntervalWithScalar compares an uncertainty interval with a scalar value.
+// Returns true if the entire range satisfies the comparison, false if no value
+// in the range satisfies it, and null (nil) if uncertain.
+func compareIntervalWithScalar(iv cqltypes.Interval, scalar fptypes.Value, op ast.BinaryOp) (fptypes.Value, error) {
+	lowC, lowOk := iv.Low.(fptypes.Comparable)
+	highC, highOk := iv.High.(fptypes.Comparable)
+	if !lowOk || !highOk {
+		return nil, nil
+	}
+
+	lowCmp, lowErr := lowC.Compare(scalar)
+	highCmp, highErr := highC.Compare(scalar)
+	if lowErr != nil || highErr != nil {
+		return nil, nil
+	}
+
+	switch op {
+	case ast.OpGreater:
+		// true if low > scalar, false if high <= scalar, null otherwise
+		if lowCmp > 0 {
+			return fptypes.NewBoolean(true), nil
+		}
+		if highCmp <= 0 {
+			return fptypes.NewBoolean(false), nil
+		}
+		return nil, nil
+	case ast.OpGreaterOrEqual:
+		if lowCmp >= 0 {
+			return fptypes.NewBoolean(true), nil
+		}
+		if highCmp < 0 {
+			return fptypes.NewBoolean(false), nil
+		}
+		return nil, nil
+	case ast.OpLess:
+		if highCmp < 0 {
+			return fptypes.NewBoolean(true), nil
+		}
+		if lowCmp >= 0 {
+			return fptypes.NewBoolean(false), nil
+		}
+		return nil, nil
+	case ast.OpLessOrEqual:
+		if highCmp <= 0 {
+			return fptypes.NewBoolean(true), nil
+		}
+		if lowCmp > 0 {
+			return fptypes.NewBoolean(false), nil
+		}
+		return nil, nil
+	}
+	return nil, nil
 }
 
 // newDecimalFromD creates a fptypes.Value from a decimal.Decimal.

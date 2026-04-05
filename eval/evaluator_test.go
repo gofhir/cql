@@ -1123,3 +1123,81 @@ func assertNullableBool(t *testing.T, v fptypes.Value, expected *bool, label str
 func boolPtr(b bool) *bool {
 	return &b
 }
+
+// TestEval_IdentifierRef_LazyEvaluation verifies that IdentifierRef lazily evaluates
+// library expression definitions without requiring EvaluateLibrary() to be called first.
+// This is the core fix for the $evaluate-measure numerator=0 bug where expressions like
+// "Needs Follow Up" = "In Demographic" and "Has Hypertension" failed to resolve references.
+func TestEval_IdentifierRef_LazyEvaluation(t *testing.T) {
+	lib := &ast.Library{
+		Statements: []*ast.ExpressionDef{
+			{
+				Name:       "In Demographic",
+				Expression: &ast.Literal{ValueType: ast.LiteralBoolean, Value: "true"},
+			},
+			{
+				Name:       "Has Hypertension",
+				Expression: &ast.Literal{ValueType: ast.LiteralBoolean, Value: "true"},
+			},
+			{
+				Name: "Needs Follow Up",
+				Expression: &ast.BinaryExpression{
+					Operator: ast.OpAnd,
+					Left:     &ast.IdentifierRef{Name: "In Demographic"},
+					Right:    &ast.IdentifierRef{Name: "Has Hypertension"},
+				},
+			},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ev := NewEvaluator(ctx)
+
+	// Evaluate "Needs Follow Up" directly — without calling EvaluateLibrary() first.
+	// The IdentifierRef nodes for "In Demographic" and "Has Hypertension" must be
+	// lazily evaluated from the library's statement definitions.
+	val, err := ev.EvaluateExpression("Needs Follow Up")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, val, true, "Needs Follow Up")
+
+	// Verify both referenced definitions were cached
+	if _, ok := ctx.Definitions["In Demographic"]; !ok {
+		t.Error("expected 'In Demographic' to be cached in Definitions")
+	}
+	if _, ok := ctx.Definitions["Has Hypertension"]; !ok {
+		t.Error("expected 'Has Hypertension' to be cached in Definitions")
+	}
+}
+
+// TestEval_IdentifierRef_LazyEvaluation_FalseCase verifies lazy evaluation with mixed results.
+func TestEval_IdentifierRef_LazyEvaluation_FalseCase(t *testing.T) {
+	lib := &ast.Library{
+		Statements: []*ast.ExpressionDef{
+			{
+				Name:       "A",
+				Expression: &ast.Literal{ValueType: ast.LiteralBoolean, Value: "true"},
+			},
+			{
+				Name:       "B",
+				Expression: &ast.Literal{ValueType: ast.LiteralBoolean, Value: "false"},
+			},
+			{
+				Name: "C",
+				Expression: &ast.BinaryExpression{
+					Operator: ast.OpAnd,
+					Left:     &ast.IdentifierRef{Name: "A"},
+					Right:    &ast.IdentifierRef{Name: "B"},
+				},
+			},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ev := NewEvaluator(ctx)
+
+	val, err := ev.EvaluateExpression("C")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, val, false, "C = A and B")
+}
