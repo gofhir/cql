@@ -192,6 +192,8 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 	switch operand.Type() {
 	case "Date":
 		return fptypes.NewDate(result.Format("2006-01-02"))
+	case "Time":
+		return fptypes.NewTime(result.Format("15:04:05.000"))
 	default:
 		return fptypes.NewDateTime(result.Format("2006-01-02T15:04:05.000Z07:00"))
 	}

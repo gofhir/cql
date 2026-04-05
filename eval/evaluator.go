@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -225,10 +226,25 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 // Identifier resolution
 // ---------------------------------------------------------------------------
 
-func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
+func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, error) {
 	val, ok := e.ctx.ResolveIdentifier(n.Name)
 	if ok {
 		return val, nil
+	}
+	// Lazily evaluate library expression definitions referenced by name.
+	// This handles CQL like: define "A": true  define "B": "A" and false
+	// where "B" references "A" via IdentifierRef.
+	if e.ctx.Library != nil {
+		for _, stmt := range e.ctx.Library.Statements {
+			if stmt.Name == n.Name {
+				result, err := e.Eval(stmt.Expression)
+				if err != nil {
+					return nil, fmt.Errorf("evaluating referenced expression %q: %w", n.Name, err)
+				}
+				e.ctx.Definitions[n.Name] = result
+				return result, nil
+			}
+		}
 	}
 	// Could be a resource type name used in query context
 	return fptypes.NewString(n.Name), nil
@@ -433,6 +449,68 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 		}
 	}
 
+	// DateTime/Date/Time ± Quantity (temporal arithmetic)
+	if isTemporalType(left) {
+		if rq, ok := right.(fptypes.Quantity); ok {
+			amount := int(rq.Value().IntPart())
+			unit := rq.Unit()
+			switch op {
+			case ast.OpAdd:
+				return funcs.DateAdd(left, amount, unit)
+			case ast.OpSubtract:
+				return funcs.DateAdd(left, -amount, unit)
+			default:
+				return nil, fmt.Errorf("unsupported operator for temporal arithmetic")
+			}
+		}
+	}
+
+	// Quantity ± Quantity
+	lq, lqOk := left.(fptypes.Quantity)
+	rq, rqOk := right.(fptypes.Quantity)
+	if lqOk && rqOk {
+		switch op {
+		case ast.OpAdd:
+			return lq.Add(rq)
+		case ast.OpSubtract:
+			return lq.Subtract(rq)
+		case ast.OpMultiply:
+			return lq.Multiply(rq.Value()), nil
+		case ast.OpDivide:
+			return lq.Divide(rq.Value())
+		case ast.OpDiv:
+			if rq.Value().IsZero() {
+				return nil, nil
+			}
+			result := lq.Value().Div(rq.Value()).IntPart()
+			return fptypes.NewQuantityFromDecimal(decimal.NewFromInt(result), lq.Unit()), nil
+		case ast.OpMod:
+			if rq.Value().IsZero() {
+				return nil, nil
+			}
+			return fptypes.NewQuantityFromDecimal(lq.Value().Mod(rq.Value()), lq.Unit()), nil
+		default:
+			return nil, fmt.Errorf("unsupported operator for quantity arithmetic")
+		}
+	}
+	// Quantity * or / numeric
+	if lqOk {
+		rd := toDecimal(right)
+		switch op {
+		case ast.OpMultiply:
+			return lq.Multiply(rd), nil
+		case ast.OpDivide:
+			return lq.Divide(rd)
+		}
+	}
+	// numeric * Quantity
+	if rqOk {
+		ld := toDecimal(left)
+		if op == ast.OpMultiply {
+			return rq.Multiply(ld), nil
+		}
+	}
+
 	// Fall back to decimal arithmetic
 	ld := toDecimal(left)
 	rd := toDecimal(right)
@@ -543,6 +621,9 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		}
 		if i, ok := operand.(fptypes.Integer); ok {
 			return fptypes.NewInteger(-i.Value()), nil
+		}
+		if q, ok := operand.(fptypes.Quantity); ok {
+			return fptypes.NewQuantityFromDecimal(q.Value().Neg(), q.Unit()), nil
 		}
 		d := toDecimal(operand)
 		return newDecimalFromD(d.Neg()), nil
@@ -1460,9 +1541,87 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 		results = results.Distinct()
 	}
 
-	// TODO: Apply sort clause
+	// Apply sort clause
+	if n.Sort != nil {
+		var sortErr error
+		sort.SliceStable(results, func(i, j int) bool {
+			if sortErr != nil {
+				return false
+			}
+			if len(n.Sort.ByItems) > 0 {
+				// Sort by explicit expressions
+				for _, byItem := range n.Sort.ByItems {
+					cmpResult, err := e.compareSortKeys(n.Sources[0].Alias, results[i], results[j], byItem.Expression)
+					if err != nil {
+						sortErr = err
+						return false
+					}
+					if cmpResult == 0 {
+						continue
+					}
+					if byItem.Direction == ast.SortDesc {
+						return cmpResult > 0
+					}
+					return cmpResult < 0
+				}
+				return false
+			}
+			// Sort without 'by' — compare items directly
+			cmpResult, err := compareValues(results[i], results[j])
+			if err != nil {
+				sortErr = err
+				return false
+			}
+			if n.Sort.Direction == ast.SortDesc {
+				return cmpResult > 0
+			}
+			return cmpResult < 0
+		})
+		if sortErr != nil {
+			return nil, sortErr
+		}
+	}
 
 	return cqltypes.NewList(results), nil
+}
+
+// compareSortKeys evaluates a sort expression against two items and returns their comparison.
+func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.Expression) (int, error) {
+	scopeA := e.ctx.ChildScope()
+	scopeA.Aliases[alias] = a
+	scopeA.This = a
+	keyA, err := e.withContext(scopeA).Eval(expr)
+	if err != nil {
+		return 0, err
+	}
+
+	scopeB := e.ctx.ChildScope()
+	scopeB.Aliases[alias] = b
+	scopeB.This = b
+	keyB, err := e.withContext(scopeB).Eval(expr)
+	if err != nil {
+		return 0, err
+	}
+
+	return compareValues(keyA, keyB)
+}
+
+// compareValues returns -1, 0, or 1 for two values. Nulls sort last (after all non-null values).
+func compareValues(a, b fptypes.Value) (int, error) {
+	if a == nil && b == nil {
+		return 0, nil
+	}
+	if a == nil {
+		return 1, nil // nulls sort last
+	}
+	if b == nil {
+		return -1, nil
+	}
+	ac, ok := a.(fptypes.Comparable)
+	if !ok {
+		return 0, fmt.Errorf("cannot compare type %s for sorting", a.Type())
+	}
+	return ac.Compare(b)
 }
 
 func (e *Evaluator) evalWithClause(w *ast.WithClause) (bool, error) {
@@ -1934,6 +2093,17 @@ func toDecimal(v fptypes.Value) decimal.Decimal {
 		return d.Value()
 	}
 	return decimal.Zero
+}
+
+func isTemporalType(v fptypes.Value) bool {
+	if v == nil {
+		return false
+	}
+	switch v.Type() {
+	case "DateTime", "Date", "Time":
+		return true
+	}
+	return false
 }
 
 func isDecimal(v fptypes.Value) bool {

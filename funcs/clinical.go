@@ -109,6 +109,9 @@ func toTime(v fptypes.Value) (time.Time, error) { //nolint:unparam // error kept
 		"2006-01-02",
 		"2006-01",
 		"2006",
+		"15:04:05.000",
+		"15:04:05",
+		"15:04",
 	} {
 		t, err := time.Parse(layout, s)
 		if err == nil {
