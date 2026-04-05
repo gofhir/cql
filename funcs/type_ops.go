@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	cqltypes "github.com/gofhir/cql/types"
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
@@ -179,7 +180,38 @@ func Convert(v fptypes.Value, typeName string) (fptypes.Value, error) {
 		return ToDate(v)
 	case "quantity", "system.quantity":
 		return ToQuantity(v)
+	case "time", "system.time":
+		return ToTime(v)
 	default:
 		return nil, fmt.Errorf("cannot convert to %s", typeName)
 	}
+}
+
+// ToTime converts a value to a Time.
+func ToTime(v fptypes.Value) (fptypes.Value, error) {
+	if v == nil {
+		return nil, nil
+	}
+	if _, ok := v.(fptypes.Time); ok {
+		return v, nil
+	}
+	s, ok := v.(fptypes.String)
+	if !ok {
+		return nil, fmt.Errorf("cannot convert %s to Time", v.Type())
+	}
+	return fptypes.NewTime(s.Value())
+}
+
+// ToConcept converts a value to a Concept.
+func ToConcept(v fptypes.Value) (fptypes.Value, error) {
+	if v == nil {
+		return nil, nil
+	}
+	if c, ok := v.(cqltypes.Concept); ok {
+		return c, nil
+	}
+	if c, ok := v.(cqltypes.Code); ok {
+		return cqltypes.NewConcept([]cqltypes.Code{c}, ""), nil
+	}
+	return nil, fmt.Errorf("cannot convert %s to Concept", v.Type())
 }

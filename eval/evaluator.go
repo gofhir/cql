@@ -370,6 +370,17 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		return fptypes.NewBoolean(!left.Equivalent(right)), nil
 
 	case ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
+		// Promote Decimal to Quantity (unit "1") when comparing with Quantity
+		if _, lIsQ := left.(fptypes.Quantity); lIsQ {
+			if rd, rIsD := right.(fptypes.Decimal); rIsD {
+				right = fptypes.NewQuantityFromDecimal(rd.Value(), "1")
+			}
+		}
+		if _, rIsQ := right.(fptypes.Quantity); rIsQ {
+			if ld, lIsD := left.(fptypes.Decimal); lIsD {
+				left = fptypes.NewQuantityFromDecimal(ld.Value(), "1")
+			}
+		}
 		lc, ok := left.(fptypes.Comparable)
 		if !ok {
 			return nil, fmt.Errorf("cannot compare %s", left.Type())
@@ -446,6 +457,15 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 			return fptypes.NewInteger(lv % rv), nil
 		case ast.OpPower:
 			return fptypes.NewInteger(int64(math.Pow(float64(lv), float64(rv)))), nil
+		}
+	}
+
+	// String + String → concatenation
+	if op == ast.OpAdd {
+		if ls, lok := left.(fptypes.String); lok {
+			if rs, rok := right.(fptypes.String); rok {
+				return fptypes.NewString(ls.Value() + rs.Value()), nil
+			}
 		}
 	}
 
@@ -1399,6 +1419,54 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 		}
 		return funcs.LowBoundary(source, prec)
+
+	// Indexer
+	case "indexer":
+		if len(n.Operands) > 0 {
+			arg, err := e.Eval(n.Operands[0])
+			if err != nil {
+				return nil, err
+			}
+			if ai, ok := arg.(fptypes.Integer); ok {
+				c := toCollection(source)
+				return funcs.Indexer(c, int(ai.Value())), nil
+			}
+		}
+		return nil, nil
+
+	// Concatenate
+	case "concatenate":
+		var result strings.Builder
+		allArgs := make([]fptypes.Value, 0, 1+len(n.Operands))
+		if source != nil {
+			allArgs = append(allArgs, source)
+		}
+		for _, op := range n.Operands {
+			v, err := e.Eval(op)
+			if err != nil {
+				return nil, err
+			}
+			if v == nil {
+				return nil, nil // null propagation
+			}
+			allArgs = append(allArgs, v)
+		}
+		for _, arg := range allArgs {
+			result.WriteString(arg.String())
+		}
+		return fptypes.NewString(result.String()), nil
+
+	// Conversion functions
+	case "todatetime":
+		return funcs.ToDateTime(source)
+	case "totime":
+		return funcs.ToTime(source)
+	case "toboolean":
+		return funcs.ToBoolean(source)
+	case "toquantity":
+		return funcs.ToQuantity(source)
+	case "toconcept":
+		return funcs.ToConcept(source)
 
 	default:
 		return nil, fmt.Errorf("unknown function: %s", n.Name)
