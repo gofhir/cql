@@ -22,6 +22,11 @@ func isAmbiguousComparisonErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "ambiguous comparison")
 }
 
+// queryCombo holds one combination of alias bindings from a multi-source query.
+type queryCombo struct {
+	aliases map[string]fptypes.Value
+}
+
 // Evaluator interprets CQL AST nodes.
 type Evaluator struct {
 	ctx   *Context
@@ -226,8 +231,20 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 	case ast.LiteralDate:
 		return fptypes.NewDate(n.Value)
 	case ast.LiteralDateTime:
-		return fptypes.NewDateTime(n.Value)
+		// Strip trailing 'T' when no time component follows (e.g., "2015-02-10T" → "2015-02-10")
+		dtVal := n.Value
+		if strings.HasSuffix(dtVal, "T") {
+			dtVal = strings.TrimSuffix(dtVal, "T")
+		}
+		return fptypes.NewDateTime(dtVal)
 	case ast.LiteralTime:
+		// Validate millisecond digits before parsing: CQL allows at most 3 fractional digits.
+		if dotIdx := strings.LastIndex(n.Value, "."); dotIdx >= 0 {
+			frac := n.Value[dotIdx+1:]
+			if len(frac) > 3 {
+				return nil, fmt.Errorf("invalid time literal (milliseconds exceed 3 digits): %s", n.Value)
+			}
+		}
 		t, err := fptypes.NewTime(n.Value)
 		if err != nil {
 			return nil, err
@@ -633,9 +650,16 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 		case ast.OpSubtract:
 			return lq.Subtract(rq)
 		case ast.OpMultiply:
-			return lq.Multiply(rq.Value()), nil
+			resultVal := lq.Value().Mul(rq.Value())
+			resultUnit := multiplyUnits(lq.Unit(), rq.Unit())
+			return fptypes.NewQuantityFromDecimal(resultVal, resultUnit), nil
 		case ast.OpDivide:
-			return lq.Divide(rq.Value())
+			if rq.Value().IsZero() {
+				return nil, nil
+			}
+			resultVal := lq.Value().Div(rq.Value())
+			resultUnit := divideUnits(lq.Unit(), rq.Unit())
+			return fptypes.NewQuantityFromDecimal(resultVal, resultUnit), nil
 		case ast.OpDiv:
 			if rq.Value().IsZero() {
 				return nil, nil
@@ -2293,6 +2317,18 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return e.evalAggregateProduct(src)
 
+	// descendents/descendants — returns all descendant elements (CQL spec).
+	// On null, returns null. On non-null, returns empty list (simplified).
+	case "descendents", "descendants":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		return cqltypes.NewList(fptypes.Collection{}), nil
+
 	default:
 		return nil, fmt.Errorf("unknown function: %s", n.Name)
 	}
@@ -2421,20 +2457,48 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	if len(n.Sources) == 0 {
 		return cqltypes.NewList(nil), nil
 	}
-	// Evaluate the first source
-	source, err := e.Eval(n.Sources[0].Source)
-	if err != nil {
-		return nil, err
-	}
-	_, sourceIsList := source.(cqltypes.List)
-	items := toCollection(source)
 
-	// Process each item
+	// Evaluate all sources and build their collections.
+	allSources := make([]fptypes.Collection, len(n.Sources))
+	var firstSource fptypes.Value
+	for idx, src := range n.Sources {
+		val, err := e.Eval(src.Source)
+		if err != nil {
+			return nil, err
+		}
+		if idx == 0 {
+			firstSource = val
+		}
+		allSources[idx] = toCollection(val)
+	}
+	_, sourceIsList := firstSource.(cqltypes.List)
+
+	// Build the cartesian product of all sources as a list of alias maps.
+	combos := []queryCombo{{aliases: make(map[string]fptypes.Value)}}
+	for idx, src := range n.Sources {
+		var next []queryCombo
+		for _, c := range combos {
+			for _, item := range allSources[idx] {
+				newAliases := make(map[string]fptypes.Value, len(c.aliases)+1)
+				for k, v := range c.aliases {
+					newAliases[k] = v
+				}
+				newAliases[src.Alias] = item
+				next = append(next, queryCombo{aliases: newAliases})
+			}
+		}
+		combos = next
+	}
+
+	// Process each combination through filters and return/aggregate.
 	var results fptypes.Collection
-	for i, item := range items {
+	for i, c := range combos {
 		child := e.ctx.ChildScope()
-		child.Aliases[n.Sources[0].Alias] = item
-		child.This = item
+		for alias, val := range c.aliases {
+			child.Aliases[alias] = val
+		}
+		// Set This and Index to the first source's item
+		child.This = c.aliases[n.Sources[0].Alias]
 		child.Index = i
 
 		// Process let bindings (reuse funcs map from parent evaluator)
@@ -2500,13 +2564,20 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 				if val != nil {
 					results = append(results, val)
 				}
+			} else if len(n.Sources) > 1 {
+				// Multi-source query without return: produce a Tuple with all aliases
+				tupleElems := make(map[string]fptypes.Value, len(n.Sources))
+				for _, src := range n.Sources {
+					tupleElems[src.Alias] = c.aliases[src.Alias]
+				}
+				results = append(results, cqltypes.NewTuple(tupleElems))
 			} else {
-				results = append(results, item)
+				results = append(results, child.This)
 			}
 		}
 	}
 
-	// Handle aggregate clause - reduction over filtered items
+	// Handle aggregate clause - reduction over filtered combos
 	if n.Aggregate != nil {
 		// Evaluate the starting value
 		var accumulator fptypes.Value
@@ -2518,16 +2589,18 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 			}
 		}
 
-		// Collect items after filtering (re-process with where/with/without)
-		filteredItems := toCollection(source)
+		// Apply distinct to the cartesian product combos if requested
+		aggCombos := combos
 		if n.Aggregate.Distinct {
-			filteredItems = nullSafeDistinct(filteredItems)
+			aggCombos = distinctCombos(aggCombos, n.Sources)
 		}
 
-		for i, item := range filteredItems {
+		for i, c := range aggCombos {
 			child := e.ctx.ChildScope()
-			child.Aliases[n.Sources[0].Alias] = item
-			child.This = item
+			for alias, val := range c.aliases {
+				child.Aliases[alias] = val
+			}
+			child.This = c.aliases[n.Sources[0].Alias]
 			child.Index = i
 			child.Aliases[n.Aggregate.Identifier] = accumulator
 
@@ -2614,6 +2687,28 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	return cqltypes.NewList(results), nil
 }
 
+// distinctCombos removes duplicate alias combinations based on value equality.
+func distinctCombos(combos []queryCombo, sources []*ast.AliasedSource) []queryCombo {
+	var result []queryCombo
+	seen := make(map[string]bool)
+	for _, c := range combos {
+		var key string
+		for _, src := range sources {
+			v := c.aliases[src.Alias]
+			if v == nil {
+				key += "nil,"
+			} else {
+				key += v.String() + ","
+			}
+		}
+		if !seen[key] {
+			seen[key] = true
+			result = append(result, c)
+		}
+	}
+	return result
+}
+
 // compareSortKeys evaluates a sort expression against two items and returns their comparison.
 func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.Expression) (int, error) {
 	scopeA := e.ctx.ChildScope()
@@ -2636,6 +2731,8 @@ func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.E
 }
 
 // compareValues returns -1, 0, or 1 for two values. Nulls sort last (after all non-null values).
+// For temporal values with different precisions (ambiguous comparison), falls back to
+// comparing at the shared precision; when equal, lower precision sorts first.
 func compareValues(a, b fptypes.Value) (int, error) {
 	if a == nil && b == nil {
 		return 0, nil
@@ -2650,7 +2747,36 @@ func compareValues(a, b fptypes.Value) (int, error) {
 	if !ok {
 		return 0, fmt.Errorf("cannot compare type %s for sorting", a.Type())
 	}
-	return ac.Compare(b)
+	result, err := ac.Compare(b)
+	if err != nil && isAmbiguousComparisonErr(err) {
+		// Fall back to component-wise comparison at shared precision
+		aComps, aMaxPrec := temporalComponents(a)
+		bComps, bMaxPrec := temporalComponents(b)
+		if aComps != nil && bComps != nil {
+			minPrec := aMaxPrec
+			if bMaxPrec < minPrec {
+				minPrec = bMaxPrec
+			}
+			for i := 0; i <= minPrec; i++ {
+				if aComps[i] < bComps[i] {
+					return -1, nil
+				}
+				if aComps[i] > bComps[i] {
+					return 1, nil
+				}
+			}
+			// Equal at shared precision: lower precision sorts first (less specific before more specific)
+			if aMaxPrec < bMaxPrec {
+				return -1, nil
+			}
+			if aMaxPrec > bMaxPrec {
+				return 1, nil
+			}
+			return 0, nil
+		}
+		return 0, nil // can't extract components, treat as equal
+	}
+	return result, err
 }
 
 func (e *Evaluator) evalWithClause(w *ast.WithClause) (bool, error) {
@@ -2747,6 +2873,21 @@ func (e *Evaluator) evalInstanceExpr(n *ast.InstanceExpression) (fptypes.Value, 
 		}
 		elements[elem.Name] = val
 	}
+
+	// Special case: Quantity { value: ..., unit: ... } → produce a real Quantity value
+	if n.Type != nil && strings.EqualFold(n.Type.Name, "Quantity") {
+		valElem := elements["value"]
+		unitElem := elements["unit"]
+		if valElem != nil && unitElem != nil {
+			numVal := toDecimal(valElem)
+			unitStr := ""
+			if us, ok := unitElem.(fptypes.String); ok {
+				unitStr = us.Value()
+			}
+			return fptypes.NewQuantityFromDecimal(numVal, unitStr), nil
+		}
+	}
+
 	t := cqltypes.NewTuple(elements)
 	// Preserve the instance type name (e.g., "ValueSet", "CodeSystem")
 	if n.Type != nil && n.Type.Name != "" {
@@ -2986,6 +3127,16 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 	}
 
+	// Handle "interval properly includes point" and "point properly included in interval"
+	// CQL: properly contains/includes a point means the point is strictly interior
+	// (not equal to either boundary).
+	if leftOk && !rightOk && n.Operator.Kind == ast.TimingIncludes && n.Operator.Properly {
+		return evalIntervalProperlyContainsPoint(leftIv, right, n.Operator.Precision)
+	}
+	if !leftOk && rightOk && (n.Operator.Kind == ast.TimingIncludedIn || n.Operator.Kind == ast.TimingDuring) && n.Operator.Properly {
+		return evalIntervalProperlyContainsPoint(rightIv, left, n.Operator.Precision)
+	}
+
 	// Handle scalar vs interval for non-temporal types (e.g., 9 before Interval[11, 20])
 	if !leftOk && rightOk {
 		// Promote scalar to point interval [x, x]
@@ -3011,11 +3162,21 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		return fptypes.NewBoolean(leftIv.Equal(rightIv)), nil
 	case ast.TimingIncludes:
 		if n.Operator.Properly {
-			return funcs.IntervalProperlyIncludes(leftIv, rightIv)
+			res, err := funcs.IntervalProperlyIncludes(leftIv, rightIv)
+			if err != nil {
+				return nil, err
+			}
+			if res == nil && n.Operator.Precision != "" {
+				return intervalIncludesAtPrecision(leftIv, rightIv, n.Operator.Precision, true)
+			}
+			return res, nil
 		}
 		result, err := leftIv.Includes(rightIv)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
+				if n.Operator.Precision != "" {
+					return intervalIncludesAtPrecision(leftIv, rightIv, n.Operator.Precision, false)
+				}
 				return nil, nil
 			}
 			return nil, err
@@ -3023,11 +3184,21 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		return fptypes.NewBoolean(result), nil
 	case ast.TimingIncludedIn, ast.TimingDuring:
 		if n.Operator.Properly {
-			return funcs.IntervalProperlyIncludedIn(leftIv, rightIv)
+			res, err := funcs.IntervalProperlyIncludedIn(leftIv, rightIv)
+			if err != nil {
+				return nil, err
+			}
+			if res == nil && n.Operator.Precision != "" {
+				return intervalIncludesAtPrecision(rightIv, leftIv, n.Operator.Precision, true)
+			}
+			return res, nil
 		}
 		result, err := rightIv.Includes(leftIv)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
+				if n.Operator.Precision != "" {
+					return intervalIncludesAtPrecision(rightIv, leftIv, n.Operator.Precision, false)
+				}
 				return nil, nil
 			}
 			return nil, err
@@ -3070,6 +3241,219 @@ func listContainsValue(c fptypes.Collection, val fptypes.Value) bool {
 	return nullSafeContains(c, val)
 }
 
+// intervalIncludesAtPrecision checks if outer includes inner at the given precision.
+// Compares interval bounds by truncating to the specified precision.
+func intervalIncludesAtPrecision(outer, inner cqltypes.Interval, precision string, properly bool) (fptypes.Value, error) {
+	pIdx := precisionIndex(precision)
+	if pIdx < 0 {
+		return nil, nil
+	}
+
+	cmpAtPrec := func(a, b fptypes.Value) (int, bool) {
+		aComps, aMax := temporalComponents(a)
+		bComps, bMax := temporalComponents(b)
+		if aComps == nil || bComps == nil {
+			return 0, false
+		}
+		// If the requested precision exceeds either operand's precision, result is ambiguous
+		if pIdx > aMax || pIdx > bMax {
+			return 0, false
+		}
+		for i := 0; i <= pIdx; i++ {
+			if aComps[i] < bComps[i] {
+				return -1, true
+			}
+			if aComps[i] > bComps[i] {
+				return 1, true
+			}
+		}
+		return 0, true
+	}
+
+	// Check outer.Low <= inner.Low (at precision)
+	if outer.Low != nil && inner.Low != nil {
+		cmp, ok := cmpAtPrec(inner.Low, outer.Low)
+		if !ok {
+			return nil, nil
+		}
+		if cmp < 0 {
+			return fptypes.NewBoolean(false), nil
+		}
+		if cmp == 0 && inner.LowClosed && !outer.LowClosed {
+			return fptypes.NewBoolean(false), nil
+		}
+	}
+	// Check inner.High <= outer.High (at precision)
+	if outer.High != nil && inner.High != nil {
+		cmp, ok := cmpAtPrec(inner.High, outer.High)
+		if !ok {
+			return nil, nil
+		}
+		if cmp > 0 {
+			return fptypes.NewBoolean(false), nil
+		}
+		if cmp == 0 && inner.HighClosed && !outer.HighClosed {
+			return fptypes.NewBoolean(false), nil
+		}
+	}
+
+	if properly {
+		// For properly includes, outer must be strictly larger.
+		// Check that at least one bound is strictly different.
+		outerEqualsInner := true
+		if outer.Low != nil && inner.Low != nil {
+			cmp, ok := cmpAtPrec(outer.Low, inner.Low)
+			if ok && cmp != 0 {
+				outerEqualsInner = false
+			}
+		}
+		if outerEqualsInner && outer.High != nil && inner.High != nil {
+			cmp, ok := cmpAtPrec(outer.High, inner.High)
+			if ok && cmp != 0 {
+				outerEqualsInner = false
+			}
+		}
+		if outerEqualsInner {
+			return fptypes.NewBoolean(false), nil
+		}
+	}
+
+	return fptypes.NewBoolean(true), nil
+}
+
+// evalIntervalProperlyContainsPoint checks if an interval properly contains a point.
+// CQL: point must be contained AND not equal to either boundary.
+// When a precision is specified, comparisons are truncated to that precision.
+func evalIntervalProperlyContainsPoint(iv cqltypes.Interval, point fptypes.Value, precision string) (fptypes.Value, error) {
+	if point == nil {
+		return nil, nil
+	}
+	// First check if the interval contains the point
+	contained, err := iv.Contains(point)
+	if err != nil {
+		if isAmbiguousComparisonErr(err) {
+			// With precision specified, try comparing at that precision
+			if precision != "" {
+				return evalIntervalProperlyContainsPointAtPrecision(iv, point, precision)
+			}
+			return nil, nil
+		}
+		return nil, err
+	}
+	if !contained {
+		return fptypes.NewBoolean(false), nil
+	}
+	// Check that point is NOT equal to the low or high boundary
+	if iv.Low != nil && iv.LowClosed && point.Equal(iv.Low) {
+		return fptypes.NewBoolean(false), nil
+	}
+	if iv.High != nil && iv.HighClosed && point.Equal(iv.High) {
+		return fptypes.NewBoolean(false), nil
+	}
+	return fptypes.NewBoolean(true), nil
+}
+
+// evalIntervalProperlyContainsPointAtPrecision checks proper containment at a given precision.
+func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fptypes.Value, precision string) (fptypes.Value, error) {
+	pIdx := precisionIndex(precision)
+	if pIdx < 0 {
+		return nil, nil
+	}
+	pointComps, pointMaxPrec := temporalComponents(point)
+	if pointComps == nil {
+		return nil, nil
+	}
+	// If the requested precision exceeds the point's precision, result is null (ambiguous)
+	if pIdx > pointMaxPrec {
+		return nil, nil
+	}
+	cmpPrec := pIdx
+
+	// Check low bound
+	if iv.Low != nil {
+		lowComps, _ := temporalComponents(iv.Low)
+		if lowComps != nil {
+			cmpResult := 0
+			for i := 0; i <= cmpPrec; i++ {
+				if pointComps[i] < lowComps[i] {
+					cmpResult = -1
+					break
+				}
+				if pointComps[i] > lowComps[i] {
+					cmpResult = 1
+					break
+				}
+			}
+			if iv.LowClosed && cmpResult < 0 {
+				return fptypes.NewBoolean(false), nil
+			}
+			if !iv.LowClosed && cmpResult <= 0 {
+				return fptypes.NewBoolean(false), nil
+			}
+			// For properly contains: point must not equal the low bound at this precision
+			if iv.LowClosed && cmpResult == 0 {
+				return fptypes.NewBoolean(false), nil
+			}
+		}
+	}
+	// Check high bound
+	if iv.High != nil {
+		highComps, _ := temporalComponents(iv.High)
+		if highComps != nil {
+			cmpResult := 0
+			for i := 0; i <= cmpPrec; i++ {
+				if pointComps[i] < highComps[i] {
+					cmpResult = -1
+					break
+				}
+				if pointComps[i] > highComps[i] {
+					cmpResult = 1
+					break
+				}
+			}
+			if iv.HighClosed && cmpResult > 0 {
+				return fptypes.NewBoolean(false), nil
+			}
+			if !iv.HighClosed && cmpResult >= 0 {
+				return fptypes.NewBoolean(false), nil
+			}
+			if iv.HighClosed && cmpResult == 0 {
+				return fptypes.NewBoolean(false), nil
+			}
+		}
+	}
+	return fptypes.NewBoolean(true), nil
+}
+
+// listContainsValueTriState checks membership with tri-state logic:
+// returns (true, false) if found, (false, false) if not found, (false, true) if ambiguous.
+func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found bool, ambiguous bool) {
+	if val == nil {
+		for _, item := range c {
+			if item == nil {
+				return true, false
+			}
+		}
+		return false, false
+	}
+	for _, item := range c {
+		if item == nil {
+			continue
+		}
+		if item.Equal(val) {
+			return true, false
+		}
+		// Check for ambiguous comparison (different precisions in temporal types)
+		if comp, ok := item.(fptypes.Comparable); ok {
+			_, err := comp.Compare(val)
+			if err != nil && isAmbiguousComparisonErr(err) {
+				ambiguous = true
+			}
+		}
+	}
+	return false, ambiguous
+}
+
 // evalListTimingOp handles timing operations when one or both operands are lists.
 func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsList, rightIsList bool, left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
 	lc := toCollection(left)
@@ -3100,7 +3484,10 @@ func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsLi
 				}
 				return nil, nil
 			}
-			found := listContainsValue(lc, right)
+			found, ambig := listContainsValueTriState(lc, right)
+			if ambig && !found {
+				return nil, nil // ambiguous membership → null
+			}
 			if op.Properly {
 				return fptypes.NewBoolean(found && lc.Count() > 1), nil
 			}
@@ -3148,7 +3535,10 @@ func (e *Evaluator) evalListTimingOp(leftList, rightList cqltypes.List, leftIsLi
 				}
 				return nil, nil
 			}
-			found := listContainsValue(rc, left)
+			found, ambig := listContainsValueTriState(rc, left)
+			if ambig && !found {
+				return nil, nil // ambiguous membership → null
+			}
 			if op.Properly {
 				return fptypes.NewBoolean(found && rc.Count() > 1), nil
 			}
@@ -3713,6 +4103,36 @@ func toDecimal(v fptypes.Value) decimal.Decimal {
 	return decimal.Zero
 }
 
+// multiplyUnits computes the UCUM product of two units (simplified).
+// e.g., "cm" * "cm" → "cm2", "m" * "s" → "m.s"
+func multiplyUnits(a, b string) string {
+	if a == b {
+		return a + "2"
+	}
+	if a == "1" || a == "" {
+		return b
+	}
+	if b == "1" || b == "" {
+		return a
+	}
+	return a + "." + b
+}
+
+// divideUnits computes the UCUM quotient of two units (simplified).
+// e.g., "g/cm3" / "g/cm3" → "1"
+func divideUnits(a, b string) string {
+	if a == b {
+		return "1"
+	}
+	if b == "1" || b == "" {
+		return a
+	}
+	if a == "1" || a == "" {
+		return "/" + b
+	}
+	return a + "/" + b
+}
+
 func isTemporalType(v fptypes.Value) bool {
 	if v == nil {
 		return false
@@ -3904,7 +4324,11 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 			return dt, nil
 		}
 		if s, ok := v.(fptypes.String); ok {
-			return fptypes.NewDateTime(s.Value())
+			dt, err := fptypes.NewDateTime(s.Value())
+			if err != nil {
+				return nil, nil // CQL: failed string-to-datetime conversion returns null
+			}
+			return dt, nil
 		}
 	case "date":
 		if d, ok := v.(fptypes.Date); ok {

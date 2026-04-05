@@ -869,11 +869,21 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			if strings.Contains(text, "properly") {
 				op.Properly = true
 			}
+			if dtps := phrase.DateTimePrecisionSpecifier(); dtps != nil {
+				if dtp := dtps.DateTimePrecision(); dtp != nil {
+					op.Precision = strings.ToLower(dtp.GetText())
+				}
+			}
 		case *grammar.IncludedInIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingIncludedIn
 			text := strings.ToLower(phrase.GetText())
 			if strings.Contains(text, "properly") {
 				op.Properly = true
+			}
+			if dtps := phrase.DateTimePrecisionSpecifier(); dtps != nil {
+				if dtp := dtps.DateTimePrecision(); dtp != nil {
+					op.Precision = strings.ToLower(dtp.GetText())
+				}
 			}
 		case *grammar.MeetsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingMeets

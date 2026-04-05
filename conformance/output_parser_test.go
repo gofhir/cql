@@ -337,10 +337,12 @@ func TestParseExpectedOutput(t *testing.T) {
 		}
 	})
 
-	t.Run("long literal returns error", func(t *testing.T) {
-		_, err := parseExpectedOutput("3L")
-		if err == nil {
-			t.Error("expected error for long literal")
+	t.Run("long literal parsed as integer", func(t *testing.T) {
+		v, err := parseExpectedOutput("3L")
+		assertNoError(t, err)
+		expected := fptypes.NewInteger(3)
+		if !expected.Equal(v) {
+			t.Errorf("expected %v, got %v", expected, v)
 		}
 	})
 

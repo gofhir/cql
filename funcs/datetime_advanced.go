@@ -40,6 +40,9 @@ func DateTimeComponentFrom(operand fptypes.Value, component string) (fptypes.Val
 		}
 	case "hour":
 		if t, ok := operand.(fptypes.DateTime); ok {
+			if t.Precision() < fptypes.DTHourPrecision {
+				return nil, nil // hour not specified
+			}
 			return fptypes.NewInteger(int64(t.Hour())), nil
 		}
 		if t, ok := operand.(fptypes.Time); ok {
@@ -47,23 +50,41 @@ func DateTimeComponentFrom(operand fptypes.Value, component string) (fptypes.Val
 		}
 	case "minute":
 		if t, ok := operand.(fptypes.DateTime); ok {
+			if t.Precision() < fptypes.DTMinutePrecision {
+				return nil, nil // minute not specified
+			}
 			return fptypes.NewInteger(int64(t.Minute())), nil
 		}
 		if t, ok := operand.(fptypes.Time); ok {
+			if t.Precision() < fptypes.MinutePrecision {
+				return nil, nil
+			}
 			return fptypes.NewInteger(int64(t.Minute())), nil
 		}
 	case "second":
 		if t, ok := operand.(fptypes.DateTime); ok {
+			if t.Precision() < fptypes.DTSecondPrecision {
+				return nil, nil // second not specified
+			}
 			return fptypes.NewInteger(int64(t.Second())), nil
 		}
 		if t, ok := operand.(fptypes.Time); ok {
+			if t.Precision() < fptypes.SecondPrecision {
+				return nil, nil
+			}
 			return fptypes.NewInteger(int64(t.Second())), nil
 		}
 	case "millisecond":
 		if t, ok := operand.(fptypes.DateTime); ok {
+			if t.Precision() < fptypes.DTMillisPrecision {
+				return nil, nil // millisecond not specified
+			}
 			return fptypes.NewInteger(int64(t.Millisecond())), nil
 		}
 		if t, ok := operand.(fptypes.Time); ok {
+			if t.Precision() < fptypes.MillisPrecision {
+				return nil, nil
+			}
 			return fptypes.NewInteger(int64(t.Millisecond())), nil
 		}
 	case "timezone":

@@ -49,6 +49,16 @@ func parseExpectedOutput(raw string) (fptypes.Value, error) {
 		return parseTuple(s)
 	}
 
+	// Concept: Concept { codes: Code { ... } ... }
+	if strings.HasPrefix(s, "Concept") {
+		return parseConcept(s)
+	}
+
+	// Code: Code { code: '...', system: '...', ... }
+	if strings.HasPrefix(s, "Code") {
+		return parseCode(s)
+	}
+
 	// Time: @T09:00:00.000
 	if strings.HasPrefix(s, "@T") {
 		timeStr := s[1:] // strip '@', keep 'T' prefix — NewTime accepts "T09:..."
@@ -181,7 +191,23 @@ func parseQuantity(s string) (fptypes.Value, error) {
 	return q, nil
 }
 
+// isBareKeyValue checks if a string looks like "Key: value" (identifier followed by colon).
+var bareKeyValuePattern = regexp.MustCompile(`^\s*[A-Za-z_][A-Za-z0-9_]*\s*:`)
+
+// looksLikeBareTuple checks if the inner content of braces looks like a bare tuple
+// (all top-level elements are key: value pairs, not nested braces).
+func looksLikeBareTuple(inner string, elements []string) bool {
+	for _, elem := range elements {
+		e := strings.TrimSpace(elem)
+		if !bareKeyValuePattern.MatchString(e) {
+			return false
+		}
+	}
+	return true
+}
+
 // parseList parses a list literal like `{1, 2, 3}` or `{'a','b','c'}`.
+// Also handles bare tuple syntax like `{ A: 2, B: 5 }`.
 func parseList(s string) (fptypes.Value, error) {
 	inner := strings.TrimSpace(s[1 : len(s)-1]) // strip { and }
 	if inner == "" {
@@ -193,6 +219,11 @@ func parseList(s string) (fptypes.Value, error) {
 		return nil, fmt.Errorf("splitting list elements: %w", err)
 	}
 
+	// Check if this is a bare tuple (all elements are key: value pairs)
+	if looksLikeBareTuple(inner, elements) {
+		return parseBareTuple(elements)
+	}
+
 	values := make(fptypes.Collection, 0, len(elements))
 	for _, elem := range elements {
 		v, err := parseExpectedOutput(strings.TrimSpace(elem))
@@ -202,6 +233,26 @@ func parseList(s string) (fptypes.Value, error) {
 		values = append(values, v)
 	}
 	return cqltypes.NewList(values), nil
+}
+
+// parseBareTuple parses a bare tuple from pre-split key:value elements.
+func parseBareTuple(parts []string) (fptypes.Value, error) {
+	elements := make(map[string]fptypes.Value, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		colonIdx := strings.Index(part, ":")
+		if colonIdx < 0 {
+			return nil, fmt.Errorf("invalid tuple element (no colon): %q", part)
+		}
+		key := strings.TrimSpace(part[:colonIdx])
+		valStr := strings.TrimSpace(part[colonIdx+1:])
+		val, err := parseExpectedOutput(valStr)
+		if err != nil {
+			return nil, fmt.Errorf("parsing tuple element %q: %w", key, err)
+		}
+		elements[key] = val
+	}
+	return cqltypes.NewTuple(elements), nil
 }
 
 // parseInterval parses an interval literal like `Interval[2, 7]` or `Interval(2, 7]`.
@@ -326,4 +377,95 @@ func splitTopLevel(s string, delim byte) ([]string, error) {
 
 	parts = append(parts, s[start:])
 	return parts, nil
+}
+
+// parseConcept parses a Concept literal like:
+//
+//	Concept { codes: Code { code: '8480-6' } }
+func parseConcept(s string) (fptypes.Value, error) {
+	rest := strings.TrimPrefix(s, "Concept")
+	rest = strings.TrimSpace(rest)
+	if !strings.HasPrefix(rest, "{") || !strings.HasSuffix(rest, "}") {
+		return nil, fmt.Errorf("invalid Concept format: %q", s)
+	}
+	inner := strings.TrimSpace(rest[1 : len(rest)-1])
+	// Parse as key:value pairs using splitTopLevel
+	parts, err := splitTopLevel(inner, ',')
+	if err != nil {
+		return nil, fmt.Errorf("splitting Concept elements: %w", err)
+	}
+	var codes []cqltypes.Code
+	display := ""
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		colonIdx := strings.Index(part, ":")
+		if colonIdx < 0 {
+			continue
+		}
+		key := strings.TrimSpace(part[:colonIdx])
+		valStr := strings.TrimSpace(part[colonIdx+1:])
+		switch key {
+		case "codes":
+			// valStr could be a single Code or multiple; parse it
+			codeVal, err := parseExpectedOutput(valStr)
+			if err != nil {
+				return nil, fmt.Errorf("parsing Concept codes: %w", err)
+			}
+			switch cv := codeVal.(type) {
+			case cqltypes.Code:
+				codes = append(codes, cv)
+			case cqltypes.List:
+				for _, item := range cv.Values {
+					if c, ok := item.(cqltypes.Code); ok {
+						codes = append(codes, c)
+					}
+				}
+			}
+		case "display":
+			if strings.HasPrefix(valStr, "'") && strings.HasSuffix(valStr, "'") {
+				display = valStr[1 : len(valStr)-1]
+			}
+		}
+	}
+	return cqltypes.NewConcept(codes, display), nil
+}
+
+// parseCode parses a Code literal like:
+//
+//	Code { code: '8480-6', system: 'http://loinc.org', display: 'Systolic BP' }
+func parseCode(s string) (fptypes.Value, error) {
+	rest := strings.TrimPrefix(s, "Code")
+	rest = strings.TrimSpace(rest)
+	if !strings.HasPrefix(rest, "{") || !strings.HasSuffix(rest, "}") {
+		return nil, fmt.Errorf("invalid Code format: %q", s)
+	}
+	inner := strings.TrimSpace(rest[1 : len(rest)-1])
+	parts, err := splitTopLevel(inner, ',')
+	if err != nil {
+		return nil, fmt.Errorf("splitting Code elements: %w", err)
+	}
+	code := ""
+	system := ""
+	display := ""
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		colonIdx := strings.Index(part, ":")
+		if colonIdx < 0 {
+			continue
+		}
+		key := strings.TrimSpace(part[:colonIdx])
+		valStr := strings.TrimSpace(part[colonIdx+1:])
+		if strings.HasPrefix(valStr, "'") && strings.HasSuffix(valStr, "'") {
+			valStr = valStr[1 : len(valStr)-1]
+		}
+		switch key {
+		case "code":
+			code = valStr
+		case "system":
+			system = valStr
+		case "display":
+			display = valStr
+		}
+	}
+	return cqltypes.NewCode(system, code, display), nil
 }
