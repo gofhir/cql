@@ -284,6 +284,43 @@ define Val: FHIRHelpers.ToString('hello')`
 	}
 }
 
+func TestEngine_FHIRHelpers_EndToEnd(t *testing.T) {
+	patient := json.RawMessage(`{
+		"resourceType": "Patient",
+		"id": "test-1",
+		"name": [{"family": "Smith", "given": ["Jane"]}],
+		"gender": "female",
+		"birthDate": "1962-07-22"
+	}`)
+
+	e := NewEngine()
+
+	cqlSource := `library Test version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+
+context Patient
+
+define "Family Name":
+    Patient.name.first().family
+
+define "Gender":
+    Patient.gender`
+
+	results, err := e.EvaluateLibrary(context.Background(), cqlSource, patient, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if fn, ok := results["Family Name"].(fptypes.String); !ok || fn.Value() != "Smith" {
+		t.Errorf("Family Name = %v (%T), want 'Smith'", results["Family Name"], results["Family Name"])
+	}
+
+	if g, ok := results["Gender"].(fptypes.String); !ok || g.Value() != "female" {
+		t.Errorf("Gender = %v (%T), want 'female'", results["Gender"], results["Gender"])
+	}
+}
+
 func TestErrorTypes(t *testing.T) {
 	t.Run("ErrSyntaxError", func(t *testing.T) {
 		err := &ErrSyntaxError{Cause: errors.New("unexpected token")}

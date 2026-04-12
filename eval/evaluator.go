@@ -277,6 +277,19 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	if ok {
 		return val, nil
 	}
+	// Check if the identifier refers to the context resource type (e.g. "Patient").
+	// In CQL, `context Patient` makes `Patient` resolve to the current context resource.
+	if e.ctx.Library != nil && len(e.ctx.ContextValue) > 0 {
+		for _, ctxDef := range e.ctx.Library.Contexts {
+			if ctxDef.Name == n.Name {
+				obj := e.ctx.GetContextObject()
+				if obj != nil {
+					return obj, nil
+				}
+			}
+		}
+	}
+
 	// Lazily evaluate library expression definitions referenced by name.
 	// This handles CQL like: define "A": true  define "B": "A" and false
 	// where "B" references "A" via IdentifierRef.
