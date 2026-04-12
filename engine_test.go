@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -211,6 +212,52 @@ define Result: 'evaluated'`
 	}
 	if results["Result"] == nil {
 		t.Error("Result should not be nil")
+	}
+}
+
+func TestEngine_EvaluateLibrary_WithIncludedLibrary(t *testing.T) {
+	mathLib := `library MathHelpers version '1.0'
+using FHIR version '4.0.1'
+define function Double(x Integer) returns Integer: x * 2`
+
+	resolver := func(ctx context.Context, name, version string) (string, error) {
+		if name == "MathHelpers" {
+			return mathLib, nil
+		}
+		return "", fmt.Errorf("library '%s' not found", name)
+	}
+
+	e := NewEngine(WithLibraryResolver(resolver))
+
+	cqlSource := `library Test version '1.0'
+using FHIR version '4.0.1'
+include MathHelpers version '1.0'
+define Result: MathHelpers.Double(21)`
+
+	results, err := e.EvaluateLibrary(context.Background(), cqlSource, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	val, ok := results["Result"].(fptypes.Integer)
+	if !ok {
+		t.Fatalf("Result: expected Integer, got %T (%v)", results["Result"], results["Result"])
+	}
+	if val.Value() != 42 {
+		t.Errorf("Result = %d, want 42", val.Value())
+	}
+}
+
+func TestEngine_EvaluateLibrary_IncludeWithoutResolver(t *testing.T) {
+	e := NewEngine()
+	cqlSource := `library Test version '1.0'
+using FHIR version '4.0.1'
+include SomeLib version '1.0'
+define X: 1`
+
+	_, err := e.EvaluateLibrary(context.Background(), cqlSource, nil, nil)
+	if err == nil {
+		t.Fatal("expected error for missing resolver")
 	}
 }
 

@@ -28,12 +28,16 @@ import (
 	"github.com/gofhir/cql/model"
 )
 
+// LibraryResolver loads CQL source by library name and version.
+type LibraryResolver func(ctx context.Context, name, version string) (string, error)
+
 // Engine is the public API for the CQL engine.
 type Engine struct {
 	dataProvider        eval.DataProvider
 	terminologyProvider eval.TerminologyProvider
 	modelInfo           model.ModelInfo
 	traceListener       eval.TraceListener
+	libraryResolver     LibraryResolver
 	maxExpressionLen    int
 	evalTimeout         time.Duration
 	maxRetrieveSize     int
@@ -90,6 +94,13 @@ func WithMaxRetrieveSize(n int) Option {
 func WithMaxDepth(n int) Option {
 	return func(e *Engine) {
 		e.maxDepth = n
+	}
+}
+
+// WithLibraryResolver sets the resolver for included libraries.
+func WithLibraryResolver(lr LibraryResolver) Option {
+	return func(e *Engine) {
+		e.libraryResolver = lr
 	}
 }
 
@@ -151,6 +162,32 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, error) {
 	return lib, nil
 }
 
+// resolveIncludes compiles and registers included libraries into the evaluation context.
+func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) error {
+	if len(lib.Includes) == 0 {
+		return nil
+	}
+	if e.libraryResolver == nil {
+		return fmt.Errorf("library '%s' is included but no LibraryResolver was provided", lib.Includes[0].Name)
+	}
+	for _, inc := range lib.Includes {
+		src, err := e.libraryResolver(ctx, inc.Name, inc.Version)
+		if err != nil {
+			return fmt.Errorf("resolving library '%s' version '%s': %w", inc.Name, inc.Version, err)
+		}
+		incLib, err := e.compileOrCache(src)
+		if err != nil {
+			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
+		}
+		alias := inc.Alias
+		if alias == "" {
+			alias = inc.Name
+		}
+		evalCtx.IncludedLibraries[alias] = incLib
+	}
+	return nil
+}
+
 // EvaluateLibrary parses and evaluates a CQL library, returning named expression results.
 // Optional EvalOption arguments allow per-call configuration (e.g., WithCallTraceListener).
 func (e *Engine) EvaluateLibrary(
@@ -195,6 +232,11 @@ func (e *Engine) EvaluateLibrary(
 	}
 	for k, v := range params {
 		evalCtx.Parameters[k] = v
+	}
+
+	// Resolve included libraries
+	if err := e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+		return nil, &ErrEvaluation{Cause: err}
 	}
 
 	// Evaluate all definitions
@@ -256,6 +298,11 @@ func (e *Engine) EvaluateExpression(
 	}
 	for k, v := range params {
 		evalCtx.Parameters[k] = v
+	}
+
+	// Resolve included libraries
+	if err := e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+		return nil, &ErrEvaluation{Cause: err}
 	}
 
 	// Evaluate specified expression
