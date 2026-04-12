@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/gofhir/cql/compare/v1.1.0...v1.2.0) (2026-04-12)
+
+
+### Features
+
+* add LibraryResolver option and include resolution ([c54aa56](https://github.com/gofhir/cql/commit/c54aa567d57e348d29b2f2df93ef0d606a302d23))
+* built-in FHIRHelpers stub with passthrough functions ([742c3bc](https://github.com/gofhir/cql/commit/742c3bc5c61e965fd9344bef33972f7ffd19fe5f))
+* FHIRHelpers compliance — library resolver, value[x] resolution, FHIR primitive wrapping ([e491b02](https://github.com/gofhir/cql/commit/e491b020afa1d5db48b71c4ad15afe03d7145a65))
+* library-qualified function dispatch for included libraries ([b20b6ac](https://github.com/gofhir/cql/commit/b20b6acd49bbcf12b599a780c904b826ee2349f9))
+* support function overloads in evaluator ([3318d60](https://github.com/gofhir/cql/commit/3318d60d81195e48f44bc8645302b866be3c52f1))
+* type-aware overload resolution for function dispatch ([21fdd69](https://github.com/gofhir/cql/commit/21fdd6971cdcaedb71ecdde50c10c628486f7cde))
+* value[x] choice type resolution in member access ([f779c76](https://github.com/gofhir/cql/commit/f779c76b82dd7c90e865f703de5cd68f9df4b107))
+
 ## [1.1.0](https://github.com/gofhir/cql/compare/v1.0.0...v1.1.0) (2026-04-05)
 
 
