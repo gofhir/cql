@@ -29,15 +29,17 @@ type queryCombo struct {
 
 // Evaluator interprets CQL AST nodes.
 type Evaluator struct {
-	ctx   *Context
-	funcs map[string][]*ast.FunctionDef // local overloads
+	ctx           *Context
+	funcs         map[string][]*ast.FunctionDef                // local overloads
+	includedFuncs map[string]map[string][]*ast.FunctionDef     // alias → name → overloads
 }
 
 // NewEvaluator creates a new evaluator for the given context.
 func NewEvaluator(ctx *Context) *Evaluator {
 	e := &Evaluator{
-		ctx:   ctx,
-		funcs: make(map[string][]*ast.FunctionDef),
+		ctx:           ctx,
+		funcs:         make(map[string][]*ast.FunctionDef),
+		includedFuncs: make(map[string]map[string][]*ast.FunctionDef),
 	}
 	// Register library functions
 	if ctx.Library != nil {
@@ -45,13 +47,21 @@ func NewEvaluator(ctx *Context) *Evaluator {
 			e.funcs[f.Name] = append(e.funcs[f.Name], f)
 		}
 	}
+	// Register included library functions
+	for alias, lib := range ctx.IncludedLibraries {
+		libFuncs := make(map[string][]*ast.FunctionDef)
+		for _, f := range lib.Functions {
+			libFuncs[f.Name] = append(libFuncs[f.Name], f)
+		}
+		e.includedFuncs[alias] = libFuncs
+	}
 	return e
 }
 
 // withContext returns a lightweight evaluator sharing the same function registry
 // but using a different context. Avoids re-building the funcs map on each iteration.
 func (e *Evaluator) withContext(ctx *Context) *Evaluator {
-	return &Evaluator{ctx: ctx, funcs: e.funcs}
+	return &Evaluator{ctx: ctx, funcs: e.funcs, includedFuncs: e.includedFuncs}
 }
 
 // EvaluateLibrary evaluates all expression definitions in the library.
@@ -1351,6 +1361,33 @@ func resolveOverload(overloads []*ast.FunctionDef, args []ast.Expression) *ast.F
 }
 
 func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error) {
+	// Check for library-qualified call via Source (e.g. FHIRHelpers.ToQuantity(...))
+	// Parser produces: FunctionCall{Source: IdentifierRef{Name: "FHIRHelpers"}, Name: "ToQuantity"}
+	if n.Source != nil {
+		if idRef, ok := n.Source.(*ast.IdentifierRef); ok {
+			if libFuncs, ok := e.includedFuncs[idRef.Name]; ok {
+				overloads, ok := libFuncs[n.Name]
+				if !ok {
+					return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, idRef.Name)
+				}
+				fd := resolveOverload(overloads, n.Operands)
+				return e.evalIncludedFunction(fd, n.Operands)
+			}
+		}
+	}
+
+	// Check for library-qualified call via Library field
+	if n.Library != "" {
+		if libFuncs, ok := e.includedFuncs[n.Library]; ok {
+			overloads, ok := libFuncs[n.Name]
+			if !ok {
+				return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, n.Library)
+			}
+			fd := resolveOverload(overloads, n.Operands)
+			return e.evalIncludedFunction(fd, n.Operands)
+		}
+	}
+
 	// Check if it's a library-defined function
 	if overloads, ok := e.funcs[n.Name]; ok {
 		fd := resolveOverload(overloads, n.Operands)
@@ -1358,6 +1395,25 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 	}
 	// Built-in functions handled here
 	return e.evalBuiltinFunction(n)
+}
+
+func (e *Evaluator) evalIncludedFunction(fd *ast.FunctionDef, args []ast.Expression) (fptypes.Value, error) {
+	if fd.External {
+		return nil, fmt.Errorf("external function '%s' not implemented", fd.Name)
+	}
+	child := e.ctx.ChildScope()
+	for i, op := range fd.Operands {
+		if i < len(args) {
+			val, err := e.Eval(args[i])
+			if err != nil {
+				return nil, err
+			}
+			child.Aliases[op.Name] = val
+		}
+	}
+	childEval := NewEvaluator(child)
+	childEval.includedFuncs = e.includedFuncs
+	return childEval.Eval(fd.Body)
 }
 
 func (e *Evaluator) evalUserFunction(fd *ast.FunctionDef, args []ast.Expression) (fptypes.Value, error) {

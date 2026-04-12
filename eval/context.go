@@ -73,6 +73,9 @@ type Context struct {
 	cachedSubjectOK bool // true once cachedSubjectID has been computed
 	cachedObject    *fptypes.ObjectValue
 
+	// IncludedLibraries maps alias → compiled included library
+	IncludedLibraries map[string]*ast.Library
+
 	// Parent context (for nested scopes)
 	parent *Context
 }
@@ -89,8 +92,9 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		Parameters:  make(map[string]fptypes.Value),
 		CodeSystems: make(map[string]*cqltypes.Code),
 		ValueSets:   make(map[string]string),
-		Aliases:     make(map[string]fptypes.Value),
-		LetBindings: make(map[string]fptypes.Value),
+		Aliases:           make(map[string]fptypes.Value),
+		LetBindings:       make(map[string]fptypes.Value),
+		IncludedLibraries: make(map[string]*ast.Library),
 	}
 	// Populate code systems and value sets from library definitions
 	if lib != nil {
@@ -125,6 +129,7 @@ func (c *Context) ChildScope() *Context {
 		cachedSubjectID:     c.cachedSubjectID,
 		cachedSubjectOK:     c.cachedSubjectOK,
 		cachedObject:        c.cachedObject,
+		IncludedLibraries:   c.IncludedLibraries,
 		parent:              c,
 	}
 }

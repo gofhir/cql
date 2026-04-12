@@ -1131,6 +1131,54 @@ func TestEvalFunctionOverloads(t *testing.T) {
 	}
 }
 
+func TestEvalLibraryQualifiedFunctionCall(t *testing.T) {
+	includedLib := &ast.Library{
+		Functions: []*ast.FunctionDef{
+			{
+				Name:     "Double",
+				Operands: []*ast.OperandDef{{Name: "x"}},
+				Body: &ast.BinaryExpression{
+					Operator: ast.OpMultiply,
+					Left:     &ast.IdentifierRef{Name: "x"},
+					Right:    &ast.Literal{ValueType: ast.LiteralInteger, Value: "2"},
+				},
+			},
+		},
+	}
+
+	mainLib := &ast.Library{
+		Includes: []*ast.IncludeDef{
+			{Name: "MyLib", Alias: "MyLib"},
+		},
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "Result",
+				Expression: &ast.FunctionCall{
+					Source:   &ast.IdentifierRef{Name: "MyLib"},
+					Name:     "Double",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralInteger, Value: "21"}},
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), mainLib)
+	ctx.IncludedLibraries["MyLib"] = includedLib
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	val, ok := results["Result"].(fptypes.Integer)
+	if !ok {
+		t.Fatalf("Result: expected Integer, got %T (%v)", results["Result"], results["Result"])
+	}
+	if val.Value() != 42 {
+		t.Errorf("Result = %d, want 42", val.Value())
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
