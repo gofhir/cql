@@ -8,6 +8,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
+	"github.com/gofhir/cql/model"
 	cqltypes "github.com/gofhir/cql/types"
 )
 
@@ -1077,6 +1078,108 @@ func TestContext_ChildScope_PropagatesContextType(t *testing.T) {
 	}
 }
 
+func TestEvalFunctionOverloads(t *testing.T) {
+	lib := &ast.Library{
+		Functions: []*ast.FunctionDef{
+			{
+				Name:     "Greet",
+				Operands: []*ast.OperandDef{{Name: "name"}},
+				Body: &ast.BinaryExpression{
+					Operator: ast.OpConcatenate,
+					Left:     &ast.Literal{ValueType: ast.LiteralString, Value: "Hello, "},
+					Right:    &ast.IdentifierRef{Name: "name"},
+				},
+			},
+			{
+				Name:     "Greet",
+				Operands: []*ast.OperandDef{},
+				Body:     &ast.Literal{ValueType: ast.LiteralString, Value: "Hello, World"},
+			},
+		},
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "WithArg",
+				Expression: &ast.FunctionCall{
+					Name:     "Greet",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralString, Value: "CQL"}},
+				},
+			},
+			{
+				Name: "NoArg",
+				Expression: &ast.FunctionCall{
+					Name:     "Greet",
+					Operands: []ast.Expression{},
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	wa, ok := results["WithArg"].(fptypes.String)
+	if !ok || wa.Value() != "Hello, CQL" {
+		t.Errorf("WithArg = %v, want 'Hello, CQL'", results["WithArg"])
+	}
+
+	na, ok := results["NoArg"].(fptypes.String)
+	if !ok || na.Value() != "Hello, World" {
+		t.Errorf("NoArg = %v, want 'Hello, World'", results["NoArg"])
+	}
+}
+
+func TestEvalLibraryQualifiedFunctionCall(t *testing.T) {
+	includedLib := &ast.Library{
+		Functions: []*ast.FunctionDef{
+			{
+				Name:     "Double",
+				Operands: []*ast.OperandDef{{Name: "x"}},
+				Body: &ast.BinaryExpression{
+					Operator: ast.OpMultiply,
+					Left:     &ast.IdentifierRef{Name: "x"},
+					Right:    &ast.Literal{ValueType: ast.LiteralInteger, Value: "2"},
+				},
+			},
+		},
+	}
+
+	mainLib := &ast.Library{
+		Includes: []*ast.IncludeDef{
+			{Name: "MyLib", Alias: "MyLib"},
+		},
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "Result",
+				Expression: &ast.FunctionCall{
+					Source:   &ast.IdentifierRef{Name: "MyLib"},
+					Name:     "Double",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralInteger, Value: "21"}},
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), mainLib)
+	ctx.IncludedLibraries["MyLib"] = includedLib
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	val, ok := results["Result"].(fptypes.Integer)
+	if !ok {
+		t.Fatalf("Result: expected Integer, got %T (%v)", results["Result"], results["Result"])
+	}
+	if val.Value() != 42 {
+		t.Errorf("Result = %d, want 42", val.Value())
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -1200,4 +1303,128 @@ func TestEval_IdentifierRef_LazyEvaluation_FalseCase(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	assertBoolean(t, val, false, "C = A and B")
+}
+
+func TestEvalMemberAccess_ChoiceType(t *testing.T) {
+	obsJSON := []byte(`{
+		"resourceType": "Observation",
+		"status": "final",
+		"valueQuantity": {
+			"value": 128,
+			"unit": "cm"
+		}
+	}`)
+
+	obj := fptypes.NewObjectValue(obsJSON)
+
+	lib := &ast.Library{
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "ObsValue",
+				Expression: &ast.MemberAccess{
+					Source: &ast.IdentifierRef{Name: "obs"},
+					Member: "value",
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	ctx.ModelInfo = model.DefaultR4ModelInfo()
+	ctx.Aliases["obs"] = obj
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	val := results["ObsValue"]
+	if val == nil {
+		t.Fatal("ObsValue should not be nil — value[x] resolution failed")
+	}
+	if _, ok := val.(*fptypes.ObjectValue); !ok {
+		t.Errorf("ObsValue: expected *ObjectValue, got %T", val)
+	}
+}
+
+func TestEvalMemberAccess_DirectField(t *testing.T) {
+	obsJSON := []byte(`{"resourceType": "Observation", "status": "final"}`)
+	obj := fptypes.NewObjectValue(obsJSON)
+
+	lib := &ast.Library{
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "Status",
+				Expression: &ast.MemberAccess{
+					Source: &ast.IdentifierRef{Name: "obs"},
+					Member: "status",
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	ctx.ModelInfo = model.DefaultR4ModelInfo()
+	ctx.Aliases["obs"] = obj
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	s, ok := results["Status"].(fptypes.String)
+	if !ok || s.Value() != "final" {
+		t.Errorf("Status = %v, want 'final'", results["Status"])
+	}
+}
+
+func TestResolveOverload_ByArgumentType(t *testing.T) {
+	// Two overloads with same arity but different operand types
+	lib := &ast.Library{
+		Functions: []*ast.FunctionDef{
+			{
+				Name:     "Convert",
+				Operands: []*ast.OperandDef{{Name: "val", Type: &ast.NamedType{Name: "Integer"}}},
+				Body:     &ast.Literal{ValueType: ast.LiteralString, Value: "integer-path"},
+			},
+			{
+				Name:     "Convert",
+				Operands: []*ast.OperandDef{{Name: "val", Type: &ast.NamedType{Name: "String"}}},
+				Body:     &ast.Literal{ValueType: ast.LiteralString, Value: "string-path"},
+			},
+		},
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "FromString",
+				Expression: &ast.FunctionCall{
+					Name:     "Convert",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralString, Value: "hello"}},
+				},
+			},
+			{
+				Name: "FromInt",
+				Expression: &ast.FunctionCall{
+					Name:     "Convert",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}},
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	fs, ok := results["FromString"].(fptypes.String)
+	if !ok || fs.Value() != "string-path" {
+		t.Errorf("FromString = %v, want 'string-path'", results["FromString"])
+	}
+
+	fi, ok := results["FromInt"].(fptypes.String)
+	if !ok || fi.Value() != "integer-path" {
+		t.Errorf("FromInt = %v, want 'integer-path'", results["FromInt"])
+	}
 }

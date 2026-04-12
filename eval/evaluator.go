@@ -29,21 +29,31 @@ type queryCombo struct {
 
 // Evaluator interprets CQL AST nodes.
 type Evaluator struct {
-	ctx   *Context
-	funcs map[string]*ast.FunctionDef // registered library functions
+	ctx           *Context
+	funcs         map[string][]*ast.FunctionDef            // local overloads
+	includedFuncs map[string]map[string][]*ast.FunctionDef // alias → name → overloads
 }
 
 // NewEvaluator creates a new evaluator for the given context.
 func NewEvaluator(ctx *Context) *Evaluator {
 	e := &Evaluator{
-		ctx:   ctx,
-		funcs: make(map[string]*ast.FunctionDef),
+		ctx:           ctx,
+		funcs:         make(map[string][]*ast.FunctionDef),
+		includedFuncs: make(map[string]map[string][]*ast.FunctionDef),
 	}
 	// Register library functions
 	if ctx.Library != nil {
 		for _, f := range ctx.Library.Functions {
-			e.funcs[f.Name] = f
+			e.funcs[f.Name] = append(e.funcs[f.Name], f)
 		}
+	}
+	// Register included library functions
+	for alias, lib := range ctx.IncludedLibraries {
+		libFuncs := make(map[string][]*ast.FunctionDef)
+		for _, f := range lib.Functions {
+			libFuncs[f.Name] = append(libFuncs[f.Name], f)
+		}
+		e.includedFuncs[alias] = libFuncs
 	}
 	return e
 }
@@ -51,7 +61,7 @@ func NewEvaluator(ctx *Context) *Evaluator {
 // withContext returns a lightweight evaluator sharing the same function registry
 // but using a different context. Avoids re-building the funcs map on each iteration.
 func (e *Evaluator) withContext(ctx *Context) *Evaluator {
-	return &Evaluator{ctx: ctx, funcs: e.funcs}
+	return &Evaluator{ctx: ctx, funcs: e.funcs, includedFuncs: e.includedFuncs}
 }
 
 // EvaluateLibrary evaluates all expression definitions in the library.
@@ -267,6 +277,19 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	if ok {
 		return val, nil
 	}
+	// Check if the identifier refers to the context resource type (e.g. "Patient").
+	// In CQL, `context Patient` makes `Patient` resolve to the current context resource.
+	if e.ctx.Library != nil && len(e.ctx.ContextValue) > 0 {
+		for _, ctxDef := range e.ctx.Library.Contexts {
+			if ctxDef.Name == n.Name {
+				obj := e.ctx.GetContextObject()
+				if obj != nil {
+					return obj, nil
+				}
+			}
+		}
+	}
+
 	// Lazily evaluate library expression definitions referenced by name.
 	// This handles CQL like: define "A": true  define "B": "A" and false
 	// where "B" references "A" via IdentifierRef.
@@ -1336,9 +1359,107 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 // Function calls
 // ---------------------------------------------------------------------------
 
+// resolveOverload picks the best FunctionDef matching the given arguments.
+// Matches by operand count. Returns first match or first overload as fallback.
+func resolveOverload(overloads []*ast.FunctionDef, args []ast.Expression) *ast.FunctionDef {
+	if len(overloads) == 1 {
+		return overloads[0]
+	}
+
+	// First filter by arity
+	var candidates []*ast.FunctionDef
+	for _, fd := range overloads {
+		if len(fd.Operands) == len(args) {
+			candidates = append(candidates, fd)
+		}
+	}
+	if len(candidates) == 0 {
+		return overloads[0]
+	}
+	if len(candidates) == 1 {
+		return candidates[0]
+	}
+
+	// Score by argument type match
+	bestScore := -1
+	var best *ast.FunctionDef
+	for _, fd := range candidates {
+		score := 0
+		for i, op := range fd.Operands {
+			if i < len(args) && op.Type != nil {
+				if nt, ok := op.Type.(*ast.NamedType); ok {
+					if matchesArgType(args[i], nt.Name) {
+						score++
+					}
+				}
+			}
+		}
+		if score > bestScore {
+			bestScore = score
+			best = fd
+		}
+	}
+	if best != nil {
+		return best
+	}
+	return candidates[0]
+}
+
+// matchesArgType checks if an AST expression matches the expected type name.
+func matchesArgType(expr ast.Expression, typeName string) bool {
+	lit, ok := expr.(*ast.Literal)
+	if !ok {
+		return false
+	}
+	switch lit.ValueType {
+	case ast.LiteralInteger:
+		return typeName == "Integer" || typeName == "System.Integer"
+	case ast.LiteralDecimal:
+		return typeName == "Decimal" || typeName == "System.Decimal"
+	case ast.LiteralString:
+		return typeName == "String" || typeName == "System.String"
+	case ast.LiteralBoolean:
+		return typeName == "Boolean" || typeName == "System.Boolean"
+	case ast.LiteralLong:
+		return typeName == "Long" || typeName == "System.Long"
+	case ast.LiteralQuantity:
+		return typeName == "Quantity" || typeName == "System.Quantity"
+	default:
+		return false
+	}
+}
+
 func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error) {
+	// Check for library-qualified call via Source (e.g. FHIRHelpers.ToQuantity(...))
+	// Parser produces: FunctionCall{Source: IdentifierRef{Name: "FHIRHelpers"}, Name: "ToQuantity"}
+	if n.Source != nil {
+		if idRef, ok := n.Source.(*ast.IdentifierRef); ok {
+			if libFuncs, ok := e.includedFuncs[idRef.Name]; ok {
+				overloads, ok := libFuncs[n.Name]
+				if !ok {
+					return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, idRef.Name)
+				}
+				fd := resolveOverload(overloads, n.Operands)
+				return e.evalUserFunction(fd, n.Operands)
+			}
+		}
+	}
+
+	// Check for library-qualified call via Library field
+	if n.Library != "" {
+		if libFuncs, ok := e.includedFuncs[n.Library]; ok {
+			overloads, ok := libFuncs[n.Name]
+			if !ok {
+				return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, n.Library)
+			}
+			fd := resolveOverload(overloads, n.Operands)
+			return e.evalUserFunction(fd, n.Operands)
+		}
+	}
+
 	// Check if it's a library-defined function
-	if fd, ok := e.funcs[n.Name]; ok {
+	if overloads, ok := e.funcs[n.Name]; ok {
+		fd := resolveOverload(overloads, n.Operands)
 		return e.evalUserFunction(fd, n.Operands)
 	}
 	// Built-in functions handled here
@@ -2352,13 +2473,39 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	// JSON object member access
 	if obj, ok := source.(*fptypes.ObjectValue); ok {
 		result := obj.GetCollection(n.Member)
-		if result.Count() == 0 {
-			return nil, nil
+		if result.Count() > 0 {
+			if result.Count() == 1 {
+				return result[0], nil
+			}
+			return cqltypes.NewList(result), nil
 		}
-		if result.Count() == 1 {
-			return result[0], nil
+
+		// Choice type resolution: check ModelInfo for value[x] patterns
+		if e.ctx.ModelInfo != nil {
+			typeName := obj.Type() // e.g. "Observation"
+			path := typeName + "." + n.Member
+			if e.ctx.ModelInfo.IsChoiceType(path) {
+				if ei, ok := e.ctx.ModelInfo.ElementInfoByPath(path); ok {
+					for _, choiceType := range ei.ChoiceTypes {
+						// Extract suffix: "FHIR.Quantity" → "Quantity"
+						suffix := choiceType
+						if idx := strings.LastIndex(choiceType, "."); idx >= 0 {
+							suffix = choiceType[idx+1:]
+						}
+						concreteKey := n.Member + suffix
+						result = obj.GetCollection(concreteKey)
+						if result.Count() > 0 {
+							if result.Count() == 1 {
+								return result[0], nil
+							}
+							return cqltypes.NewList(result), nil
+						}
+					}
+				}
+			}
 		}
-		return cqltypes.NewList(result), nil
+
+		return nil, nil
 	}
 	return nil, nil
 }

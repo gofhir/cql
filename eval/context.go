@@ -8,6 +8,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
+	"github.com/gofhir/cql/model"
 	cqltypes "github.com/gofhir/cql/types"
 )
 
@@ -60,6 +61,9 @@ type Context struct {
 	// TraceListener receives events during evaluation (optional, nil = no tracing).
 	TraceListener TraceListener
 
+	// ModelInfo provides FHIR type metadata for choice type resolution.
+	ModelInfo model.ModelInfo
+
 	// Context type and resource type for multi-context support
 	contextType         ContextType
 	contextResourceType string
@@ -68,6 +72,9 @@ type Context struct {
 	cachedSubjectID string
 	cachedSubjectOK bool // true once cachedSubjectID has been computed
 	cachedObject    *fptypes.ObjectValue
+
+	// IncludedLibraries maps alias → compiled included library
+	IncludedLibraries map[string]*ast.Library
 
 	// Parent context (for nested scopes)
 	parent *Context
@@ -79,14 +86,15 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		goCtx = context.Background()
 	}
 	c := &Context{
-		GoCtx:       goCtx,
-		Library:     lib,
-		Definitions: make(map[string]fptypes.Value),
-		Parameters:  make(map[string]fptypes.Value),
-		CodeSystems: make(map[string]*cqltypes.Code),
-		ValueSets:   make(map[string]string),
-		Aliases:     make(map[string]fptypes.Value),
-		LetBindings: make(map[string]fptypes.Value),
+		GoCtx:             goCtx,
+		Library:           lib,
+		Definitions:       make(map[string]fptypes.Value),
+		Parameters:        make(map[string]fptypes.Value),
+		CodeSystems:       make(map[string]*cqltypes.Code),
+		ValueSets:         make(map[string]string),
+		Aliases:           make(map[string]fptypes.Value),
+		LetBindings:       make(map[string]fptypes.Value),
+		IncludedLibraries: make(map[string]*ast.Library),
 	}
 	// Populate code systems and value sets from library definitions
 	if lib != nil {
@@ -115,11 +123,13 @@ func (c *Context) ChildScope() *Context {
 		DataProvider:        c.DataProvider,
 		TerminologyProvider: c.TerminologyProvider,
 		TraceListener:       c.TraceListener,
+		ModelInfo:           c.ModelInfo,
 		contextType:         c.contextType,
 		contextResourceType: c.contextResourceType,
 		cachedSubjectID:     c.cachedSubjectID,
 		cachedSubjectOK:     c.cachedSubjectOK,
 		cachedObject:        c.cachedObject,
+		IncludedLibraries:   c.IncludedLibraries,
 		parent:              c,
 	}
 }

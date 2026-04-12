@@ -25,8 +25,12 @@ import (
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/compiler"
 	"github.com/gofhir/cql/eval"
+	"github.com/gofhir/cql/fhirhelpers"
 	"github.com/gofhir/cql/model"
 )
+
+// LibraryResolver loads CQL source by library name and version.
+type LibraryResolver func(ctx context.Context, name, version string) (string, error)
 
 // Engine is the public API for the CQL engine.
 type Engine struct {
@@ -34,6 +38,7 @@ type Engine struct {
 	terminologyProvider eval.TerminologyProvider
 	modelInfo           model.ModelInfo
 	traceListener       eval.TraceListener
+	libraryResolver     LibraryResolver
 	maxExpressionLen    int
 	evalTimeout         time.Duration
 	maxRetrieveSize     int
@@ -90,6 +95,13 @@ func WithMaxRetrieveSize(n int) Option {
 func WithMaxDepth(n int) Option {
 	return func(e *Engine) {
 		e.maxDepth = n
+	}
+}
+
+// WithLibraryResolver sets the resolver for included libraries.
+func WithLibraryResolver(lr LibraryResolver) Option {
+	return func(e *Engine) {
+		e.libraryResolver = lr
 	}
 }
 
@@ -151,6 +163,44 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, error) {
 	return lib, nil
 }
 
+// resolveIncludes compiles and registers included libraries into the evaluation context.
+func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) error {
+	for _, inc := range lib.Includes {
+		alias := inc.Alias
+		if alias == "" {
+			alias = inc.Name
+		}
+
+		// Try user-provided resolver first
+		var src string
+		var resolved bool
+		if e.libraryResolver != nil {
+			s, err := e.libraryResolver(ctx, inc.Name, inc.Version)
+			if err == nil {
+				src = s
+				resolved = true
+			}
+		}
+
+		// Fall back to built-in FHIRHelpers
+		if !resolved && inc.Name == "FHIRHelpers" {
+			src = fhirhelpers.Source
+			resolved = true
+		}
+
+		if !resolved {
+			return fmt.Errorf("library '%s' version '%s' could not be resolved (no LibraryResolver provided)", inc.Name, inc.Version)
+		}
+
+		incLib, err := e.compileOrCache(src)
+		if err != nil {
+			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
+		}
+		evalCtx.IncludedLibraries[alias] = incLib
+	}
+	return nil
+}
+
 // EvaluateLibrary parses and evaluates a CQL library, returning named expression results.
 // Optional EvalOption arguments allow per-call configuration (e.g., WithCallTraceListener).
 func (e *Engine) EvaluateLibrary(
@@ -184,6 +234,7 @@ func (e *Engine) EvaluateLibrary(
 	evalCtx.DataProvider = e.dataProvider
 	evalCtx.TerminologyProvider = e.terminologyProvider
 	evalCtx.TraceListener = e.traceListener
+	evalCtx.ModelInfo = e.modelInfo
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -194,6 +245,11 @@ func (e *Engine) EvaluateLibrary(
 	}
 	for k, v := range params {
 		evalCtx.Parameters[k] = v
+	}
+
+	// Resolve included libraries
+	if err = e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+		return nil, &ErrEvaluation{Cause: err}
 	}
 
 	// Evaluate all definitions
@@ -244,6 +300,7 @@ func (e *Engine) EvaluateExpression(
 	evalCtx.DataProvider = e.dataProvider
 	evalCtx.TerminologyProvider = e.terminologyProvider
 	evalCtx.TraceListener = e.traceListener
+	evalCtx.ModelInfo = e.modelInfo
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -254,6 +311,11 @@ func (e *Engine) EvaluateExpression(
 	}
 	for k, v := range params {
 		evalCtx.Parameters[k] = v
+	}
+
+	// Resolve included libraries
+	if err = e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+		return nil, &ErrEvaluation{Cause: err}
 	}
 
 	// Evaluate specified expression
