@@ -1077,6 +1077,60 @@ func TestContext_ChildScope_PropagatesContextType(t *testing.T) {
 	}
 }
 
+func TestEvalFunctionOverloads(t *testing.T) {
+	lib := &ast.Library{
+		Functions: []*ast.FunctionDef{
+			{
+				Name:     "Greet",
+				Operands: []*ast.OperandDef{{Name: "name"}},
+				Body: &ast.BinaryExpression{
+					Operator: ast.OpConcatenate,
+					Left:     &ast.Literal{ValueType: ast.LiteralString, Value: "Hello, "},
+					Right:    &ast.IdentifierRef{Name: "name"},
+				},
+			},
+			{
+				Name:     "Greet",
+				Operands: []*ast.OperandDef{},
+				Body:     &ast.Literal{ValueType: ast.LiteralString, Value: "Hello, World"},
+			},
+		},
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "WithArg",
+				Expression: &ast.FunctionCall{
+					Name:     "Greet",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralString, Value: "CQL"}},
+				},
+			},
+			{
+				Name: "NoArg",
+				Expression: &ast.FunctionCall{
+					Name:     "Greet",
+					Operands: []ast.Expression{},
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	wa, ok := results["WithArg"].(fptypes.String)
+	if !ok || wa.Value() != "Hello, CQL" {
+		t.Errorf("WithArg = %v, want 'Hello, CQL'", results["WithArg"])
+	}
+
+	na, ok := results["NoArg"].(fptypes.String)
+	if !ok || na.Value() != "Hello, World" {
+		t.Errorf("NoArg = %v, want 'Hello, World'", results["NoArg"])
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

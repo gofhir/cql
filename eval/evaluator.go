@@ -30,19 +30,19 @@ type queryCombo struct {
 // Evaluator interprets CQL AST nodes.
 type Evaluator struct {
 	ctx   *Context
-	funcs map[string]*ast.FunctionDef // registered library functions
+	funcs map[string][]*ast.FunctionDef // local overloads
 }
 
 // NewEvaluator creates a new evaluator for the given context.
 func NewEvaluator(ctx *Context) *Evaluator {
 	e := &Evaluator{
 		ctx:   ctx,
-		funcs: make(map[string]*ast.FunctionDef),
+		funcs: make(map[string][]*ast.FunctionDef),
 	}
 	// Register library functions
 	if ctx.Library != nil {
 		for _, f := range ctx.Library.Functions {
-			e.funcs[f.Name] = f
+			e.funcs[f.Name] = append(e.funcs[f.Name], f)
 		}
 	}
 	return e
@@ -1336,9 +1336,24 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 // Function calls
 // ---------------------------------------------------------------------------
 
+// resolveOverload picks the best FunctionDef matching the given arguments.
+// Matches by operand count. Returns first match or first overload as fallback.
+func resolveOverload(overloads []*ast.FunctionDef, args []ast.Expression) *ast.FunctionDef {
+	if len(overloads) == 1 {
+		return overloads[0]
+	}
+	for _, fd := range overloads {
+		if len(fd.Operands) == len(args) {
+			return fd
+		}
+	}
+	return overloads[0]
+}
+
 func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error) {
 	// Check if it's a library-defined function
-	if fd, ok := e.funcs[n.Name]; ok {
+	if overloads, ok := e.funcs[n.Name]; ok {
+		fd := resolveOverload(overloads, n.Operands)
 		return e.evalUserFunction(fd, n.Operands)
 	}
 	// Built-in functions handled here
