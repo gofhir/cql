@@ -30,8 +30,8 @@ type queryCombo struct {
 // Evaluator interprets CQL AST nodes.
 type Evaluator struct {
 	ctx           *Context
-	funcs         map[string][]*ast.FunctionDef                // local overloads
-	includedFuncs map[string]map[string][]*ast.FunctionDef     // alias → name → overloads
+	funcs         map[string][]*ast.FunctionDef            // local overloads
+	includedFuncs map[string]map[string][]*ast.FunctionDef // alias → name → overloads
 }
 
 // NewEvaluator creates a new evaluator for the given context.
@@ -1407,24 +1407,26 @@ func resolveOverload(overloads []*ast.FunctionDef, args []ast.Expression) *ast.F
 
 // matchesArgType checks if an AST expression matches the expected type name.
 func matchesArgType(expr ast.Expression, typeName string) bool {
-	switch e := expr.(type) {
-	case *ast.Literal:
-		switch e.ValueType {
-		case ast.LiteralInteger:
-			return typeName == "Integer" || typeName == "System.Integer"
-		case ast.LiteralDecimal:
-			return typeName == "Decimal" || typeName == "System.Decimal"
-		case ast.LiteralString:
-			return typeName == "String" || typeName == "System.String"
-		case ast.LiteralBoolean:
-			return typeName == "Boolean" || typeName == "System.Boolean"
-		case ast.LiteralLong:
-			return typeName == "Long" || typeName == "System.Long"
-		case ast.LiteralQuantity:
-			return typeName == "Quantity" || typeName == "System.Quantity"
-		}
+	lit, ok := expr.(*ast.Literal)
+	if !ok {
+		return false
 	}
-	return false
+	switch lit.ValueType {
+	case ast.LiteralInteger:
+		return typeName == "Integer" || typeName == "System.Integer"
+	case ast.LiteralDecimal:
+		return typeName == "Decimal" || typeName == "System.Decimal"
+	case ast.LiteralString:
+		return typeName == "String" || typeName == "System.String"
+	case ast.LiteralBoolean:
+		return typeName == "Boolean" || typeName == "System.Boolean"
+	case ast.LiteralLong:
+		return typeName == "Long" || typeName == "System.Long"
+	case ast.LiteralQuantity:
+		return typeName == "Quantity" || typeName == "System.Quantity"
+	default:
+		return false
+	}
 }
 
 func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error) {

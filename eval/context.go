@@ -86,12 +86,12 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		goCtx = context.Background()
 	}
 	c := &Context{
-		GoCtx:       goCtx,
-		Library:     lib,
-		Definitions: make(map[string]fptypes.Value),
-		Parameters:  make(map[string]fptypes.Value),
-		CodeSystems: make(map[string]*cqltypes.Code),
-		ValueSets:   make(map[string]string),
+		GoCtx:             goCtx,
+		Library:           lib,
+		Definitions:       make(map[string]fptypes.Value),
+		Parameters:        make(map[string]fptypes.Value),
+		CodeSystems:       make(map[string]*cqltypes.Code),
+		ValueSets:         make(map[string]string),
 		Aliases:           make(map[string]fptypes.Value),
 		LetBindings:       make(map[string]fptypes.Value),
 		IncludedLibraries: make(map[string]*ast.Library),

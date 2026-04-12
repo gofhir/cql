@@ -248,7 +248,7 @@ func (e *Engine) EvaluateLibrary(
 	}
 
 	// Resolve included libraries
-	if err := e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+	if err = e.resolveIncludes(ctx, lib, evalCtx); err != nil {
 		return nil, &ErrEvaluation{Cause: err}
 	}
 
@@ -314,7 +314,7 @@ func (e *Engine) EvaluateExpression(
 	}
 
 	// Resolve included libraries
-	if err := e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+	if err = e.resolveIncludes(ctx, lib, evalCtx); err != nil {
 		return nil, &ErrEvaluation{Cause: err}
 	}
 
