@@ -8,6 +8,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
+	"github.com/gofhir/cql/model"
 	cqltypes "github.com/gofhir/cql/types"
 )
 
@@ -1302,4 +1303,77 @@ func TestEval_IdentifierRef_LazyEvaluation_FalseCase(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	assertBoolean(t, val, false, "C = A and B")
+}
+
+func TestEvalMemberAccess_ChoiceType(t *testing.T) {
+	obsJSON := []byte(`{
+		"resourceType": "Observation",
+		"status": "final",
+		"valueQuantity": {
+			"value": 128,
+			"unit": "cm"
+		}
+	}`)
+
+	obj := fptypes.NewObjectValue(obsJSON)
+
+	lib := &ast.Library{
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "ObsValue",
+				Expression: &ast.MemberAccess{
+					Source: &ast.IdentifierRef{Name: "obs"},
+					Member: "value",
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	ctx.ModelInfo = model.DefaultR4ModelInfo()
+	ctx.Aliases["obs"] = obj
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	val := results["ObsValue"]
+	if val == nil {
+		t.Fatal("ObsValue should not be nil — value[x] resolution failed")
+	}
+	if _, ok := val.(*fptypes.ObjectValue); !ok {
+		t.Errorf("ObsValue: expected *ObjectValue, got %T", val)
+	}
+}
+
+func TestEvalMemberAccess_DirectField(t *testing.T) {
+	obsJSON := []byte(`{"resourceType": "Observation", "status": "final"}`)
+	obj := fptypes.NewObjectValue(obsJSON)
+
+	lib := &ast.Library{
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "Status",
+				Expression: &ast.MemberAccess{
+					Source: &ast.IdentifierRef{Name: "obs"},
+					Member: "status",
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	ctx.ModelInfo = model.DefaultR4ModelInfo()
+	ctx.Aliases["obs"] = obj
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	s, ok := results["Status"].(fptypes.String)
+	if !ok || s.Value() != "final" {
+		t.Errorf("Status = %v, want 'final'", results["Status"])
+	}
 }

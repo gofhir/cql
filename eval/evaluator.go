@@ -2423,13 +2423,39 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	// JSON object member access
 	if obj, ok := source.(*fptypes.ObjectValue); ok {
 		result := obj.GetCollection(n.Member)
-		if result.Count() == 0 {
-			return nil, nil
+		if result.Count() > 0 {
+			if result.Count() == 1 {
+				return result[0], nil
+			}
+			return cqltypes.NewList(result), nil
 		}
-		if result.Count() == 1 {
-			return result[0], nil
+
+		// Choice type resolution: check ModelInfo for value[x] patterns
+		if e.ctx.ModelInfo != nil {
+			typeName := obj.Type() // e.g. "Observation"
+			path := typeName + "." + n.Member
+			if e.ctx.ModelInfo.IsChoiceType(path) {
+				if ei, ok := e.ctx.ModelInfo.ElementInfoByPath(path); ok {
+					for _, choiceType := range ei.ChoiceTypes {
+						// Extract suffix: "FHIR.Quantity" → "Quantity"
+						suffix := choiceType
+						if idx := strings.LastIndex(choiceType, "."); idx >= 0 {
+							suffix = choiceType[idx+1:]
+						}
+						concreteKey := n.Member + suffix
+						result = obj.GetCollection(concreteKey)
+						if result.Count() > 0 {
+							if result.Count() == 1 {
+								return result[0], nil
+							}
+							return cqltypes.NewList(result), nil
+						}
+					}
+				}
+			}
 		}
-		return cqltypes.NewList(result), nil
+
+		return nil, nil
 	}
 	return nil, nil
 }

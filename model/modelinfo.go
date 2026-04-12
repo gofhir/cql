@@ -5,6 +5,8 @@
 // type metadata from StructureDefinitions at runtime.
 package model
 
+import "strings"
+
 // ModelInfo provides type metadata about the FHIR model for CQL evaluation.
 type ModelInfo interface { //nolint:revive // stuttering name kept for API clarity
 	// TypeInfo returns the type information for a FHIR type name.
@@ -23,6 +25,9 @@ type ModelInfo interface { //nolint:revive // stuttering name kept for API clari
 	// PrimaryCodePath returns the default code-filter path for a resource type.
 	// E.g., "Condition" → "code", "Procedure" → "code".
 	PrimaryCodePath(resourceType string) string
+
+	// ElementInfoByPath returns the ElementInfo for a dot-path like "Observation.value".
+	ElementInfoByPath(path string) (*ElementInfo, bool)
 
 	// Version returns the FHIR version this model represents.
 	Version() string
@@ -95,6 +100,23 @@ func (m *StaticModelInfo) PrimaryCodePath(resourceType string) string {
 		return cp
 	}
 	return "code" // default code path
+}
+
+func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
+	parts := strings.SplitN(path, ".", 2)
+	if len(parts) != 2 {
+		return nil, false
+	}
+	ti, ok := m.types[parts[0]]
+	if !ok {
+		return nil, false
+	}
+	for i := range ti.Elements {
+		if ti.Elements[i].Name == parts[1] {
+			return &ti.Elements[i], true
+		}
+	}
+	return nil, false
 }
 
 func (m *StaticModelInfo) Version() string {
