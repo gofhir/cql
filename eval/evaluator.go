@@ -1438,7 +1438,7 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 					return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, idRef.Name)
 				}
 				fd := resolveOverload(overloads, n.Operands)
-				return e.evalIncludedFunction(fd, n.Operands)
+				return e.evalUserFunction(fd, n.Operands)
 			}
 		}
 	}
@@ -1451,7 +1451,7 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 				return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, n.Library)
 			}
 			fd := resolveOverload(overloads, n.Operands)
-			return e.evalIncludedFunction(fd, n.Operands)
+			return e.evalUserFunction(fd, n.Operands)
 		}
 	}
 
@@ -1462,25 +1462,6 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 	}
 	// Built-in functions handled here
 	return e.evalBuiltinFunction(n)
-}
-
-func (e *Evaluator) evalIncludedFunction(fd *ast.FunctionDef, args []ast.Expression) (fptypes.Value, error) {
-	if fd.External {
-		return nil, fmt.Errorf("external function '%s' not implemented", fd.Name)
-	}
-	child := e.ctx.ChildScope()
-	for i, op := range fd.Operands {
-		if i < len(args) {
-			val, err := e.Eval(args[i])
-			if err != nil {
-				return nil, err
-			}
-			child.Aliases[op.Name] = val
-		}
-	}
-	childEval := NewEvaluator(child)
-	childEval.includedFuncs = e.includedFuncs
-	return childEval.Eval(fd.Body)
 }
 
 func (e *Evaluator) evalUserFunction(fd *ast.FunctionDef, args []ast.Expression) (fptypes.Value, error) {
