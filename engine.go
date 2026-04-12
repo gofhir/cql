@@ -25,6 +25,7 @@ import (
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/compiler"
 	"github.com/gofhir/cql/eval"
+	"github.com/gofhir/cql/fhirhelpers"
 	"github.com/gofhir/cql/model"
 )
 
@@ -164,24 +165,36 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, error) {
 
 // resolveIncludes compiles and registers included libraries into the evaluation context.
 func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) error {
-	if len(lib.Includes) == 0 {
-		return nil
-	}
-	if e.libraryResolver == nil {
-		return fmt.Errorf("library '%s' is included but no LibraryResolver was provided", lib.Includes[0].Name)
-	}
 	for _, inc := range lib.Includes {
-		src, err := e.libraryResolver(ctx, inc.Name, inc.Version)
-		if err != nil {
-			return fmt.Errorf("resolving library '%s' version '%s': %w", inc.Name, inc.Version, err)
-		}
-		incLib, err := e.compileOrCache(src)
-		if err != nil {
-			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
-		}
 		alias := inc.Alias
 		if alias == "" {
 			alias = inc.Name
+		}
+
+		// Try user-provided resolver first
+		var src string
+		var resolved bool
+		if e.libraryResolver != nil {
+			s, err := e.libraryResolver(ctx, inc.Name, inc.Version)
+			if err == nil {
+				src = s
+				resolved = true
+			}
+		}
+
+		// Fall back to built-in FHIRHelpers
+		if !resolved && inc.Name == "FHIRHelpers" {
+			src = fhirhelpers.Source
+			resolved = true
+		}
+
+		if !resolved {
+			return fmt.Errorf("library '%s' version '%s' could not be resolved (no LibraryResolver provided)", inc.Name, inc.Version)
+		}
+
+		incLib, err := e.compileOrCache(src)
+		if err != nil {
+			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
 		}
 		evalCtx.IncludedLibraries[alias] = incLib
 	}

@@ -261,6 +261,29 @@ define X: 1`
 	}
 }
 
+func TestEngine_FHIRHelpers_BuiltIn(t *testing.T) {
+	// No LibraryResolver provided — FHIRHelpers should be auto-resolved
+	e := NewEngine()
+
+	cqlSource := `library Test version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+define Val: FHIRHelpers.ToString('hello')`
+
+	results, err := e.EvaluateLibrary(context.Background(), cqlSource, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	val, ok := results["Val"].(fptypes.String)
+	if !ok {
+		t.Fatalf("Val: expected String, got %T (%v)", results["Val"], results["Val"])
+	}
+	if val.Value() != "hello" {
+		t.Errorf("Val = %q, want %q", val.Value(), "hello")
+	}
+}
+
 func TestErrorTypes(t *testing.T) {
 	t.Run("ErrSyntaxError", func(t *testing.T) {
 		err := &ErrSyntaxError{Cause: errors.New("unexpected token")}
