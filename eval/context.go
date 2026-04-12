@@ -8,6 +8,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
+	"github.com/gofhir/cql/model"
 	cqltypes "github.com/gofhir/cql/types"
 )
 
@@ -59,6 +60,9 @@ type Context struct {
 
 	// TraceListener receives events during evaluation (optional, nil = no tracing).
 	TraceListener TraceListener
+
+	// ModelInfo provides FHIR type metadata for choice type resolution.
+	ModelInfo model.ModelInfo
 
 	// Context type and resource type for multi-context support
 	contextType         ContextType
@@ -115,6 +119,7 @@ func (c *Context) ChildScope() *Context {
 		DataProvider:        c.DataProvider,
 		TerminologyProvider: c.TerminologyProvider,
 		TraceListener:       c.TraceListener,
+		ModelInfo:           c.ModelInfo,
 		contextType:         c.contextType,
 		contextResourceType: c.contextResourceType,
 		cachedSubjectID:     c.cachedSubjectID,

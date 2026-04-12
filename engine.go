@@ -184,6 +184,7 @@ func (e *Engine) EvaluateLibrary(
 	evalCtx.DataProvider = e.dataProvider
 	evalCtx.TerminologyProvider = e.terminologyProvider
 	evalCtx.TraceListener = e.traceListener
+	evalCtx.ModelInfo = e.modelInfo
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -244,6 +245,7 @@ func (e *Engine) EvaluateExpression(
 	evalCtx.DataProvider = e.dataProvider
 	evalCtx.TerminologyProvider = e.terminologyProvider
 	evalCtx.TraceListener = e.traceListener
+	evalCtx.ModelInfo = e.modelInfo
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
