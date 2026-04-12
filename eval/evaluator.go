@@ -1365,12 +1365,66 @@ func resolveOverload(overloads []*ast.FunctionDef, args []ast.Expression) *ast.F
 	if len(overloads) == 1 {
 		return overloads[0]
 	}
+
+	// First filter by arity
+	var candidates []*ast.FunctionDef
 	for _, fd := range overloads {
 		if len(fd.Operands) == len(args) {
-			return fd
+			candidates = append(candidates, fd)
 		}
 	}
-	return overloads[0]
+	if len(candidates) == 0 {
+		return overloads[0]
+	}
+	if len(candidates) == 1 {
+		return candidates[0]
+	}
+
+	// Score by argument type match
+	bestScore := -1
+	var best *ast.FunctionDef
+	for _, fd := range candidates {
+		score := 0
+		for i, op := range fd.Operands {
+			if i < len(args) && op.Type != nil {
+				if nt, ok := op.Type.(*ast.NamedType); ok {
+					if matchesArgType(args[i], nt.Name) {
+						score++
+					}
+				}
+			}
+		}
+		if score > bestScore {
+			bestScore = score
+			best = fd
+		}
+	}
+	if best != nil {
+		return best
+	}
+	return candidates[0]
+}
+
+// matchesArgType checks if an AST expression matches the expected type name.
+func matchesArgType(expr ast.Expression, typeName string) bool {
+	switch e := expr.(type) {
+	case *ast.Literal:
+		switch e.ValueType {
+		case ast.LiteralInteger:
+			return typeName == "Integer" || typeName == "System.Integer"
+		case ast.LiteralDecimal:
+			return typeName == "Decimal" || typeName == "System.Decimal"
+		case ast.LiteralString:
+			return typeName == "String" || typeName == "System.String"
+		case ast.LiteralBoolean:
+			return typeName == "Boolean" || typeName == "System.Boolean"
+		case ast.LiteralLong:
+			return typeName == "Long" || typeName == "System.Long"
+		case ast.LiteralQuantity:
+			return typeName == "Quantity" || typeName == "System.Quantity"
+		}
+	}
+	return false
 }
 
 func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error) {

@@ -1377,3 +1377,54 @@ func TestEvalMemberAccess_DirectField(t *testing.T) {
 		t.Errorf("Status = %v, want 'final'", results["Status"])
 	}
 }
+
+func TestResolveOverload_ByArgumentType(t *testing.T) {
+	// Two overloads with same arity but different operand types
+	lib := &ast.Library{
+		Functions: []*ast.FunctionDef{
+			{
+				Name:     "Convert",
+				Operands: []*ast.OperandDef{{Name: "val", Type: &ast.NamedType{Name: "Integer"}}},
+				Body:     &ast.Literal{ValueType: ast.LiteralString, Value: "integer-path"},
+			},
+			{
+				Name:     "Convert",
+				Operands: []*ast.OperandDef{{Name: "val", Type: &ast.NamedType{Name: "String"}}},
+				Body:     &ast.Literal{ValueType: ast.LiteralString, Value: "string-path"},
+			},
+		},
+		Statements: []*ast.ExpressionDef{
+			{
+				Name: "FromString",
+				Expression: &ast.FunctionCall{
+					Name:     "Convert",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralString, Value: "hello"}},
+				},
+			},
+			{
+				Name: "FromInt",
+				Expression: &ast.FunctionCall{
+					Name:     "Convert",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}},
+				},
+			},
+		},
+	}
+
+	ctx := NewContext(context.Background(), lib)
+	evaluator := NewEvaluator(ctx)
+	results, err := evaluator.EvaluateLibrary()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	fs, ok := results["FromString"].(fptypes.String)
+	if !ok || fs.Value() != "string-path" {
+		t.Errorf("FromString = %v, want 'string-path'", results["FromString"])
+	}
+
+	fi, ok := results["FromInt"].(fptypes.String)
+	if !ok || fi.Value() != "integer-path" {
+		t.Errorf("FromInt = %v, want 'integer-path'", results["FromInt"])
+	}
+}
