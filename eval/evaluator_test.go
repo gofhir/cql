@@ -948,6 +948,218 @@ func TestEvalInCodeSystem(t *testing.T) {
 	assertBoolean(t, result, false, "InCodeSystem(different)")
 }
 
+func TestAnyInValueSet_ListWithMatch(t *testing.T) {
+	lib := &ast.Library{
+		ValueSets: []*ast.ValueSetDef{
+			{Name: "DiabetesCodes", ID: "http://example.org/vs/diabetes"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ctx.TerminologyProvider = &mockTerminologyProvider{inValueSet: true}
+	ev := NewEvaluator(ctx)
+
+	codes := cqltypes.NewList(fptypes.Collection{
+		fptypes.NewString("E11"),
+		fptypes.NewString("E12"),
+	})
+	result, err := ev.evalAnyInValueSet(codes, "DiabetesCodes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, true, "AnyInValueSet(list with match)")
+}
+
+func TestAnyInValueSet_EmptyList(t *testing.T) {
+	lib := &ast.Library{
+		ValueSets: []*ast.ValueSetDef{
+			{Name: "DiabetesCodes", ID: "http://example.org/vs/diabetes"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ev := NewEvaluator(ctx)
+
+	codes := cqltypes.NewList(fptypes.Collection{})
+	result, err := ev.evalAnyInValueSet(codes, "DiabetesCodes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, false, "AnyInValueSet(empty list)")
+}
+
+func TestAnyInValueSet_NilInput(t *testing.T) {
+	ctx := NewContext(context.Background(), &ast.Library{})
+	ev := NewEvaluator(ctx)
+
+	result, err := ev.evalAnyInValueSet(nil, "DiabetesCodes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != nil {
+		t.Errorf("expected nil for nil input, got %v", result)
+	}
+}
+
+func TestAnyInValueSet_NoMatch(t *testing.T) {
+	lib := &ast.Library{
+		ValueSets: []*ast.ValueSetDef{
+			{Name: "DiabetesCodes", ID: "http://example.org/vs/diabetes"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ctx.TerminologyProvider = &mockTerminologyProvider{inValueSet: false}
+	ev := NewEvaluator(ctx)
+
+	codes := cqltypes.NewList(fptypes.Collection{
+		fptypes.NewString("ZZZZZ"),
+	})
+	result, err := ev.evalAnyInValueSet(codes, "DiabetesCodes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, false, "AnyInValueSet(no match)")
+}
+
+func TestAnyInValueSet_SingleCode(t *testing.T) {
+	lib := &ast.Library{
+		ValueSets: []*ast.ValueSetDef{
+			{Name: "DiabetesCodes", ID: "http://example.org/vs/diabetes"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ctx.TerminologyProvider = &mockTerminologyProvider{inValueSet: true}
+	ev := NewEvaluator(ctx)
+
+	result, err := ev.evalAnyInValueSet(fptypes.NewString("E11"), "DiabetesCodes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, true, "AnyInValueSet(single code)")
+}
+
+func TestAnyInCodeSystem_ListWithMatch(t *testing.T) {
+	lib := &ast.Library{
+		CodeSystems: []*ast.CodeSystemDef{
+			{Name: "LOINC", ID: "http://loinc.org"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ev := NewEvaluator(ctx)
+
+	codes := cqltypes.NewList(fptypes.Collection{
+		cqltypes.NewCode("http://loinc.org", "12345-6", "Test"),
+		cqltypes.NewCode("http://snomed.info/sct", "123", "Other"),
+	})
+	result, err := ev.evalAnyInCodeSystem(codes, "LOINC")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, true, "AnyInCodeSystem(list with match)")
+}
+
+func TestAnyInCodeSystem_EmptyList(t *testing.T) {
+	lib := &ast.Library{
+		CodeSystems: []*ast.CodeSystemDef{
+			{Name: "LOINC", ID: "http://loinc.org"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ev := NewEvaluator(ctx)
+
+	codes := cqltypes.NewList(fptypes.Collection{})
+	result, err := ev.evalAnyInCodeSystem(codes, "LOINC")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, false, "AnyInCodeSystem(empty list)")
+}
+
+func TestAnyInCodeSystem_NilInput(t *testing.T) {
+	ctx := NewContext(context.Background(), &ast.Library{})
+	ev := NewEvaluator(ctx)
+
+	result, err := ev.evalAnyInCodeSystem(nil, "LOINC")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != nil {
+		t.Errorf("expected nil for nil input, got %v", result)
+	}
+}
+
+func TestAnyInCodeSystem_NoMatch(t *testing.T) {
+	lib := &ast.Library{
+		CodeSystems: []*ast.CodeSystemDef{
+			{Name: "LOINC", ID: "http://loinc.org"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ev := NewEvaluator(ctx)
+
+	codes := cqltypes.NewList(fptypes.Collection{
+		cqltypes.NewCode("http://snomed.info/sct", "123", "Test"),
+	})
+	result, err := ev.evalAnyInCodeSystem(codes, "LOINC")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, false, "AnyInCodeSystem(no match)")
+}
+
+func TestAnyInValueSet_BuiltinDispatch(t *testing.T) {
+	lib := &ast.Library{
+		ValueSets: []*ast.ValueSetDef{
+			{Name: "DiabetesCodes", ID: "http://example.org/vs/diabetes"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ctx.TerminologyProvider = &mockTerminologyProvider{inValueSet: true}
+	ev := NewEvaluator(ctx)
+
+	// Construct AST: AnyInValueSet({E11}, "DiabetesCodes")
+	fc := &ast.FunctionCall{
+		Name: "AnyInValueSet",
+		Operands: []ast.Expression{
+			&ast.ListExpression{
+				Elements: []ast.Expression{
+					&ast.Literal{Value: "E11", ValueType: ast.LiteralString},
+				},
+			},
+			&ast.IdentifierRef{Name: "DiabetesCodes"},
+		},
+	}
+	result, err := ev.evalBuiltinFunction(fc)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, true, "AnyInValueSet via builtin dispatch")
+}
+
+func TestAnyInCodeSystem_BuiltinDispatch(t *testing.T) {
+	lib := &ast.Library{
+		CodeSystems: []*ast.CodeSystemDef{
+			{Name: "LOINC", ID: "http://loinc.org"},
+		},
+	}
+	ctx := NewContext(context.Background(), lib)
+	ev := NewEvaluator(ctx)
+
+	// Construct AST: AnyInCodeSystem(Code{loinc, 12345}, "LOINC")
+	// We need to use a literal that will evaluate to a Code — use IdentifierRef pointing to a definition
+	ctx.Definitions["myCode"] = cqltypes.NewCode("http://loinc.org", "12345-6", "Test")
+	fc := &ast.FunctionCall{
+		Name: "AnyInCodeSystem",
+		Operands: []ast.Expression{
+			&ast.IdentifierRef{Name: "myCode"},
+			&ast.IdentifierRef{Name: "LOINC"},
+		},
+	}
+	result, err := ev.evalBuiltinFunction(fc)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertBoolean(t, result, true, "AnyInCodeSystem via builtin dispatch")
+}
+
 func TestResolveCodeRef(t *testing.T) {
 	lib := &ast.Library{
 		CodeSystems: []*ast.CodeSystemDef{

@@ -88,6 +88,64 @@ func (e *Evaluator) resolveCodeRef(ref cqltypes.CodeRef) fptypes.Value {
 	return nil
 }
 
+// evalAnyInValueSet checks if any code in a list is a member of the given ValueSet.
+func (e *Evaluator) evalAnyInValueSet(codes fptypes.Value, vsRefName string) (fptypes.Value, error) {
+	if codes == nil {
+		return nil, nil
+	}
+	list, ok := codes.(cqltypes.List)
+	if !ok {
+		// Single code: delegate to evalInValueSet
+		return e.evalInValueSet(codes, &ast.IdentifierRef{Name: vsRefName})
+	}
+	if len(list.Values) == 0 {
+		return fptypes.NewBoolean(false), nil
+	}
+	vsRef := &ast.IdentifierRef{Name: vsRefName}
+	for _, code := range list.Values {
+		if code == nil {
+			continue
+		}
+		result, err := e.evalInValueSet(code, vsRef)
+		if err != nil {
+			return nil, err
+		}
+		if isTrue(result) {
+			return fptypes.NewBoolean(true), nil
+		}
+	}
+	return fptypes.NewBoolean(false), nil
+}
+
+// evalAnyInCodeSystem checks if any code in a list is a member of the given CodeSystem.
+func (e *Evaluator) evalAnyInCodeSystem(codes fptypes.Value, csRefName string) (fptypes.Value, error) {
+	if codes == nil {
+		return nil, nil
+	}
+	list, ok := codes.(cqltypes.List)
+	if !ok {
+		// Single code: delegate to evalInCodeSystem
+		return e.evalInCodeSystem(codes, &ast.IdentifierRef{Name: csRefName})
+	}
+	if len(list.Values) == 0 {
+		return fptypes.NewBoolean(false), nil
+	}
+	csRef := &ast.IdentifierRef{Name: csRefName}
+	for _, code := range list.Values {
+		if code == nil {
+			continue
+		}
+		result, err := e.evalInCodeSystem(code, csRef)
+		if err != nil {
+			return nil, err
+		}
+		if isTrue(result) {
+			return fptypes.NewBoolean(true), nil
+		}
+	}
+	return fptypes.NewBoolean(false), nil
+}
+
 func extractCodeComponents(v fptypes.Value) (system, code string) {
 	switch c := v.(type) {
 	case cqltypes.Code:
