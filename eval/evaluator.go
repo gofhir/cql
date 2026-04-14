@@ -2482,6 +2482,128 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		result, convErr := convertToType(src, "integer")
 		return fptypes.NewBoolean(convErr == nil && result != nil), nil
 
+	case "convertstodecimal":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		result, convErr := convertToType(src, "decimal")
+		return fptypes.NewBoolean(convErr == nil && result != nil), nil
+
+	case "convertstolong":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		switch v := src.(type) {
+		case fptypes.Integer:
+			return fptypes.NewBoolean(true), nil
+		case fptypes.String:
+			_, parseErr := strconv.ParseInt(v.Value(), 10, 64)
+			return fptypes.NewBoolean(parseErr == nil), nil
+		default:
+			return fptypes.NewBoolean(false), nil
+		}
+
+	case "convertstoquantity":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		result, convErr := funcs.ToQuantity(src)
+		return fptypes.NewBoolean(convErr == nil && result != nil), nil
+
+	case "convertstodate":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		switch v := src.(type) {
+		case fptypes.Date:
+			return fptypes.NewBoolean(true), nil
+		case fptypes.DateTime:
+			return fptypes.NewBoolean(true), nil
+		case fptypes.String:
+			_, parseErr := fptypes.NewDate(v.Value())
+			return fptypes.NewBoolean(parseErr == nil), nil
+		default:
+			return fptypes.NewBoolean(false), nil
+		}
+
+	case "convertstodatetime":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		switch v := src.(type) {
+		case fptypes.DateTime:
+			return fptypes.NewBoolean(true), nil
+		case fptypes.Date:
+			return fptypes.NewBoolean(true), nil
+		case fptypes.String:
+			_, parseErr := fptypes.NewDateTime(v.Value())
+			return fptypes.NewBoolean(parseErr == nil), nil
+		default:
+			return fptypes.NewBoolean(false), nil
+		}
+
+	case "convertstotime":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		switch v := src.(type) {
+		case fptypes.Time:
+			return fptypes.NewBoolean(true), nil
+		case fptypes.String:
+			result, convErr := funcs.ToTime(v)
+			return fptypes.NewBoolean(convErr == nil && result != nil), nil
+		default:
+			return fptypes.NewBoolean(false), nil
+		}
+
+	case "convertstoratio":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		if _, ok := src.(cqltypes.Ratio); ok {
+			return fptypes.NewBoolean(true), nil
+		}
+		s, ok := src.(fptypes.String)
+		if !ok {
+			return fptypes.NewBoolean(false), nil
+		}
+		parts := strings.SplitN(s.Value(), ":", 2)
+		if len(parts) != 2 {
+			return fptypes.NewBoolean(false), nil
+		}
+		n, errN := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+		d, errD := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+		valid := errN == nil && errD == nil && !math.IsInf(n, 0) && !math.IsNaN(n) && !math.IsInf(d, 0) && !math.IsNaN(d)
+		return fptypes.NewBoolean(valid), nil
+
 	// descendents/descendants — returns all descendant elements (CQL spec).
 	// On null, returns null. On non-null, returns empty list (simplified).
 	case "descendents", "descendants":
