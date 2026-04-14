@@ -1227,6 +1227,124 @@ func boolPtr(b bool) *bool {
 	return &b
 }
 
+func TestEval_ConvertsToBoolean(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"string_true", &ast.Literal{ValueType: ast.LiteralString, Value: "true"}, false, true},
+		{"string_false", &ast.Literal{ValueType: ast.LiteralString, Value: "false"}, false, true},
+		{"string_maybe", &ast.Literal{ValueType: ast.LiteralString, Value: "maybe"}, false, false},
+		{"bool_true", &ast.Literal{ValueType: ast.LiteralBoolean, Value: "true"}, false, true},
+		{"int_0", &ast.Literal{ValueType: ast.LiteralInteger, Value: "0"}, false, true},
+		{"int_1", &ast.Literal{ValueType: ast.LiteralInteger, Value: "1"}, false, true},
+		{"int_2", &ast.Literal{ValueType: ast.LiteralInteger, Value: "2"}, false, false},
+		{"decimal_0.0", &ast.Literal{ValueType: ast.LiteralDecimal, Value: "0.0"}, false, true},
+		{"decimal_1.0", &ast.Literal{ValueType: ast.LiteralDecimal, Value: "1.0"}, false, true},
+		{"decimal_2.5", &ast.Literal{ValueType: ast.LiteralDecimal, Value: "2.5"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToBoolean",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToString(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"bool_true", &ast.Literal{ValueType: ast.LiteralBoolean, Value: "true"}, false, true},
+		{"int_42", &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}, false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToString",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToInteger(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"int_42", &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}, false, true},
+		{"string_42", &ast.Literal{ValueType: ast.LiteralString, Value: "42"}, false, true},
+		{"string_abc", &ast.Literal{ValueType: ast.LiteralString, Value: "abc"}, false, false},
+		{"bool_true", &ast.Literal{ValueType: ast.LiteralBoolean, Value: "true"}, false, true},
+		{"decimal_3.14", &ast.Literal{ValueType: ast.LiteralDecimal, Value: "3.14"}, false, false},
+		{"overflow_32bit", &ast.Literal{ValueType: ast.LiteralString, Value: "2147483648"}, false, false},
+		{"max_32bit", &ast.Literal{ValueType: ast.LiteralString, Value: "2147483647"}, false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToInteger",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
 // TestEval_IdentifierRef_LazyEvaluation verifies that IdentifierRef lazily evaluates
 // library expression definitions without requiring EvaluateLibrary() to be called first.
 // This is the core fix for the $evaluate-measure numerator=0 bug where expressions like
