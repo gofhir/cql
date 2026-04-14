@@ -1345,6 +1345,267 @@ func TestEval_ConvertsToInteger(t *testing.T) {
 	}
 }
 
+func TestEval_ConvertsToDecimal(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"decimal_3.14", &ast.Literal{ValueType: ast.LiteralDecimal, Value: "3.14"}, false, true},
+		{"int_42", &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}, false, true},
+		{"string_1.5", &ast.Literal{ValueType: ast.LiteralString, Value: "1.5"}, false, true},
+		{"string_abc", &ast.Literal{ValueType: ast.LiteralString, Value: "abc"}, false, false},
+		{"bool_true", &ast.Literal{ValueType: ast.LiteralBoolean, Value: "true"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToDecimal",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToLong(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"int_42", &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}, false, true},
+		{"string_max_int64", &ast.Literal{ValueType: ast.LiteralString, Value: "9223372036854775807"}, false, true},
+		{"string_abc", &ast.Literal{ValueType: ast.LiteralString, Value: "abc"}, false, false},
+		{"decimal_3.14", &ast.Literal{ValueType: ast.LiteralDecimal, Value: "3.14"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToLong",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToQuantity(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"int_42", &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}, false, true},
+		{"decimal_3.14", &ast.Literal{ValueType: ast.LiteralDecimal, Value: "3.14"}, false, true},
+		{"string_invalid", &ast.Literal{ValueType: ast.LiteralString, Value: "not a quantity"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToQuantity",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToDate(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"date_valid", &ast.Literal{ValueType: ast.LiteralDate, Value: "2024-01-15"}, false, true},
+		{"string_valid", &ast.Literal{ValueType: ast.LiteralString, Value: "2024-01-15"}, false, true},
+		{"string_invalid", &ast.Literal{ValueType: ast.LiteralString, Value: "not-a-date"}, false, false},
+		{"datetime_to_date", &ast.Literal{ValueType: ast.LiteralDateTime, Value: "2024-01-15T10:00:00"}, false, true},
+		{"int_42", &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToDate",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToDateTime(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"datetime_valid", &ast.Literal{ValueType: ast.LiteralDateTime, Value: "2024-01-15T10:30:00"}, false, true},
+		{"date_valid", &ast.Literal{ValueType: ast.LiteralDate, Value: "2024-01-15"}, false, true},
+		{"string_valid", &ast.Literal{ValueType: ast.LiteralString, Value: "2024-01-15T10:30:00"}, false, true},
+		{"string_invalid", &ast.Literal{ValueType: ast.LiteralString, Value: "not-a-datetime"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToDateTime",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToTime(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"time_valid", &ast.Literal{ValueType: ast.LiteralTime, Value: "10:30:00"}, false, true},
+		{"string_valid", &ast.Literal{ValueType: ast.LiteralString, Value: "10:30:00"}, false, true},
+		{"string_invalid", &ast.Literal{ValueType: ast.LiteralString, Value: "not-a-time"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToTime",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
+func TestEval_ConvertsToRatio(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	tests := []struct {
+		name     string
+		operand  ast.Expression
+		wantNil  bool
+		wantBool bool
+	}{
+		{"null", &ast.Literal{ValueType: ast.LiteralNull}, true, false},
+		{"valid_ratio", &ast.Literal{ValueType: ast.LiteralString, Value: "1:128"}, false, true},
+		{"invalid_words", &ast.Literal{ValueType: ast.LiteralString, Value: "hello:world"}, false, false},
+		{"no_colon", &ast.Literal{ValueType: ast.LiteralString, Value: "abc"}, false, false},
+		{"int_not_string", &ast.Literal{ValueType: ast.LiteralInteger, Value: "42"}, false, false},
+		{"multiple_colons", &ast.Literal{ValueType: ast.LiteralString, Value: "1:2:3"}, false, false},
+		{"inf_nan", &ast.Literal{ValueType: ast.LiteralString, Value: "Inf:NaN"}, false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := ev.Eval(&ast.FunctionCall{
+				Name:     "ConvertsToRatio",
+				Operands: []ast.Expression{tt.operand},
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("expected nil, got %v", val)
+				}
+				return
+			}
+			assertBoolean(t, val, tt.wantBool, tt.name)
+		})
+	}
+}
+
 // TestEval_IdentifierRef_LazyEvaluation verifies that IdentifierRef lazily evaluates
 // library expression definitions without requiring EvaluateLibrary() to be called first.
 // This is the core fix for the $evaluate-measure numerator=0 bug where expressions like
