@@ -2604,6 +2604,56 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		valid := errN == nil && errD == nil && !math.IsInf(n, 0) && !math.IsNaN(n) && !math.IsInf(d, 0) && !math.IsNaN(d)
 		return fptypes.NewBoolean(valid), nil
 
+	case "anyinvalueset":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("AnyInValueSet requires a valueset argument")
+		}
+		vsName := ""
+		if idRef, ok := operands[0].(*ast.IdentifierRef); ok {
+			vsName = idRef.Name
+		} else {
+			val, evalErr := e.Eval(operands[0])
+			if evalErr != nil {
+				return nil, evalErr
+			}
+			if s, ok := val.(fptypes.String); ok {
+				vsName = s.Value()
+			}
+		}
+		if vsName == "" {
+			return nil, fmt.Errorf("AnyInValueSet: could not resolve valueset reference")
+		}
+		return e.evalAnyInValueSet(src, vsName)
+
+	case "anyincodesystem":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("AnyInCodeSystem requires a codesystem argument")
+		}
+		csName := ""
+		if idRef, ok := operands[0].(*ast.IdentifierRef); ok {
+			csName = idRef.Name
+		} else {
+			val, evalErr := e.Eval(operands[0])
+			if evalErr != nil {
+				return nil, evalErr
+			}
+			if s, ok := val.(fptypes.String); ok {
+				csName = s.Value()
+			}
+		}
+		if csName == "" {
+			return nil, fmt.Errorf("AnyInCodeSystem: could not resolve codesystem reference")
+		}
+		return e.evalAnyInCodeSystem(src, csName)
+
 	// descendents/descendants — returns all descendant elements (CQL spec).
 	// On null, returns null. On non-null, returns empty list (simplified).
 	case "descendents", "descendants":
