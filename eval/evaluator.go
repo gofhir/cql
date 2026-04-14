@@ -2654,6 +2654,34 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return e.evalAnyInCodeSystem(src, csName)
 
+	case "subsumes":
+		left, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("Subsumes requires two code arguments")
+		}
+		right, err := e.Eval(operands[0])
+		if err != nil {
+			return nil, err
+		}
+		return e.evalSubsumes(left, right)
+
+	case "subsumedby":
+		left, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("SubsumedBy requires two code arguments")
+		}
+		right, err := e.Eval(operands[0])
+		if err != nil {
+			return nil, err
+		}
+		return e.evalSubsumedBy(left, right)
+
 	// descendents/descendants — returns all descendant elements (CQL spec).
 	// On null, returns null. On non-null, returns empty list (simplified).
 	case "descendents", "descendants":
