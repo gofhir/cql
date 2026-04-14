@@ -2436,6 +2436,52 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return e.evalAggregateProduct(src)
 
+	// ConvertsTo* predicates (CQL 1.5.3 §22)
+	// Null in → null out. Never errors. Returns true if conversion would succeed.
+	case "convertstostring":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		return fptypes.NewBoolean(true), nil
+
+	case "convertstoboolean":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		// Per CQL spec, only 0 and 1 convert to Boolean for Integer/Decimal.
+		// funcs.ToBoolean is too permissive (any non-zero → true), so we check
+		// integer range explicitly before delegating.
+		switch val := src.(type) {
+		case fptypes.Integer:
+			v := val.Value()
+			return fptypes.NewBoolean(v == 0 || v == 1), nil
+		case fptypes.Decimal:
+			v := val.Value()
+			return fptypes.NewBoolean(v.IsZero() || v.Equal(decimal.NewFromInt(1))), nil
+		default:
+			result, convErr := funcs.ToBoolean(src)
+			return fptypes.NewBoolean(convErr == nil && result != nil), nil
+		}
+
+	case "convertstointeger":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		result, convErr := convertToType(src, "integer")
+		return fptypes.NewBoolean(convErr == nil && result != nil), nil
+
 	// descendents/descendants — returns all descendant elements (CQL spec).
 	// On null, returns null. On non-null, returns empty list (simplified).
 	case "descendents", "descendants":
@@ -4426,7 +4472,7 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 		case fptypes.Integer:
 			return val, nil
 		case fptypes.String:
-			i, err := strconv.ParseInt(val.Value(), 10, 64)
+			i, err := strconv.ParseInt(val.Value(), 10, 32)
 			if err != nil {
 				return nil, nil // CQL: invalid string to integer conversion returns null
 			}
