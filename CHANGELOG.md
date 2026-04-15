@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0](https://github.com/gofhir/cql/compare/v1.2.0...v1.3.0) (2026-04-15)
+
+
+### Features
+
+* **cql:** add AnyInValueSet and AnyInCodeSystem operators ([6953a03](https://github.com/gofhir/cql/commit/6953a039123ce594774dee4a70874fd4658e72d1))
+* **cql:** add ConvertQuantity/CanConvertQuantity with pluggable QuantityConverter interface ([c193241](https://github.com/gofhir/cql/commit/c19324164a9fb2c400b0c4cd6c1d97dd8223659f))
+* **cql:** add ConvertsTo* predicates (Decimal, Long, Quantity, Date, DateTime, Time, Ratio) ([a978590](https://github.com/gofhir/cql/commit/a978590f294a70a6b8f640f6c67ed833f18b12fb))
+* **cql:** add ConvertsToBoolean, ConvertsToString, ConvertsToInteger predicates ([56a439f](https://github.com/gofhir/cql/commit/56a439fda28f662366d694e4d30baf3f3403b8de))
+* **cql:** add ExpandValueSet operator with optional ValueSetExpander interface ([cbbab8b](https://github.com/gofhir/cql/commit/cbbab8b46e49191b01037917e031d379956af82c))
+* **cql:** add LibraryLoader for cross-library include resolution with recursion guard ([08b8d36](https://github.com/gofhir/cql/commit/08b8d36156a0b8a64ace9714999263bfcfd9e46f))
+* **cql:** add SubList and SplitOnMatches operators ([31a599f](https://github.com/gofhir/cql/commit/31a599fae863787330de48d4b0cf8f874c0b48ea))
+* **cql:** add Subsumes/SubsumedBy with optional SubsumesChecker interface ([a609423](https://github.com/gofhir/cql/commit/a6094237a87fd5951bda00bd8004355c45929353))
+* **cql:** add ToLong and Children operators ([1e98532](https://github.com/gofhir/cql/commit/1e98532c3c8da2af4db6cdc9601ff58f28a004d4))
+
 ## 1.3.0 (2026-04-14)
 
 ### Features
