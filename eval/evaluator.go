@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -2102,6 +2103,88 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 		}
 		return src, nil
+
+	case "sublist":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		list, ok := src.(cqltypes.List)
+		if !ok {
+			return nil, nil
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("SubList requires a start index")
+		}
+		startVal, err := e.Eval(operands[0])
+		if err != nil {
+			return nil, err
+		}
+		startInt, ok := startVal.(fptypes.Integer)
+		if !ok {
+			return nil, nil
+		}
+		start := int(startInt.Value())
+		if start < 0 {
+			start = 0
+		}
+		items := list.Values
+		if start >= len(items) {
+			return cqltypes.NewList(fptypes.Collection{}), nil
+		}
+		result := items[start:]
+		if len(operands) >= 2 {
+			lenVal, err := e.Eval(operands[1])
+			if err != nil {
+				return nil, err
+			}
+			if lenInt, ok := lenVal.(fptypes.Integer); ok {
+				length := int(lenInt.Value())
+				if length >= 0 && length < len(result) {
+					result = result[:length]
+				}
+			}
+		}
+		cp := make(fptypes.Collection, len(result))
+		copy(cp, result)
+		return cqltypes.NewList(cp), nil
+
+	case "splitonmatches":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		s, ok := src.(fptypes.String)
+		if !ok {
+			return nil, nil
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("SplitOnMatches requires a regex pattern")
+		}
+		patternVal, err := e.Eval(operands[0])
+		if err != nil {
+			return nil, err
+		}
+		pattern, ok := patternVal.(fptypes.String)
+		if !ok {
+			return nil, nil
+		}
+		re, err := regexp.Compile(pattern.Value())
+		if err != nil {
+			return nil, fmt.Errorf("SplitOnMatches: invalid regex %q: %w", pattern.Value(), err)
+		}
+		parts := re.Split(s.Value(), -1)
+		vals := make(fptypes.Collection, len(parts))
+		for i, p := range parts {
+			vals[i] = fptypes.NewString(p)
+		}
+		return cqltypes.NewList(vals), nil
 
 	// Null operators
 	case "isnull":
