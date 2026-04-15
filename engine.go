@@ -40,6 +40,7 @@ type Engine struct {
 	traceListener       eval.TraceListener
 	libraryResolver     LibraryResolver
 	libraryLoader       eval.LibraryLoader
+	quantityConverter   eval.QuantityConverter
 	maxExpressionLen    int
 	evalTimeout         time.Duration
 	maxRetrieveSize     int
@@ -112,6 +113,14 @@ func WithLibraryResolver(lr LibraryResolver) Option {
 func WithLibraryLoader(loader eval.LibraryLoader) Option {
 	return func(e *Engine) {
 		e.libraryLoader = loader
+	}
+}
+
+// WithQuantityConverter sets the quantity converter for UCUM unit conversions.
+// When set, CQL ConvertQuantity and CanConvertQuantity functions become available.
+func WithQuantityConverter(qc eval.QuantityConverter) Option {
+	return func(e *Engine) {
+		e.quantityConverter = qc
 	}
 }
 
@@ -246,6 +255,7 @@ func (e *Engine) EvaluateLibrary(
 	evalCtx.TraceListener = e.traceListener
 	evalCtx.ModelInfo = e.modelInfo
 	evalCtx.LibraryLoader = e.libraryLoader
+	evalCtx.QuantityConverter = e.quantityConverter
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -312,6 +322,7 @@ func (e *Engine) EvaluateExpression(
 	evalCtx.TerminologyProvider = e.terminologyProvider
 	evalCtx.TraceListener = e.traceListener
 	evalCtx.ModelInfo = e.modelInfo
+	evalCtx.QuantityConverter = e.quantityConverter
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
