@@ -39,6 +39,7 @@ type Engine struct {
 	modelInfo           model.ModelInfo
 	traceListener       eval.TraceListener
 	libraryResolver     LibraryResolver
+	libraryLoader       eval.LibraryLoader
 	maxExpressionLen    int
 	evalTimeout         time.Duration
 	maxRetrieveSize     int
@@ -102,6 +103,15 @@ func WithMaxDepth(n int) Option {
 func WithLibraryResolver(lr LibraryResolver) Option {
 	return func(e *Engine) {
 		e.libraryResolver = lr
+	}
+}
+
+// WithLibraryLoader sets the library loader for lazy cross-library include resolution.
+// When set, the evaluator will call the loader on demand when a library-qualified
+// function call is encountered and the library has not been pre-resolved.
+func WithLibraryLoader(loader eval.LibraryLoader) Option {
+	return func(e *Engine) {
+		e.libraryLoader = loader
 	}
 }
 
@@ -235,6 +245,7 @@ func (e *Engine) EvaluateLibrary(
 	evalCtx.TerminologyProvider = e.terminologyProvider
 	evalCtx.TraceListener = e.traceListener
 	evalCtx.ModelInfo = e.modelInfo
+	evalCtx.LibraryLoader = e.libraryLoader
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {

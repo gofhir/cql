@@ -1430,11 +1430,60 @@ func matchesArgType(expr ast.Expression, typeName string) bool {
 	}
 }
 
+// ensureLibraryLoaded lazily loads an included library by alias using the LibraryLoader.
+// It is a no-op if no loader is configured or the library is already loaded.
+func (e *Evaluator) ensureLibraryLoaded(alias string) error {
+	if e.ctx.Library == nil || e.ctx.LibraryLoader == nil {
+		return nil
+	}
+	for _, inc := range e.ctx.Library.Includes {
+		incAlias := inc.Alias
+		if incAlias == "" {
+			incAlias = inc.Name
+		}
+		if incAlias != alias {
+			continue
+		}
+		// Recursion guard: detect circular dependencies
+		key := inc.Name + "/" + inc.Version
+		if e.ctx.loadingLibs == nil {
+			e.ctx.loadingLibs = make(map[string]bool)
+		}
+		if e.ctx.loadingLibs[key] {
+			return fmt.Errorf("circular library dependency detected: %s", key)
+		}
+		e.ctx.loadingLibs[key] = true
+		defer delete(e.ctx.loadingLibs, key)
+
+		lib, err := e.ctx.LibraryLoader.LoadLibrary(e.ctx.GoCtx, inc.Name, inc.Version)
+		if err != nil {
+			return fmt.Errorf("failed to load library %q v%q: %w", inc.Name, inc.Version, err)
+		}
+		if lib == nil {
+			return nil
+		}
+		e.ctx.IncludedLibraries[alias] = lib
+		libFuncs := make(map[string][]*ast.FunctionDef)
+		for _, f := range lib.Functions {
+			libFuncs[f.Name] = append(libFuncs[f.Name], f)
+		}
+		e.includedFuncs[alias] = libFuncs
+		return nil
+	}
+	return nil
+}
+
 func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error) {
 	// Check for library-qualified call via Source (e.g. FHIRHelpers.ToQuantity(...))
 	// Parser produces: FunctionCall{Source: IdentifierRef{Name: "FHIRHelpers"}, Name: "ToQuantity"}
 	if n.Source != nil {
 		if idRef, ok := n.Source.(*ast.IdentifierRef); ok {
+			// Lazy-load the library if not yet resolved
+			if _, loaded := e.includedFuncs[idRef.Name]; !loaded {
+				if err := e.ensureLibraryLoaded(idRef.Name); err != nil {
+					return nil, err
+				}
+			}
 			if libFuncs, ok := e.includedFuncs[idRef.Name]; ok {
 				overloads, ok := libFuncs[n.Name]
 				if !ok {
@@ -1448,6 +1497,12 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 
 	// Check for library-qualified call via Library field
 	if n.Library != "" {
+		// Lazy-load the library if not yet resolved
+		if _, loaded := e.includedFuncs[n.Library]; !loaded {
+			if err := e.ensureLibraryLoaded(n.Library); err != nil {
+				return nil, err
+			}
+		}
 		if libFuncs, ok := e.includedFuncs[n.Library]; ok {
 			overloads, ok := libFuncs[n.Name]
 			if !ok {
