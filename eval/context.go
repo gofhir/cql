@@ -57,6 +57,7 @@ type Context struct {
 	// External providers
 	DataProvider        DataProvider
 	TerminologyProvider TerminologyProvider
+	QuantityConverter   QuantityConverter
 
 	// TraceListener receives events during evaluation (optional, nil = no tracing).
 	TraceListener TraceListener
@@ -122,6 +123,7 @@ func (c *Context) ChildScope() *Context {
 		LetBindings:         make(map[string]fptypes.Value),
 		DataProvider:        c.DataProvider,
 		TerminologyProvider: c.TerminologyProvider,
+		QuantityConverter:   c.QuantityConverter,
 		TraceListener:       c.TraceListener,
 		ModelInfo:           c.ModelInfo,
 		contextType:         c.contextType,
