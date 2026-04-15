@@ -48,20 +48,20 @@ func helperLibrary() *ast.Library {
 	}
 }
 
-// mainLibraryWithInclude builds a library that includes Helpers/1.0 as alias
-// and defines Result = alias.Double(21).
-func mainLibraryWithInclude(alias string) *ast.Library {
+// mainLibraryWithInclude builds a library that includes Helpers/1.0 as "H"
+// and defines Result = H.Double(21).
+func mainLibraryWithInclude() *ast.Library {
 	lib := &ast.Library{
 		Identifier: &ast.LibraryIdentifier{Name: "Main", Version: "1.0"},
 		Includes: []*ast.IncludeDef{
-			{Name: "Helpers", Version: "1.0", Alias: alias},
+			{Name: "Helpers", Version: "1.0", Alias: "H"},
 		},
 		Statements: []*ast.ExpressionDef{
 			{
 				Name: "Result",
 				Expression: &ast.FunctionCall{
-					Source:   &ast.IdentifierRef{Name: alias},
-					Name:    "Double",
+					Source:   &ast.IdentifierRef{Name: "H"},
+					Name:     "Double",
 					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralInteger, Value: "21"}},
 				},
 			},
@@ -72,7 +72,7 @@ func mainLibraryWithInclude(alias string) *ast.Library {
 
 func TestCrossLibraryFunctionCall_Source(t *testing.T) {
 	helperLib := helperLibrary()
-	mainLib := mainLibraryWithInclude("H")
+	mainLib := mainLibraryWithInclude()
 
 	loader := &mockLibraryLoader{
 		libraries: map[string]*ast.Library{
@@ -232,7 +232,7 @@ func TestCircularDependencyDetection(t *testing.T) {
 func TestLibraryLoaderNotSet(t *testing.T) {
 	// No loader configured. Library-qualified call with no pre-loaded lib
 	// should fall through to builtin resolution (and fail).
-	mainLib := mainLibraryWithInclude("H")
+	mainLib := mainLibraryWithInclude()
 
 	ctx := NewContext(context.Background(), mainLib)
 	// no LibraryLoader set
@@ -246,7 +246,7 @@ func TestLibraryLoaderNotSet(t *testing.T) {
 
 func TestLibraryLoaderReturnsNil(t *testing.T) {
 	// Loader returns nil (library not found). Should not panic.
-	mainLib := mainLibraryWithInclude("H")
+	mainLib := mainLibraryWithInclude()
 
 	loader := &mockLibraryLoader{
 		libraries: map[string]*ast.Library{}, // empty
@@ -263,7 +263,7 @@ func TestLibraryLoaderReturnsNil(t *testing.T) {
 }
 
 func TestLibraryLoaderError(t *testing.T) {
-	mainLib := mainLibraryWithInclude("H")
+	mainLib := mainLibraryWithInclude()
 
 	ctx := NewContext(context.Background(), mainLib)
 	ctx.LibraryLoader = &errLibraryLoader{}

@@ -1453,13 +1453,14 @@ func (e *Evaluator) ensureLibraryLoaded(alias string) error {
 			return fmt.Errorf("circular library dependency detected: %s", key)
 		}
 		e.ctx.loadingLibs[key] = true
-		defer delete(e.ctx.loadingLibs, key)
 
 		lib, err := e.ctx.LibraryLoader.LoadLibrary(e.ctx.GoCtx, inc.Name, inc.Version)
 		if err != nil {
+			delete(e.ctx.loadingLibs, key)
 			return fmt.Errorf("failed to load library %q v%q: %w", inc.Name, inc.Version, err)
 		}
 		if lib == nil {
+			delete(e.ctx.loadingLibs, key)
 			return nil
 		}
 		e.ctx.IncludedLibraries[alias] = lib
@@ -1468,6 +1469,7 @@ func (e *Evaluator) ensureLibraryLoaded(alias string) error {
 			libFuncs[f.Name] = append(libFuncs[f.Name], f)
 		}
 		e.includedFuncs[alias] = libFuncs
+		delete(e.ctx.loadingLibs, key)
 		return nil
 	}
 	return nil
