@@ -2790,6 +2790,42 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return e.evalExpandValueSet(vsURL)
 
+	case "convertquantity":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("ConvertQuantity requires a target unit")
+		}
+		unitVal, err := e.Eval(operands[0])
+		if err != nil {
+			return nil, err
+		}
+		unitStr, ok := unitVal.(fptypes.String)
+		if !ok {
+			return nil, nil
+		}
+		return e.evalConvertQuantity(src, unitStr.Value())
+
+	case "canconvertquantity":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if len(operands) < 1 {
+			return nil, fmt.Errorf("CanConvertQuantity requires a target unit")
+		}
+		unitVal, err := e.Eval(operands[0])
+		if err != nil {
+			return nil, err
+		}
+		unitStr, ok := unitVal.(fptypes.String)
+		if !ok {
+			return nil, nil
+		}
+		return e.evalCanConvertQuantity(src, unitStr.Value())
+
 	// tolong — converts Integer or String to Long (int64).
 	// On null, returns null. On invalid input, returns null.
 	case "tolong":
