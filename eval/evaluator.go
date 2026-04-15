@@ -2682,6 +2682,69 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return e.evalSubsumedBy(left, right)
 
+	case "expandvalueset":
+		vsURL := ""
+		// Fluent: source is a string URL
+		if source != nil {
+			if s, ok := source.(fptypes.String); ok {
+				vsURL = s.Value()
+			}
+		}
+		// Standalone: first operand is a ValueSet reference or URL string
+		if vsURL == "" && len(operands) > 0 {
+			if idRef, ok := operands[0].(*ast.IdentifierRef); ok {
+				vsURL, _ = e.ctx.ResolveValueSetURL(idRef.Name)
+			}
+			if vsURL == "" {
+				val, evalErr := e.Eval(operands[0])
+				if evalErr != nil {
+					return nil, evalErr
+				}
+				if s, ok := val.(fptypes.String); ok {
+					vsURL = s.Value()
+				}
+			}
+		}
+		return e.evalExpandValueSet(vsURL)
+
+	// tolong — converts Integer or String to Long (int64).
+	// On null, returns null. On invalid input, returns null.
+	case "tolong":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		switch v := src.(type) {
+		case fptypes.Integer:
+			return v, nil // Already int64 internally
+		case fptypes.String:
+			n, parseErr := strconv.ParseInt(v.Value(), 10, 64)
+			if parseErr != nil {
+				return nil, nil
+			}
+			return fptypes.NewInteger(n), nil
+		default:
+			return nil, nil
+		}
+
+	// children — returns all child values of the input object.
+	// On null, returns null. On non-object, returns empty list.
+	case "children":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		if obj, ok := src.(*fptypes.ObjectValue); ok {
+			return cqltypes.NewList(obj.Children()), nil
+		}
+		return cqltypes.NewList(fptypes.Collection{}), nil
+
 	// descendents/descendants — returns all descendant elements (CQL spec).
 	// On null, returns null. On non-null, returns empty list (simplified).
 	case "descendents", "descendants":
