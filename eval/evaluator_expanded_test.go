@@ -1371,9 +1371,8 @@ func TestEval_SubList_NoAlias(t *testing.T) {
 	}
 	origList := origVal.(cqltypes.List)
 
-	// SubList(list, 0)
 	expr := &ast.FunctionCall{
-		Name:     "SubList",
+		Name: "SubList",
 		Operands: []ast.Expression{
 			listExpr,
 			&ast.Literal{ValueType: ast.LiteralInteger, Value: "0"},
