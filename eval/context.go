@@ -17,6 +17,11 @@ type DataProvider interface {
 	Retrieve(ctx context.Context, resourceType string, codePath string, codeComparator string, codes interface{}, dateRange interface{}) ([]json.RawMessage, error)
 }
 
+// LibraryLoader resolves included libraries by name and version on demand.
+type LibraryLoader interface {
+	LoadLibrary(ctx context.Context, name, version string) (*ast.Library, error)
+}
+
 // TerminologyProvider checks code membership in value sets.
 type TerminologyProvider interface {
 	InValueSet(ctx context.Context, code, system, valueSetURL string) (bool, error)
@@ -77,6 +82,11 @@ type Context struct {
 	// IncludedLibraries maps alias → compiled included library
 	IncludedLibraries map[string]*ast.Library
 
+	// LibraryLoader resolves included libraries lazily on demand (optional).
+	LibraryLoader LibraryLoader
+	// loadingLibs tracks libraries currently being loaded to detect circular deps.
+	loadingLibs map[string]bool
+
 	// Parent context (for nested scopes)
 	parent *Context
 }
@@ -132,6 +142,8 @@ func (c *Context) ChildScope() *Context {
 		cachedSubjectOK:     c.cachedSubjectOK,
 		cachedObject:        c.cachedObject,
 		IncludedLibraries:   c.IncludedLibraries,
+		LibraryLoader:       c.LibraryLoader,
+		loadingLibs:         c.loadingLibs,
 		parent:              c,
 	}
 }
