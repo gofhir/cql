@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -1231,5 +1232,279 @@ func TestEvaluator_WithContext(t *testing.T) {
 	// ev2 should be able to call TestFunc even though it wasn't built from NewEvaluator
 	if _, ok := ev2.funcs["TestFunc"]; !ok {
 		t.Error("withContext should share the funcs map")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SubList
+// ---------------------------------------------------------------------------
+
+func TestEval_SubList(t *testing.T) {
+	mkList := func(vals ...int64) *ast.ListExpression {
+		elems := make([]ast.Expression, len(vals))
+		for i, v := range vals {
+			elems[i] = &ast.Literal{ValueType: ast.LiteralInteger, Value: fmt.Sprintf("%d", v)}
+		}
+		return &ast.ListExpression{Elements: elems}
+	}
+	mkInt := func(v int64) ast.Expression {
+		return &ast.Literal{ValueType: ast.LiteralInteger, Value: fmt.Sprintf("%d", v)}
+	}
+
+	tests := []struct {
+		name     string
+		src      ast.Expression
+		operands []ast.Expression
+		wantNil  bool
+		wantVals []int64
+	}{
+		{
+			name:     "null list returns null",
+			src:      nil,
+			operands: []ast.Expression{mkInt(0)},
+			wantNil:  true,
+		},
+		{
+			name:     "from middle without length",
+			src:      mkList(10, 20, 30, 40, 50),
+			operands: []ast.Expression{mkInt(2)},
+			wantVals: []int64{30, 40, 50},
+		},
+		{
+			name:     "from middle with length",
+			src:      mkList(10, 20, 30, 40, 50),
+			operands: []ast.Expression{mkInt(1), mkInt(2)},
+			wantVals: []int64{20, 30},
+		},
+		{
+			name:     "start past end returns empty",
+			src:      mkList(10, 20),
+			operands: []ast.Expression{mkInt(5)},
+			wantVals: []int64{},
+		},
+		{
+			name:     "negative start clamps to 0",
+			src:      mkList(10, 20, 30),
+			operands: []ast.Expression{mkInt(-2)},
+			wantVals: []int64{10, 20, 30},
+		},
+		{
+			name:     "length exceeds remainder returns all remaining",
+			src:      mkList(10, 20, 30),
+			operands: []ast.Expression{mkInt(1), mkInt(100)},
+			wantVals: []int64{20, 30},
+		},
+		{
+			name:     "start at 0 with length 0 returns empty",
+			src:      mkList(10, 20, 30),
+			operands: []ast.Expression{mkInt(0), mkInt(0)},
+			wantVals: []int64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := NewContext(context.Background(), nil)
+			ev := NewEvaluator(ctx)
+
+			var expr *ast.FunctionCall
+			if tt.src == nil {
+				// Standalone call: SubList(null, startIndex)
+				ops := append([]ast.Expression{&ast.Literal{ValueType: ast.LiteralNull}}, tt.operands...)
+				expr = &ast.FunctionCall{
+					Name:     "SubList",
+					Operands: ops,
+				}
+			} else {
+				expr = &ast.FunctionCall{
+					Name:     "SubList",
+					Source:   tt.src,
+					Operands: tt.operands,
+				}
+			}
+			val, err := ev.Eval(expr)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("want nil, got %v", val)
+				}
+				return
+			}
+			list, ok := val.(cqltypes.List)
+			if !ok {
+				t.Fatalf("want List, got %T", val)
+			}
+			if len(list.Values) != len(tt.wantVals) {
+				t.Fatalf("want %d elements, got %d: %v", len(tt.wantVals), len(list.Values), list)
+			}
+			for i, want := range tt.wantVals {
+				iv, ok := list.Values[i].(fptypes.Integer)
+				if !ok {
+					t.Fatalf("element %d: want Integer, got %T", i, list.Values[i])
+				}
+				if iv.Value() != want {
+					t.Errorf("element %d: got %d, want %d", i, iv.Value(), want)
+				}
+			}
+		})
+	}
+}
+
+// TestEval_SubList_NoAlias verifies SubList copies the slice and does not alias the original.
+func TestEval_SubList_NoAlias(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	listExpr := &ast.ListExpression{
+		Elements: []ast.Expression{
+			&ast.Literal{ValueType: ast.LiteralInteger, Value: "1"},
+			&ast.Literal{ValueType: ast.LiteralInteger, Value: "2"},
+			&ast.Literal{ValueType: ast.LiteralInteger, Value: "3"},
+		},
+	}
+	// Evaluate the original list
+	origVal, err := ev.Eval(listExpr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	origList := origVal.(cqltypes.List)
+
+	// SubList(list, 0)
+	expr := &ast.FunctionCall{
+		Name:     "SubList",
+		Operands: []ast.Expression{
+			listExpr,
+			&ast.Literal{ValueType: ast.LiteralInteger, Value: "0"},
+		},
+	}
+	subVal, err := ev.Eval(expr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	subList := subVal.(cqltypes.List)
+
+	// Mutating subList should not affect origList
+	if len(subList.Values) > 0 {
+		subList.Values[0] = fptypes.NewInteger(999)
+	}
+	first := origList.Values[0].(fptypes.Integer)
+	if first.Value() == 999 {
+		t.Error("SubList result aliases the original list")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SplitOnMatches
+// ---------------------------------------------------------------------------
+
+func TestEval_SplitOnMatches(t *testing.T) {
+	mkStr := func(s string) ast.Expression {
+		return &ast.Literal{ValueType: ast.LiteralString, Value: s}
+	}
+
+	tests := []struct {
+		name     string
+		src      ast.Expression
+		pattern  ast.Expression
+		wantNil  bool
+		wantVals []string
+	}{
+		{
+			name:    "null string returns null",
+			src:     nil,
+			pattern: mkStr(`\s+`),
+			wantNil: true,
+		},
+		{
+			name:     "split on whitespace",
+			src:      mkStr("hello world  foo"),
+			pattern:  mkStr(`\s+`),
+			wantVals: []string{"hello", "world", "foo"},
+		},
+		{
+			name:     "no match returns single element",
+			src:      mkStr("hello"),
+			pattern:  mkStr(`,`),
+			wantVals: []string{"hello"},
+		},
+		{
+			name:     "multiple parts with comma",
+			src:      mkStr("a,b,,c"),
+			pattern:  mkStr(`,`),
+			wantVals: []string{"a", "b", "", "c"},
+		},
+		{
+			name:     "empty string",
+			src:      mkStr(""),
+			pattern:  mkStr(`,`),
+			wantVals: []string{""},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := NewContext(context.Background(), nil)
+			ev := NewEvaluator(ctx)
+
+			var expr *ast.FunctionCall
+			if tt.src == nil {
+				// Standalone call: SplitOnMatches(null, pattern)
+				expr = &ast.FunctionCall{
+					Name:     "SplitOnMatches",
+					Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralNull}, tt.pattern},
+				}
+			} else {
+				expr = &ast.FunctionCall{
+					Name:     "SplitOnMatches",
+					Source:   tt.src,
+					Operands: []ast.Expression{tt.pattern},
+				}
+			}
+			val, err := ev.Eval(expr)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNil {
+				if val != nil {
+					t.Fatalf("want nil, got %v", val)
+				}
+				return
+			}
+			list, ok := val.(cqltypes.List)
+			if !ok {
+				t.Fatalf("want List, got %T", val)
+			}
+			if len(list.Values) != len(tt.wantVals) {
+				t.Fatalf("want %d elements, got %d: %v", len(tt.wantVals), len(list.Values), list)
+			}
+			for i, want := range tt.wantVals {
+				sv, ok := list.Values[i].(fptypes.String)
+				if !ok {
+					t.Fatalf("element %d: want String, got %T", i, list.Values[i])
+				}
+				if sv.Value() != want {
+					t.Errorf("element %d: got %q, want %q", i, sv.Value(), want)
+				}
+			}
+		})
+	}
+}
+
+func TestEval_SplitOnMatches_InvalidRegex(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ev := NewEvaluator(ctx)
+
+	expr := &ast.FunctionCall{
+		Name:   "SplitOnMatches",
+		Source: &ast.Literal{ValueType: ast.LiteralString, Value: "test"},
+		Operands: []ast.Expression{
+			&ast.Literal{ValueType: ast.LiteralString, Value: "[invalid"},
+		},
+	}
+	_, err := ev.Eval(expr)
+	if err == nil {
+		t.Fatal("expected error for invalid regex")
 	}
 }
