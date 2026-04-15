@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.0 (2026-04-14)
+
+### Features
+
+* add 10 `ConvertsTo*` safe conversion predicates (Boolean, String, Integer, Decimal, Long, Quantity, Date, DateTime, Time, Ratio)
+* add `AnyInValueSet` and `AnyInCodeSystem` terminology operators
+* add `Subsumes`/`SubsumedBy` with optional `SubsumesChecker` interface
+* add `ExpandValueSet` operator with optional `ValueSetExpander` interface
+* add `ToLong` and `Children` operators
+* add `SubList` and `SplitOnMatches` operators
+* add `ConvertQuantity`/`CanConvertQuantity` with pluggable `QuantityConverter` interface
+* add `LibraryLoader` interface for cross-library include resolution with recursion guard
+
+### Refactoring
+
+* consolidate evalIncludedFunction into evalUserFunction
+
 ## [1.2.0](https://github.com/gofhir/cql/compare/v1.1.0...v1.2.0) (2026-04-12)
 
 
@@ -35,37 +52,6 @@
 * resolve remaining conformance failures (Long literals, null intervals, ambiguous comparisons) ([b9f7104](https://github.com/gofhir/cql/commit/b9f710414d5b7beb05090f851ef040263861d9e9))
 * resolve remaining conformance gaps (expand, list ops, string concat, edge cases) ([fb090a5](https://github.com/gofhir/cql/commit/fb090a54dc5b37922fd15fe11b7f5d180de55483))
 * resolve source/operands dispatch and fix remaining conformance failures ([2809754](https://github.com/gofhir/cql/commit/2809754594108e17dc55780a1aec401690e3d4db))
-
-## 1.1.0 (2026-04-04)
-
-### Features
-
-* add CQL conformance test suite — 1731/1731 (100%) official cqframework/cql-tests passing
-* add DateTime/Date/Time arithmetic with Quantity operands (`DateTime(2005, 10, 10) + 5 years`)
-* add math functions: Round, Floor, Ceiling, Truncate, Ln, Log, Exp, Power, Precision, HighBoundary, LowBoundary
-* add Quantity arithmetic (add, subtract, multiply, divide between quantities)
-* add string functions: Indexer, Concatenate, and string `+` concatenation
-* add conversion functions: ToDateTime, ToTime, ToBoolean, ToQuantity, ToConcept
-* add precision-aware temporal comparisons (same as, before, after, same or before, same or after)
-* add Message function
-* add multi-source query support (cartesian product)
-* add Interval Expand for Integer, Decimal, DateTime, Date, Time, and Quantity types
-* add aggregate clause support with custom accumulators
-
-### Bug Fixes
-
-* fix source/operands dispatch for standalone function calls (`Floor(1.0)` now works)
-* fix null propagation in interval operations (null bounds = unbounded)
-* fix three-valued logic in list membership and interval containment
-* fix DateTime constructor to produce precision-aware values
-* fix DurationBetween/DifferenceBetween for partial date/time precision
-* fix Quantity comparison with Decimal values
-* fix list Equivalent operator (order-independent)
-* fix successor/predecessor for DateTime, Date, Time types
-* fix overlaps before/after with open boundaries
-* fix interval meets with temporal types
-* fix Count to skip null elements
-* fix StdDev/PopulationStdDev rounding
 
 ## 1.0.0 (2026-03-18)
 
