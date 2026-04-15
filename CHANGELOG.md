@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/gofhir/cql/compare/v1.3.0...v1.4.0) (2026-04-15)
+
+
+### Features
+
+* **engine:** add WithQuantityConverter option for UCUM unit conversions ([31e3393](https://github.com/gofhir/cql/commit/31e33930dac6fe367915cbc1a1e3b7084c45c7e7))
+
 ## [1.3.0](https://github.com/gofhir/cql/compare/v1.2.0...v1.3.0) (2026-04-15)
 
 
