@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/gofhir/cql/compare/v1.5.0...v1.5.1) (2026-08-10)
+
+
+### Bug Fixes
+
+* **eval:** answer null consistently when temporal precision leaves a comparison unknown ([#11](https://github.com/gofhir/cql/issues/11)) ([426e0be](https://github.com/gofhir/cql/commit/426e0be51c055015d37ef072b92db13b7eab5a42))
+* **funcs:** honor UCUM duration units in temporal arithmetic ([#9](https://github.com/gofhir/cql/issues/9)) ([20cebc6](https://github.com/gofhir/cql/commit/20cebc63a3dedfed428f73705f0cea975eb9166a))
+
 ## [1.5.0](https://github.com/gofhir/cql/compare/v1.4.0...v1.5.0) (2026-04-15)
 
 
