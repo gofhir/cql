@@ -434,7 +434,7 @@ func TranslateExpression(expr ast.Expression) *ExpressionNode {
 
 func translateLiteral(l *ast.Literal) *ExpressionNode {
 	node := &ExpressionNode{
-		Type:  "Literal",
+		Type:  NodeLiteral,
 		Value: l.Value,
 	}
 	switch l.ValueType {

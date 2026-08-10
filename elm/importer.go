@@ -244,7 +244,7 @@ func ImportExpression(node *ExpressionNode) ast.Expression {
 	// Literals
 	case "Null":
 		return &ast.Literal{ValueType: ast.LiteralNull}
-	case "Literal":
+	case NodeLiteral:
 		return importLiteral(node)
 
 	// References
