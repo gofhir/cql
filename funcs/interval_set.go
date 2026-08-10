@@ -444,11 +444,11 @@ func temporalUnitPrecision(unit string) int {
 		return 3
 	case "hour":
 		return 4
-	case "minute":
+	case precMinute:
 		return 5
-	case "second":
+	case precSecond:
 		return 6
-	case "millisecond":
+	case precMillisecond:
 		return 7
 	}
 	return 3
@@ -624,11 +624,11 @@ func unitToTimePrecision(unit string) int {
 	switch unit {
 	case "hour":
 		return int(fptypes.HourPrecision)
-	case "minute":
+	case precMinute:
 		return int(fptypes.MinutePrecision)
-	case "second":
+	case precSecond:
 		return int(fptypes.SecondPrecision)
-	case "millisecond":
+	case precMillisecond:
 		return int(fptypes.MillisPrecision)
 	}
 	return -1
@@ -645,11 +645,11 @@ func defaultTemporalUnit(v fptypes.Value) string {
 		case 3:
 			return "hour"
 		case 4:
-			return "minute"
+			return precMinute
 		case 5:
-			return "second"
+			return precSecond
 		default:
-			return "millisecond"
+			return precMillisecond
 		}
 	case fptypes.Date:
 		return "day"
@@ -659,11 +659,11 @@ func defaultTemporalUnit(v fptypes.Value) string {
 		case 0:
 			return "hour"
 		case 1:
-			return "minute"
+			return precMinute
 		case 2:
-			return "second"
+			return precSecond
 		default:
-			return "millisecond"
+			return precMillisecond
 		}
 	}
 	return "day"
@@ -692,12 +692,12 @@ func normalizeTemporalUnit(unit string) (string, error) {
 		return "day", nil
 	case "hours", "hour":
 		return "hour", nil
-	case "minutes", "minute":
-		return "minute", nil
-	case "seconds", "second":
-		return "second", nil
-	case "milliseconds", "millisecond":
-		return "millisecond", nil
+	case "minutes", precMinute:
+		return precMinute, nil
+	case "seconds", precSecond:
+		return precSecond, nil
+	case "milliseconds", precMillisecond:
+		return precMillisecond, nil
 	}
 	return "", fmt.Errorf("%q is not a temporal unit", unit)
 }

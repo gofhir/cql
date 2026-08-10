@@ -278,11 +278,11 @@ func TemporalUnit(prec fptypes.DateTimePrecision) string {
 	case fptypes.DTHourPrecision:
 		return "hour"
 	case fptypes.DTMinutePrecision:
-		return "minute"
+		return precMinute
 	case fptypes.DTSecondPrecision:
-		return "second"
+		return precSecond
 	case fptypes.DTMillisPrecision:
-		return "millisecond"
+		return precMillisecond
 	default:
 		return "day"
 	}

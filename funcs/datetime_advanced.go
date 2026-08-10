@@ -48,7 +48,7 @@ func DateTimeComponentFrom(operand fptypes.Value, component string) (fptypes.Val
 		if t, ok := operand.(fptypes.Time); ok {
 			return fptypes.NewInteger(int64(t.Hour())), nil
 		}
-	case "minute":
+	case precMinute:
 		if t, ok := operand.(fptypes.DateTime); ok {
 			if t.Precision() < fptypes.DTMinutePrecision {
 				return nil, nil // minute not specified
@@ -61,7 +61,7 @@ func DateTimeComponentFrom(operand fptypes.Value, component string) (fptypes.Val
 			}
 			return fptypes.NewInteger(int64(t.Minute())), nil
 		}
-	case "second":
+	case precSecond:
 		if t, ok := operand.(fptypes.DateTime); ok {
 			if t.Precision() < fptypes.DTSecondPrecision {
 				return nil, nil // second not specified
@@ -74,7 +74,7 @@ func DateTimeComponentFrom(operand fptypes.Value, component string) (fptypes.Val
 			}
 			return fptypes.NewInteger(int64(t.Second())), nil
 		}
-	case "millisecond":
+	case precMillisecond:
 		if t, ok := operand.(fptypes.DateTime); ok {
 			if t.Precision() < fptypes.DTMillisPrecision {
 				return nil, nil // millisecond not specified
@@ -262,11 +262,11 @@ func durationBetweenExact(low, high fptypes.Value, precision string) (fptypes.Va
 		return DaysBetween(low, high)
 	case "hour", "hours":
 		return HoursBetween(low, high)
-	case "minute", "minutes":
+	case precMinute, "minutes":
 		return MinutesBetween(low, high)
-	case "second", "seconds":
+	case precSecond, "seconds":
 		return SecondsBetween(low, high)
-	case "millisecond", "milliseconds":
+	case precMillisecond, "milliseconds":
 		return MillisecondsBetween(low, high)
 	default:
 		return DaysBetween(low, high) // default to days
@@ -287,11 +287,11 @@ func durationPrecisionIndex(precision string) int {
 		return 2
 	case "hour", "hours":
 		return 3
-	case "minute", "minutes":
+	case precMinute, "minutes":
 		return 4
-	case "second", "seconds":
+	case precSecond, "seconds":
 		return 5
-	case "millisecond", "milliseconds":
+	case precMillisecond, "milliseconds":
 		return 6
 	default:
 		return -1
@@ -459,7 +459,7 @@ func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value
 		}
 		hours := int(th.Sub(tl).Hours())
 		return fptypes.NewInteger(int64(hours)), nil
-	case "minute", "minutes":
+	case precMinute, "minutes":
 		tl := toGoTime(low)
 		th := toGoTime(high)
 		if tl.IsZero() || th.IsZero() {
@@ -467,7 +467,7 @@ func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value
 		}
 		minutes := int(th.Sub(tl).Minutes())
 		return fptypes.NewInteger(int64(minutes)), nil
-	case "second", "seconds":
+	case precSecond, "seconds":
 		tl := toGoTime(low)
 		th := toGoTime(high)
 		if tl.IsZero() || th.IsZero() {
@@ -475,7 +475,7 @@ func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value
 		}
 		seconds := int(th.Sub(tl).Seconds())
 		return fptypes.NewInteger(int64(seconds)), nil
-	case "millisecond", "milliseconds":
+	case precMillisecond, "milliseconds":
 		tl := toGoTime(low)
 		th := toGoTime(high)
 		if tl.IsZero() || th.IsZero() {
@@ -595,11 +595,11 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 		switch unit {
 		case "hour", "hours":
 			h += amount
-		case "minute", "minutes":
+		case precMinute, "minutes":
 			m += amount
-		case "second", "seconds":
+		case precSecond, "seconds":
 			s += amount
-		case "millisecond", "milliseconds":
+		case precMillisecond, "milliseconds":
 			ms += amount
 		default:
 			h += amount
@@ -665,11 +665,11 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 			result = tt.AddDate(0, 0, amount)
 		case "hour", "hours":
 			result = tt.Add(time.Duration(amount) * time.Hour)
-		case "minute", "minutes":
+		case precMinute, "minutes":
 			result = tt.Add(time.Duration(amount) * time.Minute)
-		case "second", "seconds":
+		case precSecond, "seconds":
 			result = tt.Add(time.Duration(amount) * time.Second)
-		case "millisecond", "milliseconds":
+		case precMillisecond, "milliseconds":
 			result = tt.Add(time.Duration(amount) * time.Millisecond)
 		default:
 			result = tt.AddDate(0, 0, amount)
@@ -703,11 +703,11 @@ func convertToMatchPrecision(amount int, unit string, precIdx int, isDateTime bo
 		return truncDiv(amount*7, 30), "months"
 	case precIdx <= 2 && (unit == "hour" || unit == "hours"):
 		return truncDiv(amount, 24), "days"
-	case precIdx <= 3 && (unit == "minute" || unit == "minutes"):
+	case precIdx <= 3 && (unit == precMinute || unit == "minutes"):
 		return truncDiv(amount, 60), "hours"
-	case precIdx <= 4 && (unit == "second" || unit == "seconds"):
+	case precIdx <= 4 && (unit == precSecond || unit == "seconds"):
 		return truncDiv(amount, 60), "minutes"
-	case precIdx <= 5 && (unit == "millisecond" || unit == "milliseconds"):
+	case precIdx <= 5 && (unit == precMillisecond || unit == "milliseconds"):
 		return truncDiv(amount, 1000), "seconds"
 	default:
 		return amount, unit
@@ -729,17 +729,17 @@ func unitPrecisionIndex(unit string, isDateTime bool) int {
 			return 3
 		}
 		return -1
-	case "minute", "minutes":
+	case precMinute, "minutes":
 		if isDateTime {
 			return 4
 		}
 		return -1
-	case "second", "seconds":
+	case precSecond, "seconds":
 		if isDateTime {
 			return 5
 		}
 		return -1
-	case "millisecond", "milliseconds":
+	case precMillisecond, "milliseconds":
 		if isDateTime {
 			return 6
 		}

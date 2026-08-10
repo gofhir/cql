@@ -6,6 +6,15 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
+// The calendar precision keywords the temporal operators in this package work in.
+// Only the three that appear often enough to be worth naming are here; the coarser
+// keywords stay as literals at their handful of use sites.
+const (
+	precMinute      = "minute"
+	precSecond      = "second"
+	precMillisecond = "millisecond"
+)
+
 // ucumDurationUnits maps the UCUM codes for definite durations of a week or less
 // onto the calendar keyword they convert to exactly. CQL treats the two systems as
 // interchangeable at this scale, so `5 'd'` shifts a date exactly like `5 days`.
@@ -13,9 +22,9 @@ var ucumDurationUnits = map[string]string{
 	"wk":  "week",
 	"d":   "day",
 	"h":   "hour",
-	"min": "minute",
-	"s":   "second",
-	"ms":  "millisecond",
+	"min": precMinute,
+	"s":   precSecond,
+	"ms":  precMillisecond,
 }
 
 // ucumCalendarUnits are the UCUM durations that have no exact calendar meaning.
