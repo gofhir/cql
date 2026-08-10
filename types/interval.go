@@ -95,7 +95,7 @@ func (i Interval) Contains(point fptypes.Value) (bool, error) {
 		return false, fmt.Errorf("cannot compare %s", point.Type())
 	}
 	if i.Low != nil {
-		cmp, err := comp.Compare(i.Low)
+		cmp, err := CompareTemporal(comp, i.Low)
 		if err != nil {
 			return false, err
 		}
@@ -107,7 +107,7 @@ func (i Interval) Contains(point fptypes.Value) (bool, error) {
 		}
 	}
 	if i.High != nil {
-		cmp, err := comp.Compare(i.High)
+		cmp, err := CompareTemporal(comp, i.High)
 		if err != nil {
 			return false, err
 		}
@@ -213,7 +213,7 @@ func (i Interval) containsBound(val fptypes.Value, closed, isLow bool) (bool, er
 		return false, fmt.Errorf("cannot compare %s", val.Type())
 	}
 	if isLow && i.Low != nil {
-		cmp, err := comp.Compare(i.Low)
+		cmp, err := CompareTemporal(comp, i.Low)
 		if err != nil {
 			return false, err
 		}
@@ -225,7 +225,7 @@ func (i Interval) containsBound(val fptypes.Value, closed, isLow bool) (bool, er
 		}
 	}
 	if !isLow && i.High != nil {
-		cmp, err := comp.Compare(i.High)
+		cmp, err := CompareTemporal(comp, i.High)
 		if err != nil {
 			return false, err
 		}
@@ -262,9 +262,5 @@ func valuesEquivalent(a, b fptypes.Value) bool {
 }
 
 func compareValues(a, b fptypes.Value) (int, error) {
-	ca, ok := a.(fptypes.Comparable)
-	if !ok {
-		return 0, fmt.Errorf("cannot compare %s", a.Type())
-	}
-	return ca.Compare(b)
+	return CompareTemporal(a, b)
 }

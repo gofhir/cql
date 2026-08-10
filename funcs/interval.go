@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -12,8 +13,15 @@ import (
 )
 
 // isAmbiguousComparisonErr returns true if the error is an ambiguous temporal comparison.
+//
+// fptypes reports this as ErrPrecisionMismatch; the string check is kept for the
+// wording used before that sentinel existed.
 func isAmbiguousComparisonErr(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "ambiguous comparison")
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, fptypes.ErrPrecisionMismatch) ||
+		strings.Contains(err.Error(), "ambiguous comparison")
 }
 
 // IntervalContains checks if an interval contains a point.
@@ -207,8 +215,13 @@ func intervalPredecessor(v fptypes.Value) (fptypes.Value, bool) {
 		}
 	}
 	if dt, ok := v.(fptypes.DateTime); ok {
-		unit := TemporalUnit(dt.Precision())
-		return dt.SubtractDuration(1, unit), true
+		// TemporalUnit only ever yields a calendar keyword, so the error is unreachable;
+		// treating it as "no known step" keeps this function total either way.
+		pred, err := dt.SubtractDuration(1, TemporalUnit(dt.Precision()))
+		if err != nil {
+			return v, false
+		}
+		return pred, true
 	}
 	if t, ok := v.(fptypes.Time); ok {
 		return AdjustTime(t, -1), true
@@ -235,8 +248,12 @@ func intervalSuccessor(v fptypes.Value) (fptypes.Value, bool) {
 		}
 	}
 	if dt, ok := v.(fptypes.DateTime); ok {
-		unit := TemporalUnit(dt.Precision())
-		return dt.AddDuration(1, unit), true
+		// As in intervalPredecessor, the error cannot fire for a precision-derived unit.
+		succ, err := dt.AddDuration(1, TemporalUnit(dt.Precision()))
+		if err != nil {
+			return v, false
+		}
+		return succ, true
 	}
 	if t, ok := v.(fptypes.Time); ok {
 		return AdjustTime(t, 1), true

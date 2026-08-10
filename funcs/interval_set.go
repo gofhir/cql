@@ -464,7 +464,10 @@ func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal,
 	if unit == "" || unit == "1" {
 		unit = defaultTemporalUnit(interval.Low)
 	}
-	unit = normalizeTemporalUnit(unit)
+	unit, err := normalizeTemporalUnit(unit)
+	if err != nil {
+		return nil, err
+	}
 
 	// If per unit is finer than the interval's precision, return empty
 	intervalUnit := defaultTemporalUnit(interval.Low)
@@ -511,7 +514,10 @@ func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decim
 	if unit == "" || unit == "1" {
 		unit = defaultTemporalUnit(interval.Low)
 	}
-	unit = normalizeTemporalUnit(unit)
+	unit, err := normalizeTemporalUnit(unit)
+	if err != nil {
+		return nil, err
+	}
 
 	// If per unit is finer than the interval's precision, return empty
 	intervalUnit := defaultTemporalUnit(interval.Low)
@@ -663,27 +669,37 @@ func defaultTemporalUnit(v fptypes.Value) string {
 	return "day"
 }
 
-// normalizeTemporalUnit normalizes unit strings to singular form.
-func normalizeTemporalUnit(unit string) string {
-	switch unit {
-	case "years", "year":
-		return "year"
-	case "months", "month":
-		return "month"
-	case "weeks", "week":
-		return "week"
-	case "days", "day":
-		return "day"
-	case "hours", "hour":
-		return "hour"
-	case "minutes", "minute":
-		return "minute"
-	case "seconds", "second":
-		return "second"
-	case "milliseconds", "millisecond":
-		return "millisecond"
+// normalizeTemporalUnit normalizes unit strings to singular form, folding UCUM
+// codes onto their calendar keyword first so that `per 1 'd'` steps like `per 1 day`.
+//
+// Anything that cannot step a temporal value is reported rather than passed on. A
+// unit that does not advance the cursor used to run the expansion loop to its
+// iteration cap; returning an empty list instead would still be a wrong answer
+// wearing the face of a right one.
+func normalizeTemporalUnit(unit string) (string, error) {
+	normalized, err := normalizeDurationUnit(unit)
+	if err != nil {
+		return "", err
 	}
-	return unit
+	switch normalized {
+	case "years", "year":
+		return "year", nil
+	case "months", "month":
+		return "month", nil
+	case "weeks", "week":
+		return "week", nil
+	case "days", "day":
+		return "day", nil
+	case "hours", "hour":
+		return "hour", nil
+	case "minutes", "minute":
+		return "minute", nil
+	case "seconds", "second":
+		return "second", nil
+	case "milliseconds", "millisecond":
+		return "millisecond", nil
+	}
+	return "", fmt.Errorf("%q is not a temporal unit", unit)
 }
 
 // IntervalExpand expands an interval into a list of unit intervals per the given per quantity.

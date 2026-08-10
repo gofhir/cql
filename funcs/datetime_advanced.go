@@ -551,21 +551,26 @@ func MillisecondsBetween(low, high fptypes.Value) (fptypes.Value, error) {
 }
 
 // DateAdd adds a duration to a date/time value.
-// Uses the fptypes built-in AddDuration which preserves precision.
+// Uses the fptypes built-in AddDuration which preserves precision and clamps the
+// day to the end of the month a year or month shift lands in.
 // Handles CQL semantics: when the unit is finer than the operand's precision,
 // convert to the operand's precision first (e.g., 25 months on a year-only Date = 2 years).
+// UCUM codes are normalized to calendar keywords first, so `5 'd'` and `5 days` agree;
+// a UCUM year or month has no exact calendar meaning and is refused.
 func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value, error) {
 	if operand == nil {
 		return nil, nil
 	}
-	unit := precision
+	unit, err := normalizeDurationUnit(precision)
+	if err != nil {
+		return nil, err
+	}
 	switch t := operand.(type) {
 	case fptypes.DateTime:
 		convertedAmount, convertedUnit := convertToMatchPrecision(amount, unit, int(t.Precision()), true)
-		result := t.AddDuration(convertedAmount, convertedUnit)
-		// Clamp day for month/year additions that overflow (e.g., Feb 29 + 1 year)
-		if isMonthOrYearUnit(convertedUnit) && t.Day() > 0 {
-			result = clampDateTimeDay(result, t.Day())
+		result, err := t.AddDuration(convertedAmount, convertedUnit)
+		if err != nil {
+			return nil, err
 		}
 		// Validate result year is in valid range
 		if result.Year() < 1 || result.Year() > 9999 {
@@ -574,10 +579,9 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 		return result, nil
 	case fptypes.Date:
 		convertedAmount, convertedUnit := convertToMatchPrecision(amount, unit, int(t.Precision()), false)
-		result := t.AddDuration(convertedAmount, convertedUnit)
-		// Clamp day for month/year additions that overflow
-		if isMonthOrYearUnit(convertedUnit) && t.Day() > 0 {
-			result = clampDateDay(result, t.Day())
+		result, err := t.AddDuration(convertedAmount, convertedUnit)
+		if err != nil {
+			return nil, err
 		}
 		// Validate result year is in valid range
 		if result.Year() < 1 || result.Year() > 9999 {
@@ -588,7 +592,7 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 		// Handle Time type natively to preserve precision
 		h, m, s, ms := t.Hour(), t.Minute(), t.Second(), t.Millisecond()
 		prec := t.Precision()
-		switch precision {
+		switch unit {
 		case "hour", "hours":
 			h += amount
 		case "minute", "minutes":
@@ -650,7 +654,7 @@ func DateAdd(operand fptypes.Value, amount int, precision string) (fptypes.Value
 			return nil, nil
 		}
 		var result time.Time
-		switch precision {
+		switch unit {
 		case "year", "years":
 			result = tt.AddDate(amount, 0, 0)
 		case "month", "months":
@@ -758,71 +762,4 @@ func intVal(v fptypes.Value) int {
 		return int(iv.Value())
 	}
 	return 0
-}
-
-func isMonthOrYearUnit(unit string) bool {
-	switch unit {
-	case "year", "years", "month", "months":
-		return true
-	}
-	return false
-}
-
-// clampDateTimeDay corrects day overflow after month/year addition.
-// For example, adding 1 year to 2012-02-29 gives 2013-03-01 via Go's time.AddDate,
-// but CQL expects 2013-02-28 (clamp to last day of target month).
-func clampDateTimeDay(dt fptypes.DateTime, originalDay int) fptypes.DateTime {
-	if dt.Day() < originalDay {
-		// Day wrapped to next month. Go back to last day of previous month.
-		// Reconstruct by going to day 0 of the current month (= last day of prev month).
-		t := dt.ToTime()
-		lastDay := time.Date(t.Year(), t.Month(), 0, t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
-		s := fmt.Sprintf("%04d-%02d-%02d", lastDay.Year(), int(lastDay.Month()), lastDay.Day())
-		if dt.Precision() >= 3 { // DTHourPrecision
-			s += fmt.Sprintf("T%02d", lastDay.Hour())
-		}
-		if dt.Precision() >= 4 { // DTMinutePrecision
-			s += fmt.Sprintf(":%02d", lastDay.Minute())
-		}
-		if dt.Precision() >= 5 { // DTSecondPrecision
-			s += fmt.Sprintf(":%02d", lastDay.Second())
-		}
-		if dt.Precision() >= 6 { // DTMillisPrecision
-			s += fmt.Sprintf(".%03d", lastDay.Nanosecond()/1e6)
-		}
-		if dt.HasTZ() {
-			offset := dt.TZOffset()
-			if offset == 0 {
-				s += "Z"
-			} else {
-				sign := "+"
-				o := offset
-				if o < 0 {
-					sign = "-"
-					o = -o
-				}
-				s += fmt.Sprintf("%s%02d:%02d", sign, o/60, o%60)
-			}
-		}
-		result, err := fptypes.NewDateTime(s)
-		if err == nil {
-			return result
-		}
-	}
-	return dt
-}
-
-// clampDateDay corrects day overflow after month/year addition for Date values.
-func clampDateDay(d fptypes.Date, originalDay int) fptypes.Date {
-	if d.Day() < originalDay && d.Day() > 0 {
-		// Day wrapped to next month
-		t := d.ToTime()
-		lastDay := time.Date(t.Year(), t.Month(), 0, 0, 0, 0, 0, time.UTC)
-		s := fmt.Sprintf("%04d-%02d-%02d", lastDay.Year(), int(lastDay.Month()), lastDay.Day())
-		result, err := fptypes.NewDate(s)
-		if err == nil {
-			return result
-		}
-	}
-	return d
 }
