@@ -31,6 +31,21 @@ func isAmbiguousComparisonErr(err error) bool {
 		strings.Contains(err.Error(), "ambiguous comparison")
 }
 
+// temporalEqualityUnknown reports whether two temporal values agree on everything
+// they share while one is specified more precisely, which leaves equality unknown.
+//
+// Value.Equal answers with a bool and has nowhere to say "unknown", so the question
+// is asked here instead: @2017-09-01T00:00:00 = @2017-09-01T00:00:00.000 is null in
+// CQL, the same answer the ordering operators give for that pair. Non-temporal
+// values are none of this function's business and always compare as they did.
+func temporalEqualityUnknown(left, right fptypes.Value) bool {
+	if !fptypes.IsTemporal(left) || !fptypes.IsTemporal(right) {
+		return false
+	}
+	_, err := cqltypes.CompareTemporal(left, right)
+	return isAmbiguousComparisonErr(err)
+}
+
 // queryCombo holds one combination of alias bindings from a multi-source query.
 type queryCombo struct {
 	aliases map[string]fptypes.Value
@@ -460,6 +475,9 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return tupleEqual(lt, rt)
 			}
 		}
+		if temporalEqualityUnknown(left, right) {
+			return nil, nil
+		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
 	case ast.OpNotEqual:
 		if lt, lok := left.(cqltypes.Tuple); lok {
@@ -473,6 +491,9 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				}
 				return fptypes.NewBoolean(!isTrue(eq)), nil
 			}
+		}
+		if temporalEqualityUnknown(left, right) {
+			return nil, nil
 		}
 		return fptypes.NewBoolean(!left.Equal(right)), nil
 	case ast.OpEquivalent:
@@ -4311,6 +4332,12 @@ func precisionIndex(precision string) int {
 // temporalCompareAtPrecision compares two temporal values up to the given precision.
 // Returns -1, 0, or 1. If the comparison is uncertain (one operand doesn't have
 // enough precision), returns (0, false).
+//
+// An explicit precision states how far to look, so agreeing that far settles the
+// question: `@T15:59:59 same second as @T15:59:59.999` is true. Without one the
+// comparison runs to the precision the operands carry, and agreeing on everything
+// they share while one is specified more finely leaves the result unknown, which
+// is the rule types.CompareTemporal applies to the ordering operators.
 func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (int, bool) {
 	lComps, lMaxPrec := temporalComponents(left)
 	rComps, rMaxPrec := temporalComponents(right)
@@ -4319,7 +4346,8 @@ func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (in
 	}
 
 	targetPrec := precisionIndex(precision)
-	if targetPrec < 0 {
+	explicitPrecision := targetPrec >= 0
+	if !explicitPrecision {
 		// No precision specified: use minimum of both precisions
 		targetPrec = lMaxPrec
 		if rMaxPrec < targetPrec {
@@ -4344,6 +4372,9 @@ func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (in
 		if lComps[i] > rComps[i] {
 			return 1, true
 		}
+	}
+	if !explicitPrecision && lMaxPrec != rMaxPrec {
+		return 0, false // equal as far as both are specified, but not equally specified
 	}
 	return 0, true // equal at this precision
 }
