@@ -494,12 +494,15 @@ func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
 	return fptypes.NewBoolean(false), nil
 }
 
+// compareVals is the one place this package orders two values, so routing it
+// through CompareTemporal is what gives the interval and timing operators CQL's
+// precision rule rather than the one fptypes applies.
 func compareVals(a, b fptypes.Value) (int, error) {
 	if a == nil || b == nil {
 		return 0, nil // treat nil comparisons as equal (callers handle nil separately)
 	}
-	if ac, ok := a.(fptypes.Comparable); ok {
-		return ac.Compare(b)
+	if _, ok := a.(fptypes.Comparable); ok {
+		return cqltypes.CompareTemporal(a, b)
 	}
 	// Fall back to string comparison
 	if a.String() < b.String() {
