@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"regexp"
@@ -19,8 +20,15 @@ import (
 
 // isAmbiguousComparisonErr returns true if the error is an ambiguous temporal comparison.
 // In CQL, ambiguous comparisons should return null, not error.
+//
+// fptypes reports this as ErrPrecisionMismatch; the string check is kept for the
+// wording used before that sentinel existed.
 func isAmbiguousComparisonErr(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "ambiguous comparison")
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, fptypes.ErrPrecisionMismatch) ||
+		strings.Contains(err.Error(), "ambiguous comparison")
 }
 
 // queryCombo holds one combination of alias bindings from a multi-source query.
@@ -520,11 +528,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				left = fptypes.NewQuantityFromDecimal(ld.Value(), "1")
 			}
 		}
-		lc, ok := left.(fptypes.Comparable)
-		if !ok {
-			return nil, fmt.Errorf("cannot compare %s", left.Type())
-		}
-		cmp, err := lc.Compare(right)
+		cmp, err := cqltypes.CompareTemporal(left, right)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
 				return nil, nil // CQL: ambiguous temporal comparison → null
@@ -1111,16 +1115,24 @@ func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Val
 	}
 	// DateTime successor/predecessor: add/subtract 1 unit at the datetime's precision
 	if dt, ok := operand.(fptypes.DateTime); ok {
+		// The unit comes from the value's own precision, so it is always one fptypes
+		// recognizes; the error is threaded through rather than assumed away.
 		unit := funcs.TemporalUnit(dt.Precision())
 		if op == ast.OpSuccessorOf {
-			result := dt.AddDuration(1, unit)
+			result, err := dt.AddDuration(1, unit)
+			if err != nil {
+				return nil, err
+			}
 			// Check for overflow (year > 9999)
 			if result.Year() > 9999 {
 				return nil, fmt.Errorf("successor overflow: DateTime exceeds maximum")
 			}
 			return result, nil
 		}
-		result := dt.SubtractDuration(1, unit)
+		result, err := dt.SubtractDuration(1, unit)
+		if err != nil {
+			return nil, err
+		}
 		// Check for underflow
 		if result.Year() < 1 {
 			return nil, fmt.Errorf("predecessor underflow: DateTime below minimum")
@@ -4075,11 +4087,8 @@ func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found, 
 			return true, false
 		}
 		// Check for ambiguous comparison (different precisions in temporal types)
-		if comp, ok := item.(fptypes.Comparable); ok {
-			_, err := comp.Compare(val)
-			if err != nil && isAmbiguousComparisonErr(err) {
-				ambiguous = true
-			}
+		if _, err := cqltypes.CompareTemporal(item, val); isAmbiguousComparisonErr(err) {
+			ambiguous = true
 		}
 	}
 	return false, ambiguous

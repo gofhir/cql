@@ -225,6 +225,11 @@ type ValueSetRef struct {
 // The Type field acts as a discriminator to determine which fields are active.
 // This mirrors the HL7 ELM JSON representation where each expression node
 // carries a "type" field (e.g., "Literal", "Retrieve", "Equal", "And").
+// NodeLiteral is the ELM type discriminator for a literal expression. It is named
+// because the translator and the importer both repeat it and the tests repeat it a
+// great deal more; the other discriminators appear once each and stay as literals.
+const NodeLiteral = "Literal"
+
 type ExpressionNode struct {
 	// Discriminator — determines which fields below are populated.
 	Type string `json:"type"`

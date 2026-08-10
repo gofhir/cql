@@ -444,11 +444,11 @@ func temporalUnitPrecision(unit string) int {
 		return 3
 	case "hour":
 		return 4
-	case "minute":
+	case precMinute:
 		return 5
-	case "second":
+	case precSecond:
 		return 6
-	case "millisecond":
+	case precMillisecond:
 		return 7
 	}
 	return 3
@@ -464,7 +464,10 @@ func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal,
 	if unit == "" || unit == "1" {
 		unit = defaultTemporalUnit(interval.Low)
 	}
-	unit = normalizeTemporalUnit(unit)
+	unit, err := normalizeTemporalUnit(unit)
+	if err != nil {
+		return nil, err
+	}
 
 	// If per unit is finer than the interval's precision, return empty
 	intervalUnit := defaultTemporalUnit(interval.Low)
@@ -511,7 +514,10 @@ func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decim
 	if unit == "" || unit == "1" {
 		unit = defaultTemporalUnit(interval.Low)
 	}
-	unit = normalizeTemporalUnit(unit)
+	unit, err := normalizeTemporalUnit(unit)
+	if err != nil {
+		return nil, err
+	}
 
 	// If per unit is finer than the interval's precision, return empty
 	intervalUnit := defaultTemporalUnit(interval.Low)
@@ -618,11 +624,11 @@ func unitToTimePrecision(unit string) int {
 	switch unit {
 	case "hour":
 		return int(fptypes.HourPrecision)
-	case "minute":
+	case precMinute:
 		return int(fptypes.MinutePrecision)
-	case "second":
+	case precSecond:
 		return int(fptypes.SecondPrecision)
-	case "millisecond":
+	case precMillisecond:
 		return int(fptypes.MillisPrecision)
 	}
 	return -1
@@ -639,11 +645,11 @@ func defaultTemporalUnit(v fptypes.Value) string {
 		case 3:
 			return "hour"
 		case 4:
-			return "minute"
+			return precMinute
 		case 5:
-			return "second"
+			return precSecond
 		default:
-			return "millisecond"
+			return precMillisecond
 		}
 	case fptypes.Date:
 		return "day"
@@ -653,37 +659,47 @@ func defaultTemporalUnit(v fptypes.Value) string {
 		case 0:
 			return "hour"
 		case 1:
-			return "minute"
+			return precMinute
 		case 2:
-			return "second"
+			return precSecond
 		default:
-			return "millisecond"
+			return precMillisecond
 		}
 	}
 	return "day"
 }
 
-// normalizeTemporalUnit normalizes unit strings to singular form.
-func normalizeTemporalUnit(unit string) string {
-	switch unit {
-	case "years", "year":
-		return "year"
-	case "months", "month":
-		return "month"
-	case "weeks", "week":
-		return "week"
-	case "days", "day":
-		return "day"
-	case "hours", "hour":
-		return "hour"
-	case "minutes", "minute":
-		return "minute"
-	case "seconds", "second":
-		return "second"
-	case "milliseconds", "millisecond":
-		return "millisecond"
+// normalizeTemporalUnit normalizes unit strings to singular form, folding UCUM
+// codes onto their calendar keyword first so that `per 1 'd'` steps like `per 1 day`.
+//
+// Anything that cannot step a temporal value is reported rather than passed on. A
+// unit that does not advance the cursor used to run the expansion loop to its
+// iteration cap; returning an empty list instead would still be a wrong answer
+// wearing the face of a right one.
+func normalizeTemporalUnit(unit string) (string, error) {
+	normalized, err := normalizeDurationUnit(unit)
+	if err != nil {
+		return "", err
 	}
-	return unit
+	switch normalized {
+	case "years", "year":
+		return "year", nil
+	case "months", "month":
+		return "month", nil
+	case "weeks", "week":
+		return "week", nil
+	case "days", "day":
+		return "day", nil
+	case "hours", "hour":
+		return "hour", nil
+	case "minutes", precMinute:
+		return precMinute, nil
+	case "seconds", precSecond:
+		return precSecond, nil
+	case "milliseconds", precMillisecond:
+		return precMillisecond, nil
+	}
+	return "", fmt.Errorf("%q is not a temporal unit", unit)
 }
 
 // IntervalExpand expands an interval into a list of unit intervals per the given per quantity.
