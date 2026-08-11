@@ -1015,6 +1015,20 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 // ---------------------------------------------------------------------------
 
 func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
+	// The most negative Integer has no positive counterpart, so -2147483648 only
+	// exists as a whole: evaluating the 2147483648 on its own would overflow before
+	// the minus ever applied. Fold the sign into the literal first.
+	if n.Operator == ast.OpNegate {
+		if lit, ok := n.Operand.(*ast.Literal); ok && lit.ValueType == ast.LiteralInteger {
+			if v, err := strconv.ParseInt("-"+lit.Value, 10, 64); err == nil {
+				if v < math.MinInt32 || v > math.MaxInt32 {
+					return nil, fmt.Errorf("integer overflow: -%s", lit.Value)
+				}
+				return fptypes.NewInteger(v), nil
+			}
+		}
+	}
+
 	operand, err := e.Eval(n.Operand)
 	if err != nil {
 		return nil, err
@@ -2193,6 +2207,42 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 		}
 		return src, nil
+
+	case "slice":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		list, ok := src.(cqltypes.List)
+		if !ok {
+			return nil, nil
+		}
+		// An omitted or null bound falls back to the edge of the list, which is what
+		// makes Slice(list) the whole list and Slice(list, 1, null) everything after
+		// the first element.
+		start, end := 0, len(list.Values)
+		if len(operands) >= 1 {
+			startVal, err := e.Eval(operands[0])
+			if err != nil {
+				return nil, err
+			}
+			if startInt, ok := startVal.(fptypes.Integer); ok {
+				start = int(startInt.Value())
+			}
+		}
+		if len(operands) >= 2 {
+			endVal, err := e.Eval(operands[1])
+			if err != nil {
+				return nil, err
+			}
+			if endInt, ok := endVal.(fptypes.Integer); ok {
+				end = int(endInt.Value())
+			}
+		}
+		return cqltypes.NewList(funcs.Slice(list.Values, start, end)), nil
 
 	case "sublist":
 		src, err := resolveSource()

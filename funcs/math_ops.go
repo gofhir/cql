@@ -23,8 +23,8 @@ func toDecimalVal(v fptypes.Value) (decimal.Decimal, bool) {
 }
 
 // Round rounds a decimal value to the given precision (number of decimal places).
-// CQL uses "round half up" (towards positive infinity): -1.5 → -1, -0.5 → 0, 0.5 → 1, 1.5 → 2.
-// If the value is nil, returns nil.
+// A half rounds away from zero, so the sign does not change which way it goes:
+// -1.5 → -2, -0.5 → -1, 0.5 → 1, 1.5 → 2. If the value is nil, returns nil.
 func Round(v fptypes.Value, precision int) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
@@ -33,16 +33,10 @@ func Round(v fptypes.Value, precision int) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Round: expected numeric, got %s", v.Type())
 	}
-	// CQL rounding: round half towards positive infinity
-	// floor(x + 0.5) works for all cases:
-	// 0.5 → floor(1.0) = 1, -0.5 → floor(0.0) = 0
-	// 1.5 → floor(2.0) = 2, -1.5 → floor(-1.0) = -1
-	shift := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(precision)))
-	shifted := d.Mul(shift)
-	half := decimal.NewFromFloat(0.5)
-	rounded := shifted.Add(half).Floor()
-	result := rounded.Div(shift)
-	return decimalToValue(result), nil
+	if precision < math.MinInt32 || precision > math.MaxInt32 {
+		return nil, fmt.Errorf("Round: precision out of range: %d", precision)
+	}
+	return decimalToValue(d.Round(int32(precision))), nil
 }
 
 // Floor returns the largest integer less than or equal to the value.
@@ -58,8 +52,7 @@ func Floor(v fptypes.Value) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Floor: expected numeric, got %s", v.Type())
 	}
-	floored := d.Floor()
-	return fptypes.NewInteger(floored.IntPart()), nil
+	return integerOrNull(d.Floor()), nil
 }
 
 // Ceiling returns the smallest integer greater than or equal to the value.
@@ -74,8 +67,18 @@ func Ceiling(v fptypes.Value) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Ceiling: expected numeric, got %s", v.Type())
 	}
-	ceiled := d.Ceil()
-	return fptypes.NewInteger(ceiled.IntPart()), nil
+	return integerOrNull(d.Ceil()), nil
+}
+
+// integerOrNull returns d as an Integer, or null when it falls outside the range
+// CQL gives that type. Floor and Ceiling are the two operators that can carry a
+// Decimal past the Integer bounds while still being asked for an Integer, and CQL
+// answers that with null rather than a wrapped or clamped number.
+func integerOrNull(d decimal.Decimal) fptypes.Value {
+	if d.LessThan(decimal.NewFromInt(math.MinInt32)) || d.GreaterThan(decimal.NewFromInt(math.MaxInt32)) {
+		return nil
+	}
+	return fptypes.NewInteger(d.IntPart())
 }
 
 // Truncate removes the fractional part of a decimal value, returning an integer.
