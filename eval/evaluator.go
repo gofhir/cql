@@ -894,10 +894,12 @@ func decimalEquivalent(a, b decimal.Decimal) bool {
 	if bDec < minDec {
 		minDec = bDec
 	}
-	// Truncate both to the minimum precision and compare.
+	// Round both to the least precision and compare. Rounding, not truncation: at one
+	// decimal place 1.55 is 1.6, so 1.5 ~ 1.55 is false. Truncating would discard the
+	// digit that decides it and call the two equivalent.
 	// minDec is bounded by string decimal place count so it fits in int32.
-	aRound := a.Truncate(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
-	bRound := b.Truncate(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
+	aRound := a.Round(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
+	bRound := b.Round(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
 	return aRound.Equal(bRound)
 }
 
@@ -921,8 +923,22 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 	if len(a.Elements) != len(b.Elements) {
 		return fptypes.NewBoolean(false), nil
 	}
-	hasAsymmetricNull := false
-	for k, av := range a.Elements {
+	// The first element that does not match settles the answer, so an element that
+	// differs and an element that is unknown give different results depending on which
+	// comes first: {Id:1,Name:'John'} = {Id:2,Name:null} is false because Id already
+	// differs, while {Id:null,Name:'John'} = {Id:1,Name:'James'} is null because Id is
+	// unknown before Name is ever reached.
+	//
+	// Elements are held in a map, so the walk is over sorted keys to make the order
+	// deterministic rather than whatever the runtime hands back.
+	keys := make([]string, 0, len(a.Elements))
+	for k := range a.Elements {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		av := a.Elements[k]
 		bv, exists := b.Elements[k]
 		if !exists {
 			return fptypes.NewBoolean(false), nil
@@ -931,15 +947,11 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 			continue // both null → matching
 		}
 		if av == nil || bv == nil {
-			hasAsymmetricNull = true // one null, one not → indeterminate
-			continue
+			return nil, nil // one null, one not → indeterminate
 		}
 		if !av.Equal(bv) {
 			return fptypes.NewBoolean(false), nil
 		}
-	}
-	if hasAsymmetricNull {
-		return nil, nil
 	}
 	return fptypes.NewBoolean(true), nil
 }
@@ -3807,6 +3819,10 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 				if _, rightIsIv := right.(cqltypes.Interval); rightIsIv {
 					return fptypes.NewBoolean(true), nil
 				}
+				// A null collection holds nothing, so it properly includes nothing. That
+				// is a different question from the unbounded interval above, and it has a
+				// definite answer rather than an unknown one.
+				return fptypes.NewBoolean(false), nil
 			}
 		case ast.TimingIncludedIn, ast.TimingDuring:
 			if n.Operator.Properly && right == nil && left != nil {
@@ -3814,6 +3830,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 				if _, leftIsIv := left.(cqltypes.Interval); leftIsIv {
 					return fptypes.NewBoolean(true), nil
 				}
+				return fptypes.NewBoolean(false), nil
 			}
 		}
 		// Default null propagation for non-list operations
