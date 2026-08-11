@@ -87,10 +87,9 @@ func DateTimeComponentFrom(operand fptypes.Value, component string) (fptypes.Val
 			}
 			return fptypes.NewInteger(int64(t.Millisecond())), nil
 		}
-	case "timezone":
-		// "timezone" is not a valid CQL component; use "timezoneoffset" instead
-		return nil, fmt.Errorf("'timezone' is not a valid date/time component; use 'timezoneoffset' instead")
-	case "timezoneoffset":
+	// "timezone" is the older spelling of "timezoneoffset" and names the same
+	// component, so both answer with the offset in hours.
+	case "timezone", "timezoneoffset":
 		if dt, ok := operand.(fptypes.DateTime); ok {
 			if dt.HasTZ() {
 				offset := dt.TZOffset()

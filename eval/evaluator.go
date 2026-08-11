@@ -278,14 +278,16 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 		dtVal := strings.TrimSuffix(n.Value, "T")
 		return fptypes.NewDateTime(dtVal)
 	case ast.LiteralTime:
-		// Validate millisecond digits before parsing: CQL allows at most 3 fractional digits.
-		if dotIdx := strings.LastIndex(n.Value, "."); dotIdx >= 0 {
-			frac := n.Value[dotIdx+1:]
-			if len(frac) > 3 {
-				return nil, fmt.Errorf("invalid time literal (milliseconds exceed 3 digits): %s", n.Value)
+		// Time carries no finer precision than the millisecond, so anything written past
+		// the third fractional digit is dropped rather than rejected: @T23:59:59.10000 is
+		// @T23:59:59.100.
+		timeVal := n.Value
+		if dotIdx := strings.LastIndex(timeVal, "."); dotIdx >= 0 {
+			if frac := timeVal[dotIdx+1:]; len(frac) > 3 {
+				timeVal = timeVal[:dotIdx+1] + frac[:3]
 			}
 		}
-		t, err := fptypes.NewTime(n.Value)
+		t, err := fptypes.NewTime(timeVal)
 		if err != nil {
 			return nil, err
 		}
