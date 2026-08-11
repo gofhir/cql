@@ -1308,12 +1308,23 @@ func (e *Evaluator) evalAs(n *ast.AsExpression) (fptypes.Value, error) {
 	if operand == nil {
 		return nil, nil
 	}
-	nt, ok := n.Type.(*ast.NamedType)
-	if !ok {
-		return nil, nil
-	}
-	if strings.EqualFold(operand.Type(), nt.Name) {
-		return operand, nil
+	switch t := n.Type.(type) {
+	case *ast.NamedType:
+		if strings.EqualFold(operand.Type(), t.Name) {
+			return operand, nil
+		}
+	case *ast.ListType:
+		// A list keeps its elements whatever the cast names them: the element type is
+		// a promise about what the list may hold, not a filter applied to it. Casting
+		// to List<Any> is how the conformance suite compares lists of unlike elements
+		// at all, so dropping the list here would leave those comparisons null.
+		if list, ok := operand.(cqltypes.List); ok {
+			return list, nil
+		}
+	case *ast.IntervalType:
+		if iv, ok := operand.(cqltypes.Interval); ok {
+			return iv, nil
+		}
 	}
 	return nil, nil // safe cast returns null
 }
