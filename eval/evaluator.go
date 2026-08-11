@@ -46,6 +46,15 @@ func temporalEqualityUnknown(left, right fptypes.Value) bool {
 	return isAmbiguousComparisonErr(err)
 }
 
+// calendarUCUMQuantities reports whether two values are quantities measured in a
+// calendar year or month on one side and the matching UCUM code on the other,
+// which is the pairing CQL declines to decide. See funcs.IsCalendarUCUMDurationPair.
+func calendarUCUMQuantities(left, right fptypes.Value) bool {
+	lq, lok := left.(fptypes.Quantity)
+	rq, rok := right.(fptypes.Quantity)
+	return lok && rok && funcs.IsCalendarUCUMDurationPair(lq.Unit(), rq.Unit())
+}
+
 // queryCombo holds one combination of alias bindings from a multi-source query.
 type queryCombo struct {
 	aliases map[string]fptypes.Value
@@ -475,7 +484,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return tupleEqual(lt, rt)
 			}
 		}
-		if temporalEqualityUnknown(left, right) {
+		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
 			return nil, nil
 		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
@@ -492,7 +501,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return fptypes.NewBoolean(!isTrue(eq)), nil
 			}
 		}
-		if temporalEqualityUnknown(left, right) {
+		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
 			return nil, nil
 		}
 		return fptypes.NewBoolean(!left.Equal(right)), nil
@@ -861,6 +870,13 @@ func cqlEquivalent(left, right fptypes.Value) bool {
 		if rd, ok := right.(fptypes.Decimal); ok {
 			return decimalEquivalent(decimal.NewFromInt(li.Value()), rd.Value())
 		}
+	}
+	// A calendar year or month and its UCUM code name the same span even though CQL
+	// will not equate them, so equivalence answers on the magnitude alone.
+	if calendarUCUMQuantities(left, right) {
+		lq := left.(fptypes.Quantity)
+		rq := right.(fptypes.Quantity)
+		return lq.Value().Equal(rq.Value())
 	}
 	return left.Equivalent(right)
 }

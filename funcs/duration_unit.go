@@ -37,6 +37,30 @@ var ucumCalendarUnits = map[string]string{
 	"mo": "month",
 }
 
+// calendarDurationUnits maps the calendar keywords that have no exact UCUM
+// counterpart onto the UCUM code covering the same nominal span.
+var calendarDurationUnits = map[string]string{
+	"year":   "a",
+	"years":  "a",
+	"month":  "mo",
+	"months": "mo",
+}
+
+// IsCalendarUCUMDurationPair reports whether one unit is a calendar year or month
+// and the other the UCUM code naming the same span.
+//
+// CQL will not call those two equal. A calendar year runs 365 days or 366, while
+// UCUM's 'a' is a fixed 365.25, so whether `1 year = 1 'a'` holds depends on which
+// year is meant and the answer is unknown rather than false. They stay equivalent,
+// because equivalence asks whether the two name the same thing and they do.
+func IsCalendarUCUMDurationPair(a, b string) bool {
+	if code, ok := calendarDurationUnits[a]; ok && code == b {
+		return true
+	}
+	code, ok := calendarDurationUnits[b]
+	return ok && code == a
+}
+
 // normalizeDurationUnit maps a duration unit onto the calendar keyword that the
 // temporal arithmetic in this package works in.
 //
