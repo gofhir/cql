@@ -4242,11 +4242,14 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 				return nil, nil
 			}
 			found, ambig := listContainsValueTriState(lc, right)
+			if op.Properly {
+				// Proper containment asks for a member, and a value that only might match
+				// is not one. @T15:59:59 is not a member of a list of millisecond-precision
+				// times, so the answer is false rather than unknown.
+				return fptypes.NewBoolean(found && lc.Count() > 1), nil
+			}
 			if ambig && !found {
 				return nil, nil // ambiguous membership → null
-			}
-			if op.Properly {
-				return fptypes.NewBoolean(found && lc.Count() > 1), nil
 			}
 			return fptypes.NewBoolean(found), nil
 		}
@@ -4293,11 +4296,12 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 				return nil, nil
 			}
 			found, ambig := listContainsValueTriState(rc, left)
+			if op.Properly {
+				// See the mirror of this in the includes branch above.
+				return fptypes.NewBoolean(found && rc.Count() > 1), nil
+			}
 			if ambig && !found {
 				return nil, nil // ambiguous membership → null
-			}
-			if op.Properly {
-				return fptypes.NewBoolean(found && rc.Count() > 1), nil
 			}
 			return fptypes.NewBoolean(found), nil
 		}
