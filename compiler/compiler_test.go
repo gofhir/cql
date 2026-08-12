@@ -152,3 +152,63 @@ define "Conditions":
 		t.Errorf("expected Condition retrieve, got %v", ret.ResourceType)
 	}
 }
+
+// TestTerminologyIdentifiersAreUndelimited covers the names that index the
+// terminology tables. They used to be read with the whole node's GetText, which
+// keeps the quotes, so `[Condition: "VS"]` never matched a value set declared as
+// "VS" and the raw string reached the data provider instead of the URL.
+func TestTerminologyIdentifiersAreUndelimited(t *testing.T) {
+	src := `library T version '1.0'
+using FHIR version '4.0.1'
+codesystem "LOINC": 'http://loinc.org'
+codesystem "cs.dotted": 'http://dotted'
+valueset "Diabetes": 'http://example.org/vs/dm'
+code "SBP": '8480-6' from "LOINC"
+code "DOT": 'x' from "cs.dotted"
+concept "BP": { "SBP", "DOT" }
+
+define A: [Condition: "Diabetes"]
+`
+	lib, err := Compile(src)
+	if err != nil {
+		t.Fatalf("compiling: %v", err)
+	}
+
+	wantSystems := map[string]string{"SBP": "LOINC", "DOT": "cs.dotted"}
+	for _, cd := range lib.Codes {
+		want, ok := wantSystems[cd.Name]
+		if !ok {
+			t.Errorf("unexpected code %q", cd.Name)
+			continue
+		}
+		if cd.System != want {
+			t.Errorf("code %q system = %q, want %q", cd.Name, cd.System, want)
+		}
+	}
+
+	if len(lib.Concepts) != 1 {
+		t.Fatalf("expected 1 concept, got %d", len(lib.Concepts))
+	}
+	if got, want := lib.Concepts[0].Codes, []string{"SBP", "DOT"}; len(got) != len(want) {
+		t.Fatalf("concept codes = %v, want %v", got, want)
+	} else {
+		for i := range want {
+			if got[i] != want[i] {
+				t.Errorf("concept code %d = %q, want %q", i, got[i], want[i])
+			}
+		}
+	}
+
+	// The retrieve's terminology reference.
+	retrieve, ok := lib.Statements[0].Expression.(*ast.Retrieve)
+	if !ok {
+		t.Fatalf("expected the statement to be a Retrieve, got %T", lib.Statements[0].Expression)
+	}
+	ref, ok := retrieve.Codes.(*ast.IdentifierRef)
+	if !ok {
+		t.Fatalf("expected the terminology to be an IdentifierRef, got %T", retrieve.Codes)
+	}
+	if ref.Name != "Diabetes" {
+		t.Errorf("retrieve terminology name = %q, want %q", ref.Name, "Diabetes")
+	}
+}

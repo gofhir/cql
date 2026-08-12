@@ -4,6 +4,8 @@ package eval
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 
 	fptypes "github.com/gofhir/fhirpath/types"
 
@@ -26,6 +28,17 @@ type LibraryLoader interface {
 type TerminologyProvider interface {
 	InValueSet(ctx context.Context, code, system, valueSetURL string) (bool, error)
 }
+
+// Sentinel errors for the bounds an evaluation is held to. They are values so a
+// caller can tell a resource limit from an ordinary evaluation error with
+// errors.Is; the engine maps both to ErrTooCostly.
+var (
+	// ErrMaxDepthExceeded reports that an expression nested past MaxDepth.
+	ErrMaxDepthExceeded = errors.New("maximum expression depth exceeded")
+	// ErrMaxRetrieveSizeExceeded reports that a retrieve returned more
+	// resources than MaxRetrieveSize allows.
+	ErrMaxRetrieveSizeExceeded = errors.New("maximum retrieve size exceeded")
+)
 
 // Context holds the evaluation state for a CQL evaluation.
 type Context struct {
@@ -72,6 +85,20 @@ type Context struct {
 	// ChildScope: it governs the key expression, not a nested query inside one.
 	InSortKey bool
 
+	// MaxDepth bounds how deeply Eval may nest before giving up, and
+	// MaxRetrieveSize how many resources a single retrieve may return. Zero
+	// means unbounded for either.
+	MaxDepth        int
+	MaxRetrieveSize int
+
+	// depth counts the Eval calls currently on the stack. It is a pointer so
+	// that every scope of one evaluation shares the same counter: ChildScope
+	// hands out new contexts, but the recursion they measure is the same.
+	depth *int
+
+	// evalTicks counts Eval calls since the last cancellation check.
+	evalTicks *int
+
 	// External providers
 	DataProvider        DataProvider
 	TerminologyProvider TerminologyProvider
@@ -112,6 +139,8 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 	c := &Context{
 		GoCtx:             goCtx,
 		Library:           lib,
+		depth:             new(int),
+		evalTicks:         new(int),
 		Definitions:       make(map[string]fptypes.Value),
 		Parameters:        make(map[string]fptypes.Value),
 		CodeSystems:       make(map[string]*cqltypes.Code),
@@ -127,6 +156,27 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		}
 		for _, vs := range lib.ValueSets {
 			c.ValueSets[vs.Name] = vs.ID
+		}
+		// Declared codes and concepts are values, so they belong with the other
+		// definitions: `code "SBP": '8480-6' from "LOINC"` makes "SBP" a Code.
+		// Without this they resolved to nothing, and the identifier fallback
+		// answered with the name as a String — so `O.code ~ "SBP"` compared a
+		// Code against the text "SBP" and was quietly always false.
+		for _, cd := range lib.Codes {
+			system := cd.System
+			if cs, ok := c.CodeSystems[cd.System]; ok {
+				system = cs.System
+			}
+			c.Definitions[cd.Name] = cqltypes.NewCode(system, cd.ID, cd.Display)
+		}
+		for _, cd := range lib.Concepts {
+			codes := make([]cqltypes.Code, 0, len(cd.Codes))
+			for _, name := range cd.Codes {
+				if v, ok := c.Definitions[name].(cqltypes.Code); ok {
+					codes = append(codes, v)
+				}
+			}
+			c.Definitions[cd.Name] = cqltypes.NewConcept(codes, cd.Display)
 		}
 	}
 	return c
@@ -144,6 +194,10 @@ func (c *Context) ChildScope() *Context {
 		ValueSets:           c.ValueSets,
 		Aliases:             make(map[string]fptypes.Value),
 		LetBindings:         make(map[string]fptypes.Value),
+		MaxDepth:            c.MaxDepth,
+		MaxRetrieveSize:     c.MaxRetrieveSize,
+		depth:               c.depth,
+		evalTicks:           c.evalTicks,
 		DataProvider:        c.DataProvider,
 		TerminologyProvider: c.TerminologyProvider,
 		QuantityConverter:   c.QuantityConverter,
@@ -179,6 +233,21 @@ func (c *Context) ResolveIdentifier(name string) (fptypes.Value, bool) {
 		return c.parent.ResolveIdentifier(name)
 	}
 	return nil, false
+}
+
+// checkCanceled reports the Go context's error, if any, so that a canceled or
+// timed-out evaluation stops where it is rather than running to completion and
+// having the caller notice afterwards.
+func (c *Context) checkCanceled() error {
+	if c.GoCtx == nil {
+		return nil
+	}
+	select {
+	case <-c.GoCtx.Done():
+		return fmt.Errorf("evaluation stopped: %w", c.GoCtx.Err())
+	default:
+		return nil
+	}
 }
 
 // ResolveValueSetURL looks up a value set name and returns its URL.

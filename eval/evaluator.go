@@ -3,6 +3,7 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"regexp"
 	"sort"
@@ -136,11 +137,43 @@ func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
 	return nil, fmt.Errorf("expression '%s' not found", name)
 }
 
+// cancelCheckInterval is how many Eval calls pass between two checks of the Go
+// context. Checking on every node would put a channel receive on the hottest
+// path in the evaluator; checking never is what let a timeout go unnoticed until
+// the whole evaluation had finished.
+const cancelCheckInterval = 256
+
 // Eval evaluates a single AST expression node and returns a Value.
-func (e *Evaluator) Eval(expr ast.Expression) (result fptypes.Value, err error) {
+//
+// It is also where the two bounds on an evaluation are enforced — nesting depth
+// and cancellation — because it is the one path every node goes through.
+func (e *Evaluator) Eval(expr ast.Expression) (fptypes.Value, error) {
 	if expr == nil {
 		return nil, nil
 	}
+	if e.ctx.evalTicks != nil {
+		*e.ctx.evalTicks++
+		if *e.ctx.evalTicks >= cancelCheckInterval {
+			*e.ctx.evalTicks = 0
+			if err := e.ctx.checkCanceled(); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if e.ctx.MaxDepth <= 0 || e.ctx.depth == nil {
+		return e.eval(expr)
+	}
+	*e.ctx.depth++
+	if *e.ctx.depth > e.ctx.MaxDepth {
+		*e.ctx.depth--
+		return nil, fmt.Errorf("%w: expression nests deeper than %d", ErrMaxDepthExceeded, e.ctx.MaxDepth)
+	}
+	result, err := e.eval(expr)
+	*e.ctx.depth--
+	return result, err
+}
+
+func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) {
 	if tl := e.ctx.TraceListener; tl != nil {
 		tl.OnEnter(expr)
 		defer func() { tl.OnExit(expr, result, err) }()
@@ -341,23 +374,62 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 			if stmt.Name == n.Name {
 				result, err := e.Eval(stmt.Expression)
 				if err != nil {
-					return nil, fmt.Errorf("evaluating referenced expression %q: %w", n.Name, err)
+					return nil, wrapUnlessLimit(err, "evaluating referenced expression %q", n.Name)
 				}
 				e.ctx.Definitions[n.Name] = result
 				return result, nil
 			}
 		}
 	}
+	// A parameter the caller did not supply falls back to its declared default.
+	// The default is an expression — CQL allows `default Interval[@2020-01-01,
+	// @2020-12-31]` — so it is evaluated here rather than at parse time, and
+	// cached, since ChildScope shares the parameter map with its parent.
+	//
+	// A parameter declared with neither a default nor a supplied value is null,
+	// not an error: declaring an optional parameter is legitimate, and null is
+	// what the rest of CQL does with a missing value.
+	if e.ctx.Library != nil {
+		for _, p := range e.ctx.Library.Parameters {
+			if p.Name != n.Name {
+				continue
+			}
+			if p.Default == nil {
+				return nil, nil
+			}
+			result, err := e.Eval(p.Default)
+			if err != nil {
+				return nil, wrapUnlessLimit(err, "evaluating default for parameter %q", n.Name)
+			}
+			e.ctx.Parameters[n.Name] = result
+			return result, nil
+		}
+	}
 	// A sort key naming no column of *this* element is null, not an error: an
 	// optional FHIR element is absent from some resources and present on others,
 	// and `[Patient] P sort by birthDate` must not fail on the ones without it.
-	// A key that names nothing anywhere is caught once by sortKeyIsTypo, before
-	// any comparison happens.
+	// Whether the key names nothing anywhere is decided once by sortKeyIsTypo,
+	// before any comparison happens.
 	if e.ctx.InSortKey {
 		return nil, nil
 	}
-	// Could be a resource type name used in query context
-	return fptypes.NewString(n.Name), nil
+	// Anywhere else, a name that resolves to nothing is a mistake: answering
+	// with the name itself hides it behind a plausible-looking String.
+	return nil, fmt.Errorf("unknown identifier %q", n.Name)
+}
+
+// wrapUnlessLimit adds context to an evaluation error, except when the error is
+// one of the resource limits.
+//
+// Those two travel up through as many frames as the expression was deep, and
+// each frame naming itself is what turned `define A: A` into a 380 KB error
+// message once the depth limit made ten thousand levels reachable. The limit
+// errors already say everything useful, so they are passed through untouched.
+func wrapUnlessLimit(err error, format string, args ...interface{}) error {
+	if errors.Is(err, ErrMaxDepthExceeded) || errors.Is(err, ErrMaxRetrieveSizeExceeded) {
+		return err
+	}
+	return fmt.Errorf(fmt.Sprintf(format, args...)+": %w", err)
 }
 
 // propertyOf reads a named element from a query result item, reporting whether
@@ -3267,6 +3339,13 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("retrieve [%s] failed: %w", resourceType, err)
 	}
+	// Refuse rather than truncate. A quality measure computed over a silently
+	// shortened population is wrong without saying so, and a wrong denominator
+	// is worse than no answer.
+	if e.ctx.MaxRetrieveSize > 0 && len(results) > e.ctx.MaxRetrieveSize {
+		return nil, fmt.Errorf("%w: retrieve [%s] returned %d resources, limit is %d",
+			ErrMaxRetrieveSizeExceeded, resourceType, len(results), e.ctx.MaxRetrieveSize)
+	}
 	// Convert JSON results to fhirpath Objects
 	values := make(fptypes.Collection, 0, len(results))
 	for _, raw := range results {
@@ -3300,16 +3379,21 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	}
 	_, sourceIsList := firstSource.(cqltypes.List)
 
-	// Build the cartesian product of all sources as a list of alias maps.
+	// Build the cartesian product of all sources as a list of alias maps. This
+	// loop evaluates nothing, so the periodic check in Eval never runs here and
+	// a product large enough to matter has to be interrupted on its own.
 	combos := []queryCombo{{aliases: make(map[string]fptypes.Value)}}
 	for idx, src := range n.Sources {
 		var next []queryCombo
-		for _, c := range combos {
+		for i, c := range combos {
+			if i%cancelCheckInterval == 0 {
+				if err := e.ctx.checkCanceled(); err != nil {
+					return nil, err
+				}
+			}
 			for _, item := range allSources[idx] {
 				newAliases := make(map[string]fptypes.Value, len(c.aliases)+1)
-				for k, v := range c.aliases {
-					newAliases[k] = v
-				}
+				maps.Copy(newAliases, c.aliases)
 				newAliases[src.Alias] = item
 				next = append(next, queryCombo{aliases: newAliases})
 			}
@@ -3320,6 +3404,9 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	// Process each combination through filters and return/aggregate.
 	var results fptypes.Collection
 	for i, c := range combos {
+		if err := e.ctx.checkCanceled(); err != nil {
+			return nil, err
+		}
 		child := e.ctx.ChildScope()
 		for alias, val := range c.aliases {
 			child.Aliases[alias] = val

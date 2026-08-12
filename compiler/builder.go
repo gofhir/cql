@@ -185,6 +185,53 @@ func referentialIdentifierText(ctx grammar.IReferentialIdentifierContext) string
 	return ctx.GetText()
 }
 
+// undelimitedIdentifier renders a `(libraryIdentifier '.')? identifier` name
+// with the delimiters stripped, so `"LOINC"` reads as LOINC and `Lib."LOINC"` as
+// Lib.LOINC. The whole-node GetText keeps the quotes, and the tables these names
+// index — code systems, codes — are keyed without them.
+func undelimitedIdentifier(id grammar.IIdentifierContext, whole antlr.ParserRuleContext) string {
+	if id == nil {
+		if whole == nil {
+			return ""
+		}
+		return whole.GetText()
+	}
+	name := identifierText(id)
+	if whole == nil {
+		return name
+	}
+	// Keep the library qualifier when the name carries one. The qualifier is
+	// whatever precedes the identifier's own text, taken by length rather than
+	// by looking for the last dot: a delimited name may contain one, so
+	// `Lib."my.cs"` has to yield Lib.my.cs and not Lib."my.my.cs.
+	full, idText := whole.GetText(), id.GetText()
+	if full != idText && strings.HasSuffix(full, idText) {
+		return full[:len(full)-len(idText)] + name
+	}
+	return name
+}
+
+// qualifiedIdentifierExpressionText renders a qualified identifier with the
+// delimiters stripped from each segment, so `"VS"` reads as VS and `Lib."VS"` as
+// Lib.VS.
+//
+// GetText would keep the quotes, and every table these names are looked up in —
+// value sets, code systems, codes — is keyed by the undelimited name, so
+// `[Condition: "VS"]` never found its value set and fell through to being
+// passed to the data provider as the literal string `"VS"`.
+func qualifiedIdentifierExpressionText(ctx grammar.IQualifiedIdentifierExpressionContext) string {
+	if ctx == nil {
+		return ""
+	}
+	quals := ctx.AllQualifierExpression()
+	parts := make([]string, 0, len(quals)+1)
+	for _, q := range quals {
+		parts = append(parts, referentialIdentifierText(q.ReferentialIdentifier()))
+	}
+	parts = append(parts, referentialIdentifierText(ctx.ReferentialIdentifier()))
+	return strings.Join(parts, ".")
+}
+
 func (b *builder) visitAccessModifier(ctx grammar.IAccessModifierContext) ast.AccessLevel {
 	if ctx == nil {
 		return ast.AccessPublic
@@ -359,7 +406,7 @@ func (b *builder) VisitCodeDefinition(ctx *grammar.CodeDefinitionContext) interf
 		cd.ID = unquoteString(cid.GetText())
 	}
 	if csid := ctx.CodesystemIdentifier(); csid != nil {
-		cd.System = csid.GetText()
+		cd.System = undelimitedIdentifier(csid.Identifier(), csid)
 	}
 	if dc := ctx.DisplayClause(); dc != nil {
 		cd.Display = unquoteString(dc.STRING().GetText())
@@ -376,7 +423,7 @@ func (b *builder) VisitConceptDefinition(ctx *grammar.ConceptDefinitionContext) 
 		cp.Name = identifierText(id)
 	}
 	for _, cid := range ctx.AllCodeIdentifier() {
-		cp.Codes = append(cp.Codes, cid.GetText())
+		cp.Codes = append(cp.Codes, undelimitedIdentifier(cid.Identifier(), cid))
 	}
 	if dc := ctx.DisplayClause(); dc != nil {
 		cp.Display = unquoteString(dc.STRING().GetText())
@@ -1540,14 +1587,14 @@ func (b *builder) VisitRetrieve(ctx *grammar.RetrieveContext) interface{} {
 	if t := ctx.Terminology(); t != nil {
 		// terminology can be a qualifiedIdentifierExpression or an expression
 		if qie := t.QualifiedIdentifierExpression(); qie != nil {
-			r.Codes = &ast.IdentifierRef{Name: qie.GetText()}
+			r.Codes = &ast.IdentifierRef{Name: qualifiedIdentifierExpressionText(qie)}
 		} else if expr := t.Expression(); expr != nil {
 			r.Codes = b.visitExpression(expr)
 		}
 	}
 	if ci := ctx.ContextIdentifier(); ci != nil {
 		if qie := ci.QualifiedIdentifierExpression(); qie != nil {
-			r.Context = &ast.IdentifierRef{Name: qie.GetText()}
+			r.Context = &ast.IdentifierRef{Name: qualifiedIdentifierExpressionText(qie)}
 		}
 	}
 	return r
