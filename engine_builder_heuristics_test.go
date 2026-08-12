@@ -2,6 +2,7 @@ package cql
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -221,5 +222,143 @@ define ByNullColumn: ({ Tuple{n: 3, z: null}, Tuple{n: 1, z: null} }) A sort by 
 				t.Errorf("%s = %s, want %s", tt.name, s, tt.want)
 			}
 		})
+	}
+}
+
+// resourceProvider serves fixed JSON resources.
+type resourceProvider struct{ rows []string }
+
+func (p resourceProvider) Retrieve(_ context.Context, _, _, _ string, _, _ interface{}) ([]json.RawMessage, error) {
+	out := make([]json.RawMessage, 0, len(p.rows))
+	for _, r := range p.rows {
+		out = append(out, json.RawMessage(r))
+	}
+	return out, nil
+}
+
+// TestSortByOptionalColumn covers a sort key that some elements carry and others
+// do not, which is what any optional FHIR element looks like. Resolving the key
+// strictly per element made the whole query fail on the resources that lacked it
+// — and inconsistently so, since the qualified form `sort by P.birthDate` had
+// always tolerated it.
+func TestSortByOptionalColumn(t *testing.T) {
+	prov := resourceProvider{rows: []string{
+		`{"resourceType":"Patient","id":"a","birthDate":"1980-01-01"}`,
+		`{"resourceType":"Patient","id":"b"}`,
+		`{"resourceType":"Patient","id":"c","birthDate":"1970-01-01"}`,
+	}}
+	src := "library T version '1.0'\nusing FHIR version '4.0.1'\n\ndefine X: [Patient] P sort by birthDate\n"
+
+	got, err := NewEngine(WithDataProvider(prov)).
+		EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err != nil {
+		t.Fatalf("a column absent from one resource should sort as null, not fail: %v", err)
+	}
+	// Sorted ascending with the missing one last.
+	s := valueString(got)
+	if !strings.Contains(s, `"id":"c"`) || strings.Index(s, `"id":"c"`) > strings.Index(s, `"id":"a"`) {
+		t.Errorf("expected c before a, got %s", s)
+	}
+	if strings.Index(s, `"id":"b"`) < strings.Index(s, `"id":"a"`) {
+		t.Errorf("expected the resource without birthDate last, got %s", s)
+	}
+}
+
+// TestSortByStillCatchesTypos guards the other half: a key that names nothing
+// anywhere is still refused, decided once against the whole result rather than
+// per element.
+func TestSortByStillCatchesTypos(t *testing.T) {
+	for _, src := range []string{
+		"library T version '1.0'\n\ndefine X: ({ Tuple{n: 3}, Tuple{n: 1} }) A sort by nope\n",
+		"library T version '1.0'\n\ndefine X: ({3, 1, 2}) A sort by nope\n",
+	} {
+		_, err := NewEngine().EvaluateExpression(context.Background(), src, "X", nil, nil)
+		if err == nil {
+			t.Errorf("a key naming nothing should still be refused: %s", src)
+			continue
+		}
+		if !strings.Contains(err.Error(), "nope") {
+			t.Errorf("the error should name the key, got: %v", err)
+		}
+	}
+}
+
+// TestSortWithNullElement covers a null in the sorted list. The sort scope used
+// to be recognized by its element being non-nil, so a null element read as "not
+// in a sort key" and the key fell through to the unknown-identifier fallback.
+func TestSortWithNullElement(t *testing.T) {
+	src := "library T version '1.0'\n\ndefine X: ({Tuple{n: 3}, null, Tuple{n: 1}}) A sort by n\n"
+	got, err := NewEngine().EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err != nil {
+		t.Fatalf("a null element should sort, not fail: %v", err)
+	}
+	if s := valueString(got); s != "{Tuple{n: 1}, Tuple{n: 3}, null}" {
+		t.Errorf("X = %s, want {Tuple{n: 1}, Tuple{n: 3}, null}", s)
+	}
+}
+
+// TestSortByRepeatingColumn covers a key that resolves to more than one value.
+// A list has no ordering, so it sorts as null instead of failing the query on
+// whichever pairs the sort happened to compare.
+func TestSortByRepeatingColumn(t *testing.T) {
+	prov := resourceProvider{rows: []string{
+		`{"resourceType":"Patient","id":"a","name":[{"family":"Zed"}]}`,
+		`{"resourceType":"Patient","id":"b","name":[{"family":"Abe"},{"family":"Bee"}]}`,
+	}}
+	for _, key := range []string{"name", "P.name"} {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\n\ndefine X: [Patient] P sort by " + key + "\n"
+		if _, err := NewEngine(WithDataProvider(prov)).
+			EvaluateExpression(context.Background(), src, "X", nil, nil); err != nil {
+			t.Errorf("sort by %s: a repeating element should not fail the query: %v", key, err)
+		}
+	}
+}
+
+// TestSuccessorPredecessorRespectDatePrecision covers the Date branch, which
+// always stepped one day: the successor of @2020-01 came back as @2020-01-02,
+// claiming a precision the operand never had. `start of` and `end of` on an open
+// boundary go through here, so they inherited it.
+func TestSuccessorPredecessorRespectDatePrecision(t *testing.T) {
+	tests := []struct{ expr, want string }{
+		{`successor of @2019`, "2020"},
+		{`successor of @2020-01`, "2020-02"},
+		{`successor of @2020-01-01`, "2020-01-02"},
+		{`predecessor of @2020-01`, "2019-12"},
+		{`start of Interval(@2020-01, @2020-12)`, "2020-02"},
+		{`end of Interval(@2019, @2021)`, "2020"},
+	}
+	engine := NewEngine()
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			src := "library T version '1.0'\n\ndefine X: " + tt.expr + "\n"
+			got, err := engine.EvaluateExpression(context.Background(), src, "X", nil, nil)
+			if err != nil {
+				t.Fatalf("evaluating %s: %v", tt.expr, err)
+			}
+			if s := valueString(got); s != tt.want {
+				t.Errorf("%s = %s, want %s", tt.expr, s, tt.want)
+			}
+		})
+	}
+}
+
+// TestOpenBoundaryWithoutSuccessor covers a point type that has no successor.
+// An open boundary cannot name its first included point, so it stands for
+// itself rather than failing the expression.
+func TestOpenBoundaryWithoutSuccessor(t *testing.T) {
+	tests := []struct{ expr, want string }{
+		{`start of Interval('a','z')`, "a"},
+		{`end of Interval('a','z')`, "z"},
+	}
+	engine := NewEngine()
+	for _, tt := range tests {
+		got, err := engine.EvaluateExpression(context.Background(),
+			"library T version '1.0'\n\ndefine X: "+tt.expr+"\n", "X", nil, nil)
+		if err != nil {
+			t.Fatalf("evaluating %s: %v", tt.expr, err)
+		}
+		if s := valueString(got); s != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, s, tt.want)
+		}
 	}
 }

@@ -59,12 +59,18 @@ type Context struct {
 	Index int
 	Total fptypes.Value
 
-	// SortElement is the query result element a sort key is being evaluated
-	// against. When set, an unqualified identifier in the key names a column of
-	// that element, and one that names nothing is an error rather than a silent
-	// no-op. ChildScope deliberately does not carry it over: it governs the sort
-	// key expression itself, not a nested query written inside one.
-	SortElement fptypes.Value
+	// InSortKey marks a scope in which a sort key is being evaluated against a
+	// result element, which is This. An unqualified identifier then names a
+	// column of that element, and one that names no column is null rather than
+	// an error — an optional FHIR element is absent from some resources and
+	// present on others, and a sort must not fail on the ones that lack it.
+	// Whether the key is a typo is decided once against the whole result set,
+	// by sortKeyIsTypo, rather than per element.
+	//
+	// It is a flag rather than the element itself because the element can
+	// legitimately be null, and it is deliberately not carried over by
+	// ChildScope: it governs the key expression, not a nested query inside one.
+	InSortKey bool
 
 	// External providers
 	DataProvider        DataProvider
