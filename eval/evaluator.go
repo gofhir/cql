@@ -308,6 +308,14 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 // ---------------------------------------------------------------------------
 
 func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, error) {
+	// Inside a sort key an unqualified identifier names a column of the result,
+	// and the column wins over a query alias of the same name: in
+	// `({Tuple{A: 1}}) A sort by A` the key is the column, not the whole tuple.
+	if e.ctx.InSortKey {
+		if v, ok := propertyOf(e.ctx.This, n.Name); ok {
+			return v, nil
+		}
+	}
 	val, ok := e.ctx.ResolveIdentifier(n.Name)
 	if ok {
 		return val, nil
@@ -340,8 +348,37 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 			}
 		}
 	}
+	// A sort key naming no column of *this* element is null, not an error: an
+	// optional FHIR element is absent from some resources and present on others,
+	// and `[Patient] P sort by birthDate` must not fail on the ones without it.
+	// A key that names nothing anywhere is caught once by sortKeyIsTypo, before
+	// any comparison happens.
+	if e.ctx.InSortKey {
+		return nil, nil
+	}
 	// Could be a resource type name used in query context
 	return fptypes.NewString(n.Name), nil
+}
+
+// propertyOf reads a named element from a query result item, reporting whether
+// the item has one. The distinction between absent and null is what lets a sort
+// key tell a typo from a column that happens to be null.
+func propertyOf(v fptypes.Value, name string) (fptypes.Value, bool) {
+	switch src := v.(type) {
+	case cqltypes.Tuple:
+		return src.Get(name)
+	case *fptypes.ObjectValue:
+		c := src.GetCollection(name)
+		switch c.Count() {
+		case 0:
+			return nil, false
+		case 1:
+			return c[0], true
+		default:
+			return cqltypes.NewList(c), true
+		}
+	}
+	return nil, false
 }
 
 // ---------------------------------------------------------------------------
@@ -1114,11 +1151,21 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		return nil, fmt.Errorf("singleton from requires 0 or 1 elements, got %d", c.Count())
 	case ast.OpStartOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
+			// An open boundary excludes its own value, so the starting point is
+			// the successor of it: `start of Interval(1, 5)` is 2, not 1. A type
+			// with no successor cannot name that point, so the boundary stands
+			// for itself rather than failing the expression.
+			if iv.Low != nil && !iv.LowClosed && hasSuccessor(iv.Low) {
+				return e.evalSuccessorPredecessor(ast.OpSuccessorOf, iv.Low)
+			}
 			return iv.Low, nil
 		}
 		return nil, nil
 	case ast.OpEndOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
+			if iv.High != nil && !iv.HighClosed && hasSuccessor(iv.High) {
+				return e.evalSuccessorPredecessor(ast.OpPredecessorOf, iv.High)
+			}
 			return iv.High, nil
 		}
 		return nil, nil
@@ -1158,6 +1205,31 @@ func (e *Evaluator) evalFlatten(val fptypes.Value) fptypes.Value {
 		}
 	}
 	return cqltypes.NewList(result)
+}
+
+// dateUnit names the unit a Date steps by at its own precision, the Date-side
+// counterpart of funcs.TemporalUnit.
+func dateUnit(prec fptypes.DatePrecision) string {
+	switch prec {
+	case fptypes.YearPrecision:
+		return "year"
+	case fptypes.MonthPrecision:
+		return "month"
+	default:
+		return "day"
+	}
+}
+
+// hasSuccessor reports whether a value's type defines a successor, which is what
+// an open interval boundary needs in order to name its first included point.
+// String and the like have none, so an open boundary over them can only stand
+// for itself.
+func hasSuccessor(v fptypes.Value) bool {
+	switch v.(type) {
+	case fptypes.Integer, fptypes.Decimal, fptypes.Date, fptypes.DateTime, fptypes.Time, fptypes.Quantity:
+		return true
+	}
+	return false
 }
 
 func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Value) (fptypes.Value, error) {
@@ -1204,15 +1276,16 @@ func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Val
 		}
 		return result, nil
 	}
-	// Date successor/predecessor: add/subtract 1 unit at the date's precision
+	// Date successor/predecessor: add/subtract 1 unit at the date's precision.
+	// The step has to follow the precision the way the DateTime branch above
+	// does — the successor of @2020-01 is @2020-02, not @2020-01-02 — or the
+	// result claims a precision the operand never had.
 	if dt, ok := operand.(fptypes.Date); ok {
-		t := dt.ToTime()
+		unit := dateUnit(dt.Precision())
 		if op == ast.OpSuccessorOf {
-			t = t.AddDate(0, 0, 1)
-		} else {
-			t = t.AddDate(0, 0, -1)
+			return dt.AddDuration(1, unit)
 		}
-		return fptypes.NewDate(t.Format("2006-01-02"))
+		return dt.SubtractDuration(1, unit)
 	}
 	// Time successor/predecessor: add/subtract 1 unit at time's precision
 	if tv, ok := operand.(fptypes.Time); ok {
@@ -3396,6 +3469,12 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 
 	// Apply sort clause
 	if n.Sort != nil {
+		for _, byItem := range n.Sort.ByItems {
+			if e.sortKeyIsTypo(byItem.Expression, n.Sources, results) {
+				return nil, fmt.Errorf("unknown sort key %q: not a column of the query result",
+					byItem.Expression.(*ast.IdentifierRef).Name)
+			}
+		}
 		var sortErr error
 		sort.SliceStable(results, func(i, j int) bool {
 			if sortErr != nil {
@@ -3464,11 +3543,67 @@ func distinctCombos(combos []queryCombo, sources []*ast.AliasedSource) []queryCo
 	return result
 }
 
+// sortKeyIsTypo reports whether a bare identifier sort key names nothing at all:
+// not a column of any element of the result, not a query alias, and nothing in
+// scope. It is deliberately asked once per query rather than once per element,
+// because a column missing from *some* elements is an optional element and must
+// sort as null, while one missing from every element and resolving nowhere is a
+// mistake — and answering it with its own name as a String would give every
+// element the same key, leaving the query silently unsorted.
+func (e *Evaluator) sortKeyIsTypo(expr ast.Expression, sources []*ast.AliasedSource, results fptypes.Collection) bool {
+	id, ok := expr.(*ast.IdentifierRef)
+	if !ok {
+		return false
+	}
+	for _, src := range sources {
+		if src.Alias == id.Name {
+			return false
+		}
+	}
+	for _, item := range results {
+		if _, ok := propertyOf(item, id.Name); ok {
+			return false
+		}
+	}
+	if _, ok := e.ctx.ResolveIdentifier(id.Name); ok {
+		return false
+	}
+	if e.ctx.Library != nil {
+		for _, stmt := range e.ctx.Library.Statements {
+			if stmt.Name == id.Name {
+				return false
+			}
+		}
+		for _, p := range e.ctx.Library.Parameters {
+			if p.Name == id.Name {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// sortKeyValue reduces a sort key to something orderable. A repeating element
+// yields a list, which has no ordering: a single entry stands for itself, and
+// anything longer sorts as null rather than failing the whole query on whichever
+// pairs the sort happened to compare.
+func sortKeyValue(v fptypes.Value) fptypes.Value {
+	list, ok := v.(cqltypes.List)
+	if !ok {
+		return v
+	}
+	if list.Values.Count() == 1 {
+		return list.Values[0]
+	}
+	return nil
+}
+
 // compareSortKeys evaluates a sort expression against two items and returns their comparison.
 func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.Expression) (int, error) {
 	scopeA := e.ctx.ChildScope()
 	scopeA.Aliases[alias] = a
 	scopeA.This = a
+	scopeA.InSortKey = true
 	keyA, err := e.withContext(scopeA).Eval(expr)
 	if err != nil {
 		return 0, err
@@ -3477,12 +3612,13 @@ func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.E
 	scopeB := e.ctx.ChildScope()
 	scopeB.Aliases[alias] = b
 	scopeB.This = b
+	scopeB.InSortKey = true
 	keyB, err := e.withContext(scopeB).Eval(expr)
 	if err != nil {
 		return 0, err
 	}
 
-	return compareValues(keyA, keyB)
+	return compareValues(sortKeyValue(keyA), sortKeyValue(keyB))
 }
 
 // compareValues returns -1, 0, or 1 for two values. Nulls sort last (after all non-null values).
