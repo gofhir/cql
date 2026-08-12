@@ -135,6 +135,12 @@ func Substring(s fptypes.Value, start, length int) fptypes.Value {
 		return nil
 	}
 	str := sv.Value()
+	// The empty string is the one case where the first index is not past the end:
+	// there is nothing to run off, so Substring('', 0) is '' while Substring('ab', 2)
+	// is null.
+	if str == "" && start == 0 {
+		return fptypes.NewString("")
+	}
 	if start < 0 || start >= len(str) {
 		return nil // CQL: out of range returns null
 	}

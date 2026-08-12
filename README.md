@@ -53,26 +53,34 @@ func main() {
 
 ## Conformance
 
-**1731/1731 (100%)** — passes all official [cqframework/cql-tests](https://github.com/cqframework/cql-tests) conformance suites.
+**1820/1823 (99.8%)** against [cqframework/cql-tests](https://github.com/cqframework/cql-tests) at `727219f` (2026-08-03).
 
 | Suite | Tests | Status |
 |---|---|---|
 | Aggregate Functions | 50/50 | :white_check_mark: |
 | Aggregate Operator | 9/9 | :white_check_mark: |
-| Arithmetic Functions | 212/212 | :white_check_mark: |
-| Comparison Operators | 223/223 | :white_check_mark: |
+| Arithmetic Functions | 234/236 | :warning: |
+| Comparison Operators | 261/261 | :white_check_mark: |
 | Conditional Operators | 9/9 | :white_check_mark: |
-| DateTime Operators | 317/317 | :white_check_mark: |
+| DateTime Operators | 316/317 | :warning: |
 | Errors and Messaging | 4/4 | :white_check_mark: |
-| Interval Operators | 412/412 | :white_check_mark: |
-| List Operators | 212/212 | :white_check_mark: |
+| Interval Operators | 411/411 | :white_check_mark: |
+| List Operators | 242/242 | :white_check_mark: |
 | Logical Operators | 39/39 | :white_check_mark: |
 | Nullological Operators | 22/22 | :white_check_mark: |
 | Query Expressions | 12/12 | :white_check_mark: |
-| String Operators | 81/81 | :white_check_mark: |
+| String Operators | 82/82 | :white_check_mark: |
 | Type Operators | 35/35 | :white_check_mark: |
 | Types | 28/28 | :white_check_mark: |
 | Value Literals & Selectors | 66/66 | :white_check_mark: |
+
+The three exceptions are tests whose expectations contradict other tests in the same
+suite, so no engine can satisfy all of them at once. `DateTimeDurationBetweenUncertainInterval`
+expects `Interval[17,44]` where the Add and Multiply tests over the same expression put
+it at `[16,44]`; the two `Floor` cases expect `null` for an out-of-range Integer literal
+where the matching `Ceiling` cases expect a compile error. Each is recorded in
+`conformance/conformance_test.go` with its demonstration, and the suite fails if one of
+them starts passing, so the list cannot outlive its reason.
 
 Run conformance tests locally:
 

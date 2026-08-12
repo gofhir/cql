@@ -46,6 +46,15 @@ func temporalEqualityUnknown(left, right fptypes.Value) bool {
 	return isAmbiguousComparisonErr(err)
 }
 
+// calendarUCUMQuantities reports whether two values are quantities measured in a
+// calendar year or month on one side and the matching UCUM code on the other,
+// which is the pairing CQL declines to decide. See funcs.IsCalendarUCUMDurationPair.
+func calendarUCUMQuantities(left, right fptypes.Value) bool {
+	lq, lok := left.(fptypes.Quantity)
+	rq, rok := right.(fptypes.Quantity)
+	return lok && rok && funcs.IsCalendarUCUMDurationPair(lq.Unit(), rq.Unit())
+}
+
 // queryCombo holds one combination of alias bindings from a multi-source query.
 type queryCombo struct {
 	aliases map[string]fptypes.Value
@@ -269,14 +278,16 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 		dtVal := strings.TrimSuffix(n.Value, "T")
 		return fptypes.NewDateTime(dtVal)
 	case ast.LiteralTime:
-		// Validate millisecond digits before parsing: CQL allows at most 3 fractional digits.
-		if dotIdx := strings.LastIndex(n.Value, "."); dotIdx >= 0 {
-			frac := n.Value[dotIdx+1:]
-			if len(frac) > 3 {
-				return nil, fmt.Errorf("invalid time literal (milliseconds exceed 3 digits): %s", n.Value)
+		// Time carries no finer precision than the millisecond, so anything written past
+		// the third fractional digit is dropped rather than rejected: @T23:59:59.10000 is
+		// @T23:59:59.100.
+		timeVal := n.Value
+		if dotIdx := strings.LastIndex(timeVal, "."); dotIdx >= 0 {
+			if frac := timeVal[dotIdx+1:]; len(frac) > 3 {
+				timeVal = timeVal[:dotIdx+1] + frac[:3]
 			}
 		}
-		t, err := fptypes.NewTime(n.Value)
+		t, err := fptypes.NewTime(timeVal)
 		if err != nil {
 			return nil, err
 		}
@@ -475,7 +486,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return tupleEqual(lt, rt)
 			}
 		}
-		if temporalEqualityUnknown(left, right) {
+		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
 			return nil, nil
 		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
@@ -492,7 +503,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return fptypes.NewBoolean(!isTrue(eq)), nil
 			}
 		}
-		if temporalEqualityUnknown(left, right) {
+		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
 			return nil, nil
 		}
 		return fptypes.NewBoolean(!left.Equal(right)), nil
@@ -862,6 +873,13 @@ func cqlEquivalent(left, right fptypes.Value) bool {
 			return decimalEquivalent(decimal.NewFromInt(li.Value()), rd.Value())
 		}
 	}
+	// A calendar year or month and its UCUM code name the same span even though CQL
+	// will not equate them, so equivalence answers on the magnitude alone.
+	if calendarUCUMQuantities(left, right) {
+		lq := left.(fptypes.Quantity)
+		rq := right.(fptypes.Quantity)
+		return lq.Value().Equal(rq.Value())
+	}
 	return left.Equivalent(right)
 }
 
@@ -878,10 +896,12 @@ func decimalEquivalent(a, b decimal.Decimal) bool {
 	if bDec < minDec {
 		minDec = bDec
 	}
-	// Truncate both to the minimum precision and compare.
+	// Round both to the least precision and compare. Rounding, not truncation: at one
+	// decimal place 1.55 is 1.6, so 1.5 ~ 1.55 is false. Truncating would discard the
+	// digit that decides it and call the two equivalent.
 	// minDec is bounded by string decimal place count so it fits in int32.
-	aRound := a.Truncate(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
-	bRound := b.Truncate(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
+	aRound := a.Round(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
+	bRound := b.Round(int32(minDec)) //nolint:gosec // minDec is derived from decimal place count, always small
 	return aRound.Equal(bRound)
 }
 
@@ -905,8 +925,22 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 	if len(a.Elements) != len(b.Elements) {
 		return fptypes.NewBoolean(false), nil
 	}
-	hasAsymmetricNull := false
-	for k, av := range a.Elements {
+	// The first element that does not match settles the answer, so an element that
+	// differs and an element that is unknown give different results depending on which
+	// comes first: {Id:1,Name:'John'} = {Id:2,Name:null} is false because Id already
+	// differs, while {Id:null,Name:'John'} = {Id:1,Name:'James'} is null because Id is
+	// unknown before Name is ever reached.
+	//
+	// Elements are held in a map, so the walk is over sorted keys to make the order
+	// deterministic rather than whatever the runtime hands back.
+	keys := make([]string, 0, len(a.Elements))
+	for k := range a.Elements {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		av := a.Elements[k]
 		bv, exists := b.Elements[k]
 		if !exists {
 			return fptypes.NewBoolean(false), nil
@@ -915,15 +949,11 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 			continue // both null → matching
 		}
 		if av == nil || bv == nil {
-			hasAsymmetricNull = true // one null, one not → indeterminate
-			continue
+			return nil, nil // one null, one not → indeterminate
 		}
 		if !av.Equal(bv) {
 			return fptypes.NewBoolean(false), nil
 		}
-	}
-	if hasAsymmetricNull {
-		return nil, nil
 	}
 	return fptypes.NewBoolean(true), nil
 }
@@ -1015,6 +1045,20 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 // ---------------------------------------------------------------------------
 
 func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
+	// The most negative Integer has no positive counterpart, so -2147483648 only
+	// exists as a whole: evaluating the 2147483648 on its own would overflow before
+	// the minus ever applied. Fold the sign into the literal first.
+	if n.Operator == ast.OpNegate {
+		if lit, ok := n.Operand.(*ast.Literal); ok && lit.ValueType == ast.LiteralInteger {
+			if v, err := strconv.ParseInt("-"+lit.Value, 10, 64); err == nil {
+				if v < math.MinInt32 || v > math.MaxInt32 {
+					return nil, fmt.Errorf("integer overflow: -%s", lit.Value)
+				}
+				return fptypes.NewInteger(v), nil
+			}
+		}
+	}
+
 	operand, err := e.Eval(n.Operand)
 	if err != nil {
 		return nil, err
@@ -1278,12 +1322,23 @@ func (e *Evaluator) evalAs(n *ast.AsExpression) (fptypes.Value, error) {
 	if operand == nil {
 		return nil, nil
 	}
-	nt, ok := n.Type.(*ast.NamedType)
-	if !ok {
-		return nil, nil
-	}
-	if strings.EqualFold(operand.Type(), nt.Name) {
-		return operand, nil
+	switch t := n.Type.(type) {
+	case *ast.NamedType:
+		if strings.EqualFold(operand.Type(), t.Name) {
+			return operand, nil
+		}
+	case *ast.ListType:
+		// A list keeps its elements whatever the cast names them: the element type is
+		// a promise about what the list may hold, not a filter applied to it. Casting
+		// to List<Any> is how the conformance suite compares lists of unlike elements
+		// at all, so dropping the list here would leave those comparisons null.
+		if list, ok := operand.(cqltypes.List); ok {
+			return list, nil
+		}
+	case *ast.IntervalType:
+		if iv, ok := operand.(cqltypes.Interval); ok {
+			return iv, nil
+		}
 	}
 	return nil, nil // safe cast returns null
 }
@@ -2193,6 +2248,42 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 		}
 		return src, nil
+
+	case "slice":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		if src == nil {
+			return nil, nil
+		}
+		list, ok := src.(cqltypes.List)
+		if !ok {
+			return nil, nil
+		}
+		// An omitted or null bound falls back to the edge of the list, which is what
+		// makes Slice(list) the whole list and Slice(list, 1, null) everything after
+		// the first element.
+		start, end := 0, len(list.Values)
+		if len(operands) >= 1 {
+			startVal, err := e.Eval(operands[0])
+			if err != nil {
+				return nil, err
+			}
+			if startInt, ok := startVal.(fptypes.Integer); ok {
+				start = int(startInt.Value())
+			}
+		}
+		if len(operands) >= 2 {
+			endVal, err := e.Eval(operands[1])
+			if err != nil {
+				return nil, err
+			}
+			if endInt, ok := endVal.(fptypes.Integer); ok {
+				end = int(endInt.Value())
+			}
+		}
+		return cqltypes.NewList(funcs.Slice(list.Values, start, end)), nil
 
 	case "sublist":
 		src, err := resolveSource()
@@ -3730,6 +3821,10 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 				if _, rightIsIv := right.(cqltypes.Interval); rightIsIv {
 					return fptypes.NewBoolean(true), nil
 				}
+				// A null collection holds nothing, so it properly includes nothing. That
+				// is a different question from the unbounded interval above, and it has a
+				// definite answer rather than an unknown one.
+				return fptypes.NewBoolean(false), nil
 			}
 		case ast.TimingIncludedIn, ast.TimingDuring:
 			if n.Operator.Properly && right == nil && left != nil {
@@ -3737,6 +3832,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 				if _, leftIsIv := left.(cqltypes.Interval); leftIsIv {
 					return fptypes.NewBoolean(true), nil
 				}
+				return fptypes.NewBoolean(false), nil
 			}
 		}
 		// Default null propagation for non-list operations
@@ -4146,11 +4242,14 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 				return nil, nil
 			}
 			found, ambig := listContainsValueTriState(lc, right)
+			if op.Properly {
+				// Proper containment asks for a member, and a value that only might match
+				// is not one. @T15:59:59 is not a member of a list of millisecond-precision
+				// times, so the answer is false rather than unknown.
+				return fptypes.NewBoolean(found && lc.Count() > 1), nil
+			}
 			if ambig && !found {
 				return nil, nil // ambiguous membership → null
-			}
-			if op.Properly {
-				return fptypes.NewBoolean(found && lc.Count() > 1), nil
 			}
 			return fptypes.NewBoolean(found), nil
 		}
@@ -4197,11 +4296,12 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 				return nil, nil
 			}
 			found, ambig := listContainsValueTriState(rc, left)
+			if op.Properly {
+				// See the mirror of this in the includes branch above.
+				return fptypes.NewBoolean(found && rc.Count() > 1), nil
+			}
 			if ambig && !found {
 				return nil, nil // ambiguous membership → null
-			}
-			if op.Properly {
-				return fptypes.NewBoolean(found && rc.Count() > 1), nil
 			}
 			return fptypes.NewBoolean(found), nil
 		}

@@ -175,6 +175,38 @@ func Indexer(c fptypes.Collection, index int) fptypes.Value {
 	return c[index]
 }
 
+// Slice returns the elements between two zero-based bounds, the start included and
+// the end excluded. A negative bound counts back from the end, so the last two
+// elements are Slice(c, -2, c.Count()).
+//
+// Bounds are clamped rather than rejected: asking for more list than there is
+// yields what there is, and a start at or past the end yields an empty list. That
+// is what keeps Slice total — every pair of bounds names some slice of the list.
+func Slice(c fptypes.Collection, start, end int) fptypes.Collection {
+	start = sliceBound(start, c.Count())
+	end = sliceBound(end, c.Count())
+	if start >= end {
+		return fptypes.Collection{}
+	}
+	out := make(fptypes.Collection, end-start)
+	copy(out, c[start:end])
+	return out
+}
+
+// sliceBound resolves one Slice bound into an offset within a list of length n.
+func sliceBound(i, n int) int {
+	if i < 0 {
+		i += n
+	}
+	if i < 0 {
+		return 0
+	}
+	if i > n {
+		return n
+	}
+	return i
+}
+
 // Take returns the first n elements.
 func Take(c fptypes.Collection, n int) fptypes.Collection {
 	if n <= 0 {

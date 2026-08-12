@@ -30,7 +30,7 @@
 			<expression>Abs(-1.0'cm')</expression>
 			<output>1.0'cm'</output>
 		</test>
-		<test name="AbsLong" version="1.0">
+		<test name="AbsLong" version="1.5">
 			<capability code="system.long"/>
 			<expression>Abs(-1L)</expression>
 			<output>1L</output>
@@ -46,7 +46,7 @@
 			<expression>1 + 1</expression>
 			<output>2</output>
 		</test>
-		<test name="Add1L2L" version="1.0">
+		<test name="Add1L2L" version="1.5">
 			<capability code="system.long"/>
 			<expression>1L + 2L</expression>
 			<output>3L</output>
@@ -64,7 +64,7 @@
 			<expression>1 + 2.0</expression>
 			<output>3.0</output>
 		</test>
-		<test name="Add1L1L" version="1.0">
+		<test name="Add1L1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>1L + 1L</expression>
 			<output>2L</output>
@@ -100,6 +100,46 @@
 			<expression>Ceiling(1)</expression>
 			<output>1</output>
 		</test>
+		<test name="CeilingMaxInteger" version="1.0">
+			<expression>Ceiling(2147483647)</expression>
+			<output>2147483647</output>
+		</test>
+		<test name="CeilingMaxIntegerAsDecimal" version="1.0">
+			<expression>Ceiling(2147483647.0)</expression>
+			<output>2147483647</output>
+		</test>
+		<test name="CeilingMaxIntegerAsDecimalWhereDecimalIsNonZero" version="1.0">
+			<expression>Ceiling(2147483647.2)</expression>
+			<output>null</output>
+		</test>
+		<test name="CeilingIntegerGreaterThanMaxInteger" version="1.0">
+			<expression invalid="syntax">Ceiling(2147483648)</expression>
+			<output>null</output>
+		</test>
+		<test name="CeilingDecimalGreaterThanMaxInteger" version="1.0">
+			<expression>Ceiling(2147483648.2)</expression>
+			<output>null</output>
+		</test>
+		<test name="CeilingMinInteger" version="1.0">
+			<expression>Ceiling(-2147483648)</expression>
+			<output>-2147483648</output>
+		</test>
+		<test name="CeilingMinIntegerAsDecimal" version="1.0">
+			<expression>Ceiling(-2147483648.0)</expression>
+			<output>-2147483648</output>
+		</test>
+		<test name="CeilingMinIntegerAsDecimalWhereDecimalIsNonZero" version="1.0">
+			<expression>Ceiling(-2147483648.2)</expression>
+			<output>-2147483648</output>
+		</test>
+		<test name="CeilingIntegerLessThanMinInteger" version="1.0">
+			<expression invalid="syntax">Ceiling(-2147483649)</expression>
+			<output>null</output>
+		</test>
+		<test name="CeilingDecimalLessThanMinInteger" version="1.0">
+			<expression>Ceiling(-2147483649.2)</expression>
+			<output>null</output>
+		</test>
 	</group>
 	<group name="Divide" version="1.0">
 		<capability code="arithmetic-operators"/>
@@ -119,7 +159,7 @@
 			<expression>1 / 1</expression>
 			<output>1.0</output>
 		</test>
-		<test name="Divide1L1L" version="1.0">
+		<test name="Divide1L1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>1L / 1L</expression>
 			<output>1.0</output>
@@ -202,6 +242,46 @@
 			<expression>Floor(2)</expression>
 			<output>2</output>
 		</test>
+		<test name="FloorMaxInteger" version="1.0">
+			<expression>Floor(2147483647)</expression>
+			<output>2147483647</output>
+		</test>
+		<test name="FloorMaxIntegerAsDecimal" version="1.0">
+			<expression>Floor(2147483647.0)</expression>
+			<output>2147483647</output>
+		</test>
+		<test name="FloorMaxIntegerAsDecimalWhereDecimalIsNonZero" version="1.0">
+			<expression>Floor(2147483647.2)</expression>
+			<output>2147483647</output>
+		</test>
+		<test name="FloorIntegerGreaterThanMaxInteger" version="1.0">
+			<expression>Floor(2147483648)</expression>
+			<output>null</output>
+		</test>
+		<test name="FloorDecimalGreaterThanMaxInteger" version="1.0">
+			<expression>Floor(2147483648.2)</expression>
+			<output>null</output>
+		</test>
+		<test name="FloorMinInteger" version="1.0">
+			<expression>Floor(-2147483648)</expression>
+			<output>-2147483648</output>
+		</test>
+		<test name="FloorMinIntegerAsDecimal" version="1.0">
+			<expression>Floor(-2147483648.0)</expression>
+			<output>-2147483648</output>
+		</test>
+		<test name="FloorMinIntegerAsDecimalWhereDecimalIsNonZero" version="1.0">
+			<expression>Floor(-2147483648.2)</expression>
+			<output>null</output>
+		</test>
+		<test name="FloorIntegerLessThanMinInteger" version="1.0">
+			<expression>Floor(-2147483649)</expression>
+			<output>null</output>
+		</test>
+		<test name="FloorDecimalLessThanMinInteger" version="1.0">
+			<expression>Floor(-2147483649.2)</expression>
+			<output>null</output>
+		</test>
 	</group>
 	<group name="Exp" version="1.0">
 		<capability code="arithmetic-operators"/>
@@ -222,7 +302,7 @@
 			<expression>Round(Exp(1), 8)</expression>
 			<output>2.71828183</output>
 		</test>
-		<test name="Exp1L" version="1.0">
+		<test name="Exp1L" version="1.5">
 			<capability code="system.long"/>
 			<capability code="precision-operators-for-decimal-and-date-time-types"/>
 			<expression>Round(Exp(1L), 8)</expression>
@@ -261,6 +341,14 @@
 			<expression>HighBoundary(@T10:30, 9)</expression>
 			<output>@T10:30:59.999</output>
 		</test>
+		<test name="HighBoundaryNull">
+			<expression>HighBoundary(null as Decimal, 8)</expression>
+			<output>null</output>
+		</test>
+		<test name="HighBoundaryNullPrecision">
+			<expression>HighBoundary(1.58888, null)</expression>
+			<output>1.58888999</output>
+		</test>
 	</group>
 	<group name="Log" version="1.4">
 		<capability code="arithmetic-operators"/>
@@ -288,7 +376,7 @@
 			<expression>Log(1, 100)</expression>
 			<output>0.0</output>
 		</test>
-		<test name="Log1Base100L" version="1.4">
+		<test name="Log1Base100L" version="1.5">
 			<capability code="system.long"/>
 			<expression>Log(1L, 100L)</expression>
 			<output>0.0</output>
@@ -321,6 +409,14 @@
 			<expression>LowBoundary(@T10:30, 9)</expression>
 			<output>@T10:30:00.000</output>
 		</test>
+		<test name="LowBoundaryNull">
+			<expression>LowBoundary(null as Decimal, 8)</expression>
+			<output>null</output>
+		</test>
+		<test name="LowBoundaryNullPrecision">
+			<expression>LowBoundary(1.58888, null)</expression>
+			<output>1.58888000</output>
+		</test>
 	</group>
 	<group name="Ln" version="1.4">
 		<capability code="arithmetic-operators"/>
@@ -340,7 +436,7 @@
 			<expression>Ln(1)</expression>
 			<output>0.0</output>
 		</test>
-		<test name="Ln1L" version="1.4">
+		<test name="Ln1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>Ln(1L)</expression>
 			<output>0.0</output>
@@ -501,7 +597,7 @@
 			<expression>1 * 1</expression>
 			<output>1</output>
 		</test>
-		<test name="Multiply2LBy3L" version="1.0">
+		<test name="Multiply2LBy3L" version="1.5">
 			<capability code="system.long"/>
 			<expression>2L * 3L</expression>
 			<output>6L</output>
@@ -510,7 +606,7 @@
 			<expression>1.0 * 2.0</expression>
 			<output>2.0</output>
 		</test>
-		<test name="Multiply1By1L" version="1.0">
+		<test name="Multiply1By1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>1 * 1L</expression>
 			<output>1L</output>
@@ -544,12 +640,12 @@
 			<expression>-1</expression>
 			<output>-1</output>
 		</test>
-		<test name="Negate1L" version="1.0">
+		<test name="Negate1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>-1L</expression>
 			<output>-1L</output>
 		</test>
-		<test name="NegateMaxLong" version="1.0">
+		<test name="NegateMaxLong" version="1.5">
 			<capability code="system.long"/>
 			<expression>-9223372036854775807L</expression>
 			<output>-9223372036854775807L</output>
@@ -558,7 +654,7 @@
 			<expression>-(-1)</expression>
 			<output>1</output>
 		</test>
-		<test name="NegateNeg1L" version="1.0">
+		<test name="NegateNeg1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>-(-1L)</expression>
 			<output>1L</output>
@@ -624,7 +720,7 @@
 			<expression>predecessor of 1</expression>
 			<output>0</output>
 		</test>
-		<test name="PredecessorOf1L" version="1.0">
+		<test name="PredecessorOf1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>predecessor of 1L</expression>
 			<output>0L</output>
@@ -681,7 +777,7 @@
 			<expression>Power(2, -2)</expression>
 			<output>0.25</output>
 		</test>
-		<test name="Power2LTo2L" version="1.0">
+		<test name="Power2LTo2L" version="1.5">
 			<capability code="system.long"/>
 			<expression>Power(2L, 2L)</expression>
 			<output>4L</output>
@@ -710,7 +806,7 @@
 			<expression>2^4</expression>
 			<output>16</output>
 		</test>
-		<test name="Power2LTo3L" version="1.0">
+		<test name="Power2LTo3L" version="1.5">
 			<capability code="system.long"/>
 			<expression>2L^3L</expression>
 			<output>8L</output>
@@ -748,7 +844,7 @@
 		</test>
 		<test name="RoundNeg0D5" version="1.0">
 			<expression>Round(-0.5)</expression>
-			<output>0.0</output>
+			<output>-1.0</output>
 		</test>
 		<test name="RoundNeg0D4" version="1.0">
 			<expression>Round(-0.4)</expression>
@@ -764,7 +860,7 @@
 		</test>
 		<test name="RoundNeg1D5" version="1.0">
 			<expression>Round(-1.5)</expression>
-			<output>-1.0</output>
+			<output>-2.0</output>
 		</test>
 		<test name="RoundNeg1D6" version="1.0">
 			<expression>Round(-1.6)</expression>
@@ -781,7 +877,7 @@
 			<expression>1 - 1</expression>
 			<output>0</output>
 		</test>
-		<test name="Subtract1LAnd1L" version="1.0">
+		<test name="Subtract1LAnd1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>1L - 1L</expression>
 			<output>0L</output>
@@ -815,7 +911,7 @@
 			<expression>successor of 1</expression>
 			<output>2</output>
 		</test>
-		<test name="SuccessorOf1L" version="1.0">
+		<test name="SuccessorOf1L" version="1.5">
 			<capability code="system.long"/>
 			<expression>successor of 1L</expression>
 			<output>2L</output>
@@ -914,12 +1010,12 @@
 			<expression>10 div 3</expression>
 			<output>3</output>
 		</test>
-		<test name="TruncatedDivide10LBy3L" version="1.0">
+		<test name="TruncatedDivide10LBy3L" version="1.5">
 			<capability code="system.long"/>
 			<expression>10L div 3L</expression>
 			<output>3L</output>
 		</test>
-		<test name="TruncatedDivide10LBy0L" version="1.0">
+		<test name="TruncatedDivide10LBy0L" version="1.5">
 			<capability code="system.long"/>
 			<expression>10L div 0L</expression>
 			<output>null</output>

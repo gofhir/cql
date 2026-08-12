@@ -99,7 +99,7 @@
 		</test>
 		<test name="ContainsNullLeft" version="1.0">
 			<capability code="list-operators" />
-			<expression>null contains 'a'</expression>
+			<expression>null as List&lt;String&gt; contains 'a'</expression>
 			<output>false</output>
 		</test>
 	</group>
@@ -194,17 +194,17 @@
 		</test>
 		<test name="EqualABCAnd123" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 'a', 'b', 'c' } = { 1, 2, 3 }</expression>
+			<expression>{ 'a', 'b', 'c' } as List&lt;Any&gt; ~ { 1, 2, 3 } as List&lt;Any&gt;</expression>
 			<output>false</output>
 		</test>
 		<test name="Equal123AndABC" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 1, 2, 3 } = { 'a', 'b', 'c' }</expression>
+			<expression>{ 1, 2, 3 } as List&lt;Any&gt; = { 'a', 'b', 'c' } as List&lt;Any&gt;</expression>
 			<output>false</output>
 		</test>
 		<test name="Equal123AndString123" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 1, 2, 3 } = { '1', '2', '3' }</expression>
+			<expression>{ 1, 2, 3 } as List&lt;Any&gt; = { '1', '2', '3' } as List&lt;Any&gt;</expression>
 			<output>false</output>
 		</test>
 		<test name="Equal12And123" version="1.0">
@@ -389,7 +389,7 @@
 		</test>
 		<test name="In1Null" version="1.0">
 			<capability code="list-operators" />
-			<expression>1 in null</expression>
+			<expression>1 in null as List&lt;Integer&gt;</expression>
 			<output>false</output>
 		</test>
 		<test name="In1And12" version="1.0">
@@ -472,13 +472,12 @@
 		</test>
 		<test name="IncludesNullLeft" version="1.0">
 			<capability code="list-operators" />
-			<expression>null includes {2}</expression>
+			<expression>null as List&lt;Integer&gt; includes {2}</expression>
 			<output>null</output>
 		</test>
-		<!-- this test is going to the ContainsEvaluator -->
 		<test name="IncludesNullRight" version="1.0">
 			<capability code="list-operators" />
-			<expression>{'s', 'a', 'm'} includes null</expression>
+			<expression>{'s', 'a', 'm'} includes null as List&lt;String&gt;</expression>
 			<output>null</output>
 		</test>
 	</group>
@@ -529,15 +528,14 @@
 			<expression>@T16:59:59.999 included in { @T02:29:15.156, @T15:59:59.999, @T20:59:59.999 }</expression>
 			<output>false</output>
 		</test>
-		<!-- the following expression is going to the InEvaluator -->
 		<test name="IncludedInNullLeft" version="1.0">
 			<capability code="list-operators" />
-			<expression>null included in {2}</expression>
+			<expression>null as List&lt;Integer&gt; included in {2}</expression>
 			<output>null</output>
 		</test>
 		<test name="IncludedInNullRight" version="1.0">
 			<capability code="list-operators" />
-			<expression>{'s', 'a', 'm'} included in null</expression>
+			<expression>{'s', 'a', 'm'} included in null as List&lt;String&gt;</expression>
 			<output>null</output>
 		</test>
 	</group>
@@ -741,19 +739,19 @@
 		</test>
 		<test name="EquivalentABCAnd123" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 'a', 'b', 'c' } ~ { 1, 2, 3 }</expression>
+			<expression>{ 'a', 'b', 'c' } as List&lt;Any&gt; ~ { 1, 2, 3 } as List&lt;Any&gt;</expression>
 			<output>false</output>
 			<!-- TODO: make Translator resolve isolated Equivalent operator signatures -->
 		</test>
 		<test name="Equivalent123AndABC" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 1, 2, 3 } ~ { 'a', 'b', 'c' }</expression>
+			<expression>{ 1, 2, 3 } as List&lt;Any&gt; ~ { 'a', 'b', 'c' } as List&lt;Any&gt;</expression>
 			<output>false</output>
 			<!-- TODO: make Translator resolve isolated Equivalent operator signatures -->
 		</test>
 		<test name="Equivalent123AndString123" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 1, 2, 3 } ~ { '1', '2', '3' }</expression>
+			<expression>{ 1, 2, 3 } as List&lt;Any&gt; ~ { '1', '2', '3' } as List&lt;Any&gt;</expression>
 			<output>false</output>
 			<!-- TODO: make Translator resolve isolated Equivalent operator signatures -->
 		</test>
@@ -807,19 +805,19 @@
 		</test>
 		<test name="NotEqualABCAnd123" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 'a', 'b', 'c' } != { 1, 2, 3 }</expression>
+			<expression>{ 'a', 'b', 'c' } as List&lt;Any&gt; != { 1, 2, 3 } as List&lt;Any&gt;</expression>
 			<output>true</output>
 			<!-- TODO: make Translator resolve isolated Equivalent operator signatures -->
 		</test>
 		<test name="NotEqual123AndABC" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 1, 2, 3 } != { 'a', 'b', 'c' }</expression>
+			<expression>{ 1, 2, 3 } as List&lt;Any&gt; != { 'a', 'b', 'c' } as List&lt;Any&gt;</expression>
 			<output>true</output>
 			<!-- TODO: make Translator resolve isolated Equivalent operator signatures -->
 		</test>
 		<test name="NotEqual123AndString123" version="1.0">
 			<capability code="list-operators" />
-			<expression>{ 1, 2, 3 } != { '1', '2', '3' }</expression>
+			<expression>{ 1, 2, 3 } as List&lt;Any&gt; != { '1', '2', '3' } as List&lt;Any&gt;</expression>
 			<output>true</output>
 			<!-- TODO: make Translator resolve isolated Equivalent operator signatures -->
 		</test>
@@ -846,14 +844,64 @@
 	</group>
 	<group name="ProperContains" version="1.0">
 		<capability code="list-operators" />
+		<test name="ProperContains1" version="1.0">
+			<capability code="list-operators" />
+			<expression>null as List&lt;String&gt; properly includes 'a'</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperContains2" version="1.0">
+			<capability code="list-operators" />
+			<expression>{} properly includes 'a'</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperContains3" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ 'a' } properly includes 'a'</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperContains4" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ null } properly includes null as String</expression>
+			<output>false</output>
+		</test>
 		<test name="ProperContainsNullRightFalse" version="1.0">
 			<capability code="list-operators" />
-			<expression>{'s', 'u', 'n'} properly includes null</expression>
+			<expression>{'s', 'u', 'n'} properly includes null as String</expression>
 			<output>false</output>
+		</test>
+		<test name="ProperContains5" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ null, null } properly includes null as String</expression>
+			<output>true</output>
 		</test>
 		<test name="ProperContainsNullRightTrue" version="1.0">
 			<capability code="list-operators" />
-			<expression>{'s', 'u', 'n', null} properly includes null</expression>
+			<expression>{'s', 'u', 'n', null} properly includes null as String</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperContains6" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ 'a', 'b' } properly includes 'a'</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperContains7" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ 'a', 'a' } properly includes 'a'</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperContains8" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ 'a', 'b' } properly includes 'c'</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperContains9" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ 'a', null } properly includes 'a'</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperContains10" version="1.0">
+			<capability code="list-operators" />
+			<expression>{ 'a', 'b', null } properly includes 'a'</expression>
 			<output>true</output>
 		</test>
 		<test name="ProperContainsTimeTrue" version="1.0">
@@ -864,19 +912,69 @@
 		<test name="ProperContainsTimeNull" version="1.0">
 			<capability code="list-operators" />
 			<expression>{ @T15:59:59.999, @T20:59:59.999, @T20:59:49.999 } properly includes @T15:59:59</expression>
-			<output>null</output>
+			<output>false</output>
 		</test>
 	</group>
 	<group name="ProperIn" version="1.0">
 		<capability code="list-operators" />
+		<test name="ProperIn1" version="1.0">
+			<capability code="list-operators" />
+			<expression>'a' properly included in null as List&lt;String&gt;</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperIn2" version="1.0">
+			<capability code="list-operators" />
+			<expression>'a' properly included in {}</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperIn3" version="1.0">
+			<capability code="list-operators" />
+			<expression>'a' properly included in { 'a' }</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperIn4" version="1.0">
+			<capability code="list-operators" />
+			<expression>null as String properly included in { null }</expression>
+			<output>false</output>
+		</test>
 		<test name="ProperInNullRightFalse" version="1.0">
 			<capability code="list-operators" />
-			<expression>null properly included in {'s', 'u', 'n'}</expression>
+			<expression>null as String properly included in {'s', 'u', 'n'}</expression>
 			<output>false</output>
+		</test>
+		<test name="ProperIn5" version="1.0">
+			<capability code="list-operators" />
+			<expression>null as String properly included in { null, null }</expression>
+			<output>true</output>
 		</test>
 		<test name="ProperInNullRightTrue" version="1.0">
 			<capability code="list-operators" />
 			<expression>null properly included in {'s', 'u', 'n', null}</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperIn6" version="1.0">
+			<capability code="list-operators" />
+			<expression>'a' properly included in { 'a', 'b' }</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperIn7" version="1.0">
+			<capability code="list-operators" />
+			<expression>'a' properly included in { 'a', 'a' }</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperIn8" version="1.0">
+			<capability code="list-operators" />
+			<expression>'c' properly included in { 'a', 'b' }</expression>
+			<output>false</output>
+		</test>
+		<test name="ProperIn9" version="1.0">
+			<capability code="list-operators" />
+			<expression>'a' properly included in { 'a', null }</expression>
+			<output>true</output>
+		</test>
+		<test name="ProperIn10" version="1.0">
+			<capability code="list-operators" />
+			<expression>'a' properly included in { 'a', 'b', null }</expression>
 			<output>true</output>
 		</test>
 		<test name="ProperInTimeTrue" version="1.0">
@@ -887,7 +985,7 @@
 		<test name="ProperInTimeNull" version="1.0">
 			<capability code="list-operators" />
 			<expression>@T15:59:59 properly included in { @T15:59:59.999, @T20:59:59.999, @T20:59:49.999 }</expression>
-			<output>null</output>
+			<output>false</output>
 		</test>
 	</group>
 	<group name="ProperlyIncludes" version="1.0">
@@ -939,7 +1037,7 @@
 		</test>
 		<test name="ProperlyIncludesNullLeft" version="1.0">
 			<capability code="list-operators" />
-			<expression>null properly includes {2}</expression>
+			<expression>null as List&lt;Integer&gt; properly includes {2}</expression>
 			<output>null</output>
 		</test>
 	</group>
@@ -992,7 +1090,7 @@
 		</test>
 		<test name="ProperlyIncludedInNulRight" version="1.0">
 			<capability code="list-operators" />
-			<expression>{'s', 'u', 'n'} properly included in null</expression>
+			<expression>{'s', 'u', 'n'} properly included in null as List&lt;String&gt;</expression>
 			<output>null</output>
 		</test>
 	</group>
@@ -1055,6 +1153,59 @@
 			<capability code="list-operators" />
 			<expression>Skip({1,2,3,4,5}, 5)</expression>
 			<output>{}</output>
+		</test>
+	</group>
+	<group name="Slice" version="2.0" reference="http://cql.hl7.org/09-b-cqlreference.html#slice">
+		<capability code="list-operators" />
+		<test name="SliceAll" version="2.0">
+	  		<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 })</expression>
+			<output>{ 1, 2, 3, 4, 5 }</output>
+		</test>
+		<test name="SliceEmpty" version="2.0">
+  			<capability code="list-operators" />
+			<expression>Slice({ })</expression>
+			<output>{ }</output>
+		</test>
+		<test name="SliceNull" version="2.0">
+  			<capability code="list-operators" />
+			<expression>Slice(null)</expression>
+			<output>null</output>
+		</test>
+		<test name="SliceStart" version="2.0">
+	  		<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 }, 1)</expression>
+			<output>{ 2, 3, 4, 5 }</output>
+		</test>
+		<test name="SliceStartNull" version="2.0">
+  			<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 }, null)</expression>
+			<output>{ 1, 2, 3, 4, 5 }</output>
+		</test>
+		<test name="SliceEnd" version="2.0">
+  			<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 }, 1, 3)</expression>
+			<output>{ 2, 3 }</output>
+		</test>
+		<test name="SliceEndNull" version="2.0">
+  			<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 }, 1, null)</expression>
+			<output>{ 2, 3, 4, 5 }</output>
+		</test>
+		<test name="SliceNegative" version="2.0">
+  			<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 }, -2)</expression>
+			<output>{ 4, 5 }</output>
+		</test>
+		<test name="SliceStartAndNegative" version="2.0">
+	  		<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 }, 1, -1)</expression>
+			<output>{ 2, 3, 4 }</output>
+		</test>
+		<test name="SlicePast" version="2.0">
+  			<capability code="list-operators" />
+			<expression>Slice({ 1, 2, 3, 4, 5 }, 5)</expression>
+			<output>{ }</output>
 		</test>
 	</group>
 	<group name="Tail" version="1.0">

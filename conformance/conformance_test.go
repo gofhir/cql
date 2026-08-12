@@ -84,12 +84,40 @@ func TestConformance(t *testing.T) {
 	}
 }
 
+// upstreamContradictions are the tests whose expectations cannot all hold at once,
+// with the demonstration alongside each. They are not skipped: the engine still runs
+// them and this file asserts that they still fail. When upstream corrects one, the
+// assertion trips and the entry has to go — a list that cleans itself rather than one
+// that quietly outlives its reason.
+var upstreamContradictions = map[string]string{
+	"DateTimeDurationBetweenUncertainInterval": "expects Interval[17,44] for `days between DateTime(2014, 1, 15) " +
+		"and DateTime(2014, 2)`, while DateTimeDurationBetweenUncertainMultiply squares the same expression and " +
+		"expects Interval[256,1936] and DateTimeDurationBetweenUncertainAdd doubles it and expects Interval[32,88]. " +
+		"Both of those put the base at [16,44] (√256=16, 32/2=16), which is what the engine computes. Three tests " +
+		"require [16,44] and this one requires [17,44].",
+
+	"FloorIntegerGreaterThanMaxInteger": "expects null for Floor(2147483648), while CeilingIntegerGreaterThanMaxInteger " +
+		"marks the structurally identical Ceiling(2147483648) invalid=\"syntax\" and expects an error. The engine keeps " +
+		"the compile error, which is what the spec asks of an out-of-range Integer literal.",
+
+	"FloorIntegerLessThanMinInteger": "expects null for Floor(-2147483649); see FloorIntegerGreaterThanMaxInteger.",
+}
+
 func runTestCase(t *testing.T, engine *cql.Engine, tc TestCase) {
 	t.Helper()
 
 	expr := strings.TrimSpace(tc.Expression.Value)
 	if expr == "" {
 		t.Skip("empty expression")
+	}
+
+	if reason, known := upstreamContradictions[tc.Name]; known {
+		if runsClean(engine, tc) {
+			t.Fatalf("%s passes now, so upstream has settled it — remove this entry from "+
+				"upstreamContradictions.\n\nRecorded reason: %s", tc.Name, reason)
+		}
+		t.Logf("known upstream contradiction: %s", reason)
+		return
 	}
 
 	invalid := tc.Expression.Invalid
@@ -143,4 +171,37 @@ func runTestCase(t *testing.T, engine *cql.Engine, tc TestCase) {
 	if !valuesEqual(got, want) {
 		t.Errorf("expression: %s\ngot:  %v (%T)\nwant: %v (%T)", expr, got, got, want, want)
 	}
+}
+
+// runsClean answers whether a test case would pass, without reporting anything. It
+// mirrors the verdicts of runTestCase and exists only so an entry in
+// upstreamContradictions can be checked for still being contradictory.
+func runsClean(engine *cql.Engine, tc TestCase) bool {
+	expr := strings.TrimSpace(tc.Expression.Value)
+	cqlSource := wrapExpression(expr)
+	got, err := engine.EvaluateExpression(context.Background(), cqlSource, "result", nil, nil)
+
+	if invalid := tc.Expression.Invalid; invalid != "" && invalid != "false" {
+		return err != nil
+	}
+	if err != nil {
+		return false
+	}
+	if len(tc.Outputs) == 0 {
+		return true
+	}
+	if len(tc.Outputs) == 1 {
+		want, perr := parseExpectedOutput(strings.TrimSpace(tc.Outputs[0].Value))
+		return perr == nil && valuesEqual(got, want)
+	}
+
+	wantValues := make(fptypes.Collection, 0, len(tc.Outputs))
+	for _, out := range tc.Outputs {
+		w, perr := parseExpectedOutput(strings.TrimSpace(out.Value))
+		if perr != nil {
+			return false
+		}
+		wantValues = append(wantValues, w)
+	}
+	return valuesEqual(got, cqltypes.NewList(wantValues))
 }
