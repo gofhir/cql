@@ -211,6 +211,32 @@ func undelimitedIdentifier(id grammar.IIdentifierContext, whole antlr.ParserRule
 	return name
 }
 
+// qualifiedIdentifierSource builds the expression a qualified identifier denotes
+// when it is used as a value — a query source, most of all.
+//
+// A dotted path is a chain of member accesses, so `concept.coding C return C`
+// walks into concept. Flattening it into one identifier named "concept.coding"
+// is what made FHIRHelpers.ToConcept unresolvable, and it left every query over
+// a path unable to find its source. The base segment stays an identifier, which
+// is what lets `Lib.Something` still resolve against an include: that decision
+// belongs to the evaluator, which knows the aliases.
+func qualifiedIdentifierSource(ctx grammar.IQualifiedIdentifierExpressionContext) ast.Expression {
+	if ctx == nil {
+		return nil
+	}
+	quals := ctx.AllQualifierExpression()
+	if len(quals) == 0 {
+		return &ast.IdentifierRef{Name: referentialIdentifierText(ctx.ReferentialIdentifier())}
+	}
+	var expr ast.Expression = &ast.IdentifierRef{
+		Name: referentialIdentifierText(quals[0].ReferentialIdentifier()),
+	}
+	for _, q := range quals[1:] {
+		expr = &ast.MemberAccess{Source: expr, Member: referentialIdentifierText(q.ReferentialIdentifier())}
+	}
+	return &ast.MemberAccess{Source: expr, Member: referentialIdentifierText(ctx.ReferentialIdentifier())}
+}
+
 // qualifiedIdentifierExpressionText renders a qualified identifier with the
 // delimiters stripped from each segment, so `"VS"` reads as VS and `Lib."VS"` as
 // Lib.VS.
@@ -1666,13 +1692,13 @@ func (b *builder) VisitAliasedQuerySource(ctx *grammar.AliasedQuerySourceContext
 		if r := qs.Retrieve(); r != nil {
 			as.Source = b.Visit(r).(ast.Expression)
 		} else if qie := qs.QualifiedIdentifierExpression(); qie != nil {
-			as.Source = &ast.IdentifierRef{Name: qie.GetText()}
+			as.Source = qualifiedIdentifierSource(qie)
 		} else if expr := qs.Expression(); expr != nil {
 			as.Source = b.visitExpression(expr)
 		}
 	}
 	if a := ctx.Alias(); a != nil {
-		as.Alias = a.GetText()
+		as.Alias = identifierText(a.Identifier())
 	}
 	return as
 }

@@ -14,20 +14,46 @@ func (e *Evaluator) evalInValueSet(code fptypes.Value, vsRef *ast.IdentifierRef)
 	if code == nil {
 		return nil, nil
 	}
-
 	// Resolve the ValueSet URL from the library
 	vsURL, found := e.ctx.ResolveValueSetURL(vsRef.Name)
 	if !found || vsURL == "" {
 		return nil, fmt.Errorf("ValueSet '%s' not found in library", vsRef.Name)
 	}
+	return e.inValueSetURL(code, vsURL)
+}
 
-	// Extract system and code from the value
+// inValueSetURL asks the terminology provider about a code, once the value set
+// has been resolved to a URL. Separate from evalInValueSet because a value set
+// can be named through an include, where the name alone does not locate it.
+func (e *Evaluator) inValueSetURL(code fptypes.Value, vsURL string) (fptypes.Value, error) {
+	if code == nil {
+		return nil, nil
+	}
+	if concept, ok := code.(cqltypes.Concept); ok {
+		anyKnown := false
+		for _, c := range concept.Codes {
+			result, err := e.inValueSetURL(c, vsURL)
+			if err != nil {
+				return nil, err
+			}
+			if result == nil {
+				continue
+			}
+			anyKnown = true
+			if isTrue(result) {
+				return fptypes.NewBoolean(true), nil
+			}
+		}
+		if !anyKnown {
+			return nil, nil
+		}
+		return fptypes.NewBoolean(false), nil
+	}
+
 	system, codeVal := extractCodeComponents(code)
 	if codeVal == "" {
 		return nil, nil
 	}
-
-	// Use the TerminologyProvider if available
 	if e.ctx.TerminologyProvider != nil {
 		result, err := e.ctx.TerminologyProvider.InValueSet(e.ctx.GoCtx, codeVal, system, vsURL)
 		if err != nil {
@@ -35,9 +61,23 @@ func (e *Evaluator) evalInValueSet(code fptypes.Value, vsRef *ast.IdentifierRef)
 		}
 		return fptypes.NewBoolean(result), nil
 	}
-
 	// Without a TerminologyProvider, we can only check in-memory ValueSets
 	return nil, nil
+}
+
+// includedValueSetURL resolves `alias.name` to the URL of a value set declared
+// by an included library.
+func (e *Evaluator) includedValueSetURL(alias, name string) (string, bool) {
+	lib, ok := e.ctx.IncludedLibraries[alias]
+	if !ok || lib == nil {
+		return "", false
+	}
+	for _, vs := range lib.ValueSets {
+		if vs.Name == name {
+			return vs.ID, true
+		}
+	}
+	return "", false
 }
 
 // evalInCodeSystem evaluates "Code in CodeSystemRef" membership.

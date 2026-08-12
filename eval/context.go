@@ -99,6 +99,23 @@ type Context struct {
 	// evalTicks counts Eval calls since the last cancellation check.
 	evalTicks *int
 
+	// funcRegistries memoizes each library's name → overloads map, keyed by the
+	// library itself. Rebuilding it is what NewEvaluator used to do on every
+	// user function call.
+	funcRegistries map[*ast.Library]map[string][]*ast.FunctionDef
+
+	// includedRegistries memoizes the alias → name → overloads map for the
+	// includes of each library. Keyed by library because a library's aliases are
+	// fixed by its own include list, so every scope of one library shares them.
+	includedRegistries map[*ast.Library]map[string]map[string][]*ast.FunctionDef
+
+	// libraryScopes memoizes the scope built for each included library, keyed by
+	// the library itself. It serves two purposes: a definition of an included
+	// library is evaluated once per evaluation rather than once per reference —
+	// three mentions of H.Obs must not issue three retrieves — and the six maps
+	// a library scope carries are built once rather than on every call into it.
+	libraryScopes map[*ast.Library]*Context
+
 	// External providers
 	DataProvider        DataProvider
 	TerminologyProvider TerminologyProvider
@@ -119,8 +136,16 @@ type Context struct {
 	cachedSubjectOK bool // true once cachedSubjectID has been computed
 	cachedObject    *fptypes.ObjectValue
 
-	// IncludedLibraries maps alias → compiled included library
+	// IncludedLibraries maps alias → compiled included library. Aliases are
+	// local to the library that wrote them, so this map is rebuilt per library
+	// scope rather than inherited.
 	IncludedLibraries map[string]*ast.Library
+
+	// LoadedLibraries indexes every library compiled for this evaluation by
+	// name and by name/version. Unlike aliases these are global and unambiguous,
+	// which is what lets a library's own include list be resolved against the
+	// set already loaded.
+	LoadedLibraries map[string]*ast.Library
 
 	// LibraryLoader resolves included libraries lazily on demand (optional).
 	LibraryLoader LibraryLoader
@@ -137,49 +162,198 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		goCtx = context.Background()
 	}
 	c := &Context{
-		GoCtx:             goCtx,
-		Library:           lib,
-		depth:             new(int),
-		evalTicks:         new(int),
-		Definitions:       make(map[string]fptypes.Value),
-		Parameters:        make(map[string]fptypes.Value),
-		CodeSystems:       make(map[string]*cqltypes.Code),
-		ValueSets:         make(map[string]string),
-		Aliases:           make(map[string]fptypes.Value),
-		LetBindings:       make(map[string]fptypes.Value),
-		IncludedLibraries: make(map[string]*ast.Library),
+		GoCtx:              goCtx,
+		Library:            lib,
+		depth:              new(int),
+		evalTicks:          new(int),
+		libraryScopes:      make(map[*ast.Library]*Context),
+		funcRegistries:     make(map[*ast.Library]map[string][]*ast.FunctionDef),
+		includedRegistries: make(map[*ast.Library]map[string]map[string][]*ast.FunctionDef),
+		Definitions:        make(map[string]fptypes.Value),
+		Parameters:         make(map[string]fptypes.Value),
+		CodeSystems:        make(map[string]*cqltypes.Code),
+		ValueSets:          make(map[string]string),
+		Aliases:            make(map[string]fptypes.Value),
+		LetBindings:        make(map[string]fptypes.Value),
+		IncludedLibraries:  make(map[string]*ast.Library),
+		LoadedLibraries:    make(map[string]*ast.Library),
 	}
-	// Populate code systems and value sets from library definitions
-	if lib != nil {
-		for _, cs := range lib.CodeSystems {
-			c.CodeSystems[cs.Name] = &cqltypes.Code{System: cs.ID}
-		}
-		for _, vs := range lib.ValueSets {
-			c.ValueSets[vs.Name] = vs.ID
-		}
-		// Declared codes and concepts are values, so they belong with the other
-		// definitions: `code "SBP": '8480-6' from "LOINC"` makes "SBP" a Code.
-		// Without this they resolved to nothing, and the identifier fallback
-		// answered with the name as a String — so `O.code ~ "SBP"` compared a
-		// Code against the text "SBP" and was quietly always false.
-		for _, cd := range lib.Codes {
-			system := cd.System
-			if cs, ok := c.CodeSystems[cd.System]; ok {
-				system = cs.System
-			}
-			c.Definitions[cd.Name] = cqltypes.NewCode(system, cd.ID, cd.Display)
-		}
-		for _, cd := range lib.Concepts {
-			codes := make([]cqltypes.Code, 0, len(cd.Codes))
-			for _, name := range cd.Codes {
-				if v, ok := c.Definitions[name].(cqltypes.Code); ok {
-					codes = append(codes, v)
-				}
-			}
-			c.Definitions[cd.Name] = cqltypes.NewConcept(codes, cd.Display)
-		}
-	}
+	c.loadDeclarations(lib)
 	return c
+}
+
+// loadDeclarations populates the terminology a library declares. It is separate
+// from NewContext because an included library's own code has to run against its
+// own declarations, not the including library's.
+func (c *Context) loadDeclarations(lib *ast.Library) {
+	if lib == nil {
+		return
+	}
+	for _, cs := range lib.CodeSystems {
+		c.CodeSystems[cs.Name] = &cqltypes.Code{System: cs.ID}
+	}
+	for _, vs := range lib.ValueSets {
+		c.ValueSets[vs.Name] = vs.ID
+	}
+	// Declared codes and concepts are values, so they belong with the other
+	// definitions: `code "SBP": '8480-6' from "LOINC"` makes "SBP" a Code.
+	// Without this they resolved to nothing, and the identifier fallback
+	// answered with the name as a String — so `O.code ~ "SBP"` compared a
+	// Code against the text "SBP" and was quietly always false.
+	for _, cd := range lib.Codes {
+		system := cd.System
+		if cs, ok := c.CodeSystems[cd.System]; ok {
+			system = cs.System
+		}
+		c.Definitions[cd.Name] = cqltypes.NewCode(system, cd.ID, cd.Display)
+	}
+	for _, cd := range lib.Concepts {
+		codes := make([]cqltypes.Code, 0, len(cd.Codes))
+		for _, name := range cd.Codes {
+			if v, ok := c.Definitions[name].(cqltypes.Code); ok {
+				codes = append(codes, v)
+			}
+		}
+		c.Definitions[cd.Name] = cqltypes.NewConcept(codes, cd.Display)
+	}
+}
+
+// functionRegistry returns a library's name → overloads map, building it once.
+func (c *Context) functionRegistry(lib *ast.Library) map[string][]*ast.FunctionDef {
+	if lib == nil {
+		return map[string][]*ast.FunctionDef{}
+	}
+	if c.funcRegistries != nil {
+		if reg, ok := c.funcRegistries[lib]; ok {
+			return reg
+		}
+	}
+	reg := make(map[string][]*ast.FunctionDef, len(lib.Functions))
+	for _, f := range lib.Functions {
+		reg[f.Name] = append(reg[f.Name], f)
+	}
+	if c.funcRegistries != nil {
+		c.funcRegistries[lib] = reg
+	}
+	return reg
+}
+
+// includedFunctionRegistry returns the alias → name → overloads map for this
+// scope's includes, building it once per library.
+//
+// The result is mutable on purpose: ensureLibraryLoaded adds an alias to it when
+// a library is resolved on demand, and every scope of that library should see
+// the library it just loaded.
+func (c *Context) includedFunctionRegistry() map[string]map[string][]*ast.FunctionDef {
+	if c.includedRegistries != nil && c.Library != nil {
+		if reg, ok := c.includedRegistries[c.Library]; ok {
+			return reg
+		}
+	}
+	reg := make(map[string]map[string][]*ast.FunctionDef, len(c.IncludedLibraries))
+	for alias, lib := range c.IncludedLibraries {
+		if lib == nil {
+			continue
+		}
+		reg[alias] = c.functionRegistry(lib)
+	}
+	if c.includedRegistries != nil && c.Library != nil {
+		c.includedRegistries[c.Library] = reg
+	}
+	return reg
+}
+
+// hasInclude reports whether the library declares an include under this alias.
+func (c *Context) hasInclude(alias string) bool {
+	if c.Library == nil {
+		return false
+	}
+	for _, inc := range c.Library.Includes {
+		name := inc.Alias
+		if name == "" {
+			name = inc.Name
+		}
+		if name == alias {
+			return true
+		}
+	}
+	return false
+}
+
+// includesOf builds the alias→library map for a library's own includes,
+// resolving each against the libraries already loaded in this evaluation.
+//
+// An alias means whatever the library that wrote it says it means, so this
+// cannot be inherited from the caller: two libraries commonly pick the same
+// short alias for different targets.
+func (c *Context) includesOf(lib *ast.Library) map[string]*ast.Library {
+	if lib == nil {
+		return make(map[string]*ast.Library)
+	}
+	out := make(map[string]*ast.Library, len(lib.Includes))
+	known := c.loadedByName()
+	for _, inc := range lib.Includes {
+		alias := inc.Alias
+		if alias == "" {
+			alias = inc.Name
+		}
+		if target, ok := known[inc.Name+"/"+inc.Version]; ok {
+			out[alias] = target
+		} else if target, ok := known[inc.Name]; ok {
+			out[alias] = target
+		}
+	}
+	return out
+}
+
+// loadedByName indexes every library loaded in this evaluation under its own
+// declared name, and under name/version when it declares one. Aliases are local
+// to whoever wrote them; the library's name is not.
+func (c *Context) loadedByName() map[string]*ast.Library {
+	if c.LoadedLibraries != nil {
+		return c.LoadedLibraries
+	}
+	return make(map[string]*ast.Library)
+}
+
+// RegisterLoadedLibrary indexes a compiled library under its declared name, so
+// that any library including it can find it whatever alias it chose.
+func (c *Context) RegisterLoadedLibrary(name, version string, lib *ast.Library) {
+	if lib == nil || c.LoadedLibraries == nil {
+		return
+	}
+	if _, seen := c.LoadedLibraries[name]; !seen {
+		c.LoadedLibraries[name] = lib
+	}
+	if version != "" {
+		c.LoadedLibraries[name+"/"+version] = lib
+	}
+}
+
+// LibraryScope builds the scope an included library's own code runs in: its
+// functions, its definitions and its terminology rather than the including
+// library's. The definition cache and terminology tables are fresh, because two
+// libraries may name a define alike and those maps are otherwise shared by every
+// scope of one evaluation.
+func (c *Context) LibraryScope(lib *ast.Library) *Context {
+	scope := c.ChildScope()
+	scope.Library = lib
+	scope.Definitions = make(map[string]fptypes.Value)
+	scope.CodeSystems = make(map[string]*cqltypes.Code)
+	scope.ValueSets = make(map[string]string)
+	// Parameters are per-library in CQL, so the callee must not read a value the
+	// caller was given — nor write its own defaults back into the caller's map.
+	scope.Parameters = make(map[string]fptypes.Value)
+	// Includes are per-library too, and this is the one that bites: aliases are
+	// short and collide. With the caller's map in place, a callee's `C.Answer`
+	// resolved against whatever the *caller* had called C.
+	scope.IncludedLibraries = c.includesOf(lib)
+	// No parent: the callee must not see the caller's aliases or definitions.
+	// Crossing that line is what would let an included library resolve a name it
+	// never declared, which is worse than failing to find one.
+	scope.parent = nil
+	scope.loadDeclarations(lib)
+	return scope
 }
 
 // ChildScope creates a nested scope inheriting parent lookups.
@@ -198,6 +372,9 @@ func (c *Context) ChildScope() *Context {
 		MaxRetrieveSize:     c.MaxRetrieveSize,
 		depth:               c.depth,
 		evalTicks:           c.evalTicks,
+		libraryScopes:       c.libraryScopes,
+		funcRegistries:      c.funcRegistries,
+		includedRegistries:  c.includedRegistries,
 		DataProvider:        c.DataProvider,
 		TerminologyProvider: c.TerminologyProvider,
 		QuantityConverter:   c.QuantityConverter,
@@ -209,6 +386,7 @@ func (c *Context) ChildScope() *Context {
 		cachedSubjectOK:     c.cachedSubjectOK,
 		cachedObject:        c.cachedObject,
 		IncludedLibraries:   c.IncludedLibraries,
+		LoadedLibraries:     c.LoadedLibraries,
 		LibraryLoader:       c.LibraryLoader,
 		loadingLibs:         c.loadingLibs,
 		parent:              c,

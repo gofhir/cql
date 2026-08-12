@@ -194,13 +194,35 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, error) {
 	return lib, nil
 }
 
-// resolveIncludes compiles and registers included libraries into the evaluation context.
+// resolveIncludes compiles and registers a library's includes, and then theirs.
+//
+// The recursion matters: a library that includes another which itself includes a
+// third had only its own includes loaded, so the middle library's references
+// resolved against whatever the top-level library happened to have registered
+// under the same alias. Aliases are short and collide.
 func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) error {
+	return e.resolveIncludesInto(ctx, lib, evalCtx, make(map[string]bool))
+}
+
+func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, evalCtx *eval.Context, seen map[string]bool) error {
 	for _, inc := range lib.Includes {
 		alias := inc.Alias
 		if alias == "" {
 			alias = inc.Name
 		}
+		// A library already compiled elsewhere in the graph still has to be
+		// registered under this library's alias for it; only the walk into its
+		// own includes is skipped, and that is what stops a cycle.
+		key := inc.Name + "/" + inc.Version
+		if seen[key] {
+			if known, ok := evalCtx.LoadedLibraries[key]; ok {
+				evalCtx.IncludedLibraries[alias] = known
+			} else if known, ok := evalCtx.LoadedLibraries[inc.Name]; ok {
+				evalCtx.IncludedLibraries[alias] = known
+			}
+			continue
+		}
+		seen[key] = true
 
 		// Try user-provided resolver first
 		var src string
@@ -228,6 +250,14 @@ func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx 
 			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
 		}
 		evalCtx.IncludedLibraries[alias] = incLib
+		evalCtx.RegisterLoadedLibrary(inc.Name, inc.Version, incLib)
+		// The alias registered here belongs to lib. An included library's own
+		// aliases are rebuilt against its own include list when its scope is
+		// created, so registering the transitive libraries by alias here is only
+		// how they get loaded, not how they get named.
+		if err := e.resolveIncludesInto(ctx, incLib, evalCtx, seen); err != nil {
+			return err
+		}
 	}
 	return nil
 }
