@@ -34,6 +34,45 @@ func (b *builder) Visit(tree antlr.ParseTree) interface{} {
 	return tree.Accept(b)
 }
 
+// hasKeyword reports whether kw appears as a direct terminal token of ctx.
+//
+// Keywords must be read from the token stream, never from ctx.GetText(): that
+// method flattens the whole subtree into one string, so a keyword occurring
+// inside a nested literal or identifier is indistinguishable from the real
+// token. Matching on the flattened text made `'not' is null` build a negated
+// test and `{'union','x'} except {'x'}` build a union.
+func hasKeyword(ctx antlr.ParserRuleContext, kw string) bool {
+	return keywordIndex(ctx, kw) >= 0
+}
+
+// keywordIndex returns the child index of the first direct terminal token equal
+// to kw, or -1 when ctx has no such child.
+func keywordIndex(ctx antlr.ParserRuleContext, kw string) int {
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		if tn, ok := ctx.GetChild(i).(antlr.TerminalNode); ok && tn.GetText() == kw {
+			return i
+		}
+	}
+	return -1
+}
+
+// firstKeyword returns the text of the first direct terminal token of ctx that
+// matches one of the candidates, or "" when none does.
+func firstKeyword(ctx antlr.ParserRuleContext, candidates ...string) string {
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		tn, ok := ctx.GetChild(i).(antlr.TerminalNode)
+		if !ok {
+			continue
+		}
+		for _, c := range candidates {
+			if tn.GetText() == c {
+				return c
+			}
+		}
+	}
+	return ""
+}
+
 func (b *builder) setError(msg string, args ...interface{}) {
 	if b.err == nil {
 		b.err = fmt.Errorf(msg, args...)
@@ -437,7 +476,7 @@ func (b *builder) VisitFunctionDefinition(ctx *grammar.FunctionDefinitionContext
 	if fb := ctx.FunctionBody(); fb != nil {
 		fd.Body = b.visitExpression(fb.Expression())
 	}
-	if ctx.GetText() != "" && strings.Contains(ctx.GetText(), "external") {
+	if hasKeyword(ctx, "external") {
 		fd.External = true
 	}
 	if fm := ctx.FluentModifier(); fm != nil {
@@ -562,19 +601,16 @@ func (b *builder) VisitQueryExpression(ctx *grammar.QueryExpressionContext) inte
 }
 
 func (b *builder) VisitBooleanExpression(ctx *grammar.BooleanExpressionContext) interface{} {
+	// Grammar: expression 'is' 'not'? ('null' | 'true' | 'false')
 	expr := b.visitExpression(ctx.Expression())
-	text := ctx.GetText()
-	not := strings.Contains(text, "not")
-	testVal := "null"
-	if strings.HasSuffix(text, "true") {
-		testVal = "true"
-	} else if strings.HasSuffix(text, "false") {
-		testVal = "false"
+	testVal := firstKeyword(ctx, "null", "true", "false")
+	if testVal == "" {
+		testVal = "null"
 	}
 	return &ast.BooleanTestExpression{
 		Operand:   expr,
 		TestValue: testVal,
-		Not:       not,
+		Not:       hasKeyword(ctx, "not"),
 	}
 }
 
@@ -611,7 +647,7 @@ func (b *builder) VisitExistenceExpression(ctx *grammar.ExistenceExpressionConte
 func (b *builder) VisitBetweenExpression(ctx *grammar.BetweenExpressionContext) interface{} {
 	exprs := ctx.AllExpressionTerm()
 	expr := b.visitExpression(ctx.Expression())
-	properly := strings.Contains(ctx.GetText(), "properly")
+	properly := hasKeyword(ctx, "properly")
 	var low, high ast.Expression
 	if len(exprs) >= 2 {
 		low = b.visitExpressionTerm(exprs[0])
@@ -668,15 +704,18 @@ func (b *builder) VisitInFixSetExpression(ctx *grammar.InFixSetExpressionContext
 	}
 	left := b.visitExpression(exprs[0])
 	right := b.visitExpression(exprs[1])
-	text := ctx.GetText()
+	// Grammar: expression ('|' | 'union' | 'intersect' | 'except') expression
 	var op ast.BinaryOp
-	switch {
-	case strings.Contains(text, "union") || strings.Contains(text, "|"):
+	switch firstKeyword(ctx, "|", "union", "intersect", "except") {
+	case "|", "union":
 		op = ast.OpUnion
-	case strings.Contains(text, "intersect"):
+	case "intersect":
 		op = ast.OpIntersect
-	case strings.Contains(text, "except"):
+	case "except":
 		op = ast.OpExcept
+	default:
+		b.setError("set operator not found in %q", ctx.GetText())
+		return nil
 	}
 	return &ast.BinaryExpression{Operator: op, Left: left, Right: right}
 }
@@ -1160,9 +1199,9 @@ func (b *builder) VisitCaseExpressionItem(ctx *grammar.CaseExpressionItemContext
 }
 
 func (b *builder) VisitAggregateExpressionTerm(ctx *grammar.AggregateExpressionTermContext) interface{} {
+	// Grammar: ('distinct' | 'flatten') expression
 	expr := b.visitExpression(ctx.Expression())
-	text := ctx.GetText()
-	if strings.HasPrefix(text, "distinct") {
+	if firstKeyword(ctx, "distinct", "flatten") == "distinct" {
 		return &ast.UnaryExpression{Operator: ast.OpDistinct, Operand: expr}
 	}
 	return &ast.UnaryExpression{Operator: ast.OpFlatten, Operand: expr}
@@ -1170,9 +1209,9 @@ func (b *builder) VisitAggregateExpressionTerm(ctx *grammar.AggregateExpressionT
 
 func (b *builder) VisitSetAggregateExpressionTerm(ctx *grammar.SetAggregateExpressionTermContext) interface{} {
 	exprs := ctx.AllExpression()
+	// Grammar: ('expand' | 'collapse') expression ('per' (dateTimePrecision | expression))?
 	sa := &ast.SetAggregateExpression{}
-	text := ctx.GetText()
-	if strings.HasPrefix(text, "expand") {
+	if firstKeyword(ctx, "expand", "collapse") == "expand" {
 		sa.Kind = "expand"
 	} else {
 		sa.Kind = "collapse"
@@ -1377,10 +1416,17 @@ func (b *builder) VisitIntervalSelector(ctx *grammar.IntervalSelectorContext) in
 		ie.Low = b.visitExpression(exprs[0])
 		ie.High = b.visitExpression(exprs[1])
 	}
-	// Check boundary markers
-	text := ctx.GetText()
-	ie.LowClosed = strings.Contains(text, "Interval[")
-	ie.HighClosed = strings.HasSuffix(strings.TrimSpace(text), "]")
+	// Grammar: 'Interval' ('['|'(') expression ',' expression (']'|')')
+	// The boundary markers are the tokens right after 'Interval' and at the end,
+	// so they must be located positionally: a bracket anywhere in the flattened
+	// text may well belong to one of the two operand expressions.
+	ie.LowClosed = keywordIndex(ctx, "[") == 1
+	ie.HighClosed = false
+	if n := ctx.GetChildCount(); n > 0 {
+		if tn, ok := ctx.GetChild(n - 1).(antlr.TerminalNode); ok {
+			ie.HighClosed = tn.GetText() == "]"
+		}
+	}
 	return ie
 }
 
@@ -1624,10 +1670,10 @@ func (b *builder) VisitWithoutClause(ctx *grammar.WithoutClauseContext) interfac
 }
 
 func (b *builder) VisitReturnClause(ctx *grammar.ReturnClauseContext) interface{} {
+	// Grammar: 'return' ('all' | 'distinct')? expression
 	rc := &ast.ReturnClause{}
-	text := ctx.GetText()
-	rc.Distinct = strings.Contains(text, "distinct")
-	rc.All = strings.Contains(text, "all")
+	rc.Distinct = hasKeyword(ctx, "distinct")
+	rc.All = hasKeyword(ctx, "all")
 	if expr := ctx.Expression(); expr != nil {
 		rc.Expression = b.visitExpression(expr)
 	}
@@ -1639,9 +1685,9 @@ func (b *builder) VisitAggregateClause(ctx *grammar.AggregateClauseContext) inte
 	if id := ctx.Identifier(); id != nil {
 		ac.Identifier = identifierText(id)
 	}
-	text := ctx.GetText()
-	ac.Distinct = strings.Contains(text, "distinct")
-	ac.All = strings.Contains(text, "all")
+	// Grammar: 'aggregate' ('all' | 'distinct')? identifier startingClause? ':' expression
+	ac.Distinct = hasKeyword(ctx, "distinct")
+	ac.All = hasKeyword(ctx, "all")
 	if sc := ctx.StartingClause(); sc != nil {
 		// Starting can contain a simpleLiteral, quantity, or parenthesized expression
 		if expr := sc.Expression(); expr != nil {

@@ -308,6 +308,14 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 // ---------------------------------------------------------------------------
 
 func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, error) {
+	// Inside a sort key an unqualified identifier names a column of the result,
+	// and the column wins over a query alias of the same name: in
+	// `({Tuple{A: 1}}) A sort by A` the key is the column, not the whole tuple.
+	if e.ctx.SortElement != nil {
+		if v, ok := propertyOf(e.ctx.SortElement, n.Name); ok {
+			return v, nil
+		}
+	}
 	val, ok := e.ctx.ResolveIdentifier(n.Name)
 	if ok {
 		return val, nil
@@ -340,8 +348,35 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 			}
 		}
 	}
+	// A sort key that names neither a column nor anything in scope is a typo, and
+	// the fallback below would turn it into a constant key — the same value for
+	// every element, so the list comes back unsorted with no diagnostic.
+	if e.ctx.SortElement != nil {
+		return nil, fmt.Errorf("unknown sort key %q: not a column of the query result", n.Name)
+	}
 	// Could be a resource type name used in query context
 	return fptypes.NewString(n.Name), nil
+}
+
+// propertyOf reads a named element from a query result item, reporting whether
+// the item has one. The distinction between absent and null is what lets a sort
+// key tell a typo from a column that happens to be null.
+func propertyOf(v fptypes.Value, name string) (fptypes.Value, bool) {
+	switch src := v.(type) {
+	case cqltypes.Tuple:
+		return src.Get(name)
+	case *fptypes.ObjectValue:
+		c := src.GetCollection(name)
+		switch c.Count() {
+		case 0:
+			return nil, false
+		case 1:
+			return c[0], true
+		default:
+			return cqltypes.NewList(c), true
+		}
+	}
+	return nil, false
 }
 
 // ---------------------------------------------------------------------------
@@ -1114,11 +1149,19 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		return nil, fmt.Errorf("singleton from requires 0 or 1 elements, got %d", c.Count())
 	case ast.OpStartOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
+			// An open boundary excludes its own value, so the starting point is
+			// the successor of it: `start of Interval(1, 5)` is 2, not 1.
+			if iv.Low != nil && !iv.LowClosed {
+				return e.evalSuccessorPredecessor(ast.OpSuccessorOf, iv.Low)
+			}
 			return iv.Low, nil
 		}
 		return nil, nil
 	case ast.OpEndOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
+			if iv.High != nil && !iv.HighClosed {
+				return e.evalSuccessorPredecessor(ast.OpPredecessorOf, iv.High)
+			}
 			return iv.High, nil
 		}
 		return nil, nil
@@ -3469,6 +3512,7 @@ func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.E
 	scopeA := e.ctx.ChildScope()
 	scopeA.Aliases[alias] = a
 	scopeA.This = a
+	scopeA.SortElement = a
 	keyA, err := e.withContext(scopeA).Eval(expr)
 	if err != nil {
 		return 0, err
@@ -3477,6 +3521,7 @@ func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.E
 	scopeB := e.ctx.ChildScope()
 	scopeB.Aliases[alias] = b
 	scopeB.This = b
+	scopeB.SortElement = b
 	keyB, err := e.withContext(scopeB).Eval(expr)
 	if err != nil {
 		return 0, err
