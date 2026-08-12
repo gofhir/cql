@@ -25,7 +25,9 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: latest
+          # Pinned: 'latest' makes an upstream release able to fail a build that
+          # touched nothing, and makes CI disagree with whatever developers run.
+          version: v2.11.4
           args: --timeout=5m
 
   test:

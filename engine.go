@@ -15,6 +15,7 @@ package cql
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"sync"
@@ -87,6 +88,9 @@ func WithTimeout(d time.Duration) Option {
 }
 
 // WithMaxRetrieveSize sets the maximum number of resources per retrieve.
+// A retrieve that returns more fails with ErrTooCostly rather than being
+// truncated: a measure computed over a silently shortened population is wrong
+// without saying so. Zero disables the limit.
 func WithMaxRetrieveSize(n int) Option {
 	return func(e *Engine) {
 		e.maxRetrieveSize = n
@@ -94,6 +98,8 @@ func WithMaxRetrieveSize(n int) Option {
 }
 
 // WithMaxDepth sets the maximum recursion depth for nested expressions.
+// Zero disables the limit, which lets a self-referencing definition recurse
+// until the process dies. Exceeding it yields ErrTooCostly.
 func WithMaxDepth(n int) Option {
 	return func(e *Engine) {
 		e.maxDepth = n
@@ -153,7 +159,13 @@ func NewEngine(opts ...Option) *Engine {
 		maxExpressionLen: 100 * 1024, // 100KB default
 		evalTimeout:      30 * time.Second,
 		maxRetrieveSize:  10000,
-		maxDepth:         100,
+		// Measured, not guessed: a 100-term `or` chain and a chain of 50 defines
+		// each reach depth ~100, and both are ordinary clinical CQL. The limit
+		// exists to stop runaway recursion — `define A: A` crashed the process
+		// with an unrecoverable stack overflow while this was unwired — so it
+		// wants to sit far above real expressions and far below anything that
+		// runs for long. Depth 100000 evaluates fine, so 10000 is neither.
+		maxDepth: 10000,
 	}
 	for _, opt := range opts {
 		opt(e)
@@ -256,6 +268,8 @@ func (e *Engine) EvaluateLibrary(
 	evalCtx.ModelInfo = e.modelInfo
 	evalCtx.LibraryLoader = e.libraryLoader
 	evalCtx.QuantityConverter = e.quantityConverter
+	evalCtx.MaxDepth = e.maxDepth
+	evalCtx.MaxRetrieveSize = e.maxRetrieveSize
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -277,11 +291,7 @@ func (e *Engine) EvaluateLibrary(
 	evaluator := eval.NewEvaluator(evalCtx)
 	results, err := evaluator.EvaluateLibrary()
 	if err != nil {
-		// Check for timeout
-		if ctx.Err() == context.DeadlineExceeded {
-			return nil, &ErrTimeout{Duration: e.evalTimeout}
-		}
-		return nil, &ErrEvaluation{Cause: err}
+		return nil, e.classifyEvalError(ctx, err)
 	}
 
 	return results, nil
@@ -323,6 +333,8 @@ func (e *Engine) EvaluateExpression(
 	evalCtx.TraceListener = e.traceListener
 	evalCtx.ModelInfo = e.modelInfo
 	evalCtx.QuantityConverter = e.quantityConverter
+	evalCtx.MaxDepth = e.maxDepth
+	evalCtx.MaxRetrieveSize = e.maxRetrieveSize
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -344,13 +356,24 @@ func (e *Engine) EvaluateExpression(
 	evaluator := eval.NewEvaluator(evalCtx)
 	result, err := evaluator.EvaluateExpression(expressionName)
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return nil, &ErrTimeout{Duration: e.evalTimeout}
-		}
-		return nil, &ErrEvaluation{Cause: err}
+		return nil, e.classifyEvalError(ctx, err)
 	}
 
 	return result, nil
+}
+
+// classifyEvalError maps an evaluation failure onto the engine's error taxonomy.
+// A canceled context is checked first: the evaluator now stops on cancellation
+// and reports it as an ordinary error, so the reason has to be recovered from
+// the context rather than from the error alone.
+func (e *Engine) classifyEvalError(ctx context.Context, err error) error {
+	if ctx.Err() == context.DeadlineExceeded {
+		return &ErrTimeout{Duration: e.evalTimeout}
+	}
+	if errors.Is(err, eval.ErrMaxDepthExceeded) || errors.Is(err, eval.ErrMaxRetrieveSizeExceeded) {
+		return &ErrTooCostly{Msg: err.Error()}
+	}
+	return &ErrEvaluation{Cause: err}
 }
 
 // Compile parses a CQL source string without evaluating it.
