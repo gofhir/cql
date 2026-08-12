@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.0](https://github.com/gofhir/cql/compare/v1.5.1...v1.6.0) (2026-08-12)
+
+
+### Features
+
+* **eval:** align operator semantics with the current conformance suite ([#12](https://github.com/gofhir/cql/issues/12)) ([6b1d01f](https://github.com/gofhir/cql/commit/6b1d01fcce1ccf3c61c52868350332ef04809cfe))
+
+
+### Bug Fixes
+
+* **compiler:** decide keywords from the token stream, not the node text ([#15](https://github.com/gofhir/cql/issues/15)) ([cfdc840](https://github.com/gofhir/cql/commit/cfdc8407b84f95189b7d44121a859b2dbd57663b))
+* **eval:** enforce the limits the engine already advertised ([#16](https://github.com/gofhir/cql/issues/16)) ([19c90df](https://github.com/gofhir/cql/commit/19c90df343bc215241b08bfa5e2ce81146f04af0))
+
 ## [1.5.1](https://github.com/gofhir/cql/compare/v1.5.0...v1.5.1) (2026-08-10)
 
 
