@@ -374,7 +374,7 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 			if stmt.Name == n.Name {
 				result, err := e.Eval(stmt.Expression)
 				if err != nil {
-					return nil, fmt.Errorf("evaluating referenced expression %q: %w", n.Name, err)
+					return nil, wrapUnlessLimit(err, "evaluating referenced expression %q", n.Name)
 				}
 				e.ctx.Definitions[n.Name] = result
 				return result, nil
@@ -399,7 +399,7 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 			}
 			result, err := e.Eval(p.Default)
 			if err != nil {
-				return nil, fmt.Errorf("evaluating default for parameter %q: %w", n.Name, err)
+				return nil, wrapUnlessLimit(err, "evaluating default for parameter %q", n.Name)
 			}
 			e.ctx.Parameters[n.Name] = result
 			return result, nil
@@ -416,6 +416,20 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	// Anywhere else, a name that resolves to nothing is a mistake: answering
 	// with the name itself hides it behind a plausible-looking String.
 	return nil, fmt.Errorf("unknown identifier %q", n.Name)
+}
+
+// wrapUnlessLimit adds context to an evaluation error, except when the error is
+// one of the resource limits.
+//
+// Those two travel up through as many frames as the expression was deep, and
+// each frame naming itself is what turned `define A: A` into a 380 KB error
+// message once the depth limit made ten thousand levels reachable. The limit
+// errors already say everything useful, so they are passed through untouched.
+func wrapUnlessLimit(err error, format string, args ...interface{}) error {
+	if errors.Is(err, ErrMaxDepthExceeded) || errors.Is(err, ErrMaxRetrieveSizeExceeded) {
+		return err
+	}
+	return fmt.Errorf(fmt.Sprintf(format, args...)+": %w", err)
 }
 
 // propertyOf reads a named element from a query result item, reporting whether

@@ -266,3 +266,18 @@ func TestDeclaredCodesResolve(t *testing.T) {
 		t.Errorf("TheConcept = %s, want it to carry its declared code", s)
 	}
 }
+
+// TestRunawayRecursionErrorIsBounded covers the size of the error, not just its
+// presence. Every level of the recursion used to name itself in the message, so
+// bounding the depth at 10000 produced a 380 KB error string — which is what
+// gets logged and returned to a caller for a three-word library.
+func TestRunawayRecursionErrorIsBounded(t *testing.T) {
+	src := "library T version '1.0'\n\ndefine A: A\n"
+	_, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil)
+	if err == nil {
+		t.Fatal("expected unbounded recursion to be refused")
+	}
+	if n := len(err.Error()); n > 1024 {
+		t.Errorf("the error is %d bytes; a depth-limit error should not carry one clause per level", n)
+	}
+}

@@ -197,13 +197,16 @@ func undelimitedIdentifier(id grammar.IIdentifierContext, whole antlr.ParserRule
 		return whole.GetText()
 	}
 	name := identifierText(id)
-	// Keep the library qualifier when the name carries one.
-	if whole != nil {
-		if full := whole.GetText(); full != id.GetText() {
-			if idx := strings.LastIndex(full, "."); idx >= 0 {
-				return full[:idx+1] + name
-			}
-		}
+	if whole == nil {
+		return name
+	}
+	// Keep the library qualifier when the name carries one. The qualifier is
+	// whatever precedes the identifier's own text, taken by length rather than
+	// by looking for the last dot: a delimited name may contain one, so
+	// `Lib."my.cs"` has to yield Lib.my.cs and not Lib."my.my.cs.
+	full, idText := whole.GetText(), id.GetText()
+	if full != idText && strings.HasSuffix(full, idText) {
+		return full[:len(full)-len(idText)] + name
 	}
 	return name
 }
