@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/eval"
 )
 
@@ -78,17 +79,48 @@ func TestOnlyTheInnermostFailureIsLocated(t *testing.T) {
 	}
 }
 
-// TestUnlocatableErrorsStillRead covers an error with nowhere to point. A
-// library built without the parser has no positions, and the message must not
-// grow a stray separator.
+// TestUnlocatableErrorsStillRead covers an error with nowhere to point. Nodes
+// built without the parser — by a test, or by the ELM importer — carry no
+// position, and the message must read without a stray separator where the
+// location would have been.
 func TestUnlocatableErrorsStillRead(t *testing.T) {
-	// A depth-limit failure is raised about the evaluation, not about one node.
-	src := "library T version '1.0'\n\ndefine A: A\n"
-	_, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil)
-	if err == nil {
-		t.Fatal("expected unbounded recursion to be refused")
+	plain := errors.New("something went wrong")
+	unlocated := &eval.PositionedError{Err: plain}
+	if got := unlocated.Error(); got != "something went wrong" {
+		t.Errorf("an unlocated error reads %q, want the message alone", got)
 	}
-	if strings.Contains(err.Error(), ": :") {
-		t.Errorf("the message has an empty location in it: %v", err)
+
+	located := &eval.PositionedError{Position: ast.Position{Line: 3, Col: 11}, Err: plain}
+	if got := located.Error(); got != "3:11: something went wrong" {
+		t.Errorf("a located error reads %q", got)
+	}
+
+	inLib := &eval.PositionedError{
+		Position: ast.Position{Line: 8, Col: 34}, Library: "Helper", Err: plain,
+	}
+	if got := inLib.Error(); got != "Helper 8:34: something went wrong" {
+		t.Errorf("an error from an included library reads %q", got)
+	}
+}
+
+// TestErrorsFromIncludedLibrariesNameIt covers a position that belongs to
+// another source. A four-line library reporting an error at line 8 sends the
+// reader to a line that is not there; the library the line belongs to has to be
+// part of the message.
+func TestErrorsFromIncludedLibrariesNameIt(t *testing.T) {
+	helper := "library Helper version '1.0'\n\n// 3\n// 4\n// 5\n// 6\n// 7\ndefine function Boom(x Integer): NoSuchThing\n"
+	src := "library M version '1.0'\ninclude Helper version '1.0' called H\n\ndefine A: H.Boom(1)\n"
+
+	_, err := NewEngine(WithLibraryResolver(func(_ context.Context, name, _ string) (string, error) {
+		if name == "Helper" {
+			return helper, nil
+		}
+		return "", context.Canceled
+	})).EvaluateExpression(context.Background(), src, "A", nil, nil)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	if !strings.Contains(err.Error(), "Helper") {
+		t.Errorf("the error does not say which library line 8 belongs to: %v", err)
 	}
 }

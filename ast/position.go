@@ -18,8 +18,7 @@ type Position struct {
 	Col  int
 }
 
-// Pos returns the node's position. Every expression node embeds Position, so
-// this is how a diagnostic asks a node where it came from.
+// Pos returns the position itself, so a Position satisfies Positioned too.
 func (p Position) Pos() Position { return p }
 
 // Known reports whether a position was recorded.
@@ -34,9 +33,22 @@ func (p Position) String() string {
 	return fmt.Sprintf("%d:%d", p.Line, p.Col)
 }
 
+// positioned is what expression nodes embed to carry a position.
+//
+// It exists so that Position's String method is not promoted onto every node in
+// the AST. Embedding Position directly made every node satisfy fmt.Stringer, so
+// printing an expression with %v gave "3:11" — or nothing at all, unstamped —
+// instead of the node, silently and with no compile error to notice it by.
+type positioned struct {
+	pos Position
+}
+
+// Pos returns where the node began.
+func (p positioned) Pos() Position { return p.pos }
+
 // setPos records where a node started. It is unexported and reached through the
-// embedded Position, so the builder can stamp any node without knowing its type.
-func (p *Position) setPos(q Position) { *p = q }
+// embedded struct, so the builder can stamp any node without knowing its type.
+func (p *positioned) setPos(q Position) { p.pos = q }
 
 // Positioned is implemented by every node that knows where it came from.
 type Positioned interface {

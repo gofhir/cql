@@ -20,8 +20,8 @@ For each definition, three things this engine has to agree with eventually:
 
 Needs Docker. It is not part of CI: the reference translator pulls a JVM and
 some thirty jars, which is too much to ask of every build. The output is
-committed under `testdata/reference/` instead, and `TestAgainstReferenceELM`
-diffs against that — so the comparison runs everywhere, and only regenerating it
+committed under `testdata/reference/` instead, and the tests named
+`Test*TheReference` in the root package diff against that — so the comparison runs everywhere, and only regenerating it
 needs the toolchain.
 
 ```sh

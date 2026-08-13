@@ -473,6 +473,14 @@ func retrieveLimit(maxSize int) int {
 	return maxSize + 1
 }
 
+// libraryName is a library's declared name, or "" when it is anonymous.
+func libraryName(lib *ast.Library) string {
+	if lib == nil || lib.Identifier == nil {
+		return ""
+	}
+	return lib.Identifier.Name
+}
+
 // wrapUnlessLimit adds context to an evaluation error, except when the error is
 // one of the resource limits.
 //
@@ -1893,7 +1901,11 @@ func (e *Evaluator) runFunction(fd *ast.FunctionDef, values []fptypes.Value, own
 			child.Aliases[fd.Operands[i].Name] = val
 		}
 	}
-	return NewEvaluator(child).Eval(fd.Body)
+	result, err := NewEvaluator(child).Eval(fd.Body)
+	if owner != nil {
+		err = inLibrary(err, libraryName(owner))
+	}
+	return result, err
 }
 
 func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, error) {
@@ -3370,7 +3382,7 @@ func (e *Evaluator) evalIncludedDefinition(alias, name string) (fptypes.Value, b
 		}
 		v, err := NewEvaluator(scope).Eval(stmt.Expression)
 		if err != nil {
-			return nil, true, fmt.Errorf("evaluating %q of library %q: %w", name, alias, err)
+			return nil, true, fmt.Errorf("evaluating %q of library %q: %w", name, alias, inLibrary(err, libraryName(lib)))
 		}
 		// Memoize: a CQL definition is evaluated once, and referencing one three
 		// times must not issue three retrieves.

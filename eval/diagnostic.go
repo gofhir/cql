@@ -17,12 +17,21 @@ import (
 // reached 380 KB.
 type PositionedError struct {
 	Position ast.Position
-	Err      error
+	// Library names the included library the position belongs to, when it is
+	// not the one being evaluated. Without it a line number from an included
+	// library reads as a line number of the caller's own source, and the reader
+	// resolves it against the wrong text — a four-line library reporting an
+	// error at line 8.
+	Library string
+	Err     error
 }
 
 func (e *PositionedError) Error() string {
 	if !e.Position.Known() {
 		return e.Err.Error()
+	}
+	if e.Library != "" {
+		return fmt.Sprintf("%s %s: %s", e.Library, e.Position, e.Err)
 	}
 	return fmt.Sprintf("%s: %s", e.Position, e.Err)
 }
@@ -43,4 +52,20 @@ func withPosition(err error, expr ast.Expression) error {
 		return err
 	}
 	return &PositionedError{Position: pos, Err: err}
+}
+
+// inLibrary marks an error as having come from an included library, so its
+// position is read against that library's source rather than the caller's.
+// Only the innermost crossing records it: the name that matters is where the
+// line number is, not every library the error passed back through.
+func inLibrary(err error, name string) error {
+	if err == nil || name == "" {
+		return err
+	}
+	var positioned *PositionedError
+	if !errors.As(err, &positioned) || positioned.Library != "" {
+		return err
+	}
+	positioned.Library = name
+	return err
 }

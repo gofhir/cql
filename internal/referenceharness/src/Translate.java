@@ -26,7 +26,11 @@ public class Translate {
                 CqlCompilerOptions.Options.EnableAnnotations);
         CqlTranslator t = CqlTranslator.fromFile(file.toFile(), libs);
         if (!t.getErrors().isEmpty()) {
+            // Exit without printing. A reference derived from a failed
+            // translation would be recorded as authoritative and diffed
+            // against, which is the one thing this must never produce.
             for (Object e : t.getErrors()) System.err.println("ERROR: " + e);
+            System.exit(1);
         }
         System.out.println(t.toJson());
     }

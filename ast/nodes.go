@@ -194,7 +194,7 @@ type Expression interface {
 
 // Literal represents a constant value (string, number, boolean, null, date, etc.).
 type Literal struct {
-	Position
+	positioned
 	ValueType LiteralType
 	Value     string // raw text representation
 }
@@ -222,7 +222,7 @@ const (
 
 // IdentifierRef references a named expression, alias, or identifier.
 type IdentifierRef struct {
-	Position
+	positioned
 	Library string // optional library qualifier
 	Name    string
 }
@@ -233,7 +233,7 @@ func (*IdentifierRef) expression() {}
 
 // Retrieve represents a data access expression: [Condition: code in "ValSet"].
 type Retrieve struct {
-	Position
+	positioned
 	ResourceType   *NamedType
 	CodePath       string     // e.g. "code"
 	CodeComparator string     // "in", "=", "~"
@@ -249,7 +249,7 @@ func (*Retrieve) expression() {}
 
 // Query represents a CQL query: from ... let ... with/without ... where ... return ... sort.
 type Query struct {
-	Position
+	positioned
 	Sources   []*AliasedSource
 	Let       []*LetClause
 	With      []*WithClause
@@ -326,7 +326,7 @@ const (
 
 // BinaryExpression represents an infix binary operator.
 type BinaryExpression struct {
-	Position
+	positioned
 	Operator BinaryOp
 	Left     Expression
 	Right    Expression
@@ -376,7 +376,7 @@ const (
 
 // UnaryExpression represents a prefix unary operator.
 type UnaryExpression struct {
-	Position
+	positioned
 	Operator UnaryOp
 	Operand  Expression
 }
@@ -406,7 +406,7 @@ const (
 
 // IsExpression represents 'expression is TypeSpec'.
 type IsExpression struct {
-	Position
+	positioned
 	Operand Expression
 	Type    TypeSpecifier
 }
@@ -415,7 +415,7 @@ func (*IsExpression) expression() {}
 
 // AsExpression represents 'expression as TypeSpec'.
 type AsExpression struct {
-	Position
+	positioned
 	Operand Expression
 	Type    TypeSpecifier
 }
@@ -424,7 +424,7 @@ func (*AsExpression) expression() {}
 
 // CastExpression represents 'cast expression as TypeSpec'.
 type CastExpression struct {
-	Position
+	positioned
 	Operand Expression
 	Type    TypeSpecifier
 }
@@ -433,7 +433,7 @@ func (*CastExpression) expression() {}
 
 // ConvertExpression represents 'convert expression to TypeSpec/unit'.
 type ConvertExpression struct {
-	Position
+	positioned
 	Operand Expression
 	ToType  TypeSpecifier // non-nil if converting to type
 	ToUnit  string        // non-empty if converting to unit
@@ -445,7 +445,7 @@ func (*ConvertExpression) expression() {}
 
 // BooleanTestExpression represents 'expression is [not] (null|true|false)'.
 type BooleanTestExpression struct {
-	Position
+	positioned
 	Operand   Expression
 	TestValue string // "null", "true", or "false"
 	Not       bool   // true if 'is not'
@@ -457,7 +457,7 @@ func (*BooleanTestExpression) expression() {}
 
 // IfThenElse represents an 'if ... then ... else ...' expression.
 type IfThenElse struct {
-	Position
+	positioned
 	Condition Expression
 	Then      Expression
 	Else      Expression
@@ -467,7 +467,7 @@ func (*IfThenElse) expression() {}
 
 // CaseExpression represents 'case ... when ... then ... else ... end'.
 type CaseExpression struct {
-	Position
+	positioned
 	Comparand Expression // optional comparison target
 	Items     []*CaseItem
 	Else      Expression
@@ -485,7 +485,7 @@ type CaseItem struct {
 
 // BetweenExpression represents 'expression [properly] between low and high'.
 type BetweenExpression struct {
-	Position
+	positioned
 	Operand  Expression
 	Low      Expression
 	High     Expression
@@ -498,7 +498,7 @@ func (*BetweenExpression) expression() {}
 
 // DurationBetween represents 'duration in <precision> between x and y'.
 type DurationBetween struct {
-	Position
+	positioned
 	Precision string // e.g. "years", "months", "days"
 	Low       Expression
 	High      Expression
@@ -508,7 +508,7 @@ func (*DurationBetween) expression() {}
 
 // DifferenceBetween represents 'difference in <precision> between x and y'.
 type DifferenceBetween struct {
-	Position
+	positioned
 	Precision string
 	Low       Expression
 	High      Expression
@@ -520,7 +520,7 @@ func (*DifferenceBetween) expression() {}
 
 // DateTimeComponentFrom represents '<component> from expression'.
 type DateTimeComponentFrom struct {
-	Position
+	positioned
 	Component string // year, month, day, hour, minute, second, date, time, timezoneoffset
 	Operand   Expression
 }
@@ -529,7 +529,7 @@ func (*DateTimeComponentFrom) expression() {}
 
 // DurationOf represents 'duration in <precision> of expression'.
 type DurationOf struct {
-	Position
+	positioned
 	Precision string
 	Operand   Expression
 }
@@ -538,7 +538,7 @@ func (*DurationOf) expression() {}
 
 // DifferenceOf represents 'difference in <precision> of expression'.
 type DifferenceOf struct {
-	Position
+	positioned
 	Precision string
 	Operand   Expression
 }
@@ -549,7 +549,7 @@ func (*DifferenceOf) expression() {}
 
 // TypeExtent represents 'minimum TypeSpec' or 'maximum TypeSpec'.
 type TypeExtent struct {
-	Position
+	positioned
 	Extent string // "minimum" or "maximum"
 	Type   *NamedType
 }
@@ -560,7 +560,7 @@ func (*TypeExtent) expression() {}
 
 // TimingExpression represents CQL interval timing operators (starts, ends, meets, overlaps, etc.).
 type TimingExpression struct {
-	Position
+	positioned
 	Left     Expression
 	Right    Expression
 	Operator TimingOp
@@ -597,7 +597,7 @@ const (
 
 // MembershipExpression represents 'expression (in|contains) [precision of] expression'.
 type MembershipExpression struct {
-	Position
+	positioned
 	Left      Expression
 	Right     Expression
 	Operator  string // "in" or "contains"
@@ -610,7 +610,7 @@ func (*MembershipExpression) expression() {}
 
 // MemberAccess represents dot-notation: expression.member.
 type MemberAccess struct {
-	Position
+	positioned
 	Source Expression
 	Member string
 }
@@ -619,7 +619,7 @@ func (*MemberAccess) expression() {}
 
 // FunctionCall represents a function invocation: expr.func(args...) or func(args...).
 type FunctionCall struct {
-	Position
+	positioned
 	Source   Expression // nil for standalone calls
 	Name     string
 	Library  string // optional library qualifier
@@ -630,7 +630,7 @@ func (*FunctionCall) expression() {}
 
 // IndexAccess represents expression[index].
 type IndexAccess struct {
-	Position
+	positioned
 	Source Expression
 	Index  Expression
 }
@@ -641,7 +641,7 @@ func (*IndexAccess) expression() {}
 
 // IntervalExpression represents 'Interval[low, high]' or 'Interval(low, high)'.
 type IntervalExpression struct {
-	Position
+	positioned
 	LowClosed  bool
 	HighClosed bool
 	Low        Expression
@@ -652,7 +652,7 @@ func (*IntervalExpression) expression() {}
 
 // TupleExpression represents 'Tuple { field: expr, ... }' or '{ field: expr, ... }'.
 type TupleExpression struct {
-	Position
+	positioned
 	Elements []*TupleElement
 }
 
@@ -666,7 +666,7 @@ type TupleElement struct {
 
 // InstanceExpression represents 'TypeName { field: expr, ... }'.
 type InstanceExpression struct {
-	Position
+	positioned
 	Type     *NamedType
 	Elements []*TupleElement
 }
@@ -675,7 +675,7 @@ func (*InstanceExpression) expression() {}
 
 // ListExpression represents '{ expr, expr, ... }' or 'List<Type> { ... }'.
 type ListExpression struct {
-	Position
+	positioned
 	TypeSpec TypeSpecifier // optional type annotation
 	Elements []Expression
 }
@@ -684,7 +684,7 @@ func (*ListExpression) expression() {}
 
 // CodeExpression represents 'Code "code" from CodeSystem display "text"'.
 type CodeExpression struct {
-	Position
+	positioned
 	Code    string
 	System  string
 	Display string
@@ -694,7 +694,7 @@ func (*CodeExpression) expression() {}
 
 // ConceptExpression represents 'Concept { Code ... , Code ... } display "text"'.
 type ConceptExpression struct {
-	Position
+	positioned
 	Codes   []*CodeExpression
 	Display string
 }
@@ -705,7 +705,7 @@ func (*ConceptExpression) expression() {}
 
 // ExternalConstant represents '%name' or '%"name"' (external parameter references).
 type ExternalConstant struct {
-	Position
+	positioned
 	Name string
 }
 
@@ -714,17 +714,17 @@ func (*ExternalConstant) expression() {}
 // --- Special Tokens ---
 
 // ThisExpression represents '$this' in iteration context.
-type ThisExpression struct{ Position }
+type ThisExpression struct{ positioned }
 
 func (*ThisExpression) expression() {}
 
 // IndexExpression represents '$index' in iteration context.
-type IndexExpression struct{ Position }
+type IndexExpression struct{ positioned }
 
 func (*IndexExpression) expression() {}
 
 // TotalExpression represents '$total' in aggregate context.
-type TotalExpression struct{ Position }
+type TotalExpression struct{ positioned }
 
 func (*TotalExpression) expression() {}
 
@@ -732,7 +732,7 @@ func (*TotalExpression) expression() {}
 
 // SetAggregateExpression represents 'expand expr per ...' or 'collapse expr per ...'.
 type SetAggregateExpression struct {
-	Position
+	positioned
 	Kind    string // "expand" or "collapse"
 	Operand Expression
 	Per     Expression // optional 'per' clause
