@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/gofhir/cql/compare/v1.7.0...v1.8.0) (2026-08-13)
+
+
+### Features
+
+* **model:** carry the official FHIR ModelInfo, and consult it ([#19](https://github.com/gofhir/cql/issues/19)) ([e90b4ef](https://github.com/gofhir/cql/commit/e90b4ef1150794061bc916a6274ffba17031f0f4))
+
 ## [1.7.0](https://github.com/gofhir/cql/compare/v1.6.0...v1.7.0) (2026-08-13)
 
 
