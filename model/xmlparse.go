@@ -117,6 +117,7 @@ func ParseModelInfo(r io.Reader) (*StaticModelInfo, error) {
 		}
 		mi.conversions[conversionKey{From: cv.FromType, To: cv.ToType}] = cv.FunctionName
 	}
+	mi.indexSingleConversions()
 
 	return mi, nil
 }

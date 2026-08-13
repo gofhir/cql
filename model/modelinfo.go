@@ -65,6 +65,7 @@ type StaticModelInfo struct {
 	retrievable          map[string]bool
 	contextKeys          map[string]string        // context name → key element
 	conversions          map[conversionKey]string // from/to → converting function
+	singleConversion     map[string]string        // from → the only conversion, when there is exactly one
 	contextRels          map[contextRelKey]string // type+context → search parameter
 	patientClassName     string
 	patientBirthDatePath string
@@ -79,16 +80,17 @@ type contextRelKey struct{ Type, Context string }
 // NewStaticModelInfo creates a new static model info.
 func NewStaticModelInfo(version string) *StaticModelInfo {
 	return &StaticModelInfo{
-		version:      version,
-		types:        make(map[string]*TypeInfo),
-		elementTypes: make(map[string]string),
-		choiceTypes:  make(map[string]bool),
-		contextTypes: make(map[string]string),
-		codePaths:    make(map[string]string),
-		retrievable:  make(map[string]bool),
-		contextKeys:  make(map[string]string),
-		conversions:  make(map[conversionKey]string),
-		contextRels:  make(map[contextRelKey]string),
+		version:          version,
+		types:            make(map[string]*TypeInfo),
+		elementTypes:     make(map[string]string),
+		choiceTypes:      make(map[string]bool),
+		contextTypes:     make(map[string]string),
+		codePaths:        make(map[string]string),
+		retrievable:      make(map[string]bool),
+		contextKeys:      make(map[string]string),
+		conversions:      make(map[conversionKey]string),
+		singleConversion: make(map[string]string),
+		contextRels:      make(map[contextRelKey]string),
 	}
 }
 
@@ -202,6 +204,36 @@ func isSearchParamName(s string) bool {
 		return false
 	}
 	return true
+}
+
+// indexSingleConversions records, per source type, the one conversion declared
+// from it — and records nothing when several are, since choosing between them
+// needs a return type this has no way to know.
+func (m *StaticModelInfo) indexSingleConversions() {
+	counts := make(map[string]int, len(m.conversions))
+	for k := range m.conversions {
+		counts[k.From]++
+	}
+	clear(m.singleConversion)
+	for k, fn := range m.conversions {
+		if counts[k.From] == 1 {
+			m.singleConversion[k.From] = fn
+		}
+	}
+}
+
+// ConversionFrom names the one conversion the model declares from a type.
+//
+// It reports false when the model declares none, and equally when it declares
+// more than one: choosing between them needs the return type the context wants,
+// which is what a semantic phase would know and this does not.
+//
+// The index is built once at load. Scanning all 264 conversions per call put a
+// linear search and a map allocation on the hot path — both operands of every
+// timing expression, and every interval unary.
+func (m *StaticModelInfo) ConversionFrom(from string) (string, bool) {
+	fn, ok := m.singleConversion[from]
+	return fn, ok
 }
 
 // PatientClassName returns the model's patient type, e.g. "FHIR.Patient".
