@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/gofhir/cql/compare/v1.6.0...v1.7.0) (2026-08-13)
+
+
+### Features
+
+* **eval:** adopt the official FHIRHelpers, and make it work ([#17](https://github.com/gofhir/cql/issues/17)) ([7cf47cb](https://github.com/gofhir/cql/commit/7cf47cbc3f85622193286a5af21d3c51e0884696))
+
 ## [1.6.0](https://github.com/gofhir/cql/compare/v1.5.1...v1.6.0) (2026-08-12)
 
 
