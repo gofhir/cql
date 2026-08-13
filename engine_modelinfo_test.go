@@ -233,3 +233,33 @@ func TestUsingVersionMustBeAvailable(t *testing.T) {
 		t.Errorf("an explicit model should override the version check: %v", err)
 	}
 }
+
+// TestEvaluationTimestampIsFrozen covers Now, TimeOfDay and Today. CQL says
+// they answer with the evaluation request's timestamp, so every call in one
+// evaluation agrees with every other; reading the clock per call made
+// `Now() = Now()` false about once in every 1,700 evaluations, which is a
+// conformance failure and a flaky build, not just an irreproducible measure.
+func TestEvaluationTimestampIsFrozen(t *testing.T) {
+	src := `library T version '1.0'
+
+define SameTimeOfDay: TimeOfDay() = TimeOfDay()
+define SameNow: Now() = Now()
+define SameToday: Today() = Today()
+define AcrossDefinitions: Now() = Anchor
+define Anchor: Now()
+`
+	engine := NewEngine()
+	// The window is roughly a millisecond wide, so one evaluation proves little.
+	const runs = 2000
+	for _, name := range []string{"SameTimeOfDay", "SameNow", "SameToday", "AcrossDefinitions"} {
+		for i := 0; i < runs; i++ {
+			got, err := engine.EvaluateExpression(context.Background(), src, name, nil, nil)
+			if err != nil {
+				t.Fatalf("evaluating %s: %v", name, err)
+			}
+			if valueString(got) != "true" {
+				t.Fatalf("%s was false on run %d: the evaluation timestamp is not frozen", name, i)
+			}
+		}
+	}
+}

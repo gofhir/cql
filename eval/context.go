@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
 
@@ -130,6 +131,17 @@ type Context struct {
 	// ChildScope: it governs the key expression, not a nested query inside one.
 	InSortKey bool
 
+	// EvaluationTimestamp is the instant the evaluation request was made, and is
+	// what Now, TimeOfDay and Today answer with.
+	//
+	// CQL requires them to be consistent throughout one evaluation — they name
+	// the request's timestamp, not the clock's current reading — so reading the
+	// clock per call is a conformance bug, not just a reproducibility one:
+	// `Now() = Now()` came out false about once in every 1,700 evaluations.
+	// Freezing it also makes a measure repeatable, which is what lets the same
+	// data be re-run and give the same answer.
+	EvaluationTimestamp time.Time
+
 	// MaxDepth bounds how deeply Eval may nest before giving up, and
 	// MaxRetrieveSize how many resources a single retrieve may return. Zero
 	// means unbounded for either.
@@ -207,21 +219,22 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		goCtx = context.Background()
 	}
 	c := &Context{
-		GoCtx:              goCtx,
-		Library:            lib,
-		depth:              new(int),
-		evalTicks:          new(int),
-		libraryScopes:      make(map[*ast.Library]*Context),
-		funcRegistries:     make(map[*ast.Library]map[string][]*ast.FunctionDef),
-		includedRegistries: make(map[*ast.Library]map[string]map[string][]*ast.FunctionDef),
-		Definitions:        make(map[string]fptypes.Value),
-		Parameters:         make(map[string]fptypes.Value),
-		CodeSystems:        make(map[string]*cqltypes.Code),
-		ValueSets:          make(map[string]string),
-		Aliases:            make(map[string]fptypes.Value),
-		LetBindings:        make(map[string]fptypes.Value),
-		IncludedLibraries:  make(map[string]*ast.Library),
-		LoadedLibraries:    make(map[string]*ast.Library),
+		GoCtx:               goCtx,
+		Library:             lib,
+		EvaluationTimestamp: time.Now(),
+		depth:               new(int),
+		evalTicks:           new(int),
+		libraryScopes:       make(map[*ast.Library]*Context),
+		funcRegistries:      make(map[*ast.Library]map[string][]*ast.FunctionDef),
+		includedRegistries:  make(map[*ast.Library]map[string]map[string][]*ast.FunctionDef),
+		Definitions:         make(map[string]fptypes.Value),
+		Parameters:          make(map[string]fptypes.Value),
+		CodeSystems:         make(map[string]*cqltypes.Code),
+		ValueSets:           make(map[string]string),
+		Aliases:             make(map[string]fptypes.Value),
+		LetBindings:         make(map[string]fptypes.Value),
+		IncludedLibraries:   make(map[string]*ast.Library),
+		LoadedLibraries:     make(map[string]*ast.Library),
 	}
 	c.loadDeclarations(lib)
 	return c
@@ -415,6 +428,7 @@ func (c *Context) ChildScope() *Context {
 		LetBindings:         make(map[string]fptypes.Value),
 		MaxDepth:            c.MaxDepth,
 		MaxRetrieveSize:     c.MaxRetrieveSize,
+		EvaluationTimestamp: c.EvaluationTimestamp,
 		depth:               c.depth,
 		evalTicks:           c.evalTicks,
 		libraryScopes:       c.libraryScopes,

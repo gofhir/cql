@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/shopspring/decimal"
@@ -1966,11 +1965,9 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return nil, nil
 	case "now":
-		now := time.Now().UTC()
-		return fptypes.NewDateTime(now.Format("2006-01-02T15:04:05.000Z07:00"))
+		return funcs.NowAt(e.ctx.EvaluationTimestamp)
 	case "today":
-		today := time.Now().UTC()
-		return fptypes.NewDate(today.Format("2006-01-02"))
+		return funcs.TodayAt(e.ctx.EvaluationTimestamp)
 	case "sum":
 		src, err := resolveSource()
 		if err != nil {
@@ -2279,7 +2276,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 
 	// Temporal functions
 	case "timeofday":
-		return funcs.TimeOfDay()
+		return funcs.TimeOfDayAt(e.ctx.EvaluationTimestamp)
 
 	// Advanced string functions
 	case "positionof":
