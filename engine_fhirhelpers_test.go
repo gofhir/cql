@@ -113,3 +113,136 @@ define Ti: FH.ToTime(@T12:00:00)
 		})
 	}
 }
+
+// TestTransitiveIncludeAliases covers a library whose include chose the same
+// alias as the top-level library did for something else. Registering the whole
+// graph under one alias map made the top-level `C.Answer()` resolve against the
+// nested library's C.
+func TestTransitiveIncludeAliases(t *testing.T) {
+	libs := map[string]string{
+		"Good": "library Good version '1.0'\n\ndefine function Answer(): 'GOOD'\n",
+		"Bad":  "library Bad version '1.0'\n\ndefine function Answer(): 'BAD'\n",
+		"Mid":  "library Mid version '1.0'\ninclude Bad version '1.0' called C\n\ndefine function Ask(): C.Answer()\n",
+	}
+	src := `library T version '1.0'
+include Good version '1.0' called C
+include Mid version '1.0' called M
+
+define Mine: C.Answer()
+define Theirs: M.Ask()
+`
+	engine := NewEngine(WithLibraryResolver(func(_ context.Context, name, _ string) (string, error) {
+		if s, ok := libs[name]; ok {
+			return s, nil
+		}
+		return "", context.Canceled
+	}))
+	for _, tt := range []struct{ name, want string }{{"Mine", "GOOD"}, {"Theirs", "BAD"}} {
+		got, err := engine.EvaluateExpression(context.Background(), src, tt.name, nil, nil)
+		if err != nil {
+			t.Fatalf("evaluating %s: %v", tt.name, err)
+		}
+		if s := valueString(got); s != tt.want {
+			t.Errorf("%s = %s, want %s — an alias means what the library that wrote it says", tt.name, s, tt.want)
+		}
+	}
+}
+
+// TestIncludeAliasDoesNotShadowScope covers a query alias or operand sharing a
+// name with an include. Anything bound in scope wins.
+func TestIncludeAliasDoesNotShadowScope(t *testing.T) {
+	libs := map[string]string{"Helper": "library Helper version '1.0'\n\ndefine Anchor: 1\n"}
+	src := "library T version '1.0'\ninclude Helper version '1.0' called H\n\ndefine X: ({Tuple{x: 1}}) H return H.x\n"
+	engine := NewEngine(WithLibraryResolver(func(_ context.Context, name, _ string) (string, error) {
+		if s, ok := libs[name]; ok {
+			return s, nil
+		}
+		return "", context.Canceled
+	}))
+	got, err := engine.EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err != nil {
+		t.Fatalf("a query alias named like an include should win: %v", err)
+	}
+	if s := valueString(got); s != "{1}" {
+		t.Errorf("X = %s, want {1}", s)
+	}
+}
+
+// TestPrivateDefineStaysPrivate covers access being decided from the
+// declaration rather than from the memoized results, which fill in as the
+// library evaluates its own definitions.
+func TestPrivateDefineStaysPrivate(t *testing.T) {
+	libs := map[string]string{"H": "library H version '1.0'\n\ndefine private Secret: 42\ndefine Pub: Secret + 0\n"}
+	engine := NewEngine(WithLibraryResolver(func(_ context.Context, name, _ string) (string, error) {
+		if s, ok := libs[name]; ok {
+			return s, nil
+		}
+		return "", context.Canceled
+	}))
+	// Reading the public define first fills the cache with Secret's value.
+	src := "library T version '1.0'\ninclude H version '1.0' called H\n\ndefine X: ToString(H.Pub) + ToString(H.Secret)\n"
+	if _, err := engine.EvaluateExpression(context.Background(), src, "X", nil, nil); err == nil {
+		t.Error("a private define should stay private even after the library has read it")
+	}
+}
+
+// TestAbsentClinicalElementsAreNull covers elements the value does not carry.
+// These structs hold plain strings, so answering with the empty string made
+// `code.display is null` false for a Code that never had a display.
+func TestAbsentClinicalElementsAreNull(t *testing.T) {
+	src := `library T version '1.0'
+define C: System.Code { code: '1', system: 'http://x' }
+define NoDisplay: C.display is null
+define NoVersion: C.version is null
+define Cpt: System.Concept { codes: { System.Code { code: '1', system: 'http://x' } } }
+define NoConceptDisplay: Cpt.display is null
+`
+	engine := NewEngine()
+	for _, n := range []string{"NoDisplay", "NoVersion", "NoConceptDisplay"} {
+		got, err := engine.EvaluateExpression(context.Background(), src, n, nil, nil)
+		if err != nil {
+			t.Fatalf("evaluating %s: %v", n, err)
+		}
+		if s := valueString(got); s != "true" {
+			t.Errorf("%s = %s, want true", n, s)
+		}
+	}
+}
+
+// recordingTerminology captures what the engine actually asks the server.
+type recordingTerminology struct{ code, system string }
+
+func (r *recordingTerminology) InValueSet(_ context.Context, code, system, _ string) (bool, error) {
+	r.code, r.system = code, system
+	return code == "8480-6", nil
+}
+
+// TestTerminologyQueryIsWellFormed covers what reaches the terminology server.
+// A value the extractor did not recognize used to be rendered with String(), so
+// a raw FHIR Coding was sent as its JSON text in the code field — a query no
+// server can answer, and resource content sent outward with it.
+func TestTerminologyQueryIsWellFormed(t *testing.T) {
+	src := `library T version '1.0'
+using FHIR version '4.0.1'
+valueset "BP": 'http://example.org/bp'
+
+define Obs: First([Observation])
+define RawCodingInVS: Obs.code.coding[0] in "BP"
+define RawConceptInVS: Obs.code in "BP"
+`
+	for _, name := range []string{"RawCodingInVS", "RawConceptInVS"} {
+		spy := &recordingTerminology{}
+		engine := NewEngine(WithDataProvider(fhirProvider{}), WithTerminologyProvider(spy))
+		got, err := engine.EvaluateExpression(context.Background(), src, name, nil, nil)
+		if err != nil {
+			t.Fatalf("evaluating %s: %v", name, err)
+		}
+		if spy.code != "8480-6" || spy.system != "http://loinc.org" {
+			t.Errorf("%s asked the server for code=%q system=%q, want the coding's own fields",
+				name, spy.code, spy.system)
+		}
+		if s := valueString(got); s != "true" {
+			t.Errorf("%s = %s, want true", name, s)
+		}
+	}
+}

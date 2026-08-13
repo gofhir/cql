@@ -29,9 +29,13 @@ func (e *Evaluator) inValueSetURL(code fptypes.Value, vsURL string) (fptypes.Val
 	if code == nil {
 		return nil, nil
 	}
-	if concept, ok := code.(cqltypes.Concept); ok {
+	// A value that carries several codes is in the set when any of them is: a
+	// CodeableConcept names one idea with several codings, and a raw FHIR
+	// CodeableConcept off a resource is the same shape before conversion.
+	// Deciding by whichever code came first would answer by accident.
+	if members, ok := codeMembers(code); ok {
 		anyKnown := false
-		for _, c := range concept.Codes {
+		for _, c := range members {
 			result, err := e.inValueSetURL(c, vsURL)
 			if err != nil {
 				return nil, err
@@ -186,13 +190,61 @@ func (e *Evaluator) evalAnyInCodeSystem(codes fptypes.Value, csRefName string) (
 	return fptypes.NewBoolean(false), nil
 }
 
+// codeMembers reports the individual codes a multi-valued terminology value
+// carries, and whether it is one at all. A Concept and a raw FHIR
+// CodeableConcept are the same idea before and after conversion; a list is what
+// a repeating element resolves to.
+func codeMembers(v fptypes.Value) ([]fptypes.Value, bool) {
+	switch c := v.(type) {
+	case cqltypes.Concept:
+		out := make([]fptypes.Value, 0, len(c.Codes))
+		for _, code := range c.Codes {
+			out = append(out, code)
+		}
+		return out, true
+	case cqltypes.List:
+		return c.Values, true
+	case *fptypes.ObjectValue:
+		// A CodeableConcept carries its codings under `coding`; a Coding does
+		// not, and is a single code.
+		if codings := c.GetCollection("coding"); codings.Count() > 0 {
+			return codings, true
+		}
+	}
+	return nil, false
+}
+
+// extractCodeComponents pulls the system and code out of a value.
+//
+// It answers an empty code for anything it does not recognize, rather than
+// stringifying it. The previous fallback rendered a whole value with String(),
+// so a raw FHIR Coding reached the terminology server as the JSON text
+// `{"system":"http://loinc.org","code":"8480-6"}` in the code field: a query no
+// server can answer, and resource content sent outward to boot.
 func extractCodeComponents(v fptypes.Value) (system, code string) {
 	switch c := v.(type) {
 	case cqltypes.Code:
 		return c.System, c.Code
 	case fptypes.String:
 		return "", c.Value()
+	case *fptypes.ObjectValue:
+		// A raw FHIR Coding, as it comes off a resource before FHIRHelpers has
+		// converted it.
+		return objectField(c, "system"), objectField(c, "code")
 	default:
-		return "", v.String()
+		return "", ""
 	}
+}
+
+// objectField reads a single scalar field off a FHIR object, or "" when it is
+// absent or repeats.
+func objectField(obj *fptypes.ObjectValue, name string) string {
+	values := obj.GetCollection(name)
+	if values.Count() != 1 {
+		return ""
+	}
+	if s, ok := values[0].(fptypes.String); ok {
+		return s.Value()
+	}
+	return ""
 }

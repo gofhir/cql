@@ -3243,6 +3243,15 @@ func (e *Evaluator) evalIncludedDefinition(alias, name string) (fptypes.Value, b
 	}
 	scope := e.libraryScope(lib)
 	// Codes, concepts and anything already evaluated.
+	// Access is decided from the declaration, before the memoized results are
+	// consulted: the cache fills as the library evaluates its own definitions, so
+	// checking it first let a private define escape as soon as anything inside
+	// the library had read it.
+	for _, stmt := range lib.Statements {
+		if stmt.Name == name && stmt.AccessLevel == ast.AccessPrivate {
+			return nil, true, fmt.Errorf("%q is private to library %q", name, alias)
+		}
+	}
 	if v, ok := scope.Definitions[name]; ok {
 		return v, true, nil
 	}
@@ -3252,9 +3261,6 @@ func (e *Evaluator) evalIncludedDefinition(alias, name string) (fptypes.Value, b
 	for _, stmt := range lib.Statements {
 		if stmt.Name != name {
 			continue
-		}
-		if stmt.AccessLevel == ast.AccessPrivate {
-			return nil, true, fmt.Errorf("%q is private to library %q", name, alias)
 		}
 		v, err := NewEvaluator(scope).Eval(stmt.Expression)
 		if err != nil {
@@ -3292,9 +3298,15 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	// not a property of a value. Only functions were reachable across an include
 	// before, so a library's definitions were invisible to the libraries that
 	// included it.
+	//
+	// Anything bound in scope wins, and is checked first: a query alias or a
+	// function operand may share a name with an include, and `({…}) H return H.x`
+	// is about the row, not about the library that happens to be called H.
 	if idRef, ok := n.Source.(*ast.IdentifierRef); ok {
-		if v, ok, err := e.evalIncludedDefinition(idRef.Name, n.Member); ok {
-			return v, err
+		if _, bound := e.ctx.ResolveIdentifier(idRef.Name); !bound {
+			if v, ok, err := e.evalIncludedDefinition(idRef.Name, n.Member); ok {
+				return v, err
+			}
 		}
 	}
 	source, err := e.Eval(n.Source)
@@ -3324,13 +3336,13 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	case cqltypes.Code:
 		switch n.Member {
 		case "code":
-			return fptypes.NewString(src.Code), nil
+			return optionalString(src.Code), nil
 		case "system":
-			return fptypes.NewString(src.System), nil
+			return optionalString(src.System), nil
 		case "display":
-			return fptypes.NewString(src.Display), nil
+			return optionalString(src.Display), nil
 		case "version":
-			return fptypes.NewString(src.Version), nil
+			return optionalString(src.Version), nil
 		}
 	case cqltypes.Concept:
 		switch n.Member {
@@ -3341,7 +3353,7 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 			}
 			return cqltypes.NewList(codes), nil
 		case "display":
-			return fptypes.NewString(src.Display), nil
+			return optionalString(src.Display), nil
 		}
 	}
 	// A System.Quantity has value and unit elements. FHIRHelpers.ToQuantity
@@ -3353,7 +3365,7 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 		case "value":
 			return newDecimalFromD(q.Value()), nil
 		case "unit":
-			return fptypes.NewString(q.Unit()), nil
+			return optionalString(q.Unit()), nil
 		}
 	}
 	// Tuple member access
@@ -3982,6 +3994,19 @@ func (e *Evaluator) evalTupleExpr(n *ast.TupleExpression) (fptypes.Value, error)
 		elements[elem.Name] = val
 	}
 	return cqltypes.NewTuple(elements), nil
+}
+
+// optionalString answers null for an element the value does not carry.
+//
+// These structs hold plain strings, so absent and empty are the same thing to
+// them; answering with the empty string would make `code.display is null` false
+// for a Code that never had a display, which is not what CQL says about a
+// missing element.
+func optionalString(s string) fptypes.Value {
+	if s == "" {
+		return nil
+	}
+	return fptypes.NewString(s)
 }
 
 // isSystemPrimitive reports whether a value is one of the CQL system primitives,
