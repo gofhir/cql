@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0](https://github.com/gofhir/cql/compare/v1.8.0...v1.9.0) (2026-08-13)
+
+
+### Features
+
+* **engine:** reusable parsed libraries, an injectable clock, and provenance ([#23](https://github.com/gofhir/cql/issues/23)) ([73ea8eb](https://github.com/gofhir/cql/commit/73ea8eb42c66d16ac2873a4eae20e35082dd040c))
+* **eval:** convert FHIR values where an operator needs a system type ([#21](https://github.com/gofhir/cql/issues/21)) ([4093b93](https://github.com/gofhir/cql/commit/4093b93b97373a4a8932f1e40e603a14070377ab))
+
 ## [1.8.0](https://github.com/gofhir/cql/compare/v1.7.0...v1.8.0) (2026-08-13)
 
 
