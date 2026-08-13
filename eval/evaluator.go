@@ -245,7 +245,10 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 		if err != nil {
 			return nil, err
 		}
-		operand = e.coerceToSystem(operand)
+		operand, err = e.coerceToSystem(operand)
+		if err != nil {
+			return nil, err
+		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
 			return funcs.DurationBetween(iv.Low, iv.High, n.Precision)
 		}
@@ -255,7 +258,10 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 		if err != nil {
 			return nil, err
 		}
-		operand = e.coerceToSystem(operand)
+		operand, err = e.coerceToSystem(operand)
+		if err != nil {
+			return nil, err
+		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
 			return funcs.DifferenceBetween(iv.Low, iv.High, n.Precision)
 		}
@@ -1112,6 +1118,18 @@ func nullSafeDistinct(c fptypes.Collection) fptypes.Collection {
 }
 
 func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
+	// An interval on both sides is an inclusion question, not a membership one:
+	// CQL reads `X in Y` as IncludedIn when X is an interval and as In when it
+	// is a point, a distinction the translator makes from static types. Deciding
+	// it from the runtime values is the same call this stage makes elsewhere.
+	if leftIv, ok := left.(cqltypes.Interval); ok {
+		if rightIv, ok := right.(cqltypes.Interval); ok {
+			if op == ast.OpIn {
+				return funcs.IntervalIncludedIn(leftIv, rightIv)
+			}
+			return funcs.IntervalIncludedIn(rightIv, leftIv)
+		}
+	}
 	if op == ast.OpIn {
 		// left in right: check if left is in the right collection/interval
 		if interval, ok := right.(cqltypes.Interval); ok {
@@ -1207,7 +1225,10 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 	// about an Interval<DateTime>, not about a FHIR.Period.
 	switch n.Operator {
 	case ast.OpStartOf, ast.OpEndOf, ast.OpWidthOf, ast.OpPointFrom, ast.OpSuccessorOf, ast.OpPredecessorOf:
-		operand = e.coerceToSystem(operand)
+		operand, err = e.coerceToSystem(operand)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	switch n.Operator {
@@ -4276,6 +4297,12 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 	// terminology path existed but nothing routed to it from here, so the
 	// membership was evaluated against the name as a plain string and answered
 	// false for every code.
+	// The same conversion the timing operators need: `encounter.period in MP`
+	// is the more common spelling of `during`, and was failing where `during`
+	// worked.
+	if left, err = e.coerceToSystem(left); err != nil {
+		return nil, err
+	}
 	if n.Operator == "in" {
 		if ref, ok := n.Right.(*ast.IdentifierRef); ok {
 			if _, found := e.ctx.ResolveValueSetURL(ref.Name); found {
@@ -4301,6 +4328,13 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 	right, err := e.Eval(n.Right)
 	if err != nil {
 		return nil, err
+	}
+	// A list is a membership question, not a conversion one — only convert the
+	// operand that is not the collection being searched.
+	if _, isList := right.(cqltypes.List); !isList {
+		if right, err = e.coerceToSystem(right); err != nil {
+			return nil, err
+		}
 	}
 	// Pass through to evalInContains which handles null properly
 	if n.Operator == "in" {
@@ -4381,20 +4415,28 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	// one has to be converted first: `encounter.period during "MP"` hands it a
 	// FHIR.Period where it needs an Interval<DateTime>, and the model says which
 	// function makes that.
-	left = e.coerceToSystem(left)
-	right = e.coerceToSystem(right)
-	// A FHIR value the model cannot convert is not something this operator can
-	// answer about, and answering null is what CQL does with a value it cannot
-	// interpret — `Interval[null, null] during MP` is null too. Letting it reach
-	// the comparison instead produced "cannot compare Object", which is how an
-	// Encounter carrying an empty `period: {}` used to fail a whole measure.
-	if isUnconvertedFHIR(left) || isUnconvertedFHIR(right) {
-		return nil, nil
+	if left, err = e.coerceToSystem(left); err != nil {
+		return nil, err
+	}
+	if right, err = e.coerceToSystem(right); err != nil {
+		return nil, err
 	}
 	// For includes/includedIn/contains/in with lists, don't short-circuit on nil
 	// Handle list-based operations first (before null propagation)
 	leftList, leftIsList := left.(cqltypes.List)
 	rightList, rightIsList := right.(cqltypes.List)
+	// A FHIR value the model cannot convert is not something the point and
+	// interval operators can answer about, and answering null is what CQL does
+	// with a value it cannot interpret — `Interval[null, null] during MP` is
+	// null too. Letting it through produced "cannot compare Object", which is
+	// how an Encounter carrying an empty `period: {}` failed a whole measure.
+	//
+	// Membership in a list is a different question, and one a FHIR resource is
+	// a perfectly good subject for: `encounter included in [Encounter]` asks
+	// whether the list contains it, not how it converts.
+	if !leftIsList && !rightIsList && (isUnconvertedFHIR(left) || isUnconvertedFHIR(right)) {
+		return nil, nil
+	}
 	if leftIsList || rightIsList {
 		// For includes/includedIn: null scalar with list needs special handling
 		switch n.Operator.Kind {

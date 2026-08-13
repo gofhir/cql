@@ -224,3 +224,133 @@ define StartOf: start of First([Encounter]).period
 		})
 	}
 }
+
+// TestMembershipWithFHIRResources covers list membership, which asks whether a
+// collection contains a value rather than how that value converts. A FHIR
+// resource type has no declared conversion, so guarding the timing operators
+// against unconverted values had turned every such question into null.
+func TestMembershipWithFHIRResources(t *testing.T) {
+	src := `library M version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FH
+
+define Encs: [Encounter]
+define One: First([Encounter])
+define IncludedIn: One included in Encs
+define Includes: Encs includes One
+define ProperlyIncluded: One properly included in Encs
+`
+	engine := NewEngine(WithDataProvider(&measureProvider{}))
+	for _, name := range []string{"IncludedIn", "Includes"} {
+		got, err := engine.EvaluateExpression(context.Background(), src, name, nil, nil)
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if s := valueString(got); s != "true" {
+			t.Errorf("%s = %s, want true", name, s)
+		}
+	}
+}
+
+// TestMembershipCoercesLikeTiming covers `in` and `contains`, which are the more
+// common spellings of the same question `during` asks. Conversion was wired into
+// the timing operators and not these, so `encounter.period in MP` failed where
+// `encounter.period during MP` worked.
+//
+// It also covers an interval on both sides: CQL reads `X in Y` as IncludedIn
+// when X is an interval, a distinction the translator makes from static types
+// and this decides from the values.
+func TestMembershipCoercesLikeTiming(t *testing.T) {
+	src := `library M version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FH
+parameter MP Interval<DateTime> default Interval[@2020-01-01, @2020-12-31]
+
+define PeriodIn: First([Encounter]).period in MP
+define MPContains: MP contains First([Encounter]).period
+define IntervalIn: Interval[@2020-03-01, @2020-03-05] in MP
+define PointIn: @2020-03-01 in MP
+define OutsideIn: Interval[@2019-01-01, @2019-02-01] in MP
+`
+	engine := NewEngine(WithDataProvider(&measureProvider{}))
+	for _, tt := range []struct{ name, want string }{
+		{"PeriodIn", "true"},
+		{"MPContains", "true"},
+		{"IntervalIn", "true"},
+		{"PointIn", "true"},
+		{"OutsideIn", "false"},
+	} {
+		got, err := engine.EvaluateExpression(context.Background(), src, tt.name, nil, nil)
+		if err != nil {
+			t.Errorf("%s: %v", tt.name, err)
+			continue
+		}
+		if s := valueString(got); s != tt.want {
+			t.Errorf("%s = %s, want %s", tt.name, s, tt.want)
+		}
+	}
+}
+
+// TestConversionErrorsPropagate covers a conversion that fails for a real
+// reason. Reporting it as "no conversion applied" would turn a canceled
+// evaluation, a depth limit or a broken conversion library into an ordinary
+// answer.
+func TestConversionErrorsPropagate(t *testing.T) {
+	const broken = `library FHIRHelpers version '4.0.1'
+using FHIR version '4.0.1'
+
+define function ToInterval(period FHIR.Period): NoSuchIdentifier
+`
+	src := `library M version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FH
+parameter MP Interval<DateTime> default Interval[@2020-01-01, @2020-12-31]
+define X: First([Encounter]).period during MP
+`
+	engine := NewEngine(WithDataProvider(&measureProvider{}),
+		WithLibraryResolver(func(_ context.Context, name, _ string) (string, error) {
+			if name == "FHIRHelpers" {
+				return broken, nil
+			}
+			return "", context.Canceled
+		}))
+	_, err := engine.EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err == nil {
+		t.Fatal("a conversion that fails should surface, not answer null")
+	}
+	if !strings.Contains(err.Error(), "NoSuchIdentifier") {
+		t.Errorf("the error should carry its cause, got: %v", err)
+	}
+}
+
+// TestConversionNeedsTheAuthorsInclude covers reaching through the include
+// graph. A library that included something which in turn includes FHIRHelpers
+// has not asked for conversions itself, and converting on the strength of
+// somebody else's dependency would make the behavior depend on what a
+// transitive library happened to import.
+func TestConversionNeedsTheAuthorsInclude(t *testing.T) {
+	libs := map[string]string{
+		"Middle": "library Middle version '1.0'\nusing FHIR version '4.0.1'\n" +
+			"include FHIRHelpers version '4.0.1' called FH\n\ndefine Anchor: 1\n",
+	}
+	src := `library M version '1.0'
+using FHIR version '4.0.1'
+include Middle version '1.0' called Mid
+parameter MP Interval<DateTime> default Interval[@2020-01-01, @2020-12-31]
+define X: First([Encounter]).period during MP
+`
+	engine := NewEngine(WithDataProvider(&measureProvider{}),
+		WithLibraryResolver(func(_ context.Context, name, _ string) (string, error) {
+			if s, ok := libs[name]; ok {
+				return s, nil
+			}
+			return "", context.Canceled
+		}))
+	got, err := engine.EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err != nil {
+		t.Fatalf("evaluating: %v", err)
+	}
+	if got != nil {
+		t.Errorf("X = %v, want null — the author never included FHIRHelpers", got)
+	}
+}

@@ -12,8 +12,10 @@ import (
 // convert to CQL system types. It is asked for optionally, so a model built by
 // hand still works without one.
 type conversionResolver interface {
-	ConversionFunction(from, to string) (string, bool)
-	ConversionsFrom(from string) map[string]string
+	// ConversionFrom names the single conversion declared from a type, and
+	// reports false when there is none or when there is more than one — with no
+	// static types there is nothing to choose between them by.
+	ConversionFrom(from string) (string, bool)
 }
 
 // coerceToSystem applies the conversion the model declares for a FHIR value,
@@ -31,30 +33,32 @@ type conversionResolver interface {
 // context wants. Where the model declares exactly one conversion from a type,
 // that ambiguity does not arise, and that covers the clinical types measures
 // actually use. Anything else is left alone rather than guessed at.
-func (e *Evaluator) coerceToSystem(v fptypes.Value) fptypes.Value {
+func (e *Evaluator) coerceToSystem(v fptypes.Value) (fptypes.Value, error) {
 	obj, ok := v.(*fptypes.ObjectValue)
 	if !ok || obj == nil {
-		return v
+		return v, nil
 	}
 	resolver, ok := e.ctx.ModelInfo.(conversionResolver)
 	if !ok {
-		return v
+		return v, nil
 	}
-	from := "FHIR." + obj.Type()
-	targets := resolver.ConversionsFrom(from)
-	if len(targets) != 1 {
+	fn, ok := resolver.ConversionFrom("FHIR." + obj.Type())
+	if !ok {
 		// None declared, or more than one and nothing to choose between them.
-		return v
-	}
-	var fn string
-	for _, name := range targets {
-		fn = name
+		return v, nil
 	}
 	converted, err := e.callConversion(fn, v)
-	if err != nil || converted == nil {
-		return v
+	if err != nil {
+		// A conversion that failed for a real reason — a canceled evaluation,
+		// the depth limit, a broken conversion library — must not be reported
+		// as "no conversion applied". Swallowing it turned a canceled request
+		// into an ordinary answer.
+		return nil, err
 	}
-	return converted
+	if converted == nil {
+		return v, nil
+	}
+	return converted, nil
 }
 
 // callConversion invokes a conversion function named "Library.Function".
@@ -86,20 +90,21 @@ func (e *Evaluator) callConversion(qualified string, arg fptypes.Value) (fptypes
 	return e.runFunction(fd, []fptypes.Value{arg}, lib)
 }
 
-// conversionLibrary finds the library a conversion names, by the alias it was
-// included under or by its own name.
+// conversionLibrary finds the library a conversion names among the ones this
+// library included, by the alias it chose or by the library's own name.
+//
+// It deliberately does not search the whole loaded graph. A library that
+// included something which in turn includes FHIRHelpers has not asked for
+// conversions itself, and reaching through to it would convert on the strength
+// of somebody else's dependency.
 func (e *Evaluator) conversionLibrary(name string) *ast.Library {
 	if lib, ok := e.ctx.IncludedLibraries[name]; ok {
 		return lib
 	}
-	for alias, lib := range e.ctx.IncludedLibraries {
+	for _, lib := range e.ctx.IncludedLibraries {
 		if lib != nil && lib.Identifier != nil && lib.Identifier.Name == name {
-			_ = alias
 			return lib
 		}
-	}
-	if lib, ok := e.ctx.LoadedLibraries[name]; ok {
-		return lib
 	}
 	return nil
 }
