@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"strings"
 	"sync"
 	"time"
@@ -47,8 +48,9 @@ type Engine struct {
 	evalTimeout         time.Duration
 	maxRetrieveSize     int
 	maxDepth            int
-	modelInfoExplicit   bool     // caller supplied a model; do not second-guess it
-	compiledCache       sync.Map // hash(cqlSource) → *ast.Library
+	modelInfoExplicit   bool // caller supplied a model; do not second-guess it
+	evaluationTimestamp time.Time
+	compiledCache       sync.Map // hash(cqlSource) → cachedLibrary
 }
 
 // Option configures the Engine.
@@ -108,6 +110,22 @@ func WithMaxDepth(n int) Option {
 	}
 }
 
+// WithEvaluationTimestamp fixes the instant Now, Today and TimeOfDay answer
+// with, for every evaluation this engine performs.
+//
+// CQL defines them as the timestamp of the evaluation request, and the engine
+// takes the clock's reading when the request arrives. Supplying it instead is
+// what makes a measure re-runnable: the same data and the same timestamp give
+// the same answer months later, which is the difference between a result you
+// can re-derive and one you have to trust.
+//
+// The zero time means "read the clock", which is the default.
+func WithEvaluationTimestamp(t time.Time) Option {
+	return func(e *Engine) {
+		e.evaluationTimestamp = t
+	}
+}
+
 // WithLibraryResolver sets the resolver for included libraries.
 func WithLibraryResolver(lr LibraryResolver) Option {
 	return func(e *Engine) {
@@ -145,7 +163,8 @@ func WithTraceListener(tl eval.TraceListener) Option {
 type EvalOption func(*evalConfig)
 
 type evalConfig struct {
-	traceListener eval.TraceListener
+	traceListener       eval.TraceListener
+	evaluationTimestamp time.Time
 }
 
 // WithCallTraceListener sets a trace listener for a specific call,
@@ -153,6 +172,13 @@ type evalConfig struct {
 // This enables per-request tracing in concurrent environments.
 func WithCallTraceListener(tl eval.TraceListener) EvalOption {
 	return func(c *evalConfig) { c.traceListener = tl }
+}
+
+// WithCallEvaluationTimestamp fixes the evaluation timestamp for one call,
+// overriding the engine's. Re-running a measure as of a past date is a
+// per-request question, not a per-engine one.
+func WithCallEvaluationTimestamp(t time.Time) EvalOption {
+	return func(c *evalConfig) { c.evaluationTimestamp = t }
 }
 
 // NewEngine creates a new CQL engine with the given options.
@@ -194,20 +220,37 @@ func NewEngine(opts ...Option) *Engine {
 }
 
 // compileOrCache compiles CQL source to AST, using a cache to avoid redundant ANTLR parsing.
+// cachedLibrary is a compiled library together with the source it came from.
+//
+// The source is kept so a hit can be confirmed. Indexing by hash alone means a
+// collision hands back a different library's AST — quietly, and with no way for
+// the caller to tell. fnv64a over arbitrary CQL is not a cryptographic digest;
+// two sources colliding is unlikely, not impossible, and the failure is silent
+// and total.
+type cachedLibrary struct {
+	source string
+	lib    *ast.Library
+}
+
 func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, error) {
 	h := fnv.New64a()
 	h.Write([]byte(cqlSource))
 	key := h.Sum64()
 
 	if cached, ok := e.compiledCache.Load(key); ok {
-		return cached.(*ast.Library), nil
+		if entry, ok := cached.(cachedLibrary); ok && entry.source == cqlSource {
+			return entry.lib, nil
+		}
+		// A collision: compile this source rather than answer with the other's
+		// AST. The entry is left alone, so whichever source got there first
+		// keeps the slot and the other pays the parse each time.
 	}
 
 	lib, err := compiler.Compile(cqlSource)
 	if err != nil {
 		return nil, err
 	}
-	e.compiledCache.Store(key, lib)
+	e.compiledCache.LoadOrStore(key, cachedLibrary{source: cqlSource, lib: lib})
 	return lib, nil
 }
 
@@ -291,62 +334,36 @@ func (e *Engine) EvaluateLibrary(
 	params map[string]fptypes.Value,
 	evalOpts ...EvalOption,
 ) (map[string]fptypes.Value, error) {
-	// DoS protection: check source length
-	if len(cqlSource) > e.maxExpressionLen {
-		return nil, &ErrTooCostly{Msg: fmt.Sprintf("CQL source exceeds maximum length (%d > %d)", len(cqlSource), e.maxExpressionLen)}
-	}
-
-	// Apply timeout
-	if e.evalTimeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, e.evalTimeout)
-		defer cancel()
-	}
-
-	// Parse CQL source to AST (cached)
-	lib, err := e.compileOrCache(cqlSource)
+	parsed, err := e.Parse(cqlSource)
 	if err != nil {
-		return nil, &ErrSyntaxError{Cause: err}
+		return nil, err
 	}
+	return e.EvaluateParsedLibrary(ctx, parsed, contextResource, params, evalOpts...)
+}
 
-	// Build evaluation context
-	evalCtx := eval.NewContext(ctx, lib)
-	evalCtx.ContextValue = contextResource
-	evalCtx.DataProvider = e.dataProvider
-	evalCtx.TerminologyProvider = e.terminologyProvider
-	evalCtx.TraceListener = e.traceListener
-	evalCtx.ModelInfo = e.modelInfo
-	evalCtx.LibraryLoader = e.libraryLoader
-	evalCtx.QuantityConverter = e.quantityConverter
-	evalCtx.MaxDepth = e.maxDepth
-	evalCtx.MaxRetrieveSize = e.maxRetrieveSize
-	if usingErr := e.checkUsings(lib); usingErr != nil {
-		return nil, usingErr
+// EvaluateParsedLibrary evaluates every public definition of an already-parsed
+// library, so the parse is paid once however many times it is evaluated.
+func (e *Engine) EvaluateParsedLibrary(
+	ctx context.Context,
+	parsed *Library,
+	contextResource json.RawMessage,
+	params map[string]fptypes.Value,
+	evalOpts ...EvalOption,
+) (map[string]fptypes.Value, error) {
+	if parsed == nil || parsed.lib == nil {
+		return nil, &ErrEvaluation{Cause: fmt.Errorf("no library to evaluate")}
 	}
-	// Apply per-call options (may override engine-level trace listener)
-	var cfg evalConfig
-	for _, opt := range evalOpts {
-		opt(&cfg)
-	}
-	if cfg.traceListener != nil {
-		evalCtx.TraceListener = cfg.traceListener
-	}
-	for k, v := range params {
-		evalCtx.Parameters[k] = v
-	}
+	ctx, cancel := e.withTimeout(ctx)
+	defer cancel()
 
-	// Resolve included libraries
-	if incErr := e.resolveIncludes(ctx, lib, evalCtx); incErr != nil {
-		return nil, &ErrEvaluation{Cause: incErr}
+	evalCtx, err := e.newEvalContext(ctx, parsed.lib, contextResource, params, evalOpts)
+	if err != nil {
+		return nil, err
 	}
-
-	// Evaluate all definitions
-	evaluator := eval.NewEvaluator(evalCtx)
-	results, err := evaluator.EvaluateLibrary()
+	results, err := eval.NewEvaluator(evalCtx).EvaluateLibrary()
 	if err != nil {
 		return nil, e.classifyEvalError(ctx, err)
 	}
-
 	return results, nil
 }
 
@@ -360,38 +377,66 @@ func (e *Engine) EvaluateExpression(
 	params map[string]fptypes.Value,
 	evalOpts ...EvalOption,
 ) (fptypes.Value, error) {
-	// DoS protection
-	if len(cqlSource) > e.maxExpressionLen {
-		return nil, &ErrTooCostly{Msg: fmt.Sprintf("CQL source exceeds maximum length (%d > %d)", len(cqlSource), e.maxExpressionLen)}
-	}
-
-	// Apply timeout
-	if e.evalTimeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, e.evalTimeout)
-		defer cancel()
-	}
-
-	// Parse CQL source (cached)
-	lib, err := e.compileOrCache(cqlSource)
+	parsed, err := e.Parse(cqlSource)
 	if err != nil {
-		return nil, &ErrSyntaxError{Cause: err}
+		return nil, err
+	}
+	return e.EvaluateParsedExpression(ctx, parsed, expressionName, contextResource, params, evalOpts...)
+}
+
+// EvaluateParsedExpression evaluates one named expression of an already-parsed
+// library.
+func (e *Engine) EvaluateParsedExpression(
+	ctx context.Context,
+	parsed *Library,
+	expressionName string,
+	contextResource json.RawMessage,
+	params map[string]fptypes.Value,
+	evalOpts ...EvalOption,
+) (fptypes.Value, error) {
+	if parsed == nil || parsed.lib == nil {
+		return nil, &ErrEvaluation{Cause: fmt.Errorf("no library to evaluate")}
+	}
+	ctx, cancel := e.withTimeout(ctx)
+	defer cancel()
+
+	evalCtx, err := e.newEvalContext(ctx, parsed.lib, contextResource, params, evalOpts)
+	if err != nil {
+		return nil, err
+	}
+	result, err := eval.NewEvaluator(evalCtx).EvaluateExpression(expressionName)
+	if err != nil {
+		return nil, e.classifyEvalError(ctx, err)
+	}
+	return result, nil
+}
+
+// newEvalContext builds the evaluation context for one request: the engine's
+// providers and limits, then whatever the call overrides, then the parameters
+// and the include graph. Both evaluation entry points go through it so they
+// cannot drift apart — LibraryLoader was already only wired on one of them.
+func (e *Engine) newEvalContext(
+	ctx context.Context,
+	lib *ast.Library,
+	contextResource json.RawMessage,
+	params map[string]fptypes.Value,
+	evalOpts []EvalOption,
+) (*eval.Context, error) {
+	if err := e.checkUsings(lib); err != nil {
+		return nil, err
 	}
 
-	// Build evaluation context
 	evalCtx := eval.NewContext(ctx, lib)
 	evalCtx.ContextValue = contextResource
 	evalCtx.DataProvider = e.dataProvider
 	evalCtx.TerminologyProvider = e.terminologyProvider
 	evalCtx.TraceListener = e.traceListener
 	evalCtx.ModelInfo = e.modelInfo
+	evalCtx.LibraryLoader = e.libraryLoader
 	evalCtx.QuantityConverter = e.quantityConverter
 	evalCtx.MaxDepth = e.maxDepth
 	evalCtx.MaxRetrieveSize = e.maxRetrieveSize
-	if usingErr := e.checkUsings(lib); usingErr != nil {
-		return nil, usingErr
-	}
-	// Apply per-call options (may override engine-level trace listener)
+
 	var cfg evalConfig
 	for _, opt := range evalOpts {
 		opt(&cfg)
@@ -399,23 +444,25 @@ func (e *Engine) EvaluateExpression(
 	if cfg.traceListener != nil {
 		evalCtx.TraceListener = cfg.traceListener
 	}
-	for k, v := range params {
-		evalCtx.Parameters[k] = v
+	if ts := e.evaluationTimestampFor(cfg); !ts.IsZero() {
+		evalCtx.EvaluationTimestamp = ts
 	}
+	maps.Copy(evalCtx.Parameters, params)
 
-	// Resolve included libraries
-	if incErr := e.resolveIncludes(ctx, lib, evalCtx); incErr != nil {
-		return nil, &ErrEvaluation{Cause: incErr}
+	if err := e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+		return nil, &ErrEvaluation{Cause: err}
 	}
+	return evalCtx, nil
+}
 
-	// Evaluate specified expression
-	evaluator := eval.NewEvaluator(evalCtx)
-	result, err := evaluator.EvaluateExpression(expressionName)
-	if err != nil {
-		return nil, e.classifyEvalError(ctx, err)
+// evaluationTimestampFor resolves the instant an evaluation answers Now with:
+// the call's if it supplied one, then the engine's, then nothing — which leaves
+// the context's own reading of the clock in place.
+func (e *Engine) evaluationTimestampFor(cfg evalConfig) time.Time {
+	if !cfg.evaluationTimestamp.IsZero() {
+		return cfg.evaluationTimestamp
 	}
-
-	return result, nil
+	return e.evaluationTimestamp
 }
 
 // checkUsings refuses a library that asks for a model this build cannot serve.
@@ -440,9 +487,9 @@ func (e *Engine) checkUsings(lib *ast.Library) error {
 }
 
 // classifyEvalError maps an evaluation failure onto the engine's error taxonomy.
-// A canceled context is checked first: the evaluator now stops on cancellation
-// and reports it as an ordinary error, so the reason has to be recovered from
-// the context rather than from the error alone.
+// A canceled context is checked first: the evaluator stops on cancellation and
+// reports it as an ordinary error, so the reason has to be recovered from the
+// context rather than from the error alone.
 func (e *Engine) classifyEvalError(ctx context.Context, err error) error {
 	if ctx.Err() == context.DeadlineExceeded {
 		return &ErrTimeout{Duration: e.evalTimeout}
@@ -453,17 +500,78 @@ func (e *Engine) classifyEvalError(ctx context.Context, err error) error {
 	return &ErrEvaluation{Cause: err}
 }
 
+// withTimeout applies the engine's per-evaluation timeout.
+func (e *Engine) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	if e.evalTimeout <= 0 {
+		return ctx, func() {}
+	}
+	return context.WithTimeout(ctx, e.evalTimeout)
+}
+
+// Library is a parsed CQL library, ready to be evaluated as many times as
+// wanted without being parsed again.
+//
+// Parsing dominates the first use of a source — a 300-term expression costs
+// about 1.4ms to parse and 26µs to evaluate — so separating the two lets a
+// caller pay it once, deliberately, rather than relying on a cache keyed by a
+// hash of the text.
+type Library struct {
+	source string
+	lib    *ast.Library
+}
+
+// Name returns the library's declared name, or "" if it is anonymous.
+func (l *Library) Name() string {
+	if l == nil || l.lib == nil || l.lib.Identifier == nil {
+		return ""
+	}
+	return l.lib.Identifier.Name
+}
+
+// Version returns the library's declared version, or "" if it declares none.
+func (l *Library) Version() string {
+	if l == nil || l.lib == nil || l.lib.Identifier == nil {
+		return ""
+	}
+	return l.lib.Identifier.Version
+}
+
+// ExpressionNames returns the names a caller may evaluate, in declaration
+// order. Private definitions are the library's own business and are not listed.
+func (l *Library) ExpressionNames() []string {
+	if l == nil || l.lib == nil {
+		return nil
+	}
+	names := make([]string, 0, len(l.lib.Statements))
+	for _, stmt := range l.lib.Statements {
+		if stmt.AccessLevel == ast.AccessPrivate {
+			continue
+		}
+		names = append(names, stmt.Name)
+	}
+	return names
+}
+
+// Parse compiles CQL source into a Library that can be evaluated repeatedly.
+func (e *Engine) Parse(cqlSource string) (*Library, error) {
+	if len(cqlSource) > e.maxExpressionLen {
+		return nil, &ErrTooCostly{Msg: fmt.Sprintf("CQL source exceeds maximum length (%d > %d)", len(cqlSource), e.maxExpressionLen)}
+	}
+	lib, err := e.compileOrCache(cqlSource)
+	if err != nil {
+		return nil, &ErrSyntaxError{Cause: err}
+	}
+	return &Library{source: cqlSource, lib: lib}, nil
+}
+
 // Compile parses a CQL source string without evaluating it.
 // Useful for syntax validation and data requirements analysis.
+//
+// Deprecated: use Parse, which returns the parsed library rather than
+// discarding it.
 func (e *Engine) Compile(cqlSource string) error {
-	if len(cqlSource) > e.maxExpressionLen {
-		return &ErrTooCostly{Msg: "CQL source exceeds maximum length"}
-	}
-	_, err := compiler.Compile(cqlSource)
-	if err != nil {
-		return &ErrSyntaxError{Cause: err}
-	}
-	return nil
+	_, err := e.Parse(cqlSource)
+	return err
 }
 
 // ---------------------------------------------------------------------------

@@ -100,8 +100,13 @@ func (e *Evaluator) EvaluateLibrary() (map[string]fptypes.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating '%s': %w", stmt.Name, err)
 		}
+		// A private definition is still evaluated — the public ones may be built
+		// on it — but it is not part of what the library offers, so it is not
+		// part of what the caller is handed.
 		e.ctx.Definitions[stmt.Name] = val
-		results[stmt.Name] = val
+		if stmt.AccessLevel != ast.AccessPrivate {
+			results[stmt.Name] = val
+		}
 	}
 	return results, nil
 }
@@ -117,6 +122,12 @@ func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
 		for _, stmt := range e.ctx.Library.Statements {
 			if stmt.Name != name {
 				continue
+			}
+			// `define private` says the definition is the library's own
+			// business. Asking for one by name from outside is asking for
+			// something the library does not offer.
+			if stmt.AccessLevel == ast.AccessPrivate {
+				return nil, fmt.Errorf("expression %q is private to the library", name)
 			}
 			e.ctx.StatementContext = stmt.Context
 			val, err := e.Eval(stmt.Expression)
@@ -3593,6 +3604,9 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 	}
 	e.ctx.applyRetrieveContext(&req)
 	results, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, req)
+	if observer, ok := e.ctx.TraceListener.(RetrieveObserver); ok {
+		observer.OnRetrieve(req, len(results), err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("retrieve [%s] failed: %w", resourceType, err)
 	}

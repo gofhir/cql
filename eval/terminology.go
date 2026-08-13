@@ -60,6 +60,9 @@ func (e *Evaluator) inValueSetURL(code fptypes.Value, vsURL string) (fptypes.Val
 	}
 	if e.ctx.TerminologyProvider != nil {
 		result, err := e.ctx.TerminologyProvider.InValueSet(e.ctx.GoCtx, codeVal, system, vsURL)
+		if observer, ok := e.ctx.TraceListener.(TerminologyObserver); ok {
+			observer.OnTerminologyCheck(codeVal, system, vsURL, result, err)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("terminology check failed for ValueSet %s: %w", vsURL, err)
 		}
