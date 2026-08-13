@@ -757,12 +757,12 @@ type mockDataProvider struct {
 	err                error
 }
 
-func (m *mockDataProvider) Retrieve(_ context.Context, resourceType, codePath, codeComparator string, codes, dateRange interface{}) ([]json.RawMessage, error) {
-	m.lastResourceType = resourceType
-	m.lastCodePath = codePath
-	m.lastCodeComparator = codeComparator
-	m.lastCodes = codes
-	m.lastDateRange = dateRange
+func (m *mockDataProvider) Retrieve(_ context.Context, req RetrieveRequest) ([]json.RawMessage, error) {
+	m.lastResourceType = req.ResourceType
+	m.lastCodePath = req.CodePath
+	m.lastCodeComparator = req.CodeComparator
+	m.lastCodes = req.Codes
+	m.lastDateRange = req.DateRange
 	return m.results, m.err
 }
 

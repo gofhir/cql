@@ -87,14 +87,12 @@ func (e *Evaluator) ResolveRelatedContext(targetType, reference string) (fptypes
 		return nil, nil
 	}
 	// Retrieve the referenced resource
-	resources, err := e.ctx.DataProvider.Retrieve(
-		e.ctx.GoCtx,
-		targetType,
-		"_id",
-		"=",
-		nil,
-		nil,
-	)
+	resources, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, RetrieveRequest{
+		ResourceType:   targetType,
+		CodePath:       "_id",
+		CodeComparator: "=",
+		Limit:          e.ctx.MaxRetrieveSize,
+	})
 	if err != nil {
 		return nil, err
 	}

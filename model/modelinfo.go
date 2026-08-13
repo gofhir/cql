@@ -60,7 +60,21 @@ type StaticModelInfo struct {
 	choiceTypes  map[string]bool
 	contextTypes map[string]string
 	codePaths    map[string]string // resource type → primary code path
+
+	// Populated from an official ModelInfo document; empty for hand-built ones.
+	retrievable          map[string]bool
+	contextKeys          map[string]string        // context name → key element
+	conversions          map[conversionKey]string // from/to → converting function
+	contextRels          map[contextRelKey]string // type+context → search parameter
+	patientClassName     string
+	patientBirthDatePath string
 }
+
+// conversionKey names a declared conversion between two model types.
+type conversionKey struct{ From, To string }
+
+// contextRelKey names how one type relates to one context.
+type contextRelKey struct{ Type, Context string }
 
 // NewStaticModelInfo creates a new static model info.
 func NewStaticModelInfo(version string) *StaticModelInfo {
@@ -71,6 +85,10 @@ func NewStaticModelInfo(version string) *StaticModelInfo {
 		choiceTypes:  make(map[string]bool),
 		contextTypes: make(map[string]string),
 		codePaths:    make(map[string]string),
+		retrievable:  make(map[string]bool),
+		contextKeys:  make(map[string]string),
+		conversions:  make(map[conversionKey]string),
+		contextRels:  make(map[contextRelKey]string),
 	}
 }
 
@@ -121,6 +139,74 @@ func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
 
 func (m *StaticModelInfo) Version() string {
 	return m.version
+}
+
+// IsRetrievable reports whether a retrieve may name this type. Only a model
+// parsed from an official document knows; a hand-built one says nothing.
+func (m *StaticModelInfo) IsRetrievable(typeName string) bool {
+	return m.retrievable[typeName]
+}
+
+// ContextKeyElement returns the element that identifies the subject of a
+// context, which is what narrows a retrieve to one patient.
+func (m *StaticModelInfo) ContextKeyElement(contextName string) (string, bool) {
+	k, ok := m.contextKeys[contextName]
+	return k, ok
+}
+
+// ConversionFunction returns the function the model declares for converting
+// between two types, if it declares one.
+func (m *StaticModelInfo) ConversionFunction(from, to string) (string, bool) {
+	fn, ok := m.conversions[conversionKey{From: from, To: to}]
+	return fn, ok
+}
+
+// ContextSearchParam returns the search parameter relating a resource type to a
+// context — "subject" for Observation in a Patient context, "patient" for
+// Condition. It is what a data provider needs to scope a retrieve; it is not an
+// element path, so the engine cannot navigate it itself.
+func (m *StaticModelInfo) ContextSearchParam(resourceType, contextName string) (string, bool) {
+	p, ok := m.contextRels[contextRelKey{Type: resourceType, Context: contextName}]
+	return p, ok
+}
+
+// PatientClassName returns the model's patient type, e.g. "FHIR.Patient".
+func (m *StaticModelInfo) PatientClassName() string { return m.patientClassName }
+
+// IsSubtypeOf reports whether concrete is target or descends from it, walking
+// the declared base chain. Comparing names alone made `x is DomainResource`
+// false for every resource.
+func (m *StaticModelInfo) IsSubtypeOf(concrete, target string) bool {
+	if concrete == "" || target == "" {
+		return false
+	}
+	if strings.EqualFold(unqualify(concrete), unqualify(target)) {
+		return true
+	}
+	seen := 0
+	for name := concrete; name != ""; seen++ {
+		// The chain is a chain, but a malformed document could loop it.
+		if seen > 64 {
+			return false
+		}
+		ti, ok := m.types[unqualify(name)]
+		if !ok {
+			return false
+		}
+		if strings.EqualFold(unqualify(ti.BaseName), unqualify(target)) {
+			return true
+		}
+		name = ti.BaseName
+	}
+	return false
+}
+
+// unqualify drops a namespace prefix: "FHIR.Patient" becomes "Patient".
+func unqualify(name string) string {
+	if i := strings.LastIndex(name, "."); i >= 0 {
+		return name[i+1:]
+	}
+	return name
 }
 
 // AddType registers a type.

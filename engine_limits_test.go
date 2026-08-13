@@ -9,13 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofhir/cql/eval"
+
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
 // countingProvider returns a fixed number of identical resources.
 type countingProvider struct{ n int }
 
-func (p *countingProvider) Retrieve(_ context.Context, _, _, _ string, _, _ interface{}) ([]json.RawMessage, error) {
+func (p *countingProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
 	out := make([]json.RawMessage, p.n)
 	for i := range out {
 		out[i] = json.RawMessage(`{"resourceType":"Condition","id":"c"}`)
@@ -202,9 +204,9 @@ type capturingProvider struct {
 	codePath string
 }
 
-func (p *capturingProvider) Retrieve(_ context.Context, _, codePath, _ string, codes, _ interface{}) ([]json.RawMessage, error) {
-	p.codes = codes
-	p.codePath = codePath
+func (p *capturingProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
+	p.codes = req.Codes
+	p.codePath = req.CodePath
 	return nil, nil
 }
 

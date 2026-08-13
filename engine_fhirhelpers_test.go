@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/gofhir/cql/eval"
 )
 
 // fhirProvider serves one Observation carrying every shape the conversions read.
 type fhirProvider struct{}
 
-func (fhirProvider) Retrieve(_ context.Context, _, _, _ string, _, _ interface{}) ([]json.RawMessage, error) {
+func (fhirProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
 	return []json.RawMessage{json.RawMessage(
 		`{"resourceType":"Observation","id":"o1","status":"final",` +
 			`"valueQuantity":{"value":5,"unit":"mg","system":"http://unitsofmeasure.org","code":"mg"},` +
