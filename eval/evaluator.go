@@ -245,6 +245,7 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 		if err != nil {
 			return nil, err
 		}
+		operand = e.coerceToSystem(operand)
 		if iv, ok := operand.(cqltypes.Interval); ok {
 			return funcs.DurationBetween(iv.Low, iv.High, n.Precision)
 		}
@@ -254,6 +255,7 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 		if err != nil {
 			return nil, err
 		}
+		operand = e.coerceToSystem(operand)
 		if iv, ok := operand.(cqltypes.Interval); ok {
 			return funcs.DifferenceBetween(iv.Low, iv.High, n.Precision)
 		}
@@ -421,6 +423,14 @@ func (e *Evaluator) evaluationNow() fptypes.Value {
 		return nil
 	}
 	return v
+}
+
+// isUnconvertedFHIR reports whether a value is still a FHIR object after
+// coercion had its chance, which means no conversion was declared for it or its
+// type could not be told — an empty object has nothing to infer a type from.
+func isUnconvertedFHIR(v fptypes.Value) bool {
+	_, ok := v.(*fptypes.ObjectValue)
+	return ok
 }
 
 // retrieveLimit is what a provider is asked for: one more than the caller will
@@ -1192,6 +1202,13 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 	if err != nil {
 		return nil, err
 	}
+	// The interval operators want an interval, so a FHIR type reaching one is
+	// converted the way the model says: `start of encounter.period` is asking
+	// about an Interval<DateTime>, not about a FHIR.Period.
+	switch n.Operator {
+	case ast.OpStartOf, ast.OpEndOf, ast.OpWidthOf, ast.OpPointFrom, ast.OpSuccessorOf, ast.OpPredecessorOf:
+		operand = e.coerceToSystem(operand)
+	}
 
 	switch n.Operator {
 	case ast.OpNot:
@@ -1660,15 +1677,27 @@ func (e *Evaluator) resolveOverloadByValues(overloads []*ast.FunctionDef, values
 
 	best, bestScore := candidates[0], -1
 	for _, fd := range candidates {
-		score := 0
-		for i, op := range fd.Operands {
-			score += e.scoreOperand(op, values[i])
-		}
+		// Candidates are filtered to exactly this arity above, so the two
+		// slices line up; zipping them keeps that visible.
+		score := e.scoreOperands(fd.Operands, values)
 		if score > bestScore {
 			best, bestScore = fd, score
 		}
 	}
 	return best
+}
+
+// scoreOperands rates how well a call's arguments fit a candidate's operands.
+func (e *Evaluator) scoreOperands(operands []*ast.OperandDef, values []fptypes.Value) int {
+	n := len(operands)
+	if len(values) < n {
+		n = len(values)
+	}
+	score := 0
+	for i := range n {
+		score += e.scoreOperand(operands[i], values[i])
+	}
+	return score
 }
 
 // scoreOperand rates how well one argument fits one declared operand type.
@@ -4347,6 +4376,20 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	right, err := e.Eval(n.Right)
 	if err != nil {
 		return nil, err
+	}
+	// A timing operator works on points and intervals, so a FHIR type reaching
+	// one has to be converted first: `encounter.period during "MP"` hands it a
+	// FHIR.Period where it needs an Interval<DateTime>, and the model says which
+	// function makes that.
+	left = e.coerceToSystem(left)
+	right = e.coerceToSystem(right)
+	// A FHIR value the model cannot convert is not something this operator can
+	// answer about, and answering null is what CQL does with a value it cannot
+	// interpret — `Interval[null, null] during MP` is null too. Letting it reach
+	// the comparison instead produced "cannot compare Object", which is how an
+	// Encounter carrying an empty `period: {}` used to fail a whole measure.
+	if isUnconvertedFHIR(left) || isUnconvertedFHIR(right) {
+		return nil, nil
 	}
 	// For includes/includedIn/contains/in with lists, don't short-circuit on nil
 	// Handle list-based operations first (before null propagation)

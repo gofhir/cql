@@ -204,6 +204,22 @@ func isSearchParamName(s string) bool {
 	return true
 }
 
+// ConversionsFrom returns every conversion the model declares from a type,
+// as target type → converting function.
+func (m *StaticModelInfo) ConversionsFrom(from string) map[string]string {
+	var out map[string]string
+	for k, fn := range m.conversions {
+		if k.From != from {
+			continue
+		}
+		if out == nil {
+			out = make(map[string]string, 1)
+		}
+		out[k.To] = fn
+	}
+	return out
+}
+
 // PatientClassName returns the model's patient type, e.g. "FHIR.Patient".
 func (m *StaticModelInfo) PatientClassName() string { return m.patientClassName }
 
