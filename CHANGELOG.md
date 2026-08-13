@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/gofhir/cql/compare/v1.9.0...v1.10.0) (2026-08-13)
+
+
+### Features
+
+* **ast:** record where each expression came from, and diff against the reference ([#24](https://github.com/gofhir/cql/issues/24)) ([c5f0a6e](https://github.com/gofhir/cql/commit/c5f0a6edb1311bd5b7dd987b9348e9e475d036f2))
+
 ## [1.9.0](https://github.com/gofhir/cql/compare/v1.8.0...v1.9.0) (2026-08-13)
 
 
