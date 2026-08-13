@@ -60,7 +60,21 @@ type StaticModelInfo struct {
 	choiceTypes  map[string]bool
 	contextTypes map[string]string
 	codePaths    map[string]string // resource type → primary code path
+
+	// Populated from an official ModelInfo document; empty for hand-built ones.
+	retrievable          map[string]bool
+	contextKeys          map[string]string        // context name → key element
+	conversions          map[conversionKey]string // from/to → converting function
+	contextRels          map[contextRelKey]string // type+context → search parameter
+	patientClassName     string
+	patientBirthDatePath string
 }
+
+// conversionKey names a declared conversion between two model types.
+type conversionKey struct{ From, To string }
+
+// contextRelKey names how one type relates to one context.
+type contextRelKey struct{ Type, Context string }
 
 // NewStaticModelInfo creates a new static model info.
 func NewStaticModelInfo(version string) *StaticModelInfo {
@@ -71,6 +85,10 @@ func NewStaticModelInfo(version string) *StaticModelInfo {
 		choiceTypes:  make(map[string]bool),
 		contextTypes: make(map[string]string),
 		codePaths:    make(map[string]string),
+		retrievable:  make(map[string]bool),
+		contextKeys:  make(map[string]string),
+		conversions:  make(map[conversionKey]string),
+		contextRels:  make(map[contextRelKey]string),
 	}
 }
 
@@ -95,11 +113,16 @@ func (m *StaticModelInfo) ContextType(contextName string) string {
 	return contextName // default: context name is the resource type
 }
 
+// PrimaryCodePath returns the element a retrieve filters its codes against, or
+// "" when the model declares none.
+//
+// 84 of the 147 retrievable types declare no primary code path — a retrieve
+// naming one has to say which element it means. Answering "code" for those
+// would leave a provider unable to tell what the model said from what it did
+// not, and Media, ImagingStudy and DocumentReference have no code element at
+// all.
 func (m *StaticModelInfo) PrimaryCodePath(resourceType string) string {
-	if cp, ok := m.codePaths[resourceType]; ok {
-		return cp
-	}
-	return "code" // default code path
+	return m.codePaths[resourceType]
 }
 
 func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
@@ -121,6 +144,103 @@ func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
 
 func (m *StaticModelInfo) Version() string {
 	return m.version
+}
+
+// IsRetrievable reports whether a retrieve may name this type. Only a model
+// parsed from an official document knows; a hand-built one says nothing.
+func (m *StaticModelInfo) IsRetrievable(typeName string) bool {
+	return m.retrievable[typeName]
+}
+
+// ContextKeyElement returns the element that identifies the subject of a
+// context, which is what narrows a retrieve to one patient.
+func (m *StaticModelInfo) ContextKeyElement(contextName string) (string, bool) {
+	k, ok := m.contextKeys[contextName]
+	return k, ok
+}
+
+// ConversionFunction returns the function the model declares for converting
+// between two types, if it declares one.
+func (m *StaticModelInfo) ConversionFunction(from, to string) (string, bool) {
+	fn, ok := m.conversions[conversionKey{From: from, To: to}]
+	return fn, ok
+}
+
+// ContextSearchParam returns the search parameter relating a resource type to a
+// context — "subject" for Observation in a Patient context, "patient" for
+// Condition. It is what a data provider needs to scope a retrieve; it is not an
+// element path, so the engine cannot navigate it itself.
+//
+// Two kinds of declaration are refused rather than passed on. A type that *is*
+// the context is identified by its own key, not by a relationship to itself:
+// the model says Patient relates to Patient through "other", which is
+// Patient.link.other and would fetch the linked patients instead. And some
+// types declare a FHIRPath fragment — AuditEvent, Provenance, Basic, Person and
+// MeasureReport all say "where(resolve() is Patient)" — which is not a search
+// parameter and would make a query no server can answer.
+func (m *StaticModelInfo) ContextSearchParam(resourceType, contextName string) (string, bool) {
+	if strings.EqualFold(unqualify(resourceType), unqualify(contextName)) {
+		return "", false
+	}
+	p, ok := m.contextRels[contextRelKey{Type: resourceType, Context: contextName}]
+	if !ok || !isSearchParamName(p) {
+		return "", false
+	}
+	return p, true
+}
+
+// isSearchParamName reports whether a declaration looks like a search parameter
+// rather than a path expression.
+func isSearchParamName(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+// PatientClassName returns the model's patient type, e.g. "FHIR.Patient".
+func (m *StaticModelInfo) PatientClassName() string { return m.patientClassName }
+
+// IsSubtypeOf reports whether concrete is target or descends from it, walking
+// the declared base chain. Comparing names alone made `x is DomainResource`
+// false for every resource.
+func (m *StaticModelInfo) IsSubtypeOf(concrete, target string) bool {
+	if concrete == "" || target == "" {
+		return false
+	}
+	if strings.EqualFold(unqualify(concrete), unqualify(target)) {
+		return true
+	}
+	seen := 0
+	for name := concrete; name != ""; seen++ {
+		// The chain is a chain, but a malformed document could loop it.
+		if seen > 64 {
+			return false
+		}
+		ti, ok := m.types[unqualify(name)]
+		if !ok {
+			return false
+		}
+		if strings.EqualFold(unqualify(ti.BaseName), unqualify(target)) {
+			return true
+		}
+		name = ti.BaseName
+	}
+	return false
+}
+
+// unqualify drops a namespace prefix: "FHIR.Patient" becomes "Patient".
+func unqualify(name string) string {
+	if i := strings.LastIndex(name, "."); i >= 0 {
+		return name[i+1:]
+	}
+	return name
 }
 
 // AddType registers a type.

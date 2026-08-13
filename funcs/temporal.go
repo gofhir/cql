@@ -8,17 +8,34 @@ import (
 
 // Now returns the current date and time as a DateTime value.
 func Now() (fptypes.Value, error) {
-	return fptypes.NewDateTime(time.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00"))
+	return NowAt(time.Now())
+}
+
+// NowAt returns the given instant as a DateTime. CQL asks for the timestamp of
+// the evaluation request rather than the clock's reading at the moment of the
+// call, so that every Now in one evaluation agrees with every other.
+func NowAt(t time.Time) (fptypes.Value, error) {
+	return fptypes.NewDateTime(t.UTC().Format("2006-01-02T15:04:05.000Z07:00"))
 }
 
 // Today returns the current date as a Date value.
 func Today() (fptypes.Value, error) {
-	return fptypes.NewDate(time.Now().UTC().Format("2006-01-02"))
+	return TodayAt(time.Now())
+}
+
+// TodayAt returns the given instant's date. See NowAt.
+func TodayAt(t time.Time) (fptypes.Value, error) {
+	return fptypes.NewDate(t.UTC().Format("2006-01-02"))
 }
 
 // TimeOfDay returns the current time as a Time value.
 func TimeOfDay() (fptypes.Value, error) {
-	return fptypes.NewTime(time.Now().UTC().Format("15:04:05.000"))
+	return TimeOfDayAt(time.Now())
+}
+
+// TimeOfDayAt returns the given instant's time of day. See NowAt.
+func TimeOfDayAt(t time.Time) (fptypes.Value, error) {
+	return fptypes.NewTime(t.UTC().Format("15:04:05.000"))
 }
 
 // YearsBetween calculates the number of whole years between two dates.

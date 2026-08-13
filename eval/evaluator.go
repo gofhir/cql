@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
+	"unicode"
 
 	"github.com/shopspring/decimal"
 
@@ -95,6 +95,7 @@ func (e *Evaluator) EvaluateLibrary() (map[string]fptypes.Value, error) {
 	}
 	results := make(map[string]fptypes.Value)
 	for _, stmt := range e.ctx.Library.Statements {
+		e.ctx.StatementContext = stmt.Context
 		val, err := e.Eval(stmt.Expression)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating '%s': %w", stmt.Name, err)
@@ -114,14 +115,16 @@ func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
 	// Find the expression definition
 	if e.ctx.Library != nil {
 		for _, stmt := range e.ctx.Library.Statements {
-			if stmt.Name == name {
-				val, err := e.Eval(stmt.Expression)
-				if err != nil {
-					return nil, err
-				}
-				e.ctx.Definitions[name] = val
-				return val, nil
+			if stmt.Name != name {
+				continue
 			}
+			e.ctx.StatementContext = stmt.Context
+			val, err := e.Eval(stmt.Expression)
+			if err != nil {
+				return nil, err
+			}
+			e.ctx.Definitions[name] = val
+			return val, nil
 		}
 	}
 	return nil, fmt.Errorf("expression '%s' not found", name)
@@ -406,6 +409,33 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	// Anywhere else, a name that resolves to nothing is a mistake: answering
 	// with the name itself hides it behind a plausible-looking String.
 	return nil, fmt.Errorf("unknown identifier %q", n.Name)
+}
+
+// evaluationNow renders the evaluation's frozen timestamp as a value, for the
+// operators that take an "as of" argument and would otherwise read the clock.
+// An age computed against a different instant than Today() answers in the same
+// expression is the same inconsistency, one function further out.
+func (e *Evaluator) evaluationNow() fptypes.Value {
+	v, err := funcs.NowAt(e.ctx.EvaluationTimestamp)
+	if err != nil {
+		return nil
+	}
+	return v
+}
+
+// retrieveLimit is what a provider is asked for: one more than the caller will
+// accept.
+//
+// Asking for exactly the maximum makes the refusal below unreachable — a
+// provider that honors the limit returns exactly that many rows, len(results)
+// never exceeds it, and the population is silently truncated, which is the one
+// outcome the limit exists to prevent. One extra row is how the engine can tell
+// "there were more" from "that was all".
+func retrieveLimit(maxSize int) int {
+	if maxSize <= 0 {
+		return 0
+	}
+	return maxSize + 1
 }
 
 // wrapUnlessLimit adds context to an evaluation error, except when the error is
@@ -1423,6 +1453,19 @@ func (e *Evaluator) evalCase(n *ast.CaseExpression) (fptypes.Value, error) {
 // Type operations
 // ---------------------------------------------------------------------------
 
+// subtypeChecker is the part of a model that knows its own type hierarchy. It
+// is asked for optionally rather than added to the ModelInfo interface, so a
+// model built by hand still works without one.
+type subtypeChecker interface {
+	IsSubtypeOf(concrete, target string) bool
+}
+
+// modelSaysSubtype reports whether the model places concrete under target.
+func (e *Evaluator) modelSaysSubtype(concrete, target string) bool {
+	checker, ok := e.ctx.ModelInfo.(subtypeChecker)
+	return ok && checker.IsSubtypeOf(concrete, target)
+}
+
 func (e *Evaluator) evalIs(n *ast.IsExpression) (fptypes.Value, error) {
 	operand, err := e.Eval(n.Operand)
 	if err != nil {
@@ -1438,6 +1481,12 @@ func (e *Evaluator) evalIs(n *ast.IsExpression) (fptypes.Value, error) {
 	typeName := nt.Name
 	operandType := operand.Type()
 	if strings.EqualFold(operandType, typeName) {
+		return fptypes.NewBoolean(true), nil
+	}
+	// A resource is also every type it descends from. Comparing names alone
+	// made `x is DomainResource` false for a Patient, which is the whole point
+	// of asking.
+	if e.modelSaysSubtype(operandType, typeName) {
 		return fptypes.NewBoolean(true), nil
 	}
 	// CQL: Vocabulary is a supertype of ValueSet and CodeSystem
@@ -1585,72 +1634,64 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 
 // resolveOverload picks the best FunctionDef matching the given arguments.
 // Matches by operand count. Returns first match or first overload as fallback.
-func resolveOverload(overloads []*ast.FunctionDef, args []ast.Expression) *ast.FunctionDef {
+// resolveOverloadByValues picks the overload whose declared operand types best
+// fit the arguments actually passed.
+//
+// Scoring, highest first: the declared type names the value's own type; the
+// model places the value's type under the declared one. A candidate that fits
+// nothing still beats no candidate at all, which keeps a single same-arity
+// overload working whatever it declares.
+func (e *Evaluator) resolveOverloadByValues(overloads []*ast.FunctionDef, values []fptypes.Value) *ast.FunctionDef {
 	if len(overloads) == 1 {
 		return overloads[0]
 	}
-
-	// First filter by arity
 	var candidates []*ast.FunctionDef
 	for _, fd := range overloads {
-		if len(fd.Operands) == len(args) {
+		if len(fd.Operands) == len(values) {
 			candidates = append(candidates, fd)
 		}
 	}
-	if len(candidates) == 0 {
+	switch len(candidates) {
+	case 0:
 		return overloads[0]
-	}
-	if len(candidates) == 1 {
+	case 1:
 		return candidates[0]
 	}
 
-	// Score by argument type match
-	bestScore := -1
-	var best *ast.FunctionDef
+	best, bestScore := candidates[0], -1
 	for _, fd := range candidates {
 		score := 0
 		for i, op := range fd.Operands {
-			if i < len(args) && op.Type != nil {
-				if nt, ok := op.Type.(*ast.NamedType); ok {
-					if matchesArgType(args[i], nt.Name) {
-						score++
-					}
-				}
-			}
+			score += e.scoreOperand(op, values[i])
 		}
 		if score > bestScore {
-			bestScore = score
-			best = fd
+			best, bestScore = fd, score
 		}
 	}
-	if best != nil {
-		return best
-	}
-	return candidates[0]
+	return best
 }
 
-// matchesArgType checks if an AST expression matches the expected type name.
-func matchesArgType(expr ast.Expression, typeName string) bool {
-	lit, ok := expr.(*ast.Literal)
-	if !ok {
-		return false
+// scoreOperand rates how well one argument fits one declared operand type.
+func (e *Evaluator) scoreOperand(op *ast.OperandDef, value fptypes.Value) int {
+	if op.Type == nil || value == nil {
+		return 0
 	}
-	switch lit.ValueType {
-	case ast.LiteralInteger:
-		return typeName == "Integer" || typeName == "System.Integer"
-	case ast.LiteralDecimal:
-		return typeName == "Decimal" || typeName == "System.Decimal"
-	case ast.LiteralString:
-		return typeName == "String" || typeName == "System.String"
-	case ast.LiteralBoolean:
-		return typeName == "Boolean" || typeName == "System.Boolean"
-	case ast.LiteralLong:
-		return typeName == "Long" || typeName == "System.Long"
-	case ast.LiteralQuantity:
-		return typeName == "Quantity" || typeName == "System.Quantity"
-	default:
-		return false
+	named, ok := op.Type.(*ast.NamedType)
+	if !ok || named.Name == "" {
+		return 0
 	}
+	declared := named.Name
+	if i := strings.LastIndex(declared, "."); i >= 0 {
+		declared = declared[i+1:]
+	}
+	actual := value.Type()
+	if strings.EqualFold(declared, actual) {
+		return 2
+	}
+	if e.modelSaysSubtype(actual, declared) {
+		return 1
+	}
+	return 0
 }
 
 // ensureLibraryLoaded lazily loads an included library by alias using the LibraryLoader.
@@ -1714,8 +1755,7 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 				if !ok {
 					return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, idRef.Name)
 				}
-				fd := resolveOverload(overloads, n.Operands)
-				return e.evalUserFunctionIn(fd, n.Operands, e.ctx.IncludedLibraries[idRef.Name])
+				return e.callOverload(overloads, n.Operands, e.ctx.IncludedLibraries[idRef.Name])
 			}
 		}
 	}
@@ -1733,49 +1773,46 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 			if !ok {
 				return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, n.Library)
 			}
-			fd := resolveOverload(overloads, n.Operands)
-			return e.evalUserFunctionIn(fd, n.Operands, e.ctx.IncludedLibraries[n.Library])
+			return e.callOverload(overloads, n.Operands, e.ctx.IncludedLibraries[n.Library])
 		}
 	}
 
 	// Check if it's a library-defined function
 	if overloads, ok := e.funcs[n.Name]; ok {
-		fd := resolveOverload(overloads, n.Operands)
-		return e.evalUserFunction(fd, n.Operands)
+		return e.callOverload(overloads, n.Operands, nil)
 	}
 	// Built-in functions handled here
 	return e.evalBuiltinFunction(n)
 }
 
-func (e *Evaluator) evalUserFunction(fd *ast.FunctionDef, args []ast.Expression) (fptypes.Value, error) {
-	return e.evalUserFunctionIn(fd, args, nil)
-}
-
-// evalUserFunctionIn runs a function body, optionally in the scope of the
-// library that declared it.
+// callOverload evaluates the arguments once, picks the overload their types fit,
+// and runs it.
 //
-// owner matters for a function reached through an include. Its body has to see
-// its own library's functions, definitions and terminology: FHIRHelpers.ToConcept
-// calls ToCode, and ToQuantity calls ToCalendarUnit, so a library whose
-// conversions lean on each other cannot work at all without this. Arguments are
-// still evaluated in the caller's scope, where they were written.
-func (e *Evaluator) evalUserFunctionIn(fd *ast.FunctionDef, args []ast.Expression, owner *ast.Library) (fptypes.Value, error) {
-	if fd.External {
-		return nil, fmt.Errorf("external function '%s' not implemented", fd.Name)
-	}
-	// Evaluate the arguments before switching scope: they belong to the caller.
-	values := make([]fptypes.Value, 0, len(fd.Operands))
-	for i := range fd.Operands {
-		if i >= len(args) {
-			break
-		}
-		val, err := e.Eval(args[i])
+// The arguments have to be evaluated before the choice, not after: which
+// FHIRHelpers.ToInterval is meant depends on whether it was handed a Period, a
+// Range or a Quantity, and that is not visible in the syntax. Scoring only
+// literals is why the Period overload used to win every time.
+func (e *Evaluator) callOverload(overloads []*ast.FunctionDef, args []ast.Expression, owner *ast.Library) (fptypes.Value, error) {
+	values := make([]fptypes.Value, 0, len(args))
+	for _, arg := range args {
+		v, err := e.Eval(arg)
 		if err != nil {
 			return nil, err
 		}
-		values = append(values, val)
+		values = append(values, v)
 	}
+	fd := e.resolveOverloadByValues(overloads, values)
+	if fd == nil {
+		return nil, fmt.Errorf("no overload of %q accepts %d arguments", overloads[0].Name, len(values))
+	}
+	return e.runFunction(fd, values, owner)
+}
 
+// runFunction binds already-evaluated arguments and runs the body.
+func (e *Evaluator) runFunction(fd *ast.FunctionDef, values []fptypes.Value, owner *ast.Library) (fptypes.Value, error) {
+	if fd.External {
+		return nil, fmt.Errorf("external function '%s' not implemented", fd.Name)
+	}
 	child := e.ctx.ChildScope()
 	if owner != nil {
 		// A child of the memoized library scope, not a fresh one: the operand
@@ -1783,7 +1820,9 @@ func (e *Evaluator) evalUserFunctionIn(fd *ast.FunctionDef, args []ast.Expressio
 		child = e.libraryScope(owner).ChildScope()
 	}
 	for i, val := range values {
-		child.Aliases[fd.Operands[i].Name] = val
+		if i < len(fd.Operands) {
+			child.Aliases[fd.Operands[i].Name] = val
+		}
 	}
 	return NewEvaluator(child).Eval(fd.Body)
 }
@@ -1956,11 +1995,9 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		}
 		return nil, nil
 	case "now":
-		now := time.Now().UTC()
-		return fptypes.NewDateTime(now.Format("2006-01-02T15:04:05.000Z07:00"))
+		return funcs.NowAt(e.ctx.EvaluationTimestamp)
 	case "today":
-		today := time.Now().UTC()
-		return fptypes.NewDate(today.Format("2006-01-02"))
+		return funcs.TodayAt(e.ctx.EvaluationTimestamp)
 	case "sum":
 		src, err := resolveSource()
 		if err != nil {
@@ -2008,16 +2045,16 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 	// Clinical functions
 	case "ageinyears":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInYears(bd)
+		return funcs.AgeInYearsAt(bd, e.evaluationNow())
 	case "ageinmonths":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInMonths(bd)
+		return funcs.AgeInMonthsAt(bd, e.evaluationNow())
 	case "ageinweeks":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInWeeks(bd)
+		return funcs.AgeInWeeksAt(bd, e.evaluationNow())
 	case "ageindays":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInDays(bd)
+		return funcs.AgeInDaysAt(bd, e.evaluationNow())
 	case "ageinyearsat":
 		bd := e.getPatientBirthDate()
 		if len(n.Operands) > 0 {
@@ -2027,7 +2064,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return funcs.AgeInYearsAt(bd, asOf)
 		}
-		return funcs.AgeInYears(bd)
+		return funcs.AgeInYearsAt(bd, e.evaluationNow())
 	case "ageinmonthsat":
 		bd := e.getPatientBirthDate()
 		if len(n.Operands) > 0 {
@@ -2037,7 +2074,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return funcs.AgeInMonthsAt(bd, asOf)
 		}
-		return funcs.AgeInMonths(bd)
+		return funcs.AgeInMonthsAt(bd, e.evaluationNow())
 	case "calculateageinyears":
 		if len(n.Operands) > 0 {
 			bd, err := e.Eval(n.Operands[0])
@@ -2076,7 +2113,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return funcs.CalculateAgeInWeeks(bd, nil)
+			return funcs.CalculateAgeInWeeks(bd, e.evaluationNow())
 		}
 		return nil, nil
 	case "calculateageindays":
@@ -2085,7 +2122,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return funcs.CalculateAgeInDays(bd, nil)
+			return funcs.CalculateAgeInDays(bd, e.evaluationNow())
 		}
 		return nil, nil
 
@@ -2269,7 +2306,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 
 	// Temporal functions
 	case "timeofday":
-		return funcs.TimeOfDay()
+		return funcs.TimeOfDayAt(e.ctx.EvaluationTimestamp)
 
 	// Advanced string functions
 	case "positionof":
@@ -3395,7 +3432,11 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 						if idx := strings.LastIndex(choiceType, "."); idx >= 0 {
 							suffix = choiceType[idx+1:]
 						}
-						concreteKey := n.Member + suffix
+						// FHIR names a choice element for its type with the
+						// first letter capitalized, and the model spells the
+						// primitive types in lower case: FHIR.dateTime is the
+						// type, effectiveDateTime is the field.
+						concreteKey := n.Member + capitalizeFirst(suffix)
 						result = obj.GetCollection(concreteKey)
 						if result.Count() > 0 {
 							if result.Count() == 1 {
@@ -3484,7 +3525,24 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 		}
 		dateRange = val
 	}
-	results, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, resourceType, n.CodePath, n.CodeComparator, codes, dateRange)
+	// `[Condition: "Diabetes"]` says which codes to filter by but not which
+	// element carries them. That is the model's primary code path, and it was
+	// never consulted: every retrieve reached the provider with an empty path,
+	// leaving it to guess which element the codes referred to.
+	codePath := n.CodePath
+	if codePath == "" && codes != nil && e.ctx.ModelInfo != nil {
+		codePath = e.ctx.ModelInfo.PrimaryCodePath(resourceType)
+	}
+	req := RetrieveRequest{
+		ResourceType:   resourceType,
+		CodePath:       codePath,
+		CodeComparator: n.CodeComparator,
+		Codes:          codes,
+		DateRange:      dateRange,
+		Limit:          retrieveLimit(e.ctx.MaxRetrieveSize),
+	}
+	e.ctx.applyRetrieveContext(&req)
+	results, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, req)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve [%s] failed: %w", resourceType, err)
 	}
@@ -4007,6 +4065,18 @@ func optionalString(s string) fptypes.Value {
 		return nil
 	}
 	return fptypes.NewString(s)
+}
+
+// capitalizeFirst upper-cases the first rune, leaving the rest alone. It builds
+// the concrete name of a choice element from its type: FHIR spells the type
+// dateTime and the element effectiveDateTime.
+func capitalizeFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }
 
 // isSystemPrimitive reports whether a value is one of the CQL system primitives,

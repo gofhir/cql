@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
 
@@ -14,9 +15,54 @@ import (
 	cqltypes "github.com/gofhir/cql/types"
 )
 
+// RetrieveRequest describes what a CQL retrieve is asking for.
+//
+// It is a struct rather than a parameter list so that what a retrieve knows can
+// grow without breaking every implementation again: Subject and Limit are both
+// things the engine had and could not pass on.
+type RetrieveRequest struct {
+	// ResourceType is the type named in the retrieve, e.g. "Condition".
+	ResourceType string
+
+	// CodePath is the element the codes filter against. When the retrieve does
+	// not name one, it comes from the model's primary code path — "code" for
+	// Condition, "type" for Encounter, "vaccineCode" for Immunization.
+	CodePath string
+
+	// CodeComparator is the operator the retrieve used, e.g. "in".
+	CodeComparator string
+
+	// Codes is the value set URL, or the code values, to filter by. Nil when
+	// the retrieve is unfiltered.
+	Codes interface{}
+
+	// DateRange narrows the retrieve to a period, when the query pushed one down.
+	DateRange interface{}
+
+	// Context names the CQL context in force, e.g. "Patient", and ContextID the
+	// subject's identifier. ContextSearchParam is the model's search parameter
+	// relating this resource type to that context — "subject" for Observation,
+	// "patient" for Condition.
+	//
+	// Honoring these is the provider's job, and it is not optional: CQL scopes
+	// a retrieve to the context in force, so a provider that ignores them
+	// returns other patients' data and every measure built on it is wrong. The
+	// engine cannot do it instead — the model names a search parameter, and
+	// Condition has no element called patient.
+	Context            string
+	ContextID          string
+	ContextSearchParam string
+
+	// Limit is the most resources the caller will accept, from
+	// WithMaxRetrieveSize. Zero means unbounded. A provider that can bound the
+	// query should; the engine refuses the result if more come back, which
+	// costs the provider the work of producing them.
+	Limit int
+}
+
 // DataProvider retrieves FHIR resources for CQL retrieve expressions.
 type DataProvider interface {
-	Retrieve(ctx context.Context, resourceType string, codePath string, codeComparator string, codes interface{}, dateRange interface{}) ([]json.RawMessage, error)
+	Retrieve(ctx context.Context, req RetrieveRequest) ([]json.RawMessage, error)
 }
 
 // LibraryLoader resolves included libraries by name and version on demand.
@@ -72,6 +118,12 @@ type Context struct {
 	Index int
 	Total fptypes.Value
 
+	// StatementContext is the CQL context the statement being evaluated declared.
+	// A library may switch context part-way — `context Patient` for some
+	// definitions and `context Unfiltered` for others — so this follows the
+	// statement rather than the library's first declaration.
+	StatementContext string
+
 	// InSortKey marks a scope in which a sort key is being evaluated against a
 	// result element, which is This. An unqualified identifier then names a
 	// column of that element, and one that names no column is null rather than
@@ -84,6 +136,17 @@ type Context struct {
 	// legitimately be null, and it is deliberately not carried over by
 	// ChildScope: it governs the key expression, not a nested query inside one.
 	InSortKey bool
+
+	// EvaluationTimestamp is the instant the evaluation request was made, and is
+	// what Now, TimeOfDay and Today answer with.
+	//
+	// CQL requires them to be consistent throughout one evaluation — they name
+	// the request's timestamp, not the clock's current reading — so reading the
+	// clock per call is a conformance bug, not just a reproducibility one:
+	// `Now() = Now()` came out false about once in every 1,700 evaluations.
+	// Freezing it also makes a measure repeatable, which is what lets the same
+	// data be re-run and give the same answer.
+	EvaluationTimestamp time.Time
 
 	// MaxDepth bounds how deeply Eval may nest before giving up, and
 	// MaxRetrieveSize how many resources a single retrieve may return. Zero
@@ -162,21 +225,22 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		goCtx = context.Background()
 	}
 	c := &Context{
-		GoCtx:              goCtx,
-		Library:            lib,
-		depth:              new(int),
-		evalTicks:          new(int),
-		libraryScopes:      make(map[*ast.Library]*Context),
-		funcRegistries:     make(map[*ast.Library]map[string][]*ast.FunctionDef),
-		includedRegistries: make(map[*ast.Library]map[string]map[string][]*ast.FunctionDef),
-		Definitions:        make(map[string]fptypes.Value),
-		Parameters:         make(map[string]fptypes.Value),
-		CodeSystems:        make(map[string]*cqltypes.Code),
-		ValueSets:          make(map[string]string),
-		Aliases:            make(map[string]fptypes.Value),
-		LetBindings:        make(map[string]fptypes.Value),
-		IncludedLibraries:  make(map[string]*ast.Library),
-		LoadedLibraries:    make(map[string]*ast.Library),
+		GoCtx:               goCtx,
+		Library:             lib,
+		EvaluationTimestamp: time.Now(),
+		depth:               new(int),
+		evalTicks:           new(int),
+		libraryScopes:       make(map[*ast.Library]*Context),
+		funcRegistries:      make(map[*ast.Library]map[string][]*ast.FunctionDef),
+		includedRegistries:  make(map[*ast.Library]map[string]map[string][]*ast.FunctionDef),
+		Definitions:         make(map[string]fptypes.Value),
+		Parameters:          make(map[string]fptypes.Value),
+		CodeSystems:         make(map[string]*cqltypes.Code),
+		ValueSets:           make(map[string]string),
+		Aliases:             make(map[string]fptypes.Value),
+		LetBindings:         make(map[string]fptypes.Value),
+		IncludedLibraries:   make(map[string]*ast.Library),
+		LoadedLibraries:     make(map[string]*ast.Library),
 	}
 	c.loadDeclarations(lib)
 	return c
@@ -370,6 +434,8 @@ func (c *Context) ChildScope() *Context {
 		LetBindings:         make(map[string]fptypes.Value),
 		MaxDepth:            c.MaxDepth,
 		MaxRetrieveSize:     c.MaxRetrieveSize,
+		EvaluationTimestamp: c.EvaluationTimestamp,
+		StatementContext:    c.StatementContext,
 		depth:               c.depth,
 		evalTicks:           c.evalTicks,
 		libraryScopes:       c.libraryScopes,
@@ -450,4 +516,38 @@ func (c *Context) GetContextObject() *fptypes.ObjectValue {
 	}
 	c.cachedObject = fptypes.NewObjectValue([]byte(c.ContextValue))
 	return c.cachedObject
+}
+
+// contextScoper is the part of a model that knows how a resource type relates
+// to a context. It is asked for optionally so a hand-built model still works.
+type contextScoper interface {
+	ContextSearchParam(resourceType, contextName string) (string, bool)
+}
+
+// applyRetrieveContext fills in the context a retrieve is scoped to.
+//
+// CQL evaluates a retrieve within the context in force, so `[Condition]` under
+// `context Patient` means that patient's conditions and no one else's. The
+// engine cannot enforce it: the model relates a type to a context by search
+// parameter, and Condition has no element called patient. What it can do is say
+// which patient it means, clearly enough that a provider cannot mistake it.
+func (c *Context) applyRetrieveContext(req *RetrieveRequest) {
+	contextName := c.StatementContext
+	if contextName == "" {
+		return
+	}
+	// Without a subject there is nothing to scope to, and saying "Patient" with
+	// an empty id would ask a conforming provider to filter on nothing. A
+	// population-level run is exactly that case.
+	subject := c.GetContextSubjectID()
+	if subject == "" {
+		return
+	}
+	req.Context = contextName
+	req.ContextID = subject
+	if scoper, ok := c.ModelInfo.(contextScoper); ok {
+		if param, found := scoper.ContextSearchParam(req.ResourceType, contextName); found {
+			req.ContextSearchParam = param
+		}
+	}
 }

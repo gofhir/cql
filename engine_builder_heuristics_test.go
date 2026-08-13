@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofhir/cql/eval"
+
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
@@ -228,7 +230,7 @@ define ByNullColumn: ({ Tuple{n: 3, z: null}, Tuple{n: 1, z: null} }) A sort by 
 // resourceProvider serves fixed JSON resources.
 type resourceProvider struct{ rows []string }
 
-func (p resourceProvider) Retrieve(_ context.Context, _, _, _ string, _, _ interface{}) ([]json.RawMessage, error) {
+func (p resourceProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
 	out := make([]json.RawMessage, 0, len(p.rows))
 	for _, r := range p.rows {
 		out = append(out, json.RawMessage(r))

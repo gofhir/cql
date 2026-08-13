@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"strings"
 	"sync"
 	"time"
 
@@ -46,6 +47,7 @@ type Engine struct {
 	evalTimeout         time.Duration
 	maxRetrieveSize     int
 	maxDepth            int
+	modelInfoExplicit   bool     // caller supplied a model; do not second-guess it
 	compiledCache       sync.Map // hash(cqlSource) → *ast.Library
 }
 
@@ -171,7 +173,22 @@ func NewEngine(opts ...Option) *Engine {
 		opt(e)
 	}
 	if e.modelInfo == nil {
-		e.modelInfo = model.DefaultR4ModelInfo()
+		// The official R4 model, which knows 147 retrievable types and their
+		// code paths where the hand-built one knew ten. It is parsed once per
+		// process; the hand-built model stays as the fallback so a broken
+		// embed degrades rather than refusing to build an engine.
+		if mi, err := model.LoadR4ModelInfo(); err == nil {
+			e.modelInfo = mi
+		} else {
+			// Degrade rather than refuse to build an engine — and do not then
+			// reject every library for asking for the version we just failed to
+			// load, which is what checking the usings against the same sticky
+			// failure would do.
+			e.modelInfo = model.DefaultR4ModelInfo()
+			e.modelInfoExplicit = true
+		}
+	} else {
+		e.modelInfoExplicit = true
 	}
 	return e
 }
@@ -303,6 +320,9 @@ func (e *Engine) EvaluateLibrary(
 	evalCtx.QuantityConverter = e.quantityConverter
 	evalCtx.MaxDepth = e.maxDepth
 	evalCtx.MaxRetrieveSize = e.maxRetrieveSize
+	if usingErr := e.checkUsings(lib); usingErr != nil {
+		return nil, usingErr
+	}
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -316,8 +336,8 @@ func (e *Engine) EvaluateLibrary(
 	}
 
 	// Resolve included libraries
-	if err = e.resolveIncludes(ctx, lib, evalCtx); err != nil {
-		return nil, &ErrEvaluation{Cause: err}
+	if incErr := e.resolveIncludes(ctx, lib, evalCtx); incErr != nil {
+		return nil, &ErrEvaluation{Cause: incErr}
 	}
 
 	// Evaluate all definitions
@@ -368,6 +388,9 @@ func (e *Engine) EvaluateExpression(
 	evalCtx.QuantityConverter = e.quantityConverter
 	evalCtx.MaxDepth = e.maxDepth
 	evalCtx.MaxRetrieveSize = e.maxRetrieveSize
+	if usingErr := e.checkUsings(lib); usingErr != nil {
+		return nil, usingErr
+	}
 	// Apply per-call options (may override engine-level trace listener)
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -381,8 +404,8 @@ func (e *Engine) EvaluateExpression(
 	}
 
 	// Resolve included libraries
-	if err = e.resolveIncludes(ctx, lib, evalCtx); err != nil {
-		return nil, &ErrEvaluation{Cause: err}
+	if incErr := e.resolveIncludes(ctx, lib, evalCtx); incErr != nil {
+		return nil, &ErrEvaluation{Cause: incErr}
 	}
 
 	// Evaluate specified expression
@@ -393,6 +416,27 @@ func (e *Engine) EvaluateExpression(
 	}
 
 	return result, nil
+}
+
+// checkUsings refuses a library that asks for a model this build cannot serve.
+//
+// `using FHIR version '5.0.0'` was accepted in silence and then evaluated
+// against R4: every path and code path resolved against the wrong version of the
+// spec, and nothing said so. A caller who supplied their own ModelInfo is taken
+// at their word.
+func (e *Engine) checkUsings(lib *ast.Library) error {
+	if e.modelInfoExplicit || lib == nil {
+		return nil
+	}
+	for _, u := range lib.Usings {
+		if !strings.EqualFold(u.Name, "FHIR") {
+			continue
+		}
+		if _, err := model.FHIRModelInfo(u.Version); err != nil {
+			return &ErrEvaluation{Cause: err}
+		}
+	}
+	return nil
 }
 
 // classifyEvalError maps an evaluation failure onto the engine's error taxonomy.
