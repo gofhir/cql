@@ -1,20 +1,19 @@
-// Package fhirhelpers provides a built-in FHIRHelpers CQL library
-// that works with raw JSON values (no FHIR primitive wrapping).
+// Package fhirhelpers provides the FHIRHelpers CQL library the engine falls back
+// to when an include of it is not satisfied by the caller's LibraryResolver.
 package fhirhelpers
 
-// Source is the CQL source for the built-in FHIRHelpers 4.0.1.
-// This is a simplified version that passes through raw values,
-// since the Go engine accesses JSON fields directly without FHIR primitive wrapping.
-const Source = `library FHIRHelpers version '4.0.1'
+import _ "embed"
 
-using FHIR version '4.0.1'
-
-define function ToBoolean(value Boolean): value
-define function ToString(value String): value
-define function ToInteger(value Integer): value
-define function ToDecimal(value Decimal): value
-define function ToDateTime(value DateTime): value
-define function ToDate(value Date): value
-define function ToTime(value Time): value
-define function ToQuantity(quantity Quantity): quantity
-`
+// Source is the official FHIRHelpers 4.0.1 published by cqframework, embedded
+// verbatim from quick/src/main/resources/org/hl7/fhir in
+// cqframework/clinical_quality_language.
+//
+// It is carried rather than translated on purpose. A hand-maintained subset
+// means owning the divergence forever: every upstream change becomes a manual
+// merge, and the errors do not fail loudly — they return empty lists. The
+// version this replaced had eight identity functions and no ToCode, ToConcept,
+// ToInterval or ToRatio at all, so the four conversions that turn FHIR data into
+// CQL system types were simply missing.
+//
+//go:embed FHIRHelpers-4.0.1.cql
+var Source string

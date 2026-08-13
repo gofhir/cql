@@ -194,13 +194,40 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, error) {
 	return lib, nil
 }
 
-// resolveIncludes compiles and registers included libraries into the evaluation context.
+// resolveIncludes compiles a library's includes, and then theirs, so that the
+// whole graph is available before evaluation starts.
+//
+// Only the top-level library's own aliases are registered in IncludedLibraries.
+// A transitive library is loaded but not named there: aliases belong to the
+// library that wrote them, and registering a nested one under the same map is
+// how `C.Answer()` in the top-level library came to resolve against a `C` that
+// some included library had chosen. Each library's own alias map is rebuilt from
+// LoadedLibraries when its scope is created.
 func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) error {
+	return e.resolveIncludesInto(ctx, lib, evalCtx, make(map[string]bool), true)
+}
+
+func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, evalCtx *eval.Context, seen map[string]bool, top bool) error {
 	for _, inc := range lib.Includes {
 		alias := inc.Alias
 		if alias == "" {
 			alias = inc.Name
 		}
+		// A library already compiled elsewhere in the graph still has to be named
+		// under this library's alias when this is the top level; only the walk
+		// into its own includes is skipped, and that is what stops a cycle.
+		key := inc.Name + "/" + inc.Version
+		if seen[key] {
+			if top {
+				if known, ok := evalCtx.LoadedLibraries[key]; ok {
+					evalCtx.IncludedLibraries[alias] = known
+				} else if known, ok := evalCtx.LoadedLibraries[inc.Name]; ok {
+					evalCtx.IncludedLibraries[alias] = known
+				}
+			}
+			continue
+		}
+		seen[key] = true
 
 		// Try user-provided resolver first
 		var src string
@@ -227,7 +254,13 @@ func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx 
 		if err != nil {
 			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
 		}
-		evalCtx.IncludedLibraries[alias] = incLib
+		if top {
+			evalCtx.IncludedLibraries[alias] = incLib
+		}
+		evalCtx.RegisterLoadedLibrary(inc.Name, inc.Version, incLib)
+		if err := e.resolveIncludesInto(ctx, incLib, evalCtx, seen, false); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -69,27 +69,17 @@ type Evaluator struct {
 }
 
 // NewEvaluator creates a new evaluator for the given context.
+//
+// The function registries are memoized per library rather than rebuilt here.
+// This runs on every user function call, and the official FHIRHelpers declares
+// 297 functions: rebuilding those maps per call accounted for 64% of everything
+// a measure evaluation allocated.
 func NewEvaluator(ctx *Context) *Evaluator {
-	e := &Evaluator{
+	return &Evaluator{
 		ctx:           ctx,
-		funcs:         make(map[string][]*ast.FunctionDef),
-		includedFuncs: make(map[string]map[string][]*ast.FunctionDef),
+		funcs:         ctx.functionRegistry(ctx.Library),
+		includedFuncs: ctx.includedFunctionRegistry(),
 	}
-	// Register library functions
-	if ctx.Library != nil {
-		for _, f := range ctx.Library.Functions {
-			e.funcs[f.Name] = append(e.funcs[f.Name], f)
-		}
-	}
-	// Register included library functions
-	for alias, lib := range ctx.IncludedLibraries {
-		libFuncs := make(map[string][]*ast.FunctionDef)
-		for _, f := range lib.Functions {
-			libFuncs[f.Name] = append(libFuncs[f.Name], f)
-		}
-		e.includedFuncs[alias] = libFuncs
-	}
-	return e
 }
 
 // withContext returns a lightweight evaluator sharing the same function registry
@@ -1725,7 +1715,7 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 					return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, idRef.Name)
 				}
 				fd := resolveOverload(overloads, n.Operands)
-				return e.evalUserFunction(fd, n.Operands)
+				return e.evalUserFunctionIn(fd, n.Operands, e.ctx.IncludedLibraries[idRef.Name])
 			}
 		}
 	}
@@ -1744,7 +1734,7 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 				return nil, fmt.Errorf("function '%s' not found in library '%s'", n.Name, n.Library)
 			}
 			fd := resolveOverload(overloads, n.Operands)
-			return e.evalUserFunction(fd, n.Operands)
+			return e.evalUserFunctionIn(fd, n.Operands, e.ctx.IncludedLibraries[n.Library])
 		}
 	}
 
@@ -1758,22 +1748,44 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 }
 
 func (e *Evaluator) evalUserFunction(fd *ast.FunctionDef, args []ast.Expression) (fptypes.Value, error) {
+	return e.evalUserFunctionIn(fd, args, nil)
+}
+
+// evalUserFunctionIn runs a function body, optionally in the scope of the
+// library that declared it.
+//
+// owner matters for a function reached through an include. Its body has to see
+// its own library's functions, definitions and terminology: FHIRHelpers.ToConcept
+// calls ToCode, and ToQuantity calls ToCalendarUnit, so a library whose
+// conversions lean on each other cannot work at all without this. Arguments are
+// still evaluated in the caller's scope, where they were written.
+func (e *Evaluator) evalUserFunctionIn(fd *ast.FunctionDef, args []ast.Expression, owner *ast.Library) (fptypes.Value, error) {
 	if fd.External {
 		return nil, fmt.Errorf("external function '%s' not implemented", fd.Name)
 	}
-	// Create child scope with operand bindings
-	child := e.ctx.ChildScope()
-	for i, op := range fd.Operands {
-		if i < len(args) {
-			val, err := e.Eval(args[i])
-			if err != nil {
-				return nil, err
-			}
-			child.Aliases[op.Name] = val
+	// Evaluate the arguments before switching scope: they belong to the caller.
+	values := make([]fptypes.Value, 0, len(fd.Operands))
+	for i := range fd.Operands {
+		if i >= len(args) {
+			break
 		}
+		val, err := e.Eval(args[i])
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, val)
 	}
-	childEval := NewEvaluator(child)
-	return childEval.Eval(fd.Body)
+
+	child := e.ctx.ChildScope()
+	if owner != nil {
+		// A child of the memoized library scope, not a fresh one: the operand
+		// bindings are per call, everything else the scope carries is per library.
+		child = e.libraryScope(owner).ChildScope()
+	}
+	for i, val := range values {
+		child.Aliases[fd.Operands[i].Name] = val
+	}
+	return NewEvaluator(child).Eval(fd.Body)
 }
 
 func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, error) {
@@ -3211,13 +3223,150 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 // Member access
 // ---------------------------------------------------------------------------
 
+// evalIncludedDefinition resolves `alias.name` against an included library's
+// definitions, codes, concepts and value sets. The third return reports whether
+// alias named an include at all, so an ordinary member access on a value keeps
+// its existing path.
+func (e *Evaluator) evalIncludedDefinition(alias, name string) (fptypes.Value, bool, error) {
+	if _, loaded := e.ctx.IncludedLibraries[alias]; !loaded {
+		// The alias may name an include that is only resolved on demand.
+		if !e.ctx.hasInclude(alias) {
+			return nil, false, nil
+		}
+		if err := e.ensureLibraryLoaded(alias); err != nil {
+			return nil, true, err
+		}
+	}
+	lib, ok := e.ctx.IncludedLibraries[alias]
+	if !ok || lib == nil {
+		return nil, false, nil
+	}
+	scope := e.libraryScope(lib)
+	// Codes, concepts and anything already evaluated.
+	// Access is decided from the declaration, before the memoized results are
+	// consulted: the cache fills as the library evaluates its own definitions, so
+	// checking it first let a private define escape as soon as anything inside
+	// the library had read it.
+	for _, stmt := range lib.Statements {
+		if stmt.Name == name && stmt.AccessLevel == ast.AccessPrivate {
+			return nil, true, fmt.Errorf("%q is private to library %q", name, alias)
+		}
+	}
+	if v, ok := scope.Definitions[name]; ok {
+		return v, true, nil
+	}
+	if _, ok := scope.ValueSets[name]; ok {
+		return cqltypes.NewValueSetRef(name, alias), true, nil
+	}
+	for _, stmt := range lib.Statements {
+		if stmt.Name != name {
+			continue
+		}
+		v, err := NewEvaluator(scope).Eval(stmt.Expression)
+		if err != nil {
+			return nil, true, fmt.Errorf("evaluating %q of library %q: %w", name, alias, err)
+		}
+		// Memoize: a CQL definition is evaluated once, and referencing one three
+		// times must not issue three retrieves.
+		scope.Definitions[name] = v
+		return v, true, nil
+	}
+	return nil, true, fmt.Errorf("library %q has no definition named %q", alias, name)
+}
+
+// libraryScope returns the memoized scope for a library, building it on first
+// use. Sharing it makes a definition of an included library evaluate once per
+// evaluation, and keeps the six maps a library scope carries from being rebuilt
+// on every call into that library.
+func (e *Evaluator) libraryScope(lib *ast.Library) *Context {
+	if lib == nil {
+		return e.ctx
+	}
+	if e.ctx.libraryScopes == nil {
+		return e.ctx.LibraryScope(lib)
+	}
+	if scope, ok := e.ctx.libraryScopes[lib]; ok {
+		return scope
+	}
+	scope := e.ctx.LibraryScope(lib)
+	e.ctx.libraryScopes[lib] = scope
+	return scope
+}
+
 func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error) {
+	// `Alias.Name` where Alias is an include names a definition of that library,
+	// not a property of a value. Only functions were reachable across an include
+	// before, so a library's definitions were invisible to the libraries that
+	// included it.
+	//
+	// Anything bound in scope wins, and is checked first: a query alias or a
+	// function operand may share a name with an include, and `({…}) H return H.x`
+	// is about the row, not about the library that happens to be called H.
+	if idRef, ok := n.Source.(*ast.IdentifierRef); ok {
+		if _, bound := e.ctx.ResolveIdentifier(idRef.Name); !bound {
+			if v, ok, err := e.evalIncludedDefinition(idRef.Name, n.Member); ok {
+				return v, err
+			}
+		}
+	}
 	source, err := e.Eval(n.Source)
 	if err != nil {
 		return nil, err
 	}
 	if source == nil {
 		return nil, nil
+	}
+	// `.value` on a system primitive is the primitive itself. The official
+	// ModelInfo models FHIR.string as an object with a value element, so the
+	// official FHIRHelpers is written as coding.code.value — while the evaluator
+	// navigates raw JSON, where coding.code already is the scalar. This bridges
+	// the two without wrapping every primitive.
+	//
+	// The rule is deliberately narrow. If `.value` on any value returned that
+	// value, a mistyped someString.value would stop failing and quietly answer
+	// the string, turning a typo into a silence.
+	if n.Member == "value" && isSystemPrimitive(source) {
+		return source, nil
+	}
+	// The clinical types carry named elements too. Materializing Code and
+	// Concept as real values rather than labeled Tuples took their member
+	// access away with them, and `ToConcept(x).codes` is exactly what the
+	// official FHIRHelpers is written against.
+	switch src := source.(type) {
+	case cqltypes.Code:
+		switch n.Member {
+		case "code":
+			return optionalString(src.Code), nil
+		case "system":
+			return optionalString(src.System), nil
+		case "display":
+			return optionalString(src.Display), nil
+		case "version":
+			return optionalString(src.Version), nil
+		}
+	case cqltypes.Concept:
+		switch n.Member {
+		case "codes":
+			codes := make(fptypes.Collection, 0, len(src.Codes))
+			for _, c := range src.Codes {
+				codes = append(codes, c)
+			}
+			return cqltypes.NewList(codes), nil
+		case "display":
+			return optionalString(src.Display), nil
+		}
+	}
+	// A System.Quantity has value and unit elements. FHIRHelpers.ToQuantity
+	// returns one, and `FHIRHelpers.ToQuantity(o.valueQuantity).value` is a
+	// common enough shape that it is worth naming: without this the accessor
+	// answered null on a perfectly good Quantity.
+	if q, ok := source.(fptypes.Quantity); ok {
+		switch n.Member {
+		case "value":
+			return newDecimalFromD(q.Value()), nil
+		case "unit":
+			return optionalString(q.Unit()), nil
+		}
 	}
 	// Tuple member access
 	if t, ok := source.(cqltypes.Tuple); ok {
@@ -3402,21 +3551,26 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	}
 
 	// Process each combination through filters and return/aggregate.
+	//
+	// One scope serves the whole loop, rebound per row rather than allocated per
+	// row: a Context carries thirty-odd fields and two maps, and over a thousand
+	// resources that was the single largest source of garbage in a measure. The
+	// scope does not outlive the query — nothing retains it, and values produced
+	// from it are plain data — so rebinding is equivalent to the enter/exit scope
+	// a stack-based resolver would do.
 	var results fptypes.Collection
+	child := e.ctx.ChildScope()
+	childEval := e.withContext(child)
 	for i, c := range combos {
 		if err := e.ctx.checkCanceled(); err != nil {
 			return nil, err
 		}
-		child := e.ctx.ChildScope()
-		for alias, val := range c.aliases {
-			child.Aliases[alias] = val
-		}
+		clear(child.Aliases)
+		clear(child.LetBindings)
+		maps.Copy(child.Aliases, c.aliases)
 		// Set This and Index to the first source's item
 		child.This = c.aliases[n.Sources[0].Alias]
 		child.Index = i
-
-		// Process let bindings (reuse funcs map from parent evaluator)
-		childEval := e.withContext(child)
 		for _, let := range n.Let {
 			val, err := childEval.Eval(let.Expression)
 			if err != nil {
@@ -3842,6 +3996,89 @@ func (e *Evaluator) evalTupleExpr(n *ast.TupleExpression) (fptypes.Value, error)
 	return cqltypes.NewTuple(elements), nil
 }
 
+// optionalString answers null for an element the value does not carry.
+//
+// These structs hold plain strings, so absent and empty are the same thing to
+// them; answering with the empty string would make `code.display is null` false
+// for a Code that never had a display, which is not what CQL says about a
+// missing element.
+func optionalString(s string) fptypes.Value {
+	if s == "" {
+		return nil
+	}
+	return fptypes.NewString(s)
+}
+
+// isSystemPrimitive reports whether a value is one of the CQL system primitives,
+// the only types for which `.value` is the identity. Objects, tuples and the
+// clinical types are excluded: on those, `.value` names a real element and has
+// to keep resolving as one.
+func isSystemPrimitive(v fptypes.Value) bool {
+	switch v.(type) {
+	case fptypes.Boolean, fptypes.String, fptypes.Integer, fptypes.Decimal,
+		fptypes.Date, fptypes.DateTime, fptypes.Time:
+		return true
+	}
+	return false
+}
+
+// stringElem reads a Tuple element as a plain string.
+//
+// A collection is not a string and must not be rendered as one: a repeated FHIR
+// element feeding a Code selector would otherwise produce a code literally
+// spelled "{a, b}", which no terminology server will ever match — a silently
+// false membership check rather than a visible mistake. A one-element
+// collection is its element, since that is what a singleton repeat means.
+func stringElem(elements map[string]fptypes.Value, name string) string {
+	v, ok := elements[name]
+	if !ok || v == nil {
+		return ""
+	}
+	if list, ok := v.(cqltypes.List); ok {
+		if list.Values.Count() != 1 {
+			return ""
+		}
+		v = list.Values[0]
+		if v == nil {
+			return ""
+		}
+	}
+	if s, ok := v.(fptypes.String); ok {
+		return s.Value()
+	}
+	if _, isList := v.(cqltypes.List); isList {
+		return ""
+	}
+	return v.String()
+}
+
+// buildCode materializes a System.Code instance selector.
+func buildCode(elements map[string]fptypes.Value) cqltypes.Code {
+	return cqltypes.Code{
+		Code:    stringElem(elements, "code"),
+		System:  stringElem(elements, "system"),
+		Display: stringElem(elements, "display"),
+		Version: stringElem(elements, "version"),
+	}
+}
+
+// buildConcept materializes a System.Concept instance selector, taking the codes
+// it was given however they arrived: a list, a single code, or nothing.
+func buildConcept(elements map[string]fptypes.Value) cqltypes.Concept {
+	var codes []cqltypes.Code
+	switch v := elements["codes"].(type) {
+	case cqltypes.List:
+		for _, item := range v.Values {
+			if c, ok := item.(cqltypes.Code); ok {
+				codes = append(codes, c)
+			}
+		}
+	case cqltypes.Code:
+		codes = append(codes, v)
+	}
+	return cqltypes.NewConcept(codes, stringElem(elements, "display"))
+}
+
 func (e *Evaluator) evalInstanceExpr(n *ast.InstanceExpression) (fptypes.Value, error) {
 	elements := make(map[string]fptypes.Value)
 	for _, elem := range n.Elements {
@@ -3852,17 +4089,27 @@ func (e *Evaluator) evalInstanceExpr(n *ast.InstanceExpression) (fptypes.Value, 
 		elements[elem.Name] = val
 	}
 
-	// Special case: Quantity { value: ..., unit: ... } → produce a real Quantity value
-	if n.Type != nil && strings.EqualFold(n.Type.Name, "Quantity") {
-		valElem := elements["value"]
-		unitElem := elements["unit"]
-		if valElem != nil && unitElem != nil {
-			numVal := toDecimal(valElem)
-			unitStr := ""
-			if us, ok := unitElem.(fptypes.String); ok {
-				unitStr = us.Value()
+	// The clinical types have to be materialized, not labeled. A Tuple carrying
+	// a TypeOverride answers "Code" to Type() but is still a Tuple underneath, so
+	// extractCodeComponents does not recognize it and `x in "ValueSet"` answers
+	// false for a Code that FHIRHelpers.ToCode just built.
+	if n.Type != nil {
+		switch {
+		case strings.EqualFold(n.Type.Name, "Quantity"):
+			valElem := elements["value"]
+			unitElem := elements["unit"]
+			if valElem != nil && unitElem != nil {
+				numVal := toDecimal(valElem)
+				unitStr := ""
+				if us, ok := unitElem.(fptypes.String); ok {
+					unitStr = us.Value()
+				}
+				return fptypes.NewQuantityFromDecimal(numVal, unitStr), nil
 			}
-			return fptypes.NewQuantityFromDecimal(numVal, unitStr), nil
+		case strings.EqualFold(n.Type.Name, "Code"):
+			return buildCode(elements), nil
+		case strings.EqualFold(n.Type.Name, "Concept"):
+			return buildConcept(elements), nil
 		}
 	}
 
@@ -3925,6 +4172,32 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 	left, err := e.Eval(n.Left)
 	if err != nil {
 		return nil, err
+	}
+	// `code in "Diabetes"` names a value set, not a list to search. The
+	// terminology path existed but nothing routed to it from here, so the
+	// membership was evaluated against the name as a plain string and answered
+	// false for every code.
+	if n.Operator == "in" {
+		if ref, ok := n.Right.(*ast.IdentifierRef); ok {
+			if _, found := e.ctx.ResolveValueSetURL(ref.Name); found {
+				return e.evalInValueSet(left, ref)
+			}
+			if e.ctx.Library != nil {
+				for _, cs := range e.ctx.Library.CodeSystems {
+					if cs.Name == ref.Name {
+						return e.evalInCodeSystem(left, ref)
+					}
+				}
+			}
+		}
+		// `x in H."Diabetes"`, where the value set belongs to an included library.
+		if ma, ok := n.Right.(*ast.MemberAccess); ok {
+			if idRef, ok := ma.Source.(*ast.IdentifierRef); ok {
+				if url, ok := e.includedValueSetURL(idRef.Name, ma.Member); ok {
+					return e.inValueSetURL(left, url)
+				}
+			}
+		}
 	}
 	right, err := e.Eval(n.Right)
 	if err != nil {
