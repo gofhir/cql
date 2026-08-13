@@ -100,14 +100,32 @@ func (e *Evaluator) EvaluateLibrary() (map[string]fptypes.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating '%s': %w", stmt.Name, err)
 		}
+		// A private definition is still evaluated — the public ones may be built
+		// on it — but it is not part of what the library offers, so it is not
+		// part of what the caller is handed.
 		e.ctx.Definitions[stmt.Name] = val
-		results[stmt.Name] = val
+		if stmt.AccessLevel != ast.AccessPrivate {
+			results[stmt.Name] = val
+		}
 	}
 	return results, nil
 }
 
 // EvaluateExpression evaluates a named expression by name.
 func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
+	// Access is decided from the declaration, before the memoized results are
+	// consulted. That cache fills as the library evaluates its own definitions
+	// and is pre-seeded with declared codes and concepts, so checking it first
+	// let a private definition escape as soon as anything had read it — the
+	// same hazard evalIncludedDefinition guards against, on the wrong side of
+	// the memo.
+	if e.ctx.Library != nil {
+		for _, stmt := range e.ctx.Library.Statements {
+			if stmt.Name == name && stmt.AccessLevel == ast.AccessPrivate {
+				return nil, fmt.Errorf("expression %q is private to the library", name)
+			}
+		}
+	}
 	// Check if already evaluated
 	if val, ok := e.ctx.Definitions[name]; ok {
 		return val, nil
@@ -3593,6 +3611,9 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 	}
 	e.ctx.applyRetrieveContext(&req)
 	results, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, req)
+	if observer, ok := e.ctx.TraceListener.(RetrieveObserver); ok {
+		observer.OnRetrieve(req, len(results), err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("retrieve [%s] failed: %w", resourceType, err)
 	}
