@@ -87,12 +87,19 @@ func (e *Evaluator) ResolveRelatedContext(targetType, reference string) (fptypes
 		return nil, nil
 	}
 	// Retrieve the referenced resource
-	resources, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, RetrieveRequest{
+	req := RetrieveRequest{
 		ResourceType:   targetType,
 		CodePath:       "_id",
 		CodeComparator: "=",
-		Limit:          e.ctx.MaxRetrieveSize,
-	})
+		Limit:          retrieveLimit(e.ctx.MaxRetrieveSize),
+	}
+	resources, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, req)
+	// Every query the engine makes has to appear in a provenance trail, not
+	// only the ones a retrieve expression makes: resources fetched here are
+	// just as much a reason a decision came out the way it did.
+	if observer, ok := e.ctx.TraceListener.(RetrieveObserver); ok {
+		observer.OnRetrieve(req, len(resources), err)
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -220,6 +220,9 @@ func NewEngine(opts ...Option) *Engine {
 }
 
 // compileOrCache compiles CQL source to AST, using a cache to avoid redundant ANTLR parsing.
+// compileOrCache parses CQL source to an AST, reusing the parse when the same
+// source comes back.
+
 // cachedLibrary is a compiled library together with the source it came from.
 //
 // The source is kept so a hit can be confirmed. Indexing by hash alone means a
@@ -516,8 +519,7 @@ func (e *Engine) withTimeout(ctx context.Context) (context.Context, context.Canc
 // caller pay it once, deliberately, rather than relying on a cache keyed by a
 // hash of the text.
 type Library struct {
-	source string
-	lib    *ast.Library
+	lib *ast.Library
 }
 
 // Name returns the library's declared name, or "" if it is anonymous.
@@ -561,7 +563,7 @@ func (e *Engine) Parse(cqlSource string) (*Library, error) {
 	if err != nil {
 		return nil, &ErrSyntaxError{Cause: err}
 	}
-	return &Library{source: cqlSource, lib: lib}, nil
+	return &Library{lib: lib}, nil
 }
 
 // Compile parses a CQL source string without evaluating it.

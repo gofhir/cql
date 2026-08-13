@@ -113,6 +113,19 @@ func (e *Evaluator) EvaluateLibrary() (map[string]fptypes.Value, error) {
 
 // EvaluateExpression evaluates a named expression by name.
 func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
+	// Access is decided from the declaration, before the memoized results are
+	// consulted. That cache fills as the library evaluates its own definitions
+	// and is pre-seeded with declared codes and concepts, so checking it first
+	// let a private definition escape as soon as anything had read it — the
+	// same hazard evalIncludedDefinition guards against, on the wrong side of
+	// the memo.
+	if e.ctx.Library != nil {
+		for _, stmt := range e.ctx.Library.Statements {
+			if stmt.Name == name && stmt.AccessLevel == ast.AccessPrivate {
+				return nil, fmt.Errorf("expression %q is private to the library", name)
+			}
+		}
+	}
 	// Check if already evaluated
 	if val, ok := e.ctx.Definitions[name]; ok {
 		return val, nil
@@ -122,12 +135,6 @@ func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
 		for _, stmt := range e.ctx.Library.Statements {
 			if stmt.Name != name {
 				continue
-			}
-			// `define private` says the definition is the library's own
-			// business. Asking for one by name from outside is asking for
-			// something the library does not offer.
-			if stmt.AccessLevel == ast.AccessPrivate {
-				return nil, fmt.Errorf("expression %q is private to the library", name)
 			}
 			e.ctx.StatementContext = stmt.Context
 			val, err := e.Eval(stmt.Expression)

@@ -152,3 +152,36 @@ define X: Count([Condition])
 		t.Error("a listener without the observers should still receive the tree")
 	}
 }
+
+// TestPrivateSurvivesTheMemo covers the definition cache. Access has to be
+// decided from the declaration and not from what has already been evaluated:
+// the cache fills as a library evaluates its own definitions, and is pre-seeded
+// with declared codes and concepts, so consulting it first let a private
+// definition escape as soon as anything had read it.
+func TestPrivateSurvivesTheMemo(t *testing.T) {
+	src := "library T version '1.0'\n\ndefine private Hidden: 42\ndefine Pub: Hidden + 1\n"
+	engine := NewEngine()
+	lib, err := engine.Parse(src)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+
+	// Asking outright.
+	if _, askErr := engine.EvaluateParsedExpression(context.Background(), lib, "Hidden", nil, nil); askErr == nil {
+		t.Error("a private definition should be refused")
+	}
+
+	// The engine builds a fresh context per call, so the leak needs the same
+	// evaluator to be reused — which is what a caller holding an eval.Evaluator
+	// does, and what EvaluateLibrary does internally.
+	results, err := engine.EvaluateParsedLibrary(context.Background(), lib, nil, nil)
+	if err != nil {
+		t.Fatalf("EvaluateParsedLibrary: %v", err)
+	}
+	if _, listed := results["Hidden"]; listed {
+		t.Error("a private definition was returned among the results")
+	}
+	if valueString(results["Pub"]) != "43" {
+		t.Errorf("Pub = %s, want 43 — a private definition is still evaluated", valueString(results["Pub"]))
+	}
+}
