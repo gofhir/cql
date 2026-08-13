@@ -1,0 +1,46 @@
+{
+  "translator": "info.cqframework:cql-to-elm 3.26.0",
+  "source": "probe.cql",
+  "definitions": [
+    {
+      "name": "Patient",
+      "resultType": "",
+      "locator": "",
+      "conversions": []
+    },
+    {
+      "name": "Enc",
+      "resultType": "Encounter",
+      "locator": "10:13",
+      "conversions": []
+    },
+    {
+      "name": "During",
+      "resultType": "Boolean",
+      "locator": "11:16",
+      "conversions": [
+        "ToInterval"
+      ]
+    },
+    {
+      "name": "StartOf",
+      "resultType": "DateTime",
+      "locator": "12:17",
+      "conversions": [
+        "ToInterval"
+      ]
+    },
+    {
+      "name": "Sum",
+      "resultType": "Integer",
+      "locator": "13:13",
+      "conversions": []
+    },
+    {
+      "name": "Mixed",
+      "resultType": "Decimal",
+      "locator": "14:15",
+      "conversions": []
+    }
+  ]
+}
