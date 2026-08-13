@@ -34,6 +34,35 @@ func (b *builder) Visit(tree antlr.ParseTree) interface{} {
 	return tree.Accept(b)
 }
 
+// stampPosition records where an expression began in the source.
+//
+// It is done here, in the two funnels every expression passes through, rather
+// than in each of the three dozen visitors: a node built by one of them may be
+// returned by several paths, and the funnel is the one place that sees both the
+// node and the parse tree it came from.
+//
+// Only the outermost node of a subtree keeps the position the funnel assigns —
+// an inner node was stamped when its own visit passed through — which is what
+// makes the position point at the expression a diagnostic is about rather than
+// at the whole statement.
+func stampPosition(expr ast.Expression, ctx antlr.ParserRuleContext) ast.Expression {
+	if expr == nil || ctx == nil {
+		return expr
+	}
+	if pos, known := ast.PositionOf(expr); known {
+		// Already stamped by an inner visit; the innermost wins.
+		_ = pos
+		return expr
+	}
+	if tok := ctx.GetStart(); tok != nil {
+		// ANTLR counts columns from zero; CQL locators and editors count from
+		// one, and a diagnostic that disagrees with the reference translator by
+		// a column is worse than useless when the two are read side by side.
+		ast.SetPosition(expr, tok.GetLine(), tok.GetColumn()+1)
+	}
+	return expr
+}
+
 // hasKeyword reports whether kw appears as a direct terminal token of ctx.
 //
 // Keywords must be read from the token stream, never from ctx.GetText(): that
@@ -96,7 +125,7 @@ func (b *builder) visitExpression(ctx grammar.IExpressionContext) ast.Expression
 		b.setError("expected Expression, got %T", result)
 		return nil
 	}
-	return expr
+	return stampPosition(expr, ctx)
 }
 
 func (b *builder) visitExpressionTerm(ctx grammar.IExpressionTermContext) ast.Expression {
@@ -112,7 +141,7 @@ func (b *builder) visitExpressionTerm(ctx grammar.IExpressionTermContext) ast.Ex
 		b.setError("expected Expression from expressionTerm, got %T", result)
 		return nil
 	}
-	return expr
+	return stampPosition(expr, ctx)
 }
 
 func (b *builder) visitTypeSpecifier(ctx grammar.ITypeSpecifierContext) ast.TypeSpecifier {

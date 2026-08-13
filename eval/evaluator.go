@@ -172,7 +172,8 @@ func (e *Evaluator) Eval(expr ast.Expression) (fptypes.Value, error) {
 		}
 	}
 	if e.ctx.MaxDepth <= 0 || e.ctx.depth == nil {
-		return e.eval(expr)
+		result, err := e.eval(expr)
+		return result, withPosition(err, expr)
 	}
 	*e.ctx.depth++
 	if *e.ctx.depth > e.ctx.MaxDepth {
@@ -181,7 +182,7 @@ func (e *Evaluator) Eval(expr ast.Expression) (fptypes.Value, error) {
 	}
 	result, err := e.eval(expr)
 	*e.ctx.depth--
-	return result, err
+	return result, withPosition(err, expr)
 }
 
 func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) {
@@ -3841,8 +3842,11 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	if n.Sort != nil {
 		for _, byItem := range n.Sort.ByItems {
 			if e.sortKeyIsTypo(byItem.Expression, n.Sources, results) {
-				return nil, fmt.Errorf("unknown sort key %q: not a column of the query result",
-					byItem.Expression.(*ast.IdentifierRef).Name)
+				// The key's own position, not the query's: the mistake is the
+				// word in the sort clause, and pointing at the whole query
+				// leaves the reader to find it.
+				return nil, withPosition(fmt.Errorf("unknown sort key %q: not a column of the query result",
+					byItem.Expression.(*ast.IdentifierRef).Name), byItem.Expression)
 			}
 		}
 		var sortErr error
