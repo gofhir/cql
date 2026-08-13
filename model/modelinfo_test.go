@@ -88,3 +88,58 @@ func TestFHIRModelInfoRejectsUnknownVersion(t *testing.T) {
 		t.Error("a version the build does not carry should be an error, not a silent fallback")
 	}
 }
+
+// TestContextSearchParamRefusesWhatItCannotUse covers the declarations the
+// model makes that a provider cannot query with.
+func TestContextSearchParamRefusesWhatItCannotUse(t *testing.T) {
+	mi, err := LoadR4ModelInfo()
+	if err != nil {
+		t.Fatalf("loading: %v", err)
+	}
+
+	// Usable search parameters.
+	for _, tt := range []struct{ resource, want string }{
+		{"Condition", "patient"},
+		{"Observation", "subject"},
+		{"MedicationRequest", "subject"},
+	} {
+		got, ok := mi.ContextSearchParam(tt.resource, "Patient")
+		if !ok || got != tt.want {
+			t.Errorf("ContextSearchParam(%s, Patient) = %q (%v), want %q", tt.resource, got, ok, tt.want)
+		}
+	}
+
+	// A type that *is* the context is identified by its own key. The model says
+	// Patient relates to Patient through "other", which is Patient.link.other
+	// and would fetch the linked patients instead.
+	if got, ok := mi.ContextSearchParam("Patient", "Patient"); ok {
+		t.Errorf("ContextSearchParam(Patient, Patient) = %q, want nothing", got)
+	}
+
+	// A FHIRPath fragment is not a search parameter. These five declare
+	// "where(resolve() is Patient)", which no server can answer.
+	for _, resource := range []string{"AuditEvent", "Provenance", "Basic", "Person", "MeasureReport"} {
+		if got, ok := mi.ContextSearchParam(resource, "Patient"); ok {
+			t.Errorf("ContextSearchParam(%s, Patient) = %q, want nothing — it is a path expression", resource, got)
+		}
+	}
+}
+
+// TestPrimaryCodePathDistinguishesSilence covers the 84 retrievable types that
+// declare no primary code path. Answering "code" for those would leave a
+// provider unable to tell what the model said from what it did not, and some
+// of them have no code element at all.
+func TestPrimaryCodePathDistinguishesSilence(t *testing.T) {
+	mi, err := LoadR4ModelInfo()
+	if err != nil {
+		t.Fatalf("loading: %v", err)
+	}
+	if got := mi.PrimaryCodePath("Condition"); got != "code" {
+		t.Errorf("Condition = %q, want code", got)
+	}
+	for _, resource := range []string{"FamilyMemberHistory", "DocumentReference", "Media"} {
+		if got := mi.PrimaryCodePath(resource); got != "" {
+			t.Errorf("PrimaryCodePath(%s) = %q, want nothing declared", resource, got)
+		}
+	}
+}

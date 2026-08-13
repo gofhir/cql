@@ -82,6 +82,16 @@ func AgeInYearsAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 }
 
 // AgeInMonthsAt calculates the patient's age in months at a given date.
+func AgeInWeeksAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
+	return CalculateAgeInWeeks(birthDate, asOf)
+}
+
+// AgeInDaysAt calculates age in days as of the given instant.
+func AgeInDaysAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
+	return CalculateAgeInDays(birthDate, asOf)
+}
+
+// AgeInMonthsAt calculates age in months as of the given instant.
 func AgeInMonthsAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 	return CalculateAgeInMonths(birthDate, asOf)
 }
@@ -93,6 +103,9 @@ func referenceDate(asOf fptypes.Value) time.Time {
 			return t
 		}
 	}
+	// Reading the clock here is the last resort. The evaluator passes the
+	// evaluation's frozen timestamp, so that an age agrees with the Today() in
+	// the same expression; only a direct caller of this package lands here.
 	return time.Now().UTC()
 }
 

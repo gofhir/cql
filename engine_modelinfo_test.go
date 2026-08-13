@@ -3,6 +3,7 @@ package cql
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/gofhir/cql/eval"
@@ -165,8 +166,12 @@ func TestRetrieveCarriesItsContext(t *testing.T) {
 		if rec.last.ContextSearchParam != tt.wantParam {
 			t.Errorf("[%s] search param = %q, want %q", tt.resource, rec.last.ContextSearchParam, tt.wantParam)
 		}
-		if rec.last.Limit != 500 {
-			t.Errorf("[%s] limit = %d, want 500 — a provider that can bound the query should be told", tt.resource, rec.last.Limit)
+		// One more than the caller accepts: asking for exactly the maximum makes
+		// the engine unable to tell "there were more" from "that was all", and
+		// a provider that honors the limit would truncate the population in
+		// silence.
+		if rec.last.Limit != 501 {
+			t.Errorf("[%s] limit = %d, want 501 (max + 1)", tt.resource, rec.last.Limit)
 		}
 	}
 
@@ -261,5 +266,85 @@ define Anchor: Now()
 				t.Fatalf("%s was false on run %d: the evaluation timestamp is not frozen", name, i)
 			}
 		}
+	}
+}
+
+// countingLimitProvider honors the Limit it is given, the way a provider that
+// can bound its query would.
+type countingLimitProvider struct{ available int }
+
+func (p *countingLimitProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
+	n := p.available
+	if req.Limit > 0 && n > req.Limit {
+		n = req.Limit
+	}
+	out := make([]json.RawMessage, n)
+	for i := range out {
+		out[i] = json.RawMessage(`{"resourceType":"Condition","id":"c"}`)
+	}
+	return out, nil
+}
+
+// TestRetrieveLimitStaysReachable covers the interaction between the limit sent
+// to the provider and the refusal that backs it. Asking for exactly the maximum
+// makes the refusal unreachable: a provider that honors the limit returns
+// exactly that many rows, the count never exceeds it, and the population is
+// truncated in silence — the one outcome the limit exists to prevent.
+func TestRetrieveLimitStaysReachable(t *testing.T) {
+	src := "library T version '1.0'\nusing FHIR version '4.0.1'\n\ndefine X: Count([Condition])\n"
+
+	_, err := NewEngine(WithDataProvider(&countingLimitProvider{available: 100}), WithMaxRetrieveSize(2)).
+		EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err == nil {
+		t.Fatal("100 resources under a limit of 2 should be refused, not truncated to 2")
+	}
+	var costly *ErrTooCostly
+	if !errors.As(err, &costly) {
+		t.Errorf("expected ErrTooCostly, got %T: %v", err, err)
+	}
+
+	// Exactly at the limit is fine, and is not mistaken for an overflow.
+	got, err := NewEngine(WithDataProvider(&countingLimitProvider{available: 2}), WithMaxRetrieveSize(2)).
+		EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err != nil {
+		t.Fatalf("2 resources under a limit of 2 should succeed: %v", err)
+	}
+	if valueString(got) != "2" {
+		t.Errorf("Count = %s, want 2", valueString(got))
+	}
+}
+
+// TestContextScopingIsHonest covers the cases where the engine has nothing
+// trustworthy to tell a provider, and must say nothing rather than something
+// wrong.
+func TestContextScopingIsHonest(t *testing.T) {
+	// A context with no subject: a population-level run. Naming the context with
+	// an empty id would ask a conforming provider to filter on nothing.
+	rec := &requestRecorder{}
+	src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n\ndefine X: [Condition]\n"
+	if _, err := NewEngine(WithDataProvider(rec)).
+		EvaluateExpression(context.Background(), src, "X", nil, nil); err != nil {
+		t.Fatalf("population-level retrieve: %v", err)
+	}
+	if rec.last.Context != "" || rec.last.ContextID != "" {
+		t.Errorf("a subjectless run claimed context %q/%q", rec.last.Context, rec.last.ContextID)
+	}
+
+	// The context in force is the statement's, not the library's first.
+	patient := []byte(`{"resourceType":"Patient","id":"p1"}`)
+	rec = &requestRecorder{}
+	switched := `library T version '1.0'
+using FHIR version '4.0.1'
+context Patient
+define A: [Condition]
+context Unfiltered
+define B: [Condition]
+`
+	if _, err := NewEngine(WithDataProvider(rec)).
+		EvaluateExpression(context.Background(), switched, "B", patient, nil); err != nil {
+		t.Fatalf("switched context: %v", err)
+	}
+	if rec.last.Context == "Patient" {
+		t.Error("a definition under `context Unfiltered` was scoped to Patient")
 	}
 }

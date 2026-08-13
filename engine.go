@@ -180,7 +180,12 @@ func NewEngine(opts ...Option) *Engine {
 		if mi, err := model.LoadR4ModelInfo(); err == nil {
 			e.modelInfo = mi
 		} else {
+			// Degrade rather than refuse to build an engine — and do not then
+			// reject every library for asking for the version we just failed to
+			// load, which is what checking the usings against the same sticky
+			// failure would do.
 			e.modelInfo = model.DefaultR4ModelInfo()
+			e.modelInfoExplicit = true
 		}
 	} else {
 		e.modelInfoExplicit = true

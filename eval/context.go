@@ -118,6 +118,12 @@ type Context struct {
 	Index int
 	Total fptypes.Value
 
+	// StatementContext is the CQL context the statement being evaluated declared.
+	// A library may switch context part-way — `context Patient` for some
+	// definitions and `context Unfiltered` for others — so this follows the
+	// statement rather than the library's first declaration.
+	StatementContext string
+
 	// InSortKey marks a scope in which a sort key is being evaluated against a
 	// result element, which is This. An unqualified identifier then names a
 	// column of that element, and one that names no column is null rather than
@@ -429,6 +435,7 @@ func (c *Context) ChildScope() *Context {
 		MaxDepth:            c.MaxDepth,
 		MaxRetrieveSize:     c.MaxRetrieveSize,
 		EvaluationTimestamp: c.EvaluationTimestamp,
+		StatementContext:    c.StatementContext,
 		depth:               c.depth,
 		evalTicks:           c.evalTicks,
 		libraryScopes:       c.libraryScopes,
@@ -525,15 +532,19 @@ type contextScoper interface {
 // parameter, and Condition has no element called patient. What it can do is say
 // which patient it means, clearly enough that a provider cannot mistake it.
 func (c *Context) applyRetrieveContext(req *RetrieveRequest) {
-	if c.Library == nil || len(c.Library.Contexts) == 0 {
-		return
-	}
-	contextName := c.Library.Contexts[0].Name
+	contextName := c.StatementContext
 	if contextName == "" {
 		return
 	}
+	// Without a subject there is nothing to scope to, and saying "Patient" with
+	// an empty id would ask a conforming provider to filter on nothing. A
+	// population-level run is exactly that case.
+	subject := c.GetContextSubjectID()
+	if subject == "" {
+		return
+	}
 	req.Context = contextName
-	req.ContextID = c.GetContextSubjectID()
+	req.ContextID = subject
 	if scoper, ok := c.ModelInfo.(contextScoper); ok {
 		if param, found := scoper.ContextSearchParam(req.ResourceType, contextName); found {
 			req.ContextSearchParam = param

@@ -95,6 +95,7 @@ func (e *Evaluator) EvaluateLibrary() (map[string]fptypes.Value, error) {
 	}
 	results := make(map[string]fptypes.Value)
 	for _, stmt := range e.ctx.Library.Statements {
+		e.ctx.StatementContext = stmt.Context
 		val, err := e.Eval(stmt.Expression)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating '%s': %w", stmt.Name, err)
@@ -114,14 +115,16 @@ func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
 	// Find the expression definition
 	if e.ctx.Library != nil {
 		for _, stmt := range e.ctx.Library.Statements {
-			if stmt.Name == name {
-				val, err := e.Eval(stmt.Expression)
-				if err != nil {
-					return nil, err
-				}
-				e.ctx.Definitions[name] = val
-				return val, nil
+			if stmt.Name != name {
+				continue
 			}
+			e.ctx.StatementContext = stmt.Context
+			val, err := e.Eval(stmt.Expression)
+			if err != nil {
+				return nil, err
+			}
+			e.ctx.Definitions[name] = val
+			return val, nil
 		}
 	}
 	return nil, fmt.Errorf("expression '%s' not found", name)
@@ -406,6 +409,33 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	// Anywhere else, a name that resolves to nothing is a mistake: answering
 	// with the name itself hides it behind a plausible-looking String.
 	return nil, fmt.Errorf("unknown identifier %q", n.Name)
+}
+
+// evaluationNow renders the evaluation's frozen timestamp as a value, for the
+// operators that take an "as of" argument and would otherwise read the clock.
+// An age computed against a different instant than Today() answers in the same
+// expression is the same inconsistency, one function further out.
+func (e *Evaluator) evaluationNow() fptypes.Value {
+	v, err := funcs.NowAt(e.ctx.EvaluationTimestamp)
+	if err != nil {
+		return nil
+	}
+	return v
+}
+
+// retrieveLimit is what a provider is asked for: one more than the caller will
+// accept.
+//
+// Asking for exactly the maximum makes the refusal below unreachable — a
+// provider that honors the limit returns exactly that many rows, len(results)
+// never exceeds it, and the population is silently truncated, which is the one
+// outcome the limit exists to prevent. One extra row is how the engine can tell
+// "there were more" from "that was all".
+func retrieveLimit(maxSize int) int {
+	if maxSize <= 0 {
+		return 0
+	}
+	return maxSize + 1
 }
 
 // wrapUnlessLimit adds context to an evaluation error, except when the error is
@@ -2015,16 +2045,16 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 	// Clinical functions
 	case "ageinyears":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInYears(bd)
+		return funcs.AgeInYearsAt(bd, e.evaluationNow())
 	case "ageinmonths":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInMonths(bd)
+		return funcs.AgeInMonthsAt(bd, e.evaluationNow())
 	case "ageinweeks":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInWeeks(bd)
+		return funcs.AgeInWeeksAt(bd, e.evaluationNow())
 	case "ageindays":
 		bd := e.getPatientBirthDate()
-		return funcs.AgeInDays(bd)
+		return funcs.AgeInDaysAt(bd, e.evaluationNow())
 	case "ageinyearsat":
 		bd := e.getPatientBirthDate()
 		if len(n.Operands) > 0 {
@@ -2034,7 +2064,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return funcs.AgeInYearsAt(bd, asOf)
 		}
-		return funcs.AgeInYears(bd)
+		return funcs.AgeInYearsAt(bd, e.evaluationNow())
 	case "ageinmonthsat":
 		bd := e.getPatientBirthDate()
 		if len(n.Operands) > 0 {
@@ -2044,7 +2074,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return funcs.AgeInMonthsAt(bd, asOf)
 		}
-		return funcs.AgeInMonths(bd)
+		return funcs.AgeInMonthsAt(bd, e.evaluationNow())
 	case "calculateageinyears":
 		if len(n.Operands) > 0 {
 			bd, err := e.Eval(n.Operands[0])
@@ -2083,7 +2113,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return funcs.CalculateAgeInWeeks(bd, nil)
+			return funcs.CalculateAgeInWeeks(bd, e.evaluationNow())
 		}
 		return nil, nil
 	case "calculateageindays":
@@ -2092,7 +2122,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return funcs.CalculateAgeInDays(bd, nil)
+			return funcs.CalculateAgeInDays(bd, e.evaluationNow())
 		}
 		return nil, nil
 
@@ -3509,7 +3539,7 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 		CodeComparator: n.CodeComparator,
 		Codes:          codes,
 		DateRange:      dateRange,
-		Limit:          e.ctx.MaxRetrieveSize,
+		Limit:          retrieveLimit(e.ctx.MaxRetrieveSize),
 	}
 	e.ctx.applyRetrieveContext(&req)
 	results, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, req)

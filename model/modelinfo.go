@@ -113,11 +113,16 @@ func (m *StaticModelInfo) ContextType(contextName string) string {
 	return contextName // default: context name is the resource type
 }
 
+// PrimaryCodePath returns the element a retrieve filters its codes against, or
+// "" when the model declares none.
+//
+// 84 of the 147 retrievable types declare no primary code path — a retrieve
+// naming one has to say which element it means. Answering "code" for those
+// would leave a provider unable to tell what the model said from what it did
+// not, and Media, ImagingStudy and DocumentReference have no code element at
+// all.
 func (m *StaticModelInfo) PrimaryCodePath(resourceType string) string {
-	if cp, ok := m.codePaths[resourceType]; ok {
-		return cp
-	}
-	return "code" // default code path
+	return m.codePaths[resourceType]
 }
 
 func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
@@ -165,9 +170,38 @@ func (m *StaticModelInfo) ConversionFunction(from, to string) (string, bool) {
 // context — "subject" for Observation in a Patient context, "patient" for
 // Condition. It is what a data provider needs to scope a retrieve; it is not an
 // element path, so the engine cannot navigate it itself.
+//
+// Two kinds of declaration are refused rather than passed on. A type that *is*
+// the context is identified by its own key, not by a relationship to itself:
+// the model says Patient relates to Patient through "other", which is
+// Patient.link.other and would fetch the linked patients instead. And some
+// types declare a FHIRPath fragment — AuditEvent, Provenance, Basic, Person and
+// MeasureReport all say "where(resolve() is Patient)" — which is not a search
+// parameter and would make a query no server can answer.
 func (m *StaticModelInfo) ContextSearchParam(resourceType, contextName string) (string, bool) {
+	if strings.EqualFold(unqualify(resourceType), unqualify(contextName)) {
+		return "", false
+	}
 	p, ok := m.contextRels[contextRelKey{Type: resourceType, Context: contextName}]
-	return p, ok
+	if !ok || !isSearchParamName(p) {
+		return "", false
+	}
+	return p, true
+}
+
+// isSearchParamName reports whether a declaration looks like a search parameter
+// rather than a path expression.
+func isSearchParamName(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // PatientClassName returns the model's patient type, e.g. "FHIR.Patient".

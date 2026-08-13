@@ -142,8 +142,11 @@ func (m *StaticModelInfo) addParsedType(ti xmlTypeInfo) {
 			continue
 		}
 		key := contextRelKey{Type: ti.Name, Context: rel.Context}
-		// A type may declare several relationships to one context; the first is
-		// the one the model leads with.
+		// A type may declare several relationships to one context, and the
+		// order is meaningful: the model leads with the primary one. Basic
+		// leads with the fragment covering its subject and names author after
+		// it, so reaching past the first for something that merely looks like a
+		// search parameter would scope by the wrong element entirely.
 		if _, seen := m.contextRels[key]; !seen {
 			m.contextRels[key] = rel.RelatedKeyElement
 		}
