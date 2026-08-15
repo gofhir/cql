@@ -30,6 +30,7 @@ import (
 	"github.com/gofhir/cql/eval"
 	"github.com/gofhir/cql/fhirhelpers"
 	"github.com/gofhir/cql/model"
+	"github.com/gofhir/cql/sema"
 )
 
 // LibraryResolver loads CQL source by library name and version.
@@ -574,6 +575,51 @@ func (e *Engine) Parse(cqlSource string) (*Library, error) {
 func (e *Engine) Compile(cqlSource string) error {
 	_, err := e.Parse(cqlSource)
 	return err
+}
+
+// Check parses a library and reports what the semantic phase finds in it: what
+// type every expression has, and everything wrong with the ones that have none.
+//
+// It answers without data, without a provider and without evaluating anything,
+// which is what makes it usable where a measure is authored rather than where
+// it is run. A mistyped element name is found once, at the line that has it,
+// instead of once per patient and only for patients whose data reaches it.
+//
+// The error return is for a library that does not parse; everything the
+// semantic phase itself finds comes back as diagnostics, all of it in one pass.
+// A caller that wants to refuse the library asks Diagnostics.HasErrors — a
+// warning is a remark, not a verdict.
+func (e *Engine) Check(cqlSource string) (sema.Diagnostics, error) {
+	lib, err := e.Parse(cqlSource)
+	if err != nil {
+		return nil, err
+	}
+	return e.CheckParsed(lib), nil
+}
+
+// CheckParsed runs the semantic phase over an already parsed library, so a
+// caller that has paid for the parse does not pay for it again.
+func (e *Engine) CheckParsed(lib *Library) sema.Diagnostics {
+	if lib == nil || lib.lib == nil {
+		return nil
+	}
+	return sema.Check(lib.lib, e.semanticModel()).Diagnostics
+}
+
+// semanticModel is the model the semantic phase asks about types.
+//
+// A caller may have supplied a ModelInfo of their own making, which knows how
+// to answer the questions the evaluator asks and not the ones this phase does —
+// element types as types, declared conversions with their targets. Rather than
+// widen the public ModelInfo interface for it, an implementation that cannot
+// answer yields no model at all: the phase then types what needs no model and
+// stays quiet about the rest, which is the honest answer.
+func (e *Engine) semanticModel() sema.Model {
+	static, ok := e.modelInfo.(*model.StaticModelInfo)
+	if !ok {
+		return nil
+	}
+	return sema.FromModelInfo(static)
 }
 
 // ---------------------------------------------------------------------------

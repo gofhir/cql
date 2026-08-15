@@ -227,12 +227,29 @@ Tiene techo: sin tipos estáticos no se puede distinguir una sobrecarga por su t
 **Scope:** nuevo paquete entre `compiler` y `eval`.
 **Coste:** meses. Depende de todo lo anterior. Reducida: el despacho por tipo se adelantó a la Etapa 2.
 
-- [ ] Posiciones `{Line, Col}` en cada nodo del AST desde `ctx.GetStart()`. Mecánico, y da diagnósticos útiles desde el primer día. Hoy solo los errores de sintaxis de ANTLR llevan ubicación.
-- [ ] Tipado estático con recuperación estilo `badExpression()`: reportar todos los errores de una pasada en vez de abortar en el primero.
-- [ ] Coste de conversión en la resolución de sobrecargas, como `OverloadMatch()`.
-- [ ] Inserción estática de las conversiones que la Etapa 3 aplica en runtime.
+- [x] Posiciones `{Line, Col}` en cada nodo del AST desde `ctx.GetStart()`. Mecánico, y da diagnósticos útiles desde el primer día. Hoy solo los errores de sintaxis de ANTLR llevan ubicación.
+- [x] Tipado estático con recuperación estilo `badExpression()`: reportar todos los errores de una pasada en vez de abortar en el primero. **Paquete `sema/`**, expuesto como `Engine.Check`. La recuperación es el tipo `Unknown`: todo operador lo acepta y lo propaga, así que un nombre sin resolver se reporta una vez y no una por expresión que lo mencione.
+- [x] Coste de conversión en la resolución de sobrecargas, como `OverloadMatch()`. Escala en `sema/convert.go`: exacta < subtipo < rama de choice < conversión implícita < conversión declarada por el modelo < promoción a lista.
+- [~] Inserción estática de las conversiones que la Etapa 3 aplica en runtime. La fase ya **decide** cuáles hacen falta y dónde (`Result.Conversions`, y agrupadas por definición), y coincide con la referencia en la probe. Falta que el evaluador consuma esa decisión en vez de volver a tomarla con el valor en la mano.
 
 **Verificación:** el traductor de referencia está disponible como microservicio (`cqframework/cql-translation-service`) y como CLI (`cql-to-elm-cli`). Traducir un corpus y comparar qué tipo infiere y dónde inserta cada conversión convierte esta etapa en algo diffable.
+
+### Lo medido al cerrar la primera mitad
+
+| | |
+| --- | --- |
+| Probe de referencia | los 5 tipos coinciden y las 2 conversiones caen en la misma definición (`TestStatic*MatchTheReference`) |
+| FHIRHelpers oficial, 297 funciones | 0 diagnósticos |
+| Corpus de conformidad, 1783 expresiones válidas | 0 falsos positivos |
+| Las 39 que el corpus marca inválidas y el parser acepta | 0 detectadas, y es lo correcto: son errores de evaluación —`Exp(1000)` desborda, `Ln(0)` no existe, `successor of` el último DateTime no tiene a dónde ir—, no de tipos |
+
+**`start of encounter.period` queda cerrado estáticamente**: la fase dice `DateTime`, como la referencia, porque el modelo declara que `FHIR.Period` se convierte a `Interval<System.DateTime>`. En evaluación sigue dando `Date`, y seguirá hasta que el evaluador consuma la decisión estática.
+
+Tres reglas costaron encontrarse, y las tres salieron de correr la fase sobre el FHIRHelpers oficial en vez de sobre ejemplos propios:
+
+- **`null` en una rama no destipa la expresión.** Casi toda función de FHIRHelpers es `if x is null then null else …`; tratar el tipo de `null` como un tipo más hacía que todas devolvieran `Any`, y con ello fallaban las llamadas que las usan.
+- **`System.ValueSet` tiene elementos** (`id`, `version`, `codesystems`), y `ToValueSet` los construye.
+- **Un nombre de tipo sin cualificar es del modelo antes que de CQL.** `value as Quantity` dentro de FHIRHelpers es `FHIR.Quantity`; el mismo fichero escribe `System.Quantity` cuando quiere el otro. Solo chocan `Quantity` y `Ratio`, porque FHIR escribe sus primitivas en minúscula — razón de más para preguntárselo al modelo y no a una lista de nombres.
 
 ---
 

@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/compiler"
 	"github.com/gofhir/cql/eval"
+	"github.com/gofhir/cql/model"
+	"github.com/gofhir/cql/sema"
 )
 
 // referenceELM is what the reference translator decided, recorded by
@@ -104,10 +108,115 @@ func TestConversionsMatchTheReference(t *testing.T) {
 	}
 }
 
+// TestStaticTypesMatchTheReference covers what the semantic phase infers
+// against what the reference translator infers, with no data and no evaluation
+// involved on either side.
+//
+// This is the comparison Etapa 5 exists to pass. The older test below compares
+// the *evaluated* type of each definition, which answers a different question —
+// what came back for this patient — and diverges for a reason that is not a
+// bug: `start of Enc.period` evaluates to a Date because the value carried no
+// time, while both translators say DateTime because FHIR.Period is declared to
+// convert to Interval<System.DateTime>. Only the static comparison can hold.
+func TestStaticTypesMatchTheReference(t *testing.T) {
+	ref := loadReference(t)
+	src := loadProbe(t)
+
+	lib, err := compiler.Compile(src)
+	if err != nil {
+		t.Fatalf("compiling the probe: %v", err)
+	}
+	mi, err := model.LoadR4ModelInfo()
+	if err != nil {
+		t.Fatalf("loading model info: %v", err)
+	}
+	result := sema.Check(lib, sema.FromModelInfo(mi))
+
+	for _, want := range ref.Definitions {
+		if want.ResultType == "" {
+			continue // the implicit context definition
+		}
+		got, ok := result.Defines[want.Name]
+		if !ok {
+			t.Errorf("%s: the reference types it %s and we do not type it at all",
+				want.Name, want.ResultType)
+			continue
+		}
+		if sema.Unqualified(got) != want.ResultType {
+			t.Errorf("%s is %s, the reference says %s", want.Name, got, want.ResultType)
+		}
+	}
+
+	// A probe that produced diagnostics would mean the phase disagrees with a
+	// library the reference translator accepted without complaint.
+	if result.Diagnostics.HasErrors() {
+		t.Errorf("the reference translated the probe cleanly; we reported:\n%s",
+			result.Diagnostics.Errors().Error())
+	}
+}
+
+// TestStaticConversionsMatchTheReference covers where the semantic phase says a
+// FHIRHelpers call belongs against where the reference translator put one.
+//
+// The engine applies these at evaluation (Etapa 3) and the reference inserts
+// them at translation; agreeing on *where* is what says the two mechanisms are
+// doing the same thing.
+func TestStaticConversionsMatchTheReference(t *testing.T) {
+	ref := loadReference(t)
+	src := loadProbe(t)
+
+	lib, err := compiler.Compile(src)
+	if err != nil {
+		t.Fatalf("compiling the probe: %v", err)
+	}
+	mi, err := model.LoadR4ModelInfo()
+	if err != nil {
+		t.Fatalf("loading model info: %v", err)
+	}
+	result := sema.Check(lib, sema.FromModelInfo(mi))
+
+	for _, want := range ref.Definitions {
+		got := conversionNames(result.ConversionsByDefine[want.Name])
+		if !sameStrings(got, want.Conversions) {
+			t.Errorf("%s converts through %v, the reference used %v",
+				want.Name, got, want.Conversions)
+		}
+	}
+}
+
+// conversionNames renders the conversions of one definition the way the
+// reference records them: the function's own name, without its library.
+func conversionNames(convs []sema.Conversion) []string {
+	out := make([]string, 0, len(convs))
+	for _, conv := range convs {
+		name := conv.Function
+		if dot := strings.LastIndex(name, "."); dot >= 0 {
+			name = name[dot+1:]
+		}
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func sameStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	sorted := append([]string(nil), b...)
+	sort.Strings(sorted)
+	for i := range a {
+		if a[i] != sorted[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // TestResultTypesAgainstTheReference records where the types this engine
-// produces differ from the ones the reference infers. It reports rather than
-// fails: this engine has no semantic phase yet, so a difference is a finding to
-// carry into Etapa 5, not a regression to block on.
+// produces at evaluation differ from the ones the reference infers statically.
+// It reports rather than fails: the two answer different questions, and the
+// static comparison above is the one that has to hold.
 func TestResultTypesAgainstTheReference(t *testing.T) {
 	ref := loadReference(t)
 	src := loadProbe(t)

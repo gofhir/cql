@@ -154,6 +154,13 @@ linters:
         linters:
           - gocyclo
 
+      # The semantic phase dispatches on node and type kind, which is a switch
+      # per rule: splitting one up would scatter a single decision across
+      # functions that only ever have one caller.
+      - path: "sema/.*\\.go"
+        linters:
+          - gocyclo
+
 formatters:
   enable:
     - gofmt
