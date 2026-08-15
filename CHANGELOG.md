@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/gofhir/cql/compare/v1.11.0...v1.12.0) (2026-08-15)
+
+
+### Features
+
+* **eval:** apply the conversions the semantic phase decided on, instead of deciding again ([#28](https://github.com/gofhir/cql/issues/28)) ([aea0f45](https://github.com/gofhir/cql/commit/aea0f4514f63006bcbc57a70a5ad2608db9a4508))
+
 ## [1.11.0](https://github.com/gofhir/cql/compare/v1.10.0...v1.11.0) (2026-08-15)
 
 
