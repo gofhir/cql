@@ -238,6 +238,30 @@ func (e *Evaluator) applyPlannedConversion(conv sema.Conversion, v fptypes.Value
 // the function converts a Period, not a list of them, and calling it on the
 // list would be calling it on the wrong thing.
 func (e *Evaluator) convertEachElement(conv sema.Conversion, v fptypes.Value) (fptypes.Value, error) {
+	if iv, ok := v.(cqltypes.Interval); ok {
+		// An interval converts at its boundaries: Interval<FHIR.Quantity>
+		// reaching Interval<System.Quantity> converts the two points, and
+		// calling the function on the interval yields nothing at all.
+		low, err := e.callConversion(conv.Function, iv.Low)
+		if err != nil {
+			return nil, err
+		}
+		high, err := e.callConversion(conv.Function, iv.High)
+		if err != nil {
+			return nil, err
+		}
+		if low == nil && high == nil {
+			return v, nil
+		}
+		converted := iv
+		if low != nil {
+			converted.Low = low
+		}
+		if high != nil {
+			converted.High = high
+		}
+		return converted, nil
+	}
 	list, ok := v.(cqltypes.List)
 	if !ok {
 		// Inferred as a list and evaluated as a single value: convert it as

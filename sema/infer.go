@@ -385,6 +385,13 @@ func (c *checker) inferCase(e *ast.CaseExpression) Type {
 	if e.Else != nil {
 		result = Common(result, c.infer(e.Else), c.model)
 	}
+	// Every branch reaches the type they have in common, exactly as an if's two
+	// branches do. Leaving this out made `case when true then Q else 2 'mg' end`
+	// behave differently from the same thing written with `if`.
+	for _, item := range e.Items {
+		c.coerceRecorded(item.Then, result)
+	}
+	c.coerceRecorded(e.Else, result)
 	return result
 }
 

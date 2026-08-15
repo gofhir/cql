@@ -79,7 +79,7 @@ func (e *Evaluator) callConversion(qualified string, arg fptypes.Value) (fptypes
 	if lib == nil {
 		return nil, nil
 	}
-	fd := e.conversionOverload(lib, libName, fnName, arg)
+	fd := e.conversionOverload(lib, fnName, arg)
 	if fd == nil {
 		return nil, nil
 	}
@@ -94,8 +94,8 @@ func (e *Evaluator) callConversion(qualified string, arg fptypes.Value) (fptypes
 // ToString alone has 251 overloads, and scoring all of them against a value —
 // each score walking the model's type hierarchy — was 26% of the time spent
 // evaluating a fifty-encounter library.
-func (e *Evaluator) conversionOverload(lib *ast.Library, libName, fnName string, arg fptypes.Value) *ast.FunctionDef {
-	key := conversionKey{library: libName, function: fnName}
+func (e *Evaluator) conversionOverload(lib *ast.Library, fnName string, arg fptypes.Value) *ast.FunctionDef {
+	key := conversionKey{library: lib, function: fnName}
 	if arg != nil {
 		key.argType = arg.Type()
 	}

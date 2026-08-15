@@ -90,8 +90,13 @@ var (
 // Context holds the evaluation state for a CQL evaluation.
 // conversionKey names one resolved conversion: which function of which library,
 // applied to which type of value.
+//
+// The library is the library itself and not the name it was reached by. Two
+// libraries in one evaluation can each include a different library under the
+// same alias — FHIRHelpers is the one everybody aliases — and keying on the
+// name let whichever converted first decide the function body the other ran.
 type conversionKey struct {
-	library  string
+	library  *ast.Library
 	function string
 	argType  string
 }
