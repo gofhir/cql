@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/gofhir/cql/compare/v1.10.0...v1.11.0) (2026-08-15)
+
+
+### Features
+
+* **sema:** work out what every expression is before anything is evaluated ([#26](https://github.com/gofhir/cql/issues/26)) ([c2b9cc5](https://github.com/gofhir/cql/commit/c2b9cc55f97ee6555dadbe7acf23b8dfc192de67))
+
 ## [1.10.0](https://github.com/gofhir/cql/compare/v1.9.0...v1.10.0) (2026-08-13)
 
 
