@@ -230,7 +230,7 @@ Tiene techo: sin tipos estáticos no se puede distinguir una sobrecarga por su t
 - [x] Posiciones `{Line, Col}` en cada nodo del AST desde `ctx.GetStart()`. Mecánico, y da diagnósticos útiles desde el primer día. Hoy solo los errores de sintaxis de ANTLR llevan ubicación.
 - [x] Tipado estático con recuperación estilo `badExpression()`: reportar todos los errores de una pasada en vez de abortar en el primero. **Paquete `sema/`**, expuesto como `Engine.Check`. La recuperación es el tipo `Unknown`: todo operador lo acepta y lo propaga, así que un nombre sin resolver se reporta una vez y no una por expresión que lo mencione.
 - [x] Coste de conversión en la resolución de sobrecargas, como `OverloadMatch()`. Escala en `sema/convert.go`: exacta < subtipo < rama de choice < conversión implícita < conversión declarada por el modelo < promoción a lista.
-- [~] Inserción estática de las conversiones que la Etapa 3 aplica en runtime. La fase ya **decide** cuáles hacen falta y dónde (`Result.Conversions`, y agrupadas por definición), y coincide con la referencia en la probe. Falta que el evaluador consuma esa decisión en vez de volver a tomarla con el valor en la mano.
+- [x] Inserción estática de las conversiones que la Etapa 3 aplica en runtime. El evaluador consume la decisión en `Eval`, una sola vez y contra el nodo, en vez de que cada operador pregunte al modelo por el valor que tiene en la mano.
 
 **Verificación:** el traductor de referencia está disponible como microservicio (`cqframework/cql-translation-service`) y como CLI (`cql-to-elm-cli`). Traducir un corpus y comparar qué tipo infiere y dónde inserta cada conversión convierte esta etapa en algo diffable.
 
@@ -243,7 +243,16 @@ Tiene techo: sin tipos estáticos no se puede distinguir una sobrecarga por su t
 | Corpus de conformidad, 1783 expresiones válidas | 0 falsos positivos |
 | Las 39 que el corpus marca inválidas y el parser acepta | 0 detectadas, y es lo correcto: son errores de evaluación —`Exp(1000)` desborda, `Ln(0)` no existe, `successor of` el último DateTime no tiene a dónde ir—, no de tipos |
 
-**`start of encounter.period` queda cerrado estáticamente**: la fase dice `DateTime`, como la referencia, porque el modelo declara que `FHIR.Period` se convierte a `Interval<System.DateTime>`. En evaluación sigue dando `Date`, y seguirá hasta que el evaluador consuma la decisión estática.
+**`start of encounter.period` queda cerrado estáticamente**: la fase dice `DateTime`, como la referencia, porque el modelo declara que `FHIR.Period` se convierte a `Interval<System.DateTime>`.
+
+Medir esto de cerca corrigió dos suposiciones del plan, y conviene dejarlas por escrito:
+
+- **Que el evaluador consumiera la decisión no iba a cerrar esa divergencia**, porque la conversión *ya se aplicaba*. El `Date` sale de que el motor tipa por el texto JSON: con `period.start` = `"2020-03-01"` da `Date`, y con `"2020-03-01T10:00:00Z"` da `DateTime`. Lo que queda es el modelo de primitivas del issue #3, no las conversiones.
+- **Que hiciera falta para elegir entre conversiones ambiguas**: ningún tipo del ModelInfo R4 declara más de una, así que ese techo no se alcanza nunca.
+
+Lo que sí lo justificó fue medir el hueco: el evaluador solo intentaba convertir en los operadores de intervalo, timing y membresía, y en el resto fallaba o **contestaba mal en silencio** — `Obs.value as FHIR.Quantity = 9.1 'mg'` daba `false`, y `Sum({ Q, 2 'mg' })` daba `2 'mg'`. Aplicar la decisión en `Eval`, contra el nodo, cubre de una vez todos los contextos, incluidos los que ningún operador inspecciona: un elemento de una lista, un argumento, una rama de un `if`.
+
+Y salió más rápido, no más lento: **491 µs frente a 568 µs** en una librería de cincuenta encounters. Convertir resolvía las 251 sobrecargas de `ToString` por cada valor, que era el 26% del tiempo; la elección depende solo del tipo del argumento, así que se recuerda durante la evaluación. El análisis en sí cuesta un 1% de lo que cuesta parsear.
 
 Tres reglas costaron encontrarse, y las tres salieron de correr la fase sobre el FHIRHelpers oficial en vez de sobre ejemplos propios:
 

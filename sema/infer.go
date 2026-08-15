@@ -362,7 +362,10 @@ func (c *checker) inferIf(e *ast.IfThenElse) Type {
 	if e.Else == nil {
 		return then
 	}
-	return Common(then, c.infer(e.Else), c.model)
+	result := Common(then, c.infer(e.Else), c.model)
+	c.coerceRecorded(e.Then, result)
+	c.coerceRecorded(e.Else, result)
+	return result
 }
 
 func (c *checker) inferCase(e *ast.CaseExpression) Type {
@@ -415,6 +418,13 @@ func (c *checker) inferListConstructor(e *ast.ListExpression) Type {
 	for _, el := range e.Elements {
 		element = Common(element, c.infer(el), c.model)
 	}
+	// Every element has to reach the type they have in common, which is what
+	// makes `{ Obs.value as FHIR.Quantity, 2 'mg' }` a list of two quantities
+	// rather than a list of one quantity and one FHIR object that Sum walks
+	// straight past.
+	for _, el := range e.Elements {
+		c.coerceRecorded(el, element)
+	}
 	return &List{Element: element}
 }
 
@@ -458,7 +468,12 @@ func (c *checker) inferConvert(e *ast.ConvertExpression) Type {
 // inferBetween types `x between low and high`, which is a pair of comparisons
 // and so a Boolean.
 func (c *checker) inferBetween(e *ast.BetweenExpression) Type {
-	operand := c.infer(e.Operand)
+	// The operand is what converts, not the bounds: `Obs.value as FHIR.Quantity
+	// between 1 'mg' and 20 'mg'` compares a system Quantity against two
+	// literals, and asking the literals to become FHIR.Quantity — which is what
+	// inferring the operand plainly did — converts nothing and compares a
+	// FHIR value against a system one.
+	operand := c.arithmeticOperand(e.Operand)
 	c.expect(e.Low, operand)
 	c.expect(e.High, operand)
 	return Boolean
@@ -613,6 +628,27 @@ func (c *checker) convertToSystem(expr ast.Expression, from *Named) (Type, bool)
 		return target, true
 	}
 	return nil, false
+}
+
+// coerceRecorded records the conversion an expression needs to reach a type,
+// without typing it again.
+//
+// It is what expect() does minus the inference and the diagnostic, for the
+// places that work out a common type *from* their parts and only then know what
+// each part has to become — the elements of a list, the branches of an if. Those
+// cannot use expect: it would walk each part a second time, and reaching the
+// common type is never an error, since the common type was derived from them.
+func (c *checker) coerceRecorded(expr ast.Expression, want Type) {
+	if expr == nil || IsUnknown(want) {
+		return
+	}
+	got, ok := c.types[expr]
+	if !ok || IsUnknown(got) || Equal(got, want) {
+		return
+	}
+	if conv, ok := Convertible(got, want, c.model); ok {
+		c.convert(expr, conv)
+	}
 }
 
 // expect types an expression and checks it against the type the context needs,

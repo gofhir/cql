@@ -15,6 +15,7 @@ import (
 
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/funcs"
+	"github.com/gofhir/cql/sema"
 	cqltypes "github.com/gofhir/cql/types"
 	fptypes "github.com/gofhir/fhirpath/types"
 )
@@ -172,7 +173,7 @@ func (e *Evaluator) Eval(expr ast.Expression) (fptypes.Value, error) {
 		}
 	}
 	if e.ctx.MaxDepth <= 0 || e.ctx.depth == nil {
-		result, err := e.eval(expr)
+		result, err := e.evalAndConvert(expr)
 		return result, withPosition(err, expr)
 	}
 	*e.ctx.depth++
@@ -180,9 +181,82 @@ func (e *Evaluator) Eval(expr ast.Expression) (fptypes.Value, error) {
 		*e.ctx.depth--
 		return nil, fmt.Errorf("%w: expression nests deeper than %d", ErrMaxDepthExceeded, e.ctx.MaxDepth)
 	}
-	result, err := e.eval(expr)
+	result, err := e.evalAndConvert(expr)
 	*e.ctx.depth--
 	return result, withPosition(err, expr)
+}
+
+// evalAndConvert evaluates an expression and applies whatever conversion the
+// semantic phase decided it needs.
+//
+// Doing it here, once, is the whole point. The alternative — and what this
+// replaces — is each operator asking the model whether the value it was handed
+// needs converting, which meant every operator that nobody thought to teach
+// simply did not convert: arithmetic on a FHIR.Quantity failed outright, and
+// `Obs.value as FHIR.Quantity = 9.1 'mg'` answered false. The phase decides
+// against the node, so applying it against the node covers every context the
+// node can appear in, including the ones no operator inspects — an element of a
+// list, an argument, a branch of an if.
+func (e *Evaluator) evalAndConvert(expr ast.Expression) (fptypes.Value, error) {
+	result, err := e.eval(expr)
+	if err != nil || result == nil || e.ctx.Plan == nil {
+		return result, err
+	}
+	conv, ok := e.ctx.Plan.ConversionFor(expr)
+	if !ok {
+		return result, nil
+	}
+	return e.applyPlannedConversion(conv, result)
+}
+
+// applyPlannedConversion runs one decided conversion over a value.
+//
+// A conversion that fails to produce anything leaves the value alone rather
+// than turning it into null: the phase decides from types, and a value that
+// does not fit what it expected — a list where a single value was inferred,
+// most of all — is better handed on unconverted, to fail at the operator that
+// actually cares, than silently emptied here.
+func (e *Evaluator) applyPlannedConversion(conv sema.Conversion, v fptypes.Value) (fptypes.Value, error) {
+	if conv.Function == "" {
+		return v, nil
+	}
+	if conv.Elementwise {
+		return e.convertEachElement(conv, v)
+	}
+	converted, err := e.callConversion(conv.Function, v)
+	if err != nil {
+		return nil, err
+	}
+	if converted == nil {
+		return v, nil
+	}
+	return converted, nil
+}
+
+// convertEachElement applies a conversion to every element of a collection,
+// which is what a List<FHIR.Period> reaching List<Interval<DateTime>> needs:
+// the function converts a Period, not a list of them, and calling it on the
+// list would be calling it on the wrong thing.
+func (e *Evaluator) convertEachElement(conv sema.Conversion, v fptypes.Value) (fptypes.Value, error) {
+	list, ok := v.(cqltypes.List)
+	if !ok {
+		// Inferred as a list and evaluated as a single value: convert it as
+		// one rather than refusing, since a one-element list and its element
+		// are the same thing to CQL.
+		return e.applyPlannedConversion(sema.Conversion{Function: conv.Function}, v)
+	}
+	out := make(fptypes.Collection, 0, len(list.Values))
+	for _, item := range list.Values {
+		converted, err := e.callConversion(conv.Function, item)
+		if err != nil {
+			return nil, err
+		}
+		if converted == nil {
+			converted = item
+		}
+		out = append(out, converted)
+	}
+	return cqltypes.List{Values: out}, nil
 }
 
 func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) {

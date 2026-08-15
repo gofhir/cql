@@ -79,15 +79,38 @@ func (e *Evaluator) callConversion(qualified string, arg fptypes.Value) (fptypes
 	if lib == nil {
 		return nil, nil
 	}
-	overloads := e.ctx.functionRegistry(lib)[fnName]
-	if len(overloads) == 0 {
-		return nil, nil
-	}
-	fd := e.resolveOverloadByValues(overloads, []fptypes.Value{arg})
+	fd := e.conversionOverload(lib, libName, fnName, arg)
 	if fd == nil {
 		return nil, nil
 	}
 	return e.runFunction(fd, []fptypes.Value{arg}, lib)
+}
+
+// conversionOverload picks the overload of a conversion function that takes
+// this value, remembering the answer for the rest of the evaluation.
+//
+// Which overload runs depends only on the argument's type, and a measure
+// converts the same type over and over: once per row, per column, per patient.
+// ToString alone has 251 overloads, and scoring all of them against a value —
+// each score walking the model's type hierarchy — was 26% of the time spent
+// evaluating a fifty-encounter library.
+func (e *Evaluator) conversionOverload(lib *ast.Library, libName, fnName string, arg fptypes.Value) *ast.FunctionDef {
+	key := conversionKey{library: libName, function: fnName}
+	if arg != nil {
+		key.argType = arg.Type()
+	}
+	if fd, ok := e.ctx.conversionOverloads[key]; ok {
+		return fd // nil is an answer too: nothing takes this type
+	}
+	overloads := e.ctx.functionRegistry(lib)[fnName]
+	var fd *ast.FunctionDef
+	if len(overloads) > 0 {
+		fd = e.resolveOverloadByValues(overloads, []fptypes.Value{arg})
+	}
+	if e.ctx.conversionOverloads != nil {
+		e.ctx.conversionOverloads[key] = fd
+	}
+	return fd
 }
 
 // conversionLibrary finds the library a conversion names among the ones this

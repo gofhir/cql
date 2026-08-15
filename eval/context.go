@@ -12,6 +12,7 @@ import (
 
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/model"
+	"github.com/gofhir/cql/sema"
 	cqltypes "github.com/gofhir/cql/types"
 )
 
@@ -87,6 +88,14 @@ var (
 )
 
 // Context holds the evaluation state for a CQL evaluation.
+// conversionKey names one resolved conversion: which function of which library,
+// applied to which type of value.
+type conversionKey struct {
+	library  string
+	function string
+	argType  string
+}
+
 type Context struct {
 	// Go context for cancellation/timeout
 	GoCtx context.Context
@@ -190,6 +199,21 @@ type Context struct {
 	// ModelInfo provides FHIR type metadata for choice type resolution.
 	ModelInfo model.ModelInfo
 
+	// conversionOverloads remembers which overload of a conversion function
+	// takes which argument type, for the length of one evaluation. See
+	// conversionOverload.
+	conversionOverloads map[conversionKey]*ast.FunctionDef
+
+	// Plan is what the semantic phase decided about the library being
+	// evaluated: which expressions have to be converted before the context
+	// around them can use them.
+	//
+	// It is consulted per node, so a plan belonging to a different library
+	// simply never matches and the evaluator falls back to deciding for itself
+	// — which is what happens inside an included library, whose AST the phase
+	// is not given.
+	Plan *sema.Result
+
 	// Context type and resource type for multi-context support
 	contextType         ContextType
 	contextResourceType string
@@ -241,6 +265,7 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		LetBindings:         make(map[string]fptypes.Value),
 		IncludedLibraries:   make(map[string]*ast.Library),
 		LoadedLibraries:     make(map[string]*ast.Library),
+		conversionOverloads: make(map[conversionKey]*ast.FunctionDef),
 	}
 	c.loadDeclarations(lib)
 	return c
@@ -446,6 +471,8 @@ func (c *Context) ChildScope() *Context {
 		QuantityConverter:   c.QuantityConverter,
 		TraceListener:       c.TraceListener,
 		ModelInfo:           c.ModelInfo,
+		Plan:                c.Plan,
+		conversionOverloads: c.conversionOverloads,
 		contextType:         c.contextType,
 		contextResourceType: c.contextResourceType,
 		cachedSubjectID:     c.cachedSubjectID,
