@@ -184,9 +184,17 @@ func (c *checker) inferFunctionCall(e *ast.FunctionCall) Type {
 		c.reportf(e, SeverityError, "no overload of %s takes %s", e.Name, describeArgs(args))
 		return Unknown
 	}
-	// A function CQL defines itself. The table gives its return type and not
-	// its operand types, so an argument needing conversion to reach one is not
-	// recorded here — the evaluator still converts those where it needs to.
+	// A function CQL defines itself. The table gives return types and not
+	// operand types, so an argument needing conversion is recorded only for the
+	// functions that cannot work without it — see systemArgFunctions.
+	if wantsSystemArguments(e.Name) {
+		for i, arg := range args {
+			if want := systemFormOf(arg, c.model); want != nil {
+				c.coerceRecorded(exprs[i], want)
+				args[i] = want
+			}
+		}
+	}
 	if t, ok := systemFunctionType(e.Name, args, c.model); ok {
 		return t
 	}

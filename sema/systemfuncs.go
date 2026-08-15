@@ -20,6 +20,57 @@ func systemFunctionType(name string, args []Type, m Model) (Type, bool) {
 // A rule works out a return type from the argument types. Most ignore them.
 type funcRule func(args []Type, m Model) Type
 
+// systemArgFunctions are the functions that only work on CQL's own types, so an
+// argument drawn from a data model has to be converted before they see it.
+//
+// The table above gives return types and not operand types, which is why an
+// argument needing conversion to reach one is normally left alone. For the
+// aggregates that is not good enough: summing a list of FHIR quantities is what
+// a measure does all day, and Sum walking straight past the ones it does not
+// recognize answers with a number that is quietly too small.
+var systemArgFunctions = map[string]bool{
+	"sum": true, "product": true, "avg": true, "median": true,
+	"min": true, "max": true, "mode": true, "geometricmean": true,
+	"stddev": true, "variance": true, "populationstddev": true,
+	"populationvariance": true, "alltrue": true, "anytrue": true,
+}
+
+// wantsSystemArguments reports whether a function needs its arguments in CQL's
+// own types.
+func wantsSystemArguments(name string) bool {
+	return systemArgFunctions[strings.ToLower(name)]
+}
+
+// systemFormOf is the CQL type a model type stands for, as the model declares
+// it: FHIR.Quantity is a System.Quantity, and a list of them is a list of those.
+// It answers nil when the type is already CQL's own, or when the model declares
+// no conversion for it.
+func systemFormOf(t Type, m Model) Type {
+	if m == nil {
+		return nil
+	}
+	switch x := t.(type) {
+	case *List:
+		if inner := systemFormOf(x.Element, m); inner != nil {
+			return &List{Element: inner}
+		}
+	case *Interval:
+		if inner := systemFormOf(x.Point, m); inner != nil {
+			return &Interval{Point: inner}
+		}
+	case *Named:
+		if x.Model == "System" {
+			return nil
+		}
+		for _, mc := range m.ConversionsFrom(x.String()) {
+			if target := ParseTypeName(mc.To); IsSystem(target) {
+				return target
+			}
+		}
+	}
+	return nil
+}
+
 // fixed returns the same type whatever the arguments.
 func fixed(t Type) funcRule { return func([]Type, Model) Type { return t } }
 

@@ -36,6 +36,22 @@ type Result struct {
 	Diagnostics Diagnostics
 }
 
+// ConversionFor returns the conversion this phase decided an expression needs
+// before the context around it can use it.
+//
+// It is what lets the evaluator apply a decision instead of making one. The
+// evaluator can only ask "what does the model convert this value's type to",
+// which answers nothing when a type declares more than one conversion and
+// nothing at all where the operator never thought to ask — which is most of
+// arithmetic and all of comparison.
+func (r *Result) ConversionFor(expr ast.Expression) (Conversion, bool) {
+	if r == nil || expr == nil {
+		return Conversion{}, false
+	}
+	conv, ok := r.Conversions[expr]
+	return conv, ok
+}
+
 // TypeOf returns the type inferred for an expression.
 func (r *Result) TypeOf(expr ast.Expression) Type {
 	if t, ok := r.Types[expr]; ok {
