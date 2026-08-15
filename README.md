@@ -94,6 +94,7 @@ go test ./conformance/... -v
 - 100% conformance with the official CQL test suite
 - Expression evaluation with FHIR R4 context
 - Pluggable data and terminology providers
+- Static type checking before evaluation, with every finding located
 - Compiled expression caching
 - Configurable timeouts and resource limits
 - Trace listener support for debugging
@@ -119,6 +120,14 @@ value, err := engine.EvaluateExpression(ctx, cqlSource, "ExpressionName", resour
 
 // Validate CQL syntax without evaluation
 err := engine.Compile(cqlSource)
+
+// Type-check a library without data, a provider, or evaluating anything.
+// Every finding carries a line, a column and the definition it is in, and
+// one pass reports all of them rather than stopping at the first.
+diagnostics, err := engine.Check(cqlSource)
+if diagnostics.HasErrors() {
+    fmt.Println(diagnostics.Errors().Error())
+}
 ```
 
 ### Options

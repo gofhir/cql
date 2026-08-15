@@ -5,7 +5,10 @@
 // type metadata from StructureDefinitions at runtime.
 package model
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 // ModelInfo provides type metadata about the FHIR model for CQL evaluation.
 type ModelInfo interface { //nolint:revive // stuttering name kept for API clarity
@@ -166,6 +169,32 @@ func (m *StaticModelInfo) ContextKeyElement(contextName string) (string, bool) {
 func (m *StaticModelInfo) ConversionFunction(from, to string) (string, bool) {
 	fn, ok := m.conversions[conversionKey{From: from, To: to}]
 	return fn, ok
+}
+
+// Conversion is one declared conversion: the type arrived at, and the function
+// that gets there.
+type Conversion struct {
+	To       string
+	Function string
+}
+
+// ConversionsFrom lists every conversion the model declares from a type, in a
+// stable order.
+//
+// ConversionFrom answers only when there is exactly one, because the evaluator
+// has no way to choose between two. A semantic phase does — it knows the type
+// the surrounding expression wants — so it needs all of them, with their
+// targets. FHIR.Period declares one conversion, to Interval<System.DateTime>;
+// were it to declare two, only the type in hand could say which was meant.
+func (m *StaticModelInfo) ConversionsFrom(from string) []Conversion {
+	var out []Conversion
+	for k, fn := range m.conversions {
+		if k.From == from {
+			out = append(out, Conversion{To: k.To, Function: fn})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].To < out[j].To })
+	return out
 }
 
 // ContextSearchParam returns the search parameter relating a resource type to a
