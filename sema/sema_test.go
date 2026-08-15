@@ -10,6 +10,10 @@ import (
 	"github.com/gofhir/cql/sema"
 )
 
+// Result is the phase's answer, aliased so the table-driven tests below can
+// name it without repeating the package.
+type Result = sema.Result
+
 // check compiles a library and runs the semantic phase over it against the
 // official R4 model.
 func check(t *testing.T, source string) *sema.Result {
@@ -340,5 +344,163 @@ func TestTheOfficialFHIRHelpersChecksCleanly(t *testing.T) {
 	}
 	if len(lib.Functions) < 250 {
 		t.Errorf("only %d functions parsed; this is meant to cover all 297", len(lib.Functions))
+	}
+}
+
+// --- what a review of the first cut found, each held down by a test ---
+
+// TestACalleeDoesNotSeeTheCallersScope covers inference re-entering a body from
+// somewhere that has names of its own in scope.
+//
+// A function body is typed from each call site, to bind operands the
+// declaration left untyped. Leaving the caller's scope stack in place while
+// doing it let the body resolve a free name against the caller's query alias,
+// so a nonsense function came back with a confident type.
+func TestACalleeDoesNotSeeTheCallersScope(t *testing.T) {
+	result := check(t, preamble+`
+define function F(x Integer): status
+define Q: [Encounter] E return F(1)
+`)
+
+	if got := result.Defines["Q"]; got == nil || got.String() != "List<?>" {
+		t.Errorf("Q is %v; `status` is not in scope inside F, so it cannot be typed", got)
+	}
+	errs := result.Diagnostics.Errors()
+	if len(errs) != 1 || errs[0].Define != "F" {
+		t.Errorf("want one diagnostic, blamed on F, got:\n%s", errs.Error())
+	}
+}
+
+// TestAForwardReferenceDoesNotSeeTheReferringQuery is the same fault reached
+// through a definition rather than a function, and the worse of the two: it
+// reported nothing at all, memoized the wrong type, and which of the two
+// definitions came first decided whether the library checked clean.
+func TestAForwardReferenceDoesNotSeeTheReferringQuery(t *testing.T) {
+	forward := check(t, preamble+`
+define Q: [Encounter] E where Later is not null
+define Later: E
+`)
+	backward := check(t, preamble+`
+define Later: E
+define Q: [Encounter] E where Later is not null
+`)
+
+	for _, tc := range []struct {
+		order  string
+		result *Result
+	}{{"referenced before it is declared", forward}, {"declared first", backward}} {
+		errs := tc.result.Diagnostics.Errors()
+		if len(errs) != 1 {
+			t.Errorf("%s: want one diagnostic about E, got %d:\n%s",
+				tc.order, len(errs), errs.Error())
+		}
+		if got := tc.result.Defines["Later"]; !sema.IsUnknown(got) {
+			t.Errorf("%s: Later is %v, and E is not in scope where it is defined", tc.order, got)
+		}
+	}
+}
+
+// TestOneMistakeInAHelperIsReportedOnce covers a body inferred once per call
+// site plus once by the pass that owns it: three walks, and every one of them
+// reporting.
+func TestOneMistakeInAHelperIsReportedOnce(t *testing.T) {
+	result := check(t, preamble+`
+define function Helper(x Integer): x + Missing
+define A: Helper(1)
+define B: Helper(2)
+`)
+
+	errs := result.Diagnostics.Errors()
+	if len(errs) != 1 {
+		t.Fatalf("want one diagnostic, got %d:\n%s", len(errs), errs.Error())
+	}
+	if errs[0].Define != "Helper" {
+		t.Errorf("the mistake is in Helper, blamed on %q", errs[0].Define)
+	}
+}
+
+// TestAConversionInsideAFunctionBelongsToIt covers where a conversion is filed.
+// It was being attributed to whichever definition called the function first,
+// with none recorded against the function and none against the other callers.
+func TestAConversionInsideAFunctionBelongsToIt(t *testing.T) {
+	result := check(t, preamble+`
+define function Dur(e Encounter): duration in days of e.period
+define A: Dur(First([Encounter]))
+define B: Dur(Last([Encounter]))
+`)
+
+	if got := len(result.ConversionsByDefine["Dur"]); got != 1 {
+		t.Errorf("Dur converts a Period to an interval; %d conversions recorded against it", got)
+	}
+	for _, caller := range []string{"A", "B"} {
+		if got := result.ConversionsByDefine[caller]; len(got) != 0 {
+			t.Errorf("%s converts nothing itself, and has %v", caller, got)
+		}
+	}
+}
+
+// TestAnArgumentThatNeedsConvertingRecordsIt covers the conversions that
+// reaching an overload takes. Resolution worked them out and threw them away,
+// so a call needing FHIRHelpers.ToString recorded nothing — in the one place
+// the stage is meant to be about.
+func TestAnArgumentThatNeedsConvertingRecordsIt(t *testing.T) {
+	result := check(t, preamble+`
+define function Shout(s String): Upper(s)
+define A: Shout(First([Encounter]).status)
+`)
+
+	convs := result.ConversionsByDefine["A"]
+	if len(convs) != 1 || convs[0].Function != "FHIRHelpers.ToString" {
+		t.Errorf("passing a FHIR.EncounterStatus where a String is wanted needs "+
+			"ToString; recorded %v", convs)
+	}
+	if result.Diagnostics.HasErrors() {
+		t.Errorf("unexpected diagnostics:\n%s", result.Diagnostics.Errors().Error())
+	}
+}
+
+// TestAggregateReportsOnce covers the second pass an aggregate needs to bind
+// $total: it reaches everything the first did, and both were reporting.
+func TestAggregateReportsOnce(t *testing.T) {
+	result := check(t, preamble+`
+define A: [Encounter] E aggregate Acc: Count({ Missing })
+`)
+
+	if errs := result.Diagnostics.Errors(); len(errs) != 1 {
+		t.Errorf("want one diagnostic, got %d:\n%s", len(errs), errs.Error())
+	}
+}
+
+// TestAListConversionKeepsTheFunctionItNeeds covers a conversion over a
+// container. The function was being dropped, which left the case looking like
+// no conversion was needed at all — while promotion, just below it in the same
+// switch, kept it.
+func TestAListConversionKeepsTheFunctionItNeeds(t *testing.T) {
+	mi, err := model.LoadR4ModelInfo()
+	if err != nil {
+		t.Fatalf("loading model info: %v", err)
+	}
+	m := sema.FromModelInfo(mi)
+
+	from := &sema.List{Element: &sema.Named{Model: "FHIR", Name: "Period"}}
+	to := &sema.List{Element: &sema.Interval{Point: sema.DateTime}}
+
+	conv, ok := sema.Convertible(from, to, m)
+	if !ok {
+		t.Fatal("a List<FHIR.Period> is a List<Interval<DateTime>> element by element")
+	}
+	if conv.Function != "FHIRHelpers.ToInterval" {
+		t.Errorf("the conversion names %q; it takes ToInterval", conv.Function)
+	}
+	if !conv.Elementwise {
+		t.Error("ToInterval applies to each element here, not to the list, and " +
+			"a caller that cannot tell will apply it to the wrong thing")
+	}
+
+	// Promotion applies the function to the value and then wraps it, so the
+	// same function on the same types is not elementwise.
+	promoted, ok := sema.Convertible(&sema.Named{Model: "FHIR", Name: "Period"}, to, m)
+	if !ok || promoted.Elementwise {
+		t.Errorf("promotion converts the value itself: %+v", promoted)
 	}
 }

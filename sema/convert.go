@@ -43,6 +43,17 @@ type Conversion struct {
 	Cost     int
 	Function string // set when the model declares a function for it
 	Target   Type   // the type arrived at, which may be wider than requested
+
+	// Elementwise says the function converts each element of a list, or each
+	// boundary of an interval, rather than the value itself.
+	//
+	// A List<FHIR.Period> reaches List<Interval<DateTime>> by calling
+	// ToInterval on every element, and a caller that applied it to the list
+	// would be calling it on the wrong thing. The distinction has to be in the
+	// record because both cases name the same function: dropping the name
+	// instead — which is what this did — loses the information entirely, and
+	// leaves the elementwise case looking like no conversion at all.
+	Elementwise bool
 }
 
 // Conversion costs, cheapest first. See Conversion.Cost.
@@ -135,13 +146,13 @@ func Convertible(from, to Type, m Model) (Conversion, bool) {
 	case *List:
 		if t, ok := to.(*List); ok {
 			if conv, ok := Convertible(f.Element, t.Element, m); ok {
-				return Conversion{Cost: conv.Cost, Target: to}, true
+				return elementwise(conv, to), true
 			}
 		}
 	case *Interval:
 		if t, ok := to.(*Interval); ok {
 			if conv, ok := Convertible(f.Point, t.Point, m); ok {
-				return Conversion{Cost: conv.Cost, Target: to}, true
+				return elementwise(conv, to), true
 			}
 		}
 	case *Tuple:
@@ -214,6 +225,17 @@ func convertNamed(from, to Type, m Model) (Conversion, bool) {
 		}
 	}
 	return Conversion{}, false
+}
+
+// elementwise rebuilds an element's conversion as one over the container,
+// keeping the function that performs it and marking how it has to be applied.
+func elementwise(conv Conversion, to Type) Conversion {
+	return Conversion{
+		Cost:        conv.Cost,
+		Function:    conv.Function,
+		Target:      to,
+		Elementwise: conv.Function != "",
+	}
 }
 
 // isAny reports whether a type is System.Any, the supertype every value has.

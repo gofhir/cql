@@ -9,8 +9,9 @@ import (
 // Result is what one pass over a library decided.
 type Result struct {
 	// Types is the type of every expression the pass reached, keyed by node.
-	// An expression it could not type is absent rather than Unknown, so that
-	// "never visited" and "visited and gave up" stay distinguishable.
+	// One it reached and could not work out is present, with Unknown: absence
+	// means the pass never got there, which is a different thing and worth
+	// being able to tell apart. Use TypeOf, which answers Unknown for both.
 	Types map[ast.Expression]Type
 
 	// Conversions is where an implicit conversion has to happen for an
@@ -107,6 +108,10 @@ type checker struct {
 
 	currentDefine string
 	contextType   Type
+
+	// speculative counts how deep the pass is inside an inference whose
+	// findings another pass will arrive at again. See speculate.
+	speculative int
 }
 
 func (c *checker) run() {
@@ -166,6 +171,12 @@ func (c *checker) collectParameters() {
 
 // resolveContext works out what the context statement names, which is the type
 // an unqualified property access resolves against outside a query.
+//
+// A library may change context part-way through, and the last one wins here
+// because the AST does not say which statements followed which context:
+// Library.Contexts is a list of its own, detached from Library.Statements.
+// Getting that right needs the builder to record the context each definition
+// was written under, which is a change to the AST and not to this phase.
 func (c *checker) resolveContext() {
 	c.contextType = Unknown
 	for _, ctx := range c.lib.Contexts {
@@ -212,17 +223,52 @@ func (c *checker) typeOfDefine(name string) Type {
 		return Unknown
 	}
 	c.inProgress[name] = true
-	outerDefine, outerImplicit := c.currentDefine, c.implicit
-	c.currentDefine, c.implicit = name, c.contextType
-	t := c.infer(def.Expression)
-	c.currentDefine, c.implicit = outerDefine, outerImplicit
+	t := c.isolated(name, func() Type { return c.infer(def.Expression) })
 	delete(c.inProgress, name)
 
 	c.defines[name] = t
 	return t
 }
 
-// checkFunction types a function body with its operands in scope.
+// isolated runs an inference as though it were the only one in the library:
+// with an empty scope stack, the library's context as what unqualified
+// properties resolve against, and its own name on any diagnostic.
+//
+// It exists because inference is re-entrant. A definition may be reached for
+// the first time from the middle of another one's query, and a function body
+// from a call site inside one — and whatever was in scope there is not in scope
+// here. Leaving the caller's scopes in place let a definition resolve a free
+// name against the *caller's* query alias: `define Q: [Encounter] E where Later
+// is not null` with `define Later: E` typed Later as an Encounter and reported
+// nothing, and memoized that. Which of the two was declared first decided
+// whether the library checked clean.
+func (c *checker) isolated(define string, infer func() Type) Type {
+	savedScopes, savedDefine, savedImplicit := c.scopes, c.currentDefine, c.implicit
+	c.scopes, c.currentDefine, c.implicit = nil, define, c.contextType
+	t := infer()
+	c.scopes, c.currentDefine, c.implicit = savedScopes, savedDefine, savedImplicit
+	return t
+}
+
+// speculate runs an inference whose findings will be arrived at again, and
+// drops what it finds on the way.
+//
+// A function body with no declared return type has to be typed from each call
+// site, to bind operands the declaration left untyped — and again by
+// checkFunction, which is the pass that owns it. Only one of them may report:
+// otherwise a single mistake in a helper comes back once per caller, and a
+// conversion inside the helper is filed under whoever called it rather than
+// under the helper.
+func (c *checker) speculate(infer func() Type) Type {
+	c.speculative++
+	t := infer()
+	c.speculative--
+	return t
+}
+
+// checkFunction types a function body with its operands in scope. This is the
+// pass that owns a body: the diagnostics and conversions inside it are recorded
+// here, under the function's own name, however many call sites it has.
 func (c *checker) checkFunction(fn *ast.FunctionDef) {
 	if fn.Body == nil {
 		return // external: the declaration is all there is
@@ -231,12 +277,11 @@ func (c *checker) checkFunction(fn *ast.FunctionDef) {
 	for _, op := range fn.Operands {
 		scope[op.Name] = c.resolveTypeSpecifier(op.Type)
 	}
-	outerDefine, outerImplicit := c.currentDefine, c.implicit
-	c.currentDefine, c.implicit = fn.Name, c.contextType
-	c.pushScope(scope)
-	body := c.infer(fn.Body)
-	c.popScope()
-	c.currentDefine, c.implicit = outerDefine, outerImplicit
+	body := c.isolated(fn.Name, func() Type {
+		c.pushScope(scope)
+		defer c.popScope()
+		return c.infer(fn.Body)
+	})
 
 	// A declared return type is a claim about the body, and one worth checking:
 	// `define function F() returns Integer: 'x'` is wrong wherever it is called
@@ -279,9 +324,13 @@ func (c *checker) typeOfFunction(fn *ast.FunctionDef, args []Type) Type {
 		}
 		scope[op.Name] = declared
 	}
-	c.pushScope(scope)
-	t := c.infer(fn.Body)
-	c.popScope()
+	t := c.speculate(func() Type {
+		return c.isolated(fn.Name, func() Type {
+			c.pushScope(scope)
+			defer c.popScope()
+			return c.infer(fn.Body)
+		})
+	})
 	delete(c.inProgress, key)
 	return t
 }
@@ -304,6 +353,9 @@ func (c *checker) lookup(name string) (Type, bool) {
 // --- diagnostics ---
 
 func (c *checker) reportf(at ast.Expression, sev Severity, format string, args ...any) {
+	if c.speculative > 0 {
+		return
+	}
 	pos, _ := ast.PositionOf(at)
 	c.diags = append(c.diags, Diagnostic{
 		Position: pos,
@@ -321,7 +373,7 @@ func (c *checker) reportf(at ast.Expression, sev Severity, format string, args .
 // needs the node, and a diff against the reference translator needs the
 // definition, because that is the granularity its ELM reports.
 func (c *checker) convert(expr ast.Expression, conv Conversion) {
-	if conv.Function == "" {
+	if conv.Function == "" || c.speculative > 0 {
 		return
 	}
 	if _, already := c.conversions[expr]; already {
