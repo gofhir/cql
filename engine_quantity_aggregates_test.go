@@ -72,6 +72,73 @@ func TestAggregatesConvertUnitsLikeTheOperatorDoes(t *testing.T) {
 	}
 }
 
+// TestProductCompoundsUnits covers the aggregate that has to agree with the
+// operator beside it. `2 'mg' * 3 'mg'` is 6 'mg2' in this engine, so a Product
+// that refused to multiply quantities would be the same two-policy split these
+// aggregates were fixed to remove — and a single-element list has no units to
+// compound at all.
+func TestProductCompoundsUnits(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{`Product({ 4 'mg' })`, "4 'mg'"},
+		{`Product({ 2 'mg', 3 'mg' })`, "6 'mg2'"},
+		{`Product({ 2 'mg', 3 'mL' })`, "6 'mg.mL'"},
+	} {
+		got, err := evalAggregate(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+	// And it answers what the operator answers, rather than close to it.
+	viaOperator, err := evalAggregate(t, `2 'mg' * 3 'mg'`)
+	if err != nil {
+		t.Fatalf("operator: %v", err)
+	}
+	viaAggregate, err := evalAggregate(t, `Product({ 2 'mg', 3 'mg' })`)
+	if err != nil {
+		t.Fatalf("aggregate: %v", err)
+	}
+	if viaOperator != viaAggregate {
+		t.Errorf("operator gave %s, Product gave %s", viaOperator, viaAggregate)
+	}
+}
+
+// TestSpreadAggregatesUnderstandQuantities covers the ones that measure spread.
+// Variance, StdDev and PopulationVariance all answered 0 for a list of doses,
+// which is not merely wrong but the specific claim that the doses were all the
+// same.
+//
+// A variance is in the square of the unit and its root is back in the original,
+// which is why these do not share a return type.
+func TestSpreadAggregatesUnderstandQuantities(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{`Variance({ 1 'mg', 2 'mg', 3 'mg' })`, "1 'mg2'"},
+		{`Variance({ 1 'mg', 2 'mg' })`, "0.5 'mg2'"},
+		{`PopulationVariance({ 1 'mg', 3 'mg' })`, "1 'mg2'"},
+		{`StdDev({ 1 'mg', 2 'mg', 3 'mg' })`, "1 'mg'"},
+
+		// Converted first, so two ways of writing the same amount have no
+		// spread between them.
+		{`StdDev({ 1 'g', 1000 'mg' })`, "0 'g'"},
+
+		// One value says nothing about spread, which is why the sample variance
+		// of a single quantity is null — the same answer the numeric one gives.
+		{`Variance({ 1 'mg' })`, "null"},
+	} {
+		got, err := evalAggregate(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
+
 // TestAggregatesRefuseWhatTheyCannotAdd covers the cases where no number is the
 // right answer. `1 'mg' + 1 's'` and `1 'mg' + 2` are already errors, and a
 // collection is no better placed to guess.
@@ -80,14 +147,11 @@ func TestAggregatesRefuseWhatTheyCannotAdd(t *testing.T) {
 		{`Sum({ 1 'mg', 1 's' })`, "incompatible units"},
 		{`Avg({ 1 'mg', 1 's' })`, "incompatible units"},
 		{`Median({ 1 'mg', 1 's' })`, "incompatible units"},
+		{`Variance({ 1 'mg', 1 's' })`, "incompatible units"},
 
 		// Skipping the bare number is how Sum({ 1 'mg', 2 }) came to be 1 'mg'.
 		{`Sum({ 1 'mg', 2 })`, "non-quantity"},
 		{`Avg({ 1 'mg', 2 })`, "non-quantity"},
-
-		// Multiplying quantities compounds their units; this reduced them all
-		// to zero instead, so any list of doses had a product of 0.
-		{`Product({ 2 'mg', 3 'mg' })`, "not supported"},
 	} {
 		got, err := evalAggregate(t, tt.expr)
 		if err == nil {
@@ -133,6 +197,9 @@ func TestNumericAggregatesAreUnchanged(t *testing.T) {
 		{`Product({ 2, 3, 4 })`, "24"},
 		{`Min({ 3, 1, 2 })`, "1"},
 		{`Max({ 3, 1, 2 })`, "3"},
+		{`Variance({ 1, 2, 3 })`, "1"},
+		{`StdDev({ 1, 2, 3 })`, "1"},
+		{`PopulationVariance({ 1, 3 })`, "1"},
 	} {
 		got, err := evalAggregate(t, tt.expr)
 		if err != nil {

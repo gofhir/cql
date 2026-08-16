@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/shopspring/decimal"
 
@@ -76,6 +77,93 @@ func avgQuantities(quantities []fptypes.Quantity) (fptypes.Value, error) {
 		return nil, err
 	}
 	return avg, nil
+}
+
+// productOfQuantities multiplies through, compounding units the way the *
+// operator does: mg by mg is mg2, mg by mL is mg.mL.
+func productOfQuantities(quantities []fptypes.Quantity) fptypes.Value {
+	value := quantities[0].Value()
+	unit := quantities[0].Unit()
+	for _, q := range quantities[1:] {
+		value = value.Mul(q.Value())
+		unit = multiplyUnits(unit, q.Unit())
+	}
+	return fptypes.NewQuantityFromDecimal(value, unit)
+}
+
+// varianceOfQuantities is the mean squared deviation, in the square of the
+// unit — the variance of milligrams is in mg2, and its square root is back in
+// mg. Sample variance divides by n-1, population variance by n.
+func varianceOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Value, error) {
+	divisor := len(quantities)
+	if sample {
+		divisor--
+	}
+	if divisor <= 0 {
+		// One sample says nothing about spread, which is why CQL's sample
+		// variance of a single value is null rather than zero.
+		return nil, nil
+	}
+	mean, err := meanQuantity(quantities)
+	if err != nil {
+		return nil, err
+	}
+	total := decimal.Zero
+	for _, q := range quantities {
+		// Subtract through Quantity so that a list mixing mg and g is brought
+		// to one unit before the deviation is squared.
+		deviation, err := q.Subtract(mean)
+		if err != nil {
+			return nil, err
+		}
+		total = total.Add(deviation.Value().Mul(deviation.Value()))
+	}
+	variance := trimTrailingZeros(total.Div(decimal.NewFromInt(int64(divisor))))
+	return fptypes.NewQuantityFromDecimal(variance, multiplyUnits(mean.Unit(), mean.Unit())), nil
+}
+
+// trimTrailingZeros drops the zeros a division leaves behind, so that a
+// variance of one prints as 1 rather than 1.0000000000000000 — decimal keeps
+// the scale it divided at, and the numeric aggregates print the same figure
+// without it.
+func trimTrailingZeros(d decimal.Decimal) decimal.Decimal {
+	for d.Exponent() < 0 {
+		shorter := d.Truncate(-d.Exponent() - 1)
+		if !shorter.Equal(d) {
+			break
+		}
+		d = shorter
+	}
+	return d
+}
+
+// stdDevOfQuantities is the square root of the variance, which returns the
+// original unit.
+func stdDevOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Value, error) {
+	variance, err := varianceOfQuantities(quantities, sample)
+	if err != nil || variance == nil {
+		return nil, err
+	}
+	v, ok := variance.(fptypes.Quantity)
+	if !ok {
+		return nil, nil
+	}
+	// Through float64 and rounded to 8 places, the same way funcs.StdDev takes
+	// its root, so a quantity and a plain number do not disagree in the last
+	// digits over the same figures.
+	f, _ := v.Value().Float64()
+	root := trimTrailingZeros(decimal.NewFromFloat(math.Sqrt(f)).Round(8))
+	return fptypes.NewQuantityFromDecimal(root, quantities[0].Unit()), nil
+}
+
+// meanQuantity is the average, kept separate because variance needs it before
+// it can measure anything.
+func meanQuantity(quantities []fptypes.Quantity) (fptypes.Quantity, error) {
+	total, err := sumQuantities(quantities)
+	if err != nil {
+		return fptypes.Quantity{}, err
+	}
+	return total.Divide(decimal.NewFromInt(int64(len(quantities))))
 }
 
 // medianQuantities sorts by Quantity.Compare, which already knows that 1 'g' is

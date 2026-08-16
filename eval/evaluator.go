@@ -2467,6 +2467,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return varianceOfQuantities(quantities, false)
+		}
 		return funcs.PopulationVariance(c), nil
 	case "stddev":
 		src, err := resolveSource()
@@ -2474,6 +2480,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return stdDevOfQuantities(quantities, true)
+		}
 		return funcs.StdDev(c), nil
 	case "variance":
 		src, err := resolveSource()
@@ -2481,6 +2493,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return varianceOfQuantities(quantities, true)
+		}
 		return funcs.Variance(c), nil
 
 	// Temporal functions
@@ -5540,14 +5558,14 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 	if c.Empty() {
 		return nil, nil
 	}
-	// Multiplying quantities compounds their units — 2 'mg' by 3 'mg' is
-	// 6 'mg2' — and this reduced every one of them to zero, so the product of
-	// any list of doses was 0. Refusing says so; answering zero did not.
+	// Multiplying quantities compounds their units, the way `2 'mg' * 3 'mg'`
+	// already gives 6 'mg2'. This reduced them all to zero instead, so the
+	// product of any list of doses was 0.
 	if quantities, found, err := quantityOperands(c); found {
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("product over %d Quantity values is not supported: multiplying units is not implemented", len(quantities))
+		return productOfQuantities(quantities), nil
 	}
 	allInt := true
 	product := decimal.NewFromInt(1)
