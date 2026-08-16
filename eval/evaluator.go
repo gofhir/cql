@@ -3717,6 +3717,7 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 		CodePath:       codePath,
 		CodeComparator: n.CodeComparator,
 		Codes:          codes,
+		DatePath:       n.DatePath,
 		DateRange:      dateRange,
 		Limit:          retrieveLimit(e.ctx.MaxRetrieveSize),
 	}
