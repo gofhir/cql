@@ -25,9 +25,14 @@ func sourceKey(cqlSource string) uint64 {
 // vary one space can add an entry per request and nothing ever removes one.
 // That is memory exhaustion reachable by anyone who can reach the endpoint.
 //
-// A few hundred entries covers the libraries a real deployment evaluates while
-// putting a ceiling on the ones it will never see again.
-const DefaultCompiledCacheSize = 256
+// The number is measured rather than picked. An entry holds an AST and the
+// semantic result beside it, which for FHIRHelpers — 520 lines, 26KB of source
+// — comes to about 344KB, some thirteen times the source it came from. Sixty
+// four of those is a ceiling around 22MB, which covers the libraries a real
+// deployment evaluates without making the cache a notable part of the process.
+// A deployment with more libraries than that should raise it deliberately,
+// knowing what each one costs.
+const DefaultCompiledCacheSize = 64
 
 // cachedLibrary is a compiled library together with the source it came from.
 //
