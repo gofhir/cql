@@ -138,6 +138,43 @@ func TestResolveRelatedContextSkipsUnqueryableReferences(t *testing.T) {
 	}
 }
 
+// TestResolveRelatedContextRefusesAReferenceToAnotherType covers the wrong
+// resource this function can still find once it asks by id. A reference names
+// its own type, and ignoring it turns Organization/5 into a request for
+// Practitioner/5 — which exists, has the right id and the right type, and is
+// not the referenced resource.
+func TestResolveRelatedContextRefusesAReferenceToAnotherType(t *testing.T) {
+	rec := &idRecorder{resources: []json.RawMessage{
+		json.RawMessage(`{"resourceType":"Practitioner","id":"5"}`),
+	}}
+	got, err := newRelatedEvaluator(rec).ResolveRelatedContext("Practitioner", "Organization/5")
+	if err != nil {
+		t.Fatalf("resolving: %v", err)
+	}
+	if got != nil {
+		t.Errorf("resolved to %v, want nothing: the reference names an Organization", got)
+	}
+	if rec.last.ResourceType != "" {
+		t.Error("the mismatched reference reached the provider, want no query at all")
+	}
+}
+
+// A reference whose URL has no type segment still resolves: the segment before
+// the id is a host there, not a type, and reading it as one would reject the
+// reference outright.
+func TestResolveRelatedContextAcceptsATypelessURL(t *testing.T) {
+	rec := &idRecorder{resources: []json.RawMessage{
+		json.RawMessage(`{"resourceType":"Practitioner","id":"pr2"}`),
+	}}
+	got, err := newRelatedEvaluator(rec).ResolveRelatedContext("Practitioner", "http://example.org/pr2")
+	if err != nil {
+		t.Fatalf("resolving: %v", err)
+	}
+	if got == nil {
+		t.Error("resolved to nothing, want the Practitioner: the URL states no type to contradict")
+	}
+}
+
 // TestUnusableSubjectStopsTheRetrieve covers the case a caller cannot see: a
 // context resource that yields no id produces the same unscoped retrieve as a
 // deliberate population-level run, and returns every subject's data.
@@ -149,6 +186,10 @@ func TestUnusableSubjectStopsTheRetrieve(t *testing.T) {
 	}{
 		{"no context resource at all", nil, false},
 		{"empty context resource", json.RawMessage(``), false},
+		// JSON null is what a caller that serialized a nil pointer sends, and
+		// it says exactly what an absent value says.
+		{"JSON null", json.RawMessage(`null`), false},
+		{"JSON null with whitespace", json.RawMessage(" null\n"), false},
 		{"resource without id", json.RawMessage(`{"resourceType":"Patient"}`), true},
 		{"resource with empty id", json.RawMessage(`{"resourceType":"Patient","id":""}`), true},
 		{"resource that does not parse", json.RawMessage(`{"resourceType":`), true},

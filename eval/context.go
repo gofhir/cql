@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -608,6 +609,13 @@ type legacyContextScoper interface {
 func (c *Context) applyRetrieveContext(req *RetrieveRequest) error {
 	contextName := c.StatementContext
 	if contextName == "" {
+		return nil
+	}
+	// `context Unfiltered` asks for every subject by definition, so there is no
+	// subject to demand and nothing to scope by. Reporting the context anyway
+	// would hand a provider a name and an id that it must not filter on, and
+	// requiring an id would fail the one run that is meant not to have one.
+	if strings.EqualFold(contextName, string(ContextUnfiltered)) {
 		return nil
 	}
 	// No context resource is a population-level run: the caller asked for every

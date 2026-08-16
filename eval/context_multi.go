@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -87,7 +88,10 @@ func (c *Context) subjectID() (string, error) {
 		return c.cachedSubjectID, c.cachedSubjectErr
 	}
 	c.cachedSubjectOK = true
-	if len(c.ContextValue) == 0 {
+	// JSON null is how "no resource" arrives from a caller that serialized a
+	// nil pointer. It says the same thing an absent value says, so it gets the
+	// same answer rather than an error about a resource that is not there.
+	if trimmed := bytes.TrimSpace(c.ContextValue); len(trimmed) == 0 || string(trimmed) == "null" {
 		return "", nil
 	}
 	var resource struct {
@@ -130,8 +134,16 @@ func (e *Evaluator) ResolveRelatedContext(targetType, reference string) (fptypes
 	if e.ctx.DataProvider == nil {
 		return nil, nil
 	}
-	id := referenceID(reference)
+	refType, id := referenceParts(reference)
 	if id == "" {
+		return nil, nil
+	}
+	// A reference that names its own type has the last word on what it points
+	// at. Asking for Practitioner/5 because a caller wanted a Practitioner and
+	// the reference said Organization/5 finds a resource that exists, has the
+	// right id and the right type, and is not the referenced one — the same
+	// wrong-resource answer this function was fixed to stop giving.
+	if refType != "" && !strings.EqualFold(refType, targetType) {
 		return nil, nil
 	}
 	req := RetrieveRequest{
@@ -168,27 +180,57 @@ func (e *Evaluator) ResolveRelatedContext(targetType, reference string) (fptypes
 	return nil, nil
 }
 
-// referenceID reduces a FHIR reference to the resource id it names.
+// referenceParts splits a FHIR reference into the type it names, if any, and
+// the resource id.
 //
 // "Practitioner/123" and "http://example.org/fhir/Practitioner/123" both name
-// 123. A bare "123" is taken as an id already. Contained references ("#x") and
-// URN references name nothing a retrieve by id can find, so they resolve to
-// nothing rather than to a wrong resource.
-func referenceID(reference string) string {
+// type Practitioner and id 123. A bare "123" is taken as an id with no type
+// stated. Contained references ("#x") and URN references name nothing a
+// retrieve by id can find, so they resolve to nothing rather than to a wrong
+// resource.
+func referenceParts(reference string) (resourceType, id string) {
 	ref := strings.TrimSpace(reference)
 	if ref == "" || strings.HasPrefix(ref, "#") || strings.HasPrefix(ref, "urn:") {
-		return ""
+		return "", ""
 	}
-	// Drop a version suffix before taking the last segment: _history/2 would
-	// otherwise be read as the id.
+	// Drop a version suffix before taking the last segments: _history/2 would
+	// otherwise be read as the type and the id.
 	if i := strings.Index(ref, "/_history/"); i >= 0 {
 		ref = ref[:i]
 	}
-	if i := strings.LastIndex(ref, "/"); i >= 0 {
-		ref = ref[i+1:]
-	}
 	if strings.ContainsAny(ref, "?&") {
-		return ""
+		return "", ""
 	}
-	return ref
+	i := strings.LastIndex(ref, "/")
+	if i < 0 {
+		return "", ref
+	}
+	id = ref[i+1:]
+	rest := ref[:i]
+	if j := strings.LastIndex(rest, "/"); j >= 0 {
+		rest = rest[j+1:]
+	}
+	// Only a plain type name qualifies. The segment before the id in
+	// "http://example.org/fhir/Practitioner/123" is a type; in
+	// "http://example.org/123" it is a host, and reading it as one would
+	// reject every reference that came from a URL without a type path.
+	if isResourceTypeName(rest) {
+		return rest, id
+	}
+	return "", id
+}
+
+// isResourceTypeName reports whether a path segment looks like a FHIR resource
+// type: letters only, starting upper case.
+func isResourceTypeName(s string) bool {
+	if s == "" || s[0] < 'A' || s[0] > 'Z' {
+		return false
+	}
+	for _, r := range s {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' {
+			continue
+		}
+		return false
+	}
+	return true
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/gofhir/cql/eval"
@@ -96,6 +97,35 @@ func TestUnusableContextSubjectIsAnError(t *testing.T) {
 	}
 }
 
+// TestUnfilteredContextNeedsNoSubject covers the run that is meant not to have
+// one. `context Unfiltered` asks for every subject by definition, so demanding
+// an id there fails the very query that was asked for — and naming a context
+// and an id the provider must not filter on invites it to filter on them.
+func TestUnfilteredContextNeedsNoSubject(t *testing.T) {
+	src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Unfiltered\n\ndefine X: [Condition]\n"
+
+	for _, tt := range []struct {
+		name     string
+		resource []byte
+	}{
+		{"with an id-less resource", []byte(`{"resourceType":"Bundle"}`)},
+		{"with a usable resource", []byte(`{"resourceType":"Patient","id":"p1"}`)},
+		{"with nothing", nil},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := &requestRecorder{}
+			if _, err := NewEngine(WithDataProvider(rec)).
+				EvaluateExpression(context.Background(), src, "X", tt.resource, nil); err != nil {
+				t.Fatalf("unfiltered run: %v", err)
+			}
+			if rec.last.Context != "" || rec.last.ContextID != "" || rec.last.ContextRelation != "" {
+				t.Errorf("unfiltered retrieve carries context %q/%q/%q, want none",
+					rec.last.Context, rec.last.ContextID, rec.last.ContextRelation)
+			}
+		})
+	}
+}
+
 // emptyProvider answers every retrieve with nothing.
 type emptyProvider struct{}
 
@@ -177,6 +207,33 @@ func TestCompiledCacheCanBeUnbounded(t *testing.T) {
 	}
 	if got := engine.compiledCache.len(); got != 20 {
 		t.Errorf("cache holds %d parses, want all 20", got)
+	}
+}
+
+// The cache used to be a sync.Map, which was safe for concurrent use without
+// anyone having to think about it. Eviction needs the recency order updated on
+// a hit, so it is a mutex now, and an engine is shared across the requests of a
+// server. Run under -race this is the test that says so.
+func TestCompiledCacheIsConcurrent(t *testing.T) {
+	engine := NewEngine(WithDataProvider(emptyProvider{}), WithCompiledCacheSize(8))
+	var wg sync.WaitGroup
+	for i := range 32 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			// Overlapping sources: some evict, some hit, all at once.
+			for _, n := range []int{i, i % 4, i % 8} {
+				if _, err := engine.EvaluateExpression(
+					context.Background(), libSource(n), "X", nil, nil); err != nil {
+					t.Errorf("evaluating library %d: %v", n, err)
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	if got := engine.compiledCache.len(); got > 8 {
+		t.Errorf("cache holds %d parses, want at most 8", got)
 	}
 }
 
