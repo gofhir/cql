@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	fptypes "github.com/gofhir/fhirpath/types"
+
+	"github.com/gofhir/cql/model"
 )
 
 // idRecorder answers retrieves with a fixed set of resources, remembering what
@@ -212,6 +214,50 @@ func TestUnusableSubjectStopsTheRetrieve(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
+	}
+}
+
+// legacyModel answers only the narrower question a model used to be asked.
+type legacyModel struct{ model.ModelInfo }
+
+func (legacyModel) ContextSearchParam(resourceType, _ string) (string, bool) {
+	if resourceType == "Condition" {
+		return "patient", true
+	}
+	return "", false
+}
+
+// TestLegacyModelStillScopes covers a model that implements only
+// ContextSearchParam. Its search parameters must still reach the provider, and
+// what it cannot distinguish must arrive as "unknown" rather than as "none":
+// answering false covers self, expression and no relation at all, and telling a
+// provider "unrelated, return everything" on that basis would be a guess made
+// from silence.
+func TestLegacyModelStillScopes(t *testing.T) {
+	for _, tt := range []struct {
+		resource  string
+		wantKind  model.ContextRelationKind
+		wantParam string
+	}{
+		{"Condition", model.ContextBySearchParam, "patient"},
+		{"Patient", model.ContextRelationUnknown, ""},
+		{"Medication", model.ContextRelationUnknown, ""},
+	} {
+		ctx := NewContext(context.Background(), nil)
+		ctx.StatementContext = "Patient"
+		ctx.ModelInfo = legacyModel{}
+		ctx.SetContextResource("Patient", json.RawMessage(`{"resourceType":"Patient","id":"p1"}`))
+
+		req := RetrieveRequest{ResourceType: tt.resource}
+		if err := ctx.applyRetrieveContext(&req); err != nil {
+			t.Fatalf("[%s]: %v", tt.resource, err)
+		}
+		if req.ContextRelation != tt.wantKind {
+			t.Errorf("[%s] relation = %q, want %q", tt.resource, req.ContextRelation, tt.wantKind)
+		}
+		if req.ContextSearchParam != tt.wantParam {
+			t.Errorf("[%s] search param = %q, want %q", tt.resource, req.ContextSearchParam, tt.wantParam)
+		}
 	}
 }
 
