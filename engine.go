@@ -17,10 +17,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"maps"
 	"strings"
-	"sync"
 	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -51,7 +49,9 @@ type Engine struct {
 	maxDepth            int
 	modelInfoExplicit   bool // caller supplied a model; do not second-guess it
 	evaluationTimestamp time.Time
-	compiledCache       sync.Map // hash(cqlSource) → cachedLibrary
+	compiledCacheSize   int
+	compiledCacheSet    bool
+	compiledCache       *compiledCache // hash(cqlSource) → cachedLibrary
 }
 
 // Option configures the Engine.
@@ -182,6 +182,25 @@ func WithCallEvaluationTimestamp(t time.Time) EvalOption {
 	return func(c *evalConfig) { c.evaluationTimestamp = t }
 }
 
+// WithCompiledCacheSize sets how many parsed libraries the engine keeps.
+//
+// The engine caches a parse per distinct source so that evaluating the same
+// library twice costs one parse. A server that evaluates CQL supplied in the
+// request sees a distinct source per caller, so without a ceiling the cache is
+// a way to grow the process without bound — one entry per source the server has
+// ever been sent, none of them ever removed.
+//
+// A positive n keeps the n most recently used parses. Zero disables the cache,
+// which is what a process evaluating each library once wants. A negative n
+// restores the unbounded behavior, which is only safe when the set of sources
+// is closed and known.
+func WithCompiledCacheSize(n int) Option {
+	return func(e *Engine) {
+		e.compiledCacheSize = n
+		e.compiledCacheSet = true
+	}
+}
+
 // NewEngine creates a new CQL engine with the given options.
 func NewEngine(opts ...Option) *Engine {
 	e := &Engine{
@@ -199,6 +218,10 @@ func NewEngine(opts ...Option) *Engine {
 	for _, opt := range opts {
 		opt(e)
 	}
+	if !e.compiledCacheSet {
+		e.compiledCacheSize = DefaultCompiledCacheSize
+	}
+	e.compiledCache = newCompiledCache(e.compiledCacheSize)
 	if e.modelInfo == nil {
 		// The official R4 model, which knows 147 retrievable types and their
 		// code paths where the hand-built one knew ten. It is parsed once per
@@ -220,35 +243,12 @@ func NewEngine(opts ...Option) *Engine {
 	return e
 }
 
-// compileOrCache compiles CQL source to AST, using a cache to avoid redundant ANTLR parsing.
 // compileOrCache parses CQL source to an AST, reusing the parse when the same
 // source comes back.
-
-// cachedLibrary is a compiled library together with the source it came from.
-//
-// The source is kept so a hit can be confirmed. Indexing by hash alone means a
-// collision hands back a different library's AST — quietly, and with no way for
-// the caller to tell. fnv64a over arbitrary CQL is not a cryptographic digest;
-// two sources colliding is unlikely, not impossible, and the failure is silent
-// and total.
-type cachedLibrary struct {
-	source string
-	lib    *ast.Library
-	plan   *sema.Result
-}
-
 func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, *sema.Result, error) {
-	h := fnv.New64a()
-	h.Write([]byte(cqlSource))
-	key := h.Sum64()
-
-	if cached, ok := e.compiledCache.Load(key); ok {
-		if entry, ok := cached.(cachedLibrary); ok && entry.source == cqlSource {
-			return entry.lib, entry.plan, nil
-		}
-		// A collision: compile this source rather than answer with the other's
-		// AST. The entry is left alone, so whichever source got there first
-		// keeps the slot and the other pays the parse each time.
+	key := sourceKey(cqlSource)
+	if entry, ok := e.compiledCache.load(key, cqlSource); ok {
+		return entry.lib, entry.plan, nil
 	}
 
 	lib, err := compiler.Compile(cqlSource)
@@ -260,7 +260,7 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, *sema.Result, e
 	// measure-sized library — and what it decides is what the evaluator applies
 	// instead of deciding for itself.
 	plan := sema.Check(lib, e.semanticModel())
-	e.compiledCache.LoadOrStore(key, cachedLibrary{source: cqlSource, lib: lib, plan: plan})
+	e.compiledCache.store(key, cachedLibrary{source: cqlSource, lib: lib, plan: plan})
 	return lib, plan, nil
 }
 

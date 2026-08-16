@@ -40,6 +40,13 @@ type RetrieveRequest struct {
 	// DateRange narrows the retrieve to a period, when the query pushed one down.
 	DateRange interface{}
 
+	// IDs restricts the retrieve to specific resource ids, as the FHIR _id
+	// search parameter does. It is set when the engine is resolving a
+	// reference rather than evaluating a retrieve expression, and is nil
+	// otherwise. Unlike the context fields, a provider that ignores this one
+	// costs nothing but work: the engine checks the ids of what comes back.
+	IDs []string
+
 	// Context names the CQL context in force, e.g. "Patient", and ContextID the
 	// subject's identifier. ContextSearchParam is the model's search parameter
 	// relating this resource type to that context — "subject" for Observation,
@@ -50,9 +57,30 @@ type RetrieveRequest struct {
 	// returns other patients' data and every measure built on it is wrong. The
 	// engine cannot do it instead — the model names a search parameter, and
 	// Condition has no element called patient.
+	//
+	// ContextRelation says which of four situations produced these fields, so
+	// that the three without a search parameter stay distinguishable. An empty
+	// ContextSearchParam used to mean all three at once, and a provider reading
+	// only that field returned every patient's data in two of them:
+	//
+	//	self         the retrieve asks for the context type itself. Scope by
+	//	             resource id; ContextSearchParam is "_id" so that a provider
+	//	             reading only that field does the right thing anyway.
+	//	searchParam  ContextSearchParam names the parameter to filter on.
+	//	expression   the model relates this type by a FHIRPath fragment, in
+	//	             ContextExpression, not by a search parameter. It still must
+	//	             be scoped — by a compartment definition, or however the
+	//	             provider can — but the engine has no query to describe.
+	//	none         no relation is declared. Do not scope: Medication and
+	//	             ValueSet belong to no patient.
+	//
+	// ContextRelation is empty when no context is in force, which is the
+	// population-level run.
 	Context            string
 	ContextID          string
 	ContextSearchParam string
+	ContextRelation    model.ContextRelationKind
+	ContextExpression  string
 
 	// Limit is the most resources the caller will accept, from
 	// WithMaxRetrieveSize. Zero means unbounded. A provider that can bound the
@@ -85,6 +113,11 @@ var (
 	// ErrMaxRetrieveSizeExceeded reports that a retrieve returned more
 	// resources than MaxRetrieveSize allows.
 	ErrMaxRetrieveSizeExceeded = errors.New("maximum retrieve size exceeded")
+	// ErrContextSubjectUnusable reports that a context resource was supplied
+	// but no subject id could be read from it. Evaluating on regardless would
+	// send an unscoped retrieve, which is indistinguishable from a deliberate
+	// population-level run and returns every subject's data.
+	ErrContextSubjectUnusable = errors.New("context resource has no usable subject id")
 )
 
 // Context holds the evaluation state for a CQL evaluation.
@@ -224,9 +257,10 @@ type Context struct {
 	contextResourceType string
 
 	// Cached parsed context value (avoids repeated JSON unmarshal)
-	cachedSubjectID string
-	cachedSubjectOK bool // true once cachedSubjectID has been computed
-	cachedObject    *fptypes.ObjectValue
+	cachedSubjectID  string
+	cachedSubjectOK  bool  // true once cachedSubjectID has been computed
+	cachedSubjectErr error // why there is no id, when there is none
+	cachedObject     *fptypes.ObjectValue
 
 	// IncludedLibraries maps alias → compiled included library. Aliases are
 	// local to the library that wrote them, so this map is rebuilt per library
@@ -482,6 +516,7 @@ func (c *Context) ChildScope() *Context {
 		contextResourceType: c.contextResourceType,
 		cachedSubjectID:     c.cachedSubjectID,
 		cachedSubjectOK:     c.cachedSubjectOK,
+		cachedSubjectErr:    c.cachedSubjectErr,
 		cachedObject:        c.cachedObject,
 		IncludedLibraries:   c.IncludedLibraries,
 		LoadedLibraries:     c.LoadedLibraries,
@@ -553,6 +588,13 @@ func (c *Context) GetContextObject() *fptypes.ObjectValue {
 // contextScoper is the part of a model that knows how a resource type relates
 // to a context. It is asked for optionally so a hand-built model still works.
 type contextScoper interface {
+	ContextRelation(resourceType, contextName string) model.ContextRelation
+}
+
+// legacyContextScoper is the narrower question this used to ask. A model that
+// answers only this one still gets its search parameters through; it just
+// cannot distinguish the three cases that have none.
+type legacyContextScoper interface {
 	ContextSearchParam(resourceType, contextName string) (string, bool)
 }
 
@@ -563,23 +605,63 @@ type contextScoper interface {
 // engine cannot enforce it: the model relates a type to a context by search
 // parameter, and Condition has no element called patient. What it can do is say
 // which patient it means, clearly enough that a provider cannot mistake it.
-func (c *Context) applyRetrieveContext(req *RetrieveRequest) {
+func (c *Context) applyRetrieveContext(req *RetrieveRequest) error {
 	contextName := c.StatementContext
 	if contextName == "" {
-		return
+		return nil
 	}
-	// Without a subject there is nothing to scope to, and saying "Patient" with
-	// an empty id would ask a conforming provider to filter on nothing. A
-	// population-level run is exactly that case.
-	subject := c.GetContextSubjectID()
+	// No context resource is a population-level run: the caller asked for every
+	// subject, and an unscoped retrieve is the right query. A context resource
+	// that yields no id produces the same unscoped retrieve without anyone
+	// having asked for it, so it stops here instead.
+	subject, err := c.subjectID()
+	if err != nil {
+		return fmt.Errorf("retrieve [%s] in %s context: %w", req.ResourceType, contextName, err)
+	}
 	if subject == "" {
-		return
+		return nil
 	}
 	req.Context = contextName
 	req.ContextID = subject
-	if scoper, ok := c.ModelInfo.(contextScoper); ok {
-		if param, found := scoper.ContextSearchParam(req.ResourceType, contextName); found {
-			req.ContextSearchParam = param
-		}
+
+	rel := c.contextRelation(req.ResourceType, contextName)
+	req.ContextRelation = rel.Kind
+	switch rel.Kind {
+	case model.ContextSelf:
+		// The retrieve asks for the context type itself, so the scoping element
+		// is the resource id. "_id" is a real search parameter, which means a
+		// provider that reads nothing but ContextSearchParam still scopes this
+		// correctly instead of returning every patient.
+		req.ContextSearchParam = "_id"
+	case model.ContextBySearchParam:
+		req.ContextSearchParam = rel.SearchParam
+	case model.ContextByExpression:
+		// Not a query the engine can describe. Passing the fragment on is worth
+		// more than passing nothing: the provider can recognize it, or fall
+		// back to a compartment definition, and at least knows that scoping is
+		// required here.
+		req.ContextExpression = rel.Expression
+	case model.ContextUnrelated, model.ContextRelationUnknown:
 	}
+	return nil
+}
+
+// contextRelation asks the model how a type reaches the context, accepting
+// either the full answer or the search-parameter-only one.
+//
+// A model that answers neither leaves the question open, and the answer is
+// "unknown" rather than "unrelated": those two lead a provider to opposite
+// decisions, and only one of them is a guess this can make.
+func (c *Context) contextRelation(resourceType, contextName string) model.ContextRelation {
+	if scoper, ok := c.ModelInfo.(contextScoper); ok {
+		return scoper.ContextRelation(resourceType, contextName)
+	}
+	if scoper, ok := c.ModelInfo.(legacyContextScoper); ok {
+		if param, found := scoper.ContextSearchParam(resourceType, contextName); found {
+			return model.ContextRelation{Kind: model.ContextBySearchParam, SearchParam: param}
+		}
+		// The narrower question cannot separate self, expression and none: all
+		// three answer false here.
+	}
+	return model.ContextRelation{Kind: model.ContextRelationUnknown}
 }

@@ -2,6 +2,8 @@ package eval
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	fptypes "github.com/gofhir/fhirpath/types"
 )
@@ -35,6 +37,7 @@ func (c *Context) SetContextResource(resourceType string, data json.RawMessage) 
 	c.contextResourceType = resourceType
 	c.cachedSubjectID = ""
 	c.cachedSubjectOK = false
+	c.cachedSubjectErr = nil
 	c.cachedObject = nil
 }
 
@@ -61,37 +64,80 @@ func (c *Context) IsUnfilteredContext() bool {
 // GetContextSubjectID extracts the subject ID from the context value.
 // Used by DataProvider to scope data retrieval to the current subject.
 // The result is cached to avoid repeated JSON unmarshaling.
+//
+// An empty result means only that there is no id to scope by; it does not say
+// whether that is because no context resource was supplied. Use subjectID when
+// the difference matters.
 func (c *Context) GetContextSubjectID() string {
+	id, err := c.subjectID()
+	if err != nil {
+		return ""
+	}
+	return id
+}
+
+// subjectID returns the context subject's id, or the reason there is none.
+//
+// No context resource is not an error: that is a population-level run, and the
+// caller asked for one. A context resource that yields no id is, because the
+// two are indistinguishable downstream — both produce an unscoped retrieve —
+// and only one of them was intended.
+func (c *Context) subjectID() (string, error) {
 	if c.cachedSubjectOK {
-		return c.cachedSubjectID
+		return c.cachedSubjectID, c.cachedSubjectErr
 	}
 	c.cachedSubjectOK = true
-	if c.ContextValue == nil {
-		return ""
+	if len(c.ContextValue) == 0 {
+		return "", nil
 	}
 	var resource struct {
 		ID string `json:"id"`
 	}
 	if err := json.Unmarshal(c.ContextValue, &resource); err != nil {
-		return ""
+		c.cachedSubjectErr = fmt.Errorf("%w: %s resource does not parse: %w",
+			ErrContextSubjectUnusable, orUnknown(c.contextResourceType), err)
+		return "", c.cachedSubjectErr
+	}
+	if resource.ID == "" {
+		c.cachedSubjectErr = fmt.Errorf("%w: %s resource has no id",
+			ErrContextSubjectUnusable, orUnknown(c.contextResourceType))
+		return "", c.cachedSubjectErr
 	}
 	c.cachedSubjectID = resource.ID
-	return c.cachedSubjectID
+	return c.cachedSubjectID, nil
+}
+
+func orUnknown(resourceType string) string {
+	if resourceType == "" {
+		return "context"
+	}
+	return resourceType
 }
 
 // ResolveRelatedContext allows querying data from a related context.
 // For example, from within a Patient context, query Practitioner data
 // using the patient's generalPractitioner reference.
+//
+// The reference is asked for by id and the answer is checked against it. The
+// request used to name no id at all — CodePath was "_id" with nothing to
+// compare against — so the provider saw an unfiltered retrieve and the first
+// resource of that type in the database came back as though it were the
+// referenced one. A provider that ignores IDs still returns everything, which
+// is why the id is verified here rather than trusted: this engine cannot make
+// a provider filter, but it can refuse to hand back a resource that is not the
+// one that was asked for.
 func (e *Evaluator) ResolveRelatedContext(targetType, reference string) (fptypes.Value, error) {
 	if e.ctx.DataProvider == nil {
 		return nil, nil
 	}
-	// Retrieve the referenced resource
+	id := referenceID(reference)
+	if id == "" {
+		return nil, nil
+	}
 	req := RetrieveRequest{
-		ResourceType:   targetType,
-		CodePath:       "_id",
-		CodeComparator: "=",
-		Limit:          retrieveLimit(e.ctx.MaxRetrieveSize),
+		ResourceType: targetType,
+		IDs:          []string{id},
+		Limit:        retrieveLimit(e.ctx.MaxRetrieveSize),
 	}
 	resources, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, req)
 	// Every query the engine makes has to appear in a provenance trail, not
@@ -103,8 +149,46 @@ func (e *Evaluator) ResolveRelatedContext(targetType, reference string) (fptypes
 	if err != nil {
 		return nil, err
 	}
-	if len(resources) == 0 {
-		return nil, nil
+	for _, resource := range resources {
+		var header struct {
+			ResourceType string `json:"resourceType"`
+			ID           string `json:"id"`
+		}
+		if err := json.Unmarshal(resource, &header); err != nil {
+			continue
+		}
+		if header.ID != id {
+			continue
+		}
+		if header.ResourceType != "" && !strings.EqualFold(header.ResourceType, targetType) {
+			continue
+		}
+		return fptypes.NewString(string(resource)), nil
 	}
-	return fptypes.NewString(string(resources[0])), nil
+	return nil, nil
+}
+
+// referenceID reduces a FHIR reference to the resource id it names.
+//
+// "Practitioner/123" and "http://example.org/fhir/Practitioner/123" both name
+// 123. A bare "123" is taken as an id already. Contained references ("#x") and
+// URN references name nothing a retrieve by id can find, so they resolve to
+// nothing rather than to a wrong resource.
+func referenceID(reference string) string {
+	ref := strings.TrimSpace(reference)
+	if ref == "" || strings.HasPrefix(ref, "#") || strings.HasPrefix(ref, "urn:") {
+		return ""
+	}
+	// Drop a version suffix before taking the last segment: _history/2 would
+	// otherwise be read as the id.
+	if i := strings.Index(ref, "/_history/"); i >= 0 {
+		ref = ref[:i]
+	}
+	if i := strings.LastIndex(ref, "/"); i >= 0 {
+		ref = ref[i+1:]
+	}
+	if strings.ContainsAny(ref, "?&") {
+		return ""
+	}
+	return ref
 }

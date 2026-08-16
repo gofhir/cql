@@ -125,6 +125,45 @@ func TestContextSearchParamRefusesWhatItCannotUse(t *testing.T) {
 	}
 }
 
+// TestContextRelationSeparatesTheThreeSilences covers what having no search
+// parameter meant. Three different situations reported the same empty string,
+// and two of them still need the retrieve scoped: a provider reading only that
+// field returned every patient's data for a Patient retrieve and for the five
+// types whose relation is a FHIRPath fragment.
+func TestContextRelationSeparatesTheThreeSilences(t *testing.T) {
+	mi, err := LoadR4ModelInfo()
+	if err != nil {
+		t.Fatalf("loading: %v", err)
+	}
+
+	for _, tt := range []struct {
+		resource string
+		want     ContextRelation
+	}{
+		// The type that is the context: scope by resource id.
+		{"Patient", ContextRelation{Kind: ContextSelf}},
+
+		// A search parameter the provider can query with.
+		{"Condition", ContextRelation{Kind: ContextBySearchParam, SearchParam: "patient"}},
+		{"Observation", ContextRelation{Kind: ContextBySearchParam, SearchParam: "subject"}},
+
+		// A FHIRPath fragment: still needs scoping, but not by a query.
+		{"AuditEvent", ContextRelation{Kind: ContextByExpression, Expression: "where(resolve() is Patient)"}},
+		{"Provenance", ContextRelation{Kind: ContextByExpression, Expression: "where(resolve() is Patient)"}},
+
+		// No relation at all: these belong to no patient, and scoping them
+		// would return nothing rather than everything.
+		{"Medication", ContextRelation{Kind: ContextUnrelated}},
+		{"Location", ContextRelation{Kind: ContextUnrelated}},
+		{"Organization", ContextRelation{Kind: ContextUnrelated}},
+	} {
+		got := mi.ContextRelation(tt.resource, "Patient")
+		if got != tt.want {
+			t.Errorf("ContextRelation(%s, Patient) = %+v, want %+v", tt.resource, got, tt.want)
+		}
+	}
+}
+
 // TestPrimaryCodePathDistinguishesSilence covers the 84 retrievable types that
 // declare no primary code path. Answering "code" for those would leave a
 // provider unable to tell what the model said from what it did not, and some
