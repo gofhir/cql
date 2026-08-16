@@ -38,7 +38,23 @@ type RetrieveRequest struct {
 	// the retrieve is unfiltered.
 	Codes interface{}
 
-	// DateRange narrows the retrieve to a period, when the query pushed one down.
+	// DatePath is the element DateRange applies to — "period" for an Encounter,
+	// "onset" for a Condition. A provider maps it to whatever its store
+	// searches by; the engine does not navigate it.
+	//
+	// DateRange without it is an interval with nothing to compare against, and
+	// that is what a provider used to receive: the AST carried the path and the
+	// request had no field to put it in.
+	DatePath string
+
+	// DateRange narrows the retrieve to a period, when the query pushed one
+	// down. It is the interval the query named, already evaluated.
+	//
+	// A pushed-down range is a request, not a promise about what comes back.
+	// The query's where clause is still applied to whatever the provider
+	// returns, so ignoring this costs work and nothing else — and returning
+	// more than it asks for, which a FHIR date search does when it answers with
+	// an overlap, is equally safe.
 	DateRange interface{}
 
 	// IDs restricts the retrieve to specific resource ids, as the FHIR _id

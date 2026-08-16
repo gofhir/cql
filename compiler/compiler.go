@@ -38,6 +38,11 @@ func Compile(source string) (*ast.Library, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected Library node, got %T", result)
 	}
+	// A date filter a query states about its own retrieve is worth more to the
+	// provider than to the evaluator. This only adds to the retrieve; the
+	// clause stays where the author wrote it, so what the library means is
+	// unchanged either way.
+	pushDownDateRanges(lib)
 	return lib, nil
 }
 
