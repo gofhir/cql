@@ -3720,7 +3720,9 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 		DateRange:      dateRange,
 		Limit:          retrieveLimit(e.ctx.MaxRetrieveSize),
 	}
-	e.ctx.applyRetrieveContext(&req)
+	if err := e.ctx.applyRetrieveContext(&req); err != nil {
+		return nil, err
+	}
 	results, err := e.ctx.DataProvider.Retrieve(e.ctx.GoCtx, req)
 	if observer, ok := e.ctx.TraceListener.(RetrieveObserver); ok {
 		observer.OnRetrieve(req, len(results), err)

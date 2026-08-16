@@ -197,27 +197,81 @@ func (m *StaticModelInfo) ConversionsFrom(from string) []Conversion {
 	return out
 }
 
+// ContextRelationKind says how a resource type reaches the context a retrieve
+// is scoped to. The four cases arrive at a data provider looking identical when
+// only a search parameter is reported — three of them have no parameter to
+// report — and two of those three still need scoping. Naming them is what lets
+// a provider tell "scope this by id" and "I cannot express this relation" apart
+// from "this type is unrelated, return everything".
+type ContextRelationKind string
+
+const (
+	// ContextUnrelated means the model declares no relation. A retrieve for
+	// this type is not scoped to the context: Medication and ValueSet belong
+	// to no patient.
+	ContextUnrelated ContextRelationKind = "none"
+
+	// ContextSelf means the type *is* the context type, so the relation is
+	// identity and the scoping element is the resource id.
+	ContextSelf ContextRelationKind = "self"
+
+	// ContextBySearchParam means the model names a search parameter, reported
+	// in SearchParam.
+	ContextBySearchParam ContextRelationKind = "searchParam"
+
+	// ContextByExpression means the model declares a FHIRPath fragment rather
+	// than a search parameter, reported in Expression. It still needs scoping,
+	// but not by a query the engine can describe.
+	ContextByExpression ContextRelationKind = "expression"
+
+	// ContextRelationUnknown means the model cannot say. StaticModelInfo never
+	// reports it; it reaches a provider when the engine was given a model that
+	// does not answer this question, and it means the retrieve may well need
+	// scoping — treat it as ContextByExpression, not as ContextUnrelated.
+	ContextRelationUnknown ContextRelationKind = "unknown"
+)
+
+// ContextRelation is how one resource type relates to one context.
+type ContextRelation struct {
+	Kind        ContextRelationKind
+	SearchParam string // set when Kind is ContextBySearchParam
+	Expression  string // set when Kind is ContextByExpression
+}
+
+// ContextRelation reports how a resource type reaches a context, keeping the
+// three ways of having no search parameter distinct.
+//
+// A type that *is* the context is identified by its own key, not by a
+// relationship to itself: the model says Patient relates to Patient through
+// "other", which is Patient.link.other and would fetch the linked patients
+// instead. Some types declare a FHIRPath fragment — AuditEvent, Provenance,
+// Basic, Person and MeasureReport all say "where(resolve() is Patient)" —
+// which is not a search parameter and would make a query no server can answer.
+// Neither is passed on as a parameter, but both are reported for what they are.
+func (m *StaticModelInfo) ContextRelation(resourceType, contextName string) ContextRelation {
+	if strings.EqualFold(unqualify(resourceType), unqualify(contextName)) {
+		return ContextRelation{Kind: ContextSelf}
+	}
+	p, ok := m.contextRels[contextRelKey{Type: resourceType, Context: contextName}]
+	if !ok || p == "" {
+		return ContextRelation{Kind: ContextUnrelated}
+	}
+	if !isSearchParamName(p) {
+		return ContextRelation{Kind: ContextByExpression, Expression: p}
+	}
+	return ContextRelation{Kind: ContextBySearchParam, SearchParam: p}
+}
+
 // ContextSearchParam returns the search parameter relating a resource type to a
 // context — "subject" for Observation in a Patient context, "patient" for
 // Condition. It is what a data provider needs to scope a retrieve; it is not an
 // element path, so the engine cannot navigate it itself.
 //
-// Two kinds of declaration are refused rather than passed on. A type that *is*
-// the context is identified by its own key, not by a relationship to itself:
-// the model says Patient relates to Patient through "other", which is
-// Patient.link.other and would fetch the linked patients instead. And some
-// types declare a FHIRPath fragment — AuditEvent, Provenance, Basic, Person and
-// MeasureReport all say "where(resolve() is Patient)" — which is not a search
-// parameter and would make a query no server can answer.
+// It reports only the case that has a search parameter to give. Use
+// ContextRelation to tell the other three apart.
 func (m *StaticModelInfo) ContextSearchParam(resourceType, contextName string) (string, bool) {
-	if strings.EqualFold(unqualify(resourceType), unqualify(contextName)) {
-		return "", false
-	}
-	p, ok := m.contextRels[contextRelKey{Type: resourceType, Context: contextName}]
-	if !ok || !isSearchParamName(p) {
-		return "", false
-	}
-	return p, true
+	rel := m.ContextRelation(resourceType, contextName)
+	return rel.SearchParam, rel.Kind == ContextBySearchParam
 }
 
 // isSearchParamName reports whether a declaration looks like a search parameter

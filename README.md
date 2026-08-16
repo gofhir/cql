@@ -142,6 +142,7 @@ if diagnostics.HasErrors() {
 | `WithMaxRetrieveSize` | Maximum resources per retrieve | 10000 |
 | `WithMaxDepth` | Maximum recursion depth | 100 |
 | `WithTraceListener` | Trace listener for debugging | `nil` |
+| `WithCompiledCacheSize` | Parsed libraries kept; `0` disables, negative is unbounded | 64 |
 
 ## Error Handling
 
