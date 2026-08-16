@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/gofhir/cql/compare/v1.13.0...v1.13.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* **eval:** teach the aggregates what a Quantity is ([#33](https://github.com/gofhir/cql/issues/33)) ([cba41a1](https://github.com/gofhir/cql/commit/cba41a11fffb618d75ea61961eee4d51202c4400))
+
 ## [1.13.0](https://github.com/gofhir/cql/compare/v1.12.0...v1.13.0) (2026-08-16)
 
 
