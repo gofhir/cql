@@ -2467,6 +2467,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return varianceOfQuantities(quantities, false)
+		}
 		return funcs.PopulationVariance(c), nil
 	case "stddev":
 		src, err := resolveSource()
@@ -2474,6 +2480,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return stdDevOfQuantities(quantities, true)
+		}
 		return funcs.StdDev(c), nil
 	case "variance":
 		src, err := resolveSource()
@@ -2481,6 +2493,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return varianceOfQuantities(quantities, true)
+		}
 		return funcs.Variance(c), nil
 
 	// Temporal functions
@@ -2562,6 +2580,15 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		// funcs.Median reads a Quantity as the number zero and then drops it
+		// for being zero, so a list of doses had no values left and the median
+		// of any of them was null.
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return medianQuantities(quantities)
+		}
 		return funcs.Median(c), nil
 	case "geometricmean":
 		src, err := resolveSource()
@@ -5439,36 +5466,14 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 	if c.Empty() {
 		return nil, nil
 	}
-	// Check if we have Quantity values
-	var firstQ fptypes.Quantity
-	hasQ := false
-	for _, item := range c {
-		if item == nil {
-			continue
+	// Quantities are added through Quantity.Add, so a mixture of mg and g is
+	// converted rather than added as bare numbers — this used to make
+	// Sum({ 1 'mg', 1 'g' }) come out as 2 'mg'.
+	if quantities, found, err := quantityOperands(c); found {
+		if err != nil {
+			return nil, err
 		}
-		if q, ok := item.(fptypes.Quantity); ok {
-			firstQ = q
-			hasQ = true
-			break
-		}
-	}
-	if hasQ {
-		sum := firstQ.Value()
-		unit := firstQ.Unit()
-		first := true
-		for _, item := range c {
-			if item == nil {
-				continue
-			}
-			if q, ok := item.(fptypes.Quantity); ok {
-				if first {
-					first = false
-					continue
-				}
-				sum = sum.Add(q.Value())
-			}
-		}
-		return fptypes.NewQuantityFromDecimal(sum, unit), nil
+		return sumQuantities(quantities)
 	}
 	sum := decimal.Zero
 	allInt := true
@@ -5494,6 +5499,14 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 	c := toCollection(source)
 	if c.Empty() {
 		return nil, nil
+	}
+	// toDecimal answers zero for a Quantity, so averaging doses produced 0 —
+	// a plausible number, in an operation a measure runs on every patient.
+	if quantities, found, err := quantityOperands(c); found {
+		if err != nil {
+			return nil, err
+		}
+		return avgQuantities(quantities)
 	}
 	sum := decimal.Zero
 	count := int64(0)
@@ -5544,6 +5557,15 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 	c := toCollection(source)
 	if c.Empty() {
 		return nil, nil
+	}
+	// Multiplying quantities compounds their units, the way `2 'mg' * 3 'mg'`
+	// already gives 6 'mg2'. This reduced them all to zero instead, so the
+	// product of any list of doses was 0.
+	if quantities, found, err := quantityOperands(c); found {
+		if err != nil {
+			return nil, err
+		}
+		return productOfQuantities(quantities), nil
 	}
 	allInt := true
 	product := decimal.NewFromInt(1)
