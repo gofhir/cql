@@ -206,9 +206,8 @@ func TestCaseBranchesConvergeLikeIfBranches(t *testing.T) {
 // list converged on System.Quantity by itself, and with a null beside it there
 // was nothing to converge on.
 //
-// Avg and Median are not covered because they do not work on quantities at all,
-// FHIR or otherwise — `Avg({ 1 'mg', 2 'mg' })` is 0 and `Median` of the same is
-// null. That is a gap in funcs/, not in what is converted, and it predates this.
+// Avg and Median went from not working on quantities at all to working on the
+// converted ones too, so they are covered here now.
 func TestAggregatesConvertWhatTheyAreGiven(t *testing.T) {
 	engine := NewEngine(WithDataProvider(plannedProvider{}))
 	patient := []byte(`{"resourceType":"Patient","id":"p1"}`)
@@ -218,6 +217,9 @@ func TestAggregatesConvertWhatTheyAreGiven(t *testing.T) {
 		{`Sum({ Q, null })`, "9.1 'mg'"},
 		{`Max({ Q, null })`, "9.1 'mg'"},
 		{`Min({ Q, 2 'mg' })`, "2 'mg'"},
+		{`Avg({ Q, 2 'mg' })`, "5.55 'mg'"},
+		{`Median({ Q, 2 'mg' })`, "5.55 'mg'"},
+		{`Avg({ Q, null })`, "9.1 'mg'"},
 	} {
 		src := plannedPreamble + "define R: " + tc.expr + "\n"
 		got, err := engine.EvaluateExpression(context.Background(), src, "R", patient, nil)
