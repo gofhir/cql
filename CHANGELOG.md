@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.0](https://github.com/gofhir/cql/compare/v1.12.0...v1.13.0) (2026-08-16)
+
+
+### Features
+
+* **compiler:** push a query's date filter down to the retrieve it reads from ([#31](https://github.com/gofhir/cql/issues/31)) ([b9803e3](https://github.com/gofhir/cql/commit/b9803e3af75ce309847fa39252086c9e9bcc7a12))
+* **eval:** say which subject a retrieve means, and stop when it cannot ([#30](https://github.com/gofhir/cql/issues/30)) ([c24342c](https://github.com/gofhir/cql/commit/c24342c188a29dd20e2ec046c6ab6dcaecf5496f))
+
 ## [1.12.0](https://github.com/gofhir/cql/compare/v1.11.0...v1.12.0) (2026-08-15)
 
 
