@@ -58,6 +58,61 @@ define S: FHIRHelpers.ToString(First([Encounter]).status)
 	}
 }
 
+// TestCheckDoesNotResolveIncludedCallsLocally covers the call around the alias,
+// which the alias fix alone does not reach. Only the ELM importer sets
+// FunctionCall.Library; the text parser builds `C.Helper(x)` as a fluent call
+// with the alias as its source, so the alias was counted as a first argument
+// and the call resolved against *this* library's overloads.
+//
+// A local Helper(Integer, Integer) therefore made `C.Helper('x')` report an
+// overload failure on valid CQL, and `C.Helper(3)` take the local function's
+// return type — a wrong type that reaches the evaluator through the recorded
+// conversions.
+func TestCheckDoesNotResolveIncludedCallsLocally(t *testing.T) {
+	const collides = `library M version '1.0'
+include Common version '1.0' called C
+define function Helper(a Integer, b Integer) returns Integer: a + b
+define A: C.Helper(3)
+define B: C.Helper('x')
+`
+	if msgs := checkDiags(t, collides); len(msgs) != 0 {
+		t.Errorf("want no findings for calls into an included library, got %v", msgs)
+	}
+
+	// With nothing local to collide with, the bare name used to reach the
+	// system function table and answer with its return type instead.
+	const systemName = `library M version '1.0'
+include Common version '1.0' called C
+define A: C.ToString(3)
+`
+	if msgs := checkDiags(t, systemName); len(msgs) != 0 {
+		t.Errorf("want no findings, got %v", msgs)
+	}
+}
+
+// The call being unknown must not hide a mistake inside its arguments, and a
+// call to a local function must still resolve its overloads.
+func TestCheckStillChecksAroundIncludedCalls(t *testing.T) {
+	const badArgument = `library M version '1.0'
+include Common version '1.0' called C
+define A: C.Helper(Bogus)
+`
+	if msgs := checkDiags(t, badArgument); len(msgs) != 1 ||
+		!strings.Contains(msgs[0], "Bogus is not defined") {
+		t.Errorf("want the undefined argument reported, got %v", msgs)
+	}
+
+	const localCall = `library M version '1.0'
+define function Helper(a Integer, b Integer) returns Integer: a + b
+define A: Helper(1, 2)
+define B: Helper('x', 2)
+`
+	msgs := checkDiags(t, localCall)
+	if len(msgs) != 1 || !strings.Contains(msgs[0], "no overload of Helper") {
+		t.Errorf("want the local overload failure reported, got %v", msgs)
+	}
+}
+
 // TestCheckResolvesChoiceElementsByTheirConcreteName covers the other half of
 // the same problem. The model declares Observation.value[x] as `value`, while
 // both the JSON and the CQL that reads it say `valueQuantity`, so every access
