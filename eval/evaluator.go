@@ -858,27 +858,24 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		return fptypes.NewBoolean(isTrue(left) != isTrue(right)), nil
 
 	case ast.OpUnion:
-		// Interval union: if both are intervals, compute interval union
-		if lIv, lok := left.(cqltypes.Interval); lok {
-			if rIv, rok := right.(cqltypes.Interval); rok {
-				return funcs.IntervalUnion(lIv, rIv)
-			}
+		if lIv, rIv, ok, err := e.asIntervals(left, right); err != nil {
+			return nil, err
+		} else if ok {
+			return funcs.IntervalUnion(lIv, rIv)
 		}
 		return e.evalSetOp(n.Operator, left, right)
 	case ast.OpIntersect:
-		// Interval intersect
-		if lIv, lok := left.(cqltypes.Interval); lok {
-			if rIv, rok := right.(cqltypes.Interval); rok {
-				return funcs.IntervalIntersect(lIv, rIv)
-			}
+		if lIv, rIv, ok, err := e.asIntervals(left, right); err != nil {
+			return nil, err
+		} else if ok {
+			return funcs.IntervalIntersect(lIv, rIv)
 		}
 		return e.evalSetOp(n.Operator, left, right)
 	case ast.OpExcept:
-		// Interval except
-		if lIv, lok := left.(cqltypes.Interval); lok {
-			if rIv, rok := right.(cqltypes.Interval); rok {
-				return funcs.IntervalExcept(lIv, rIv)
-			}
+		if lIv, rIv, ok, err := e.asIntervals(left, right); err != nil {
+			return nil, err
+		} else if ok {
+			return funcs.IntervalExcept(lIv, rIv)
 		}
 		return e.evalSetOp(n.Operator, left, right)
 

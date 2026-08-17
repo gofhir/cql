@@ -629,11 +629,42 @@ func (c *checker) inferIntervalOperand(expr, at ast.Expression) Type {
 	if iv, ok := t.(*Interval); ok {
 		return iv.Point
 	}
+	// A choice every branch of which is an interval is an interval as far as
+	// this operator is concerned, and its point type is the choice of theirs.
+	// FHIR reaches this constantly: Condition.onset is a choice, so a helper
+	// that normalizes it returns Choice<Interval<Quantity>, Interval<DateTime>>,
+	// and `start of` that was reported as applied to something that is not an
+	// interval — when every branch of it is one.
+	if points, ok := intervalPointsOfChoice(t); ok {
+		return points
+	}
 	if IsUnknown(t) {
 		return Unknown
 	}
 	c.reportf(at, SeverityError, "expected an interval, got %s", t)
 	return Unknown
+}
+
+// intervalPointsOfChoice reports the point types of a choice of intervals, and
+// nothing when any branch is something else — a choice that is only sometimes an
+// interval is a genuine mistake at an operator that always needs one.
+func intervalPointsOfChoice(t Type) (Type, bool) {
+	choice, ok := t.(*Choice)
+	if !ok {
+		return nil, false
+	}
+	points := make([]Type, 0, len(choice.Types))
+	for _, branch := range choice.Types {
+		iv, ok := branch.(*Interval)
+		if !ok {
+			return nil, false
+		}
+		points = append(points, iv.Point)
+	}
+	if len(points) == 0 {
+		return nil, false
+	}
+	return NewChoice(points), true
 }
 
 func (c *checker) inferMembership(e *ast.MembershipExpression) Type {

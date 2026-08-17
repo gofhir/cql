@@ -77,14 +77,37 @@ func (a *modelInfoAdapter) IsSubtypeOf(concrete, target string) bool {
 	return a.mi.IsSubtypeOf(concrete, target)
 }
 
+// ConversionsFrom lists what a type converts to, inheriting from its base.
+//
+// The document declares a conversion where it is introduced, and FHIR's
+// primitives are a hierarchy: `id` extends `string`, which is what converts to
+// System.String. Asking only about the type itself found nothing for FHIR.id, so
+// `'discharged: ' & Encounter.id` was reported as a String operator applied to
+// something that is not one — while the evaluator converted it and answered
+// correctly, since it walks the same hierarchy at runtime.
 func (a *modelInfoAdapter) ConversionsFrom(from string) []ModelConversion {
-	declared := a.mi.ConversionsFrom(from)
-	out := make([]ModelConversion, len(declared))
-	for i, c := range declared {
-		out[i] = ModelConversion{To: c.To, Function: c.Function}
+	for name, seen := from, 0; seen < maxTypeHierarchyDepth; seen++ {
+		declared := a.mi.ConversionsFrom(name)
+		if len(declared) > 0 {
+			out := make([]ModelConversion, len(declared))
+			for i, c := range declared {
+				out[i] = ModelConversion{To: c.To, Function: c.Function}
+			}
+			return out
+		}
+		base, ok := a.baseOf(name)
+		if !ok {
+			return nil
+		}
+		name = base
 	}
-	return out
+	return nil
 }
+
+// maxTypeHierarchyDepth bounds the walk up a base chain. FHIR's deepest is five
+// or so; the limit is there because a document that declared a cycle would
+// otherwise hang the phase rather than report anything.
+const maxTypeHierarchyDepth = 32
 
 // HasType reports whether the model declares this type, matched exactly: FHIR
 // declares `integer` and not `Integer`, and treating the two as one would make

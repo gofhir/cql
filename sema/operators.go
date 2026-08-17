@@ -197,6 +197,11 @@ func (c *checker) inferSetOperation(e *ast.BinaryExpression) Type {
 			return &List{Element: Common(l.Element, r.Element, c.model)}
 		}
 	}
+	// A FHIR.Period is an interval once the model's conversion is applied, and
+	// these three operators were the ones not applying it: `Enc.period intersect
+	// "Measurement Period"` read as a list operation between a Period and an
+	// interval. The evaluator had the same gap and answered with the empty list.
+	left, right = c.convertedToInterval(e.Left, left), c.convertedToInterval(e.Right, right)
 	if l, ok := left.(*Interval); ok {
 		if r, ok := right.(*Interval); ok {
 			return &Interval{Point: Common(l.Point, r.Point, c.model)}
@@ -204,6 +209,18 @@ func (c *checker) inferSetOperation(e *ast.BinaryExpression) Type {
 	}
 	c.reportf(e, SeverityError, "%s and %s are not both lists or both intervals", left, right)
 	return Unknown
+}
+
+// convertedToInterval is the type an operand takes once a model-declared
+// conversion to an interval is applied, or the type it already had.
+func (c *checker) convertedToInterval(expr ast.Expression, t Type) Type {
+	if _, ok := t.(*Interval); ok {
+		return t
+	}
+	if converted, ok := c.convertToInterval(expr, t); ok {
+		return converted
+	}
+	return t
 }
 
 // inferUnary types a prefix operator.

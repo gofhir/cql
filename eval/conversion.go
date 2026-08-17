@@ -6,6 +6,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
+	cqltypes "github.com/gofhir/cql/types"
 )
 
 // conversionResolver is the part of a model that declares how its own types
@@ -59,6 +60,38 @@ func (e *Evaluator) coerceToSystem(v fptypes.Value) (fptypes.Value, error) {
 		return v, nil
 	}
 	return converted, nil
+}
+
+// asIntervals reports both operands as intervals when both can be, converting
+// what the model knows how to convert.
+//
+// The set operators read `union`, `intersect` and `except` as either interval or
+// list operations, and decided by asking whether each operand already was an
+// Interval. A FHIR.Period is not one, so `Enc.period intersect "Measurement
+// Period"` took the list branch, found no common elements between a Period and
+// an interval, and answered with the empty list — a plausible answer to a
+// question nobody asked. `overlaps` and `during` had been converting all along;
+// these three were not.
+func (e *Evaluator) asIntervals(left, right fptypes.Value) (
+	leftInterval, rightInterval cqltypes.Interval, both bool, err error,
+) {
+	converted, err := e.coerceToSystem(left)
+	if err != nil {
+		return cqltypes.Interval{}, cqltypes.Interval{}, false, err
+	}
+	lIv, ok := converted.(cqltypes.Interval)
+	if !ok {
+		return cqltypes.Interval{}, cqltypes.Interval{}, false, nil
+	}
+	converted, err = e.coerceToSystem(right)
+	if err != nil {
+		return cqltypes.Interval{}, cqltypes.Interval{}, false, err
+	}
+	rIv, ok := converted.(cqltypes.Interval)
+	if !ok {
+		return cqltypes.Interval{}, cqltypes.Interval{}, false, nil
+	}
+	return lIv, rIv, true, nil
 }
 
 // callConversion invokes a conversion function named "Library.Function".
