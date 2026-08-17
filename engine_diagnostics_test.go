@@ -19,22 +19,25 @@ func TestEvaluationErrorsCarryTheirLocation(t *testing.T) {
 		src  string
 		at   string
 	}{
+		// Errors of value rather than of type: the semantic phase types these
+		// perfectly well and only evaluating them finds the problem, which is
+		// what keeps them on this path now that a library whose meaning does
+		// not check out is refused before evaluation. See
+		// TestSemanticErrorsCarryTheirLocation for the other path.
 		{
-			"unknown identifier",
-			"library T version '1.0'\n\ndefine A: Bogus\n",
+			"overflow",
+			"library T version '1.0'\n\ndefine A: Exp(1000)\n",
 			"3:11",
 		},
 		{
-			"unknown identifier on its own line",
-			"library T version '1.0'\n\ndefine A:\n  Bogus\n",
-			"4:3",
+			"undefined for zero",
+			"library T version '1.0'\n\ndefine A: Ln(0)\n",
+			"3:11",
 		},
 		{
-			// The sort key, not the query that contains it: pointing at the
-			// whole query leaves the reader to find the word.
-			"unknown sort key",
-			"library T version '1.0'\n\ndefine A: ({1,2}) X sort by nope\n",
-			"3:29",
+			"an error the library raises itself",
+			"library T version '1.0'\n\ndefine A: Message(1, true, 'code', 'Error', 'boom')\n",
+			"3:11",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -64,7 +67,11 @@ func TestEvaluationErrorsCarryTheirLocation(t *testing.T) {
 // recursion error once reached 380 KB.
 func TestOnlyTheInnermostFailureIsLocated(t *testing.T) {
 	src := "library T version '1.0'\n\ndefine A: 1 + (2 * (3 + Bogus))\n"
-	_, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil)
+	// The undefined name is now caught before evaluation, so this reads the
+	// position through the phase that catches it. What is being tested is the
+	// same: one location, and the innermost one.
+	_, err := NewEngine(WithSemanticValidation(false)).
+		EvaluateExpression(context.Background(), src, "A", nil, nil)
 	if err == nil {
 		t.Fatal("expected an error")
 	}

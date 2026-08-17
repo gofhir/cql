@@ -49,6 +49,7 @@ type Engine struct {
 	maxDepth            int
 	modelInfoExplicit   bool // caller supplied a model; do not second-guess it
 	evaluationTimestamp time.Time
+	semanticValidation  bool
 	compiledCacheSize   int
 	compiledCacheSet    bool
 	compiledCache       *compiledCache // hash(cqlSource) → cachedLibrary
@@ -201,12 +202,36 @@ func WithCompiledCacheSize(n int) Option {
 	}
 }
 
+// WithSemanticValidation decides whether a library whose meaning does not check
+// out is evaluated anyway.
+//
+// The specification puts semantic validation in the phase before evaluation:
+// it "is the process of verifying that the meaning of the expression is valid",
+// and what it produces — a type for every expression — is what "guarantees that
+// the expression is guaranteed to return either a value of that type, or a
+// null". ELM says the same from the other side: a message of severity error is
+// "an error that is preventing the translation from completing successfully",
+// and a semantic error is one of the kinds it names.
+//
+// Without it that guarantee simply does not hold. `1 + 'text'` evaluated to 1,
+// having dropped the string, and no caller could tell that from arithmetic.
+//
+// Warnings never block, as ELM has them "not critical enough to prevent
+// translation". Turn this off when a library must run despite its findings —
+// the evaluator then decides types as it goes, which is what it did before.
+func WithSemanticValidation(enabled bool) Option {
+	return func(e *Engine) {
+		e.semanticValidation = enabled
+	}
+}
+
 // NewEngine creates a new CQL engine with the given options.
 func NewEngine(opts ...Option) *Engine {
 	e := &Engine{
-		maxExpressionLen: 100 * 1024, // 100KB default
-		evalTimeout:      30 * time.Second,
-		maxRetrieveSize:  10000,
+		semanticValidation: true,
+		maxExpressionLen:   100 * 1024, // 100KB default
+		evalTimeout:        30 * time.Second,
+		maxRetrieveSize:    10000,
 		// Measured, not guessed: a 100-term `or` chain and a chain of 50 defines
 		// each reach depth ~100, and both are ordinary clinical CQL. The limit
 		// exists to stop runaway recursion — `define A: A` crashed the process
@@ -436,6 +461,14 @@ func (e *Engine) newEvalContext(
 	if err := e.checkUsings(lib); err != nil {
 		return nil, err
 	}
+	// The phase before evaluation, where the specification puts it. Parse and
+	// Check stay out of this on purpose: their whole job is to hand back a
+	// library with its findings, including one that will not evaluate.
+	if e.semanticValidation && plan != nil {
+		if errs := plan.Diagnostics.Errors(); len(errs) > 0 {
+			return nil, &ErrSemantic{Diagnostics: errs}
+		}
+	}
 
 	evalCtx := eval.NewContext(ctx, lib)
 	evalCtx.ContextValue = contextResource
@@ -651,6 +684,20 @@ func (e *ErrSyntaxError) Error() string {
 
 func (e *ErrSyntaxError) Unwrap() error {
 	return e.Cause
+}
+
+// ErrSemantic indicates a library whose meaning does not check out: an operator
+// applied to types it does not accept, a name that is not defined, an element
+// the model does not have (HTTP 400).
+//
+// It carries the findings rather than only a message, so a caller can report
+// every one of them with its position instead of the first.
+type ErrSemantic struct {
+	Diagnostics sema.Diagnostics
+}
+
+func (e *ErrSemantic) Error() string {
+	return fmt.Sprintf("CQL semantic error: %v", e.Diagnostics.Error())
 }
 
 // ErrEvaluation indicates a runtime evaluation error (HTTP 422).
