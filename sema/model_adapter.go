@@ -98,8 +98,18 @@ func (a *modelInfoAdapter) ContextType(contextName string) string {
 	return a.mi.ContextType(contextName)
 }
 
+// unqualify drops the model qualifier from a type name, leaving the name the
+// document indexes it under.
+//
+// The qualifier is the first segment, not everything before the last dot. FHIR
+// names its backbone elements after the type that owns them —
+// FHIR.Encounter.Hospitalization is one type, whose name is
+// Encounter.Hospitalization — so cutting at the last dot left "Hospitalization",
+// which the document has never heard of. Every element of every backbone
+// element was reported missing on that basis: dischargeDisposition on a
+// hospitalization, code and value on an Observation.component.
 func unqualify(name string) string {
-	if i := strings.LastIndex(name, "."); i >= 0 {
+	if i := strings.Index(name, "."); i >= 0 {
 		return name[i+1:]
 	}
 	return name

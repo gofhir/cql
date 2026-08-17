@@ -131,16 +131,24 @@ func (m *StaticModelInfo) PrimaryCodePath(resourceType string) string {
 }
 
 func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
-	parts := strings.SplitN(path, ".", 2)
-	if len(parts) != 2 {
+	// The element is the last segment and the type is everything before it, not
+	// the other way round. FHIR names a backbone element after the type that
+	// owns it, so Encounter.Hospitalization.dischargeDisposition is
+	// dischargeDisposition on Encounter.Hospitalization — splitting at the first
+	// dot looked for an element called "Hospitalization.dischargeDisposition" on
+	// Encounter, and every element of every backbone element was reported
+	// missing on that basis.
+	i := strings.LastIndex(path, ".")
+	if i < 0 {
 		return nil, false
 	}
-	ti, ok := m.types[parts[0]]
+	typeName, element := path[:i], path[i+1:]
+	ti, ok := m.types[typeName]
 	if !ok {
 		return nil, false
 	}
 	for i := range ti.Elements {
-		if ti.Elements[i].Name == parts[1] {
+		if ti.Elements[i].Name == element {
 			return &ti.Elements[i], true
 		}
 	}
