@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/gofhir/cql/compare/v1.13.2...v1.14.0) (2026-08-17)
+
+
+### Features
+
+* **engine:** refuse to evaluate a library whose meaning does not check out ([#37](https://github.com/gofhir/cql/issues/37)) ([99692cf](https://github.com/gofhir/cql/commit/99692cf3734d39b24f4b3ad643e549e929405b39))
+
 ## [1.13.2](https://github.com/gofhir/cql/compare/v1.13.1...v1.13.2) (2026-08-17)
 
 
