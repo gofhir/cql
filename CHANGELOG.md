@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1](https://github.com/gofhir/cql/compare/v1.14.0...v1.14.1) (2026-08-17)
+
+
+### Bug Fixes
+
+* **compiler:** unquote delimited type names, and stop validating by default ([#39](https://github.com/gofhir/cql/issues/39)) ([e1876cc](https://github.com/gofhir/cql/commit/e1876ccdc012f089162d8c802d78ff112d4b7f01))
+
 ## [1.14.0](https://github.com/gofhir/cql/compare/v1.13.2...v1.14.0) (2026-08-17)
 
 
