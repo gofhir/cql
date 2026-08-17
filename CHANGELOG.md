@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.2](https://github.com/gofhir/cql/compare/v1.13.1...v1.13.2) (2026-08-17)
+
+
+### Bug Fixes
+
+* **sema:** stop reporting included libraries and choice elements as mistakes ([#35](https://github.com/gofhir/cql/issues/35)) ([b77ceb0](https://github.com/gofhir/cql/commit/b77ceb0eec311d56261a49d3b83822b4726d22d5))
+
 ## [1.13.1](https://github.com/gofhir/cql/compare/v1.13.0...v1.13.1) (2026-08-16)
 
 
