@@ -150,6 +150,22 @@ func (c *checker) inferSortKeys(s *ast.SortClause, element Type) {
 // inferFunctionCall types an invocation: a function this library defines, or
 // one of the operators the specification defines as a function.
 func (c *checker) inferFunctionCall(e *ast.FunctionCall) Type {
+	// `C.Helper(x)` where C is an included library. Only the ELM importer sets
+	// Library; the text parser builds this as a fluent call with the alias as
+	// its source, so without this the alias is counted as a first argument and
+	// resolved against *this* library's overloads — a local Helper(Integer,
+	// Integer) would make `C.Helper('x')` report an overload failure on valid
+	// CQL, and `C.Helper(3)` type as the local function's return.
+	//
+	// The operands are still inferred, so a mistake inside the arguments is
+	// still found; it is the call itself whose type this pass cannot know.
+	if src, ok := e.Source.(*ast.IdentifierRef); ok && src.Library == "" && c.isIncludeAlias(src.Name) {
+		for _, operand := range e.Operands {
+			c.infer(operand)
+		}
+		return Unknown
+	}
+
 	args := make([]Type, 0, len(e.Operands)+1)
 	exprs := make([]ast.Expression, 0, len(e.Operands)+1)
 	if e.Source != nil {

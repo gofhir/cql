@@ -1,6 +1,8 @@
 package sema
 
 import (
+	"strings"
+
 	"github.com/gofhir/cql/ast"
 )
 
@@ -178,8 +180,42 @@ func (c *checker) inferIdentifier(e *ast.IdentifierRef) Type {
 	} else if len(c.scopes) > 0 {
 		return Unknown
 	}
+	// An alias this library included is defined, whatever is behind it. This
+	// phase is given one library and not the graph it sits in, so `FH.ToString`
+	// resolves to Unknown rather than to a type — but calling the alias
+	// undefined would report every use of every included library, which is
+	// most of the calls a real measure makes.
+	if c.isIncludeAlias(e.Name) {
+		return Unknown
+	}
 	c.reportf(e, SeverityError, "%s is not defined", e.Name)
 	return Unknown
+}
+
+// isIncludeAlias reports whether a name is how this library refers to one it
+// included — the `called` clause, or the library's own name when there is none.
+func (c *checker) isIncludeAlias(name string) bool {
+	if c.lib == nil {
+		return false
+	}
+	for _, inc := range c.lib.Includes {
+		if inc.Alias == name || (inc.Alias == "" && inc.Name == name) {
+			return true
+		}
+		// `include FHIRHelpers version '4.0.1'` is referred to by its last
+		// qualified segment when no alias is given.
+		if inc.Alias == "" && lastSegment(inc.Name) == name {
+			return true
+		}
+	}
+	return false
+}
+
+func lastSegment(qualified string) string {
+	if i := strings.LastIndex(qualified, "."); i >= 0 {
+		return qualified[i+1:]
+	}
+	return qualified
 }
 
 func (c *checker) implicitOr(fallback Type) Type {
@@ -289,7 +325,65 @@ func (c *checker) namedProperty(s *Named, name string, at ast.Expression) (Type,
 			return t, true
 		}
 	}
+	return c.choiceProperty(s, name)
+}
+
+// choiceProperty resolves the name FHIR gives one branch of a choice element.
+//
+// The model declares Observation.value[x] as `value`, and both the JSON and the
+// CQL that reads it say `valueQuantity`. Without this, every access to a choice
+// element by its concrete name is reported as an element the type does not
+// have — which is what FHIRHelpers does eight times over, so the phase called
+// the official library wrong.
+func (c *checker) choiceProperty(s *Named, name string) (Type, bool) {
+	// The split point is where the type name begins, and FHIR capitalizes it.
+	for i := 1; i < len(name); i++ {
+		if name[i] < 'A' || name[i] > 'Z' {
+			continue
+		}
+		base, suffix := name[:i], name[i:]
+		declared, ok := c.model.ElementType(s.String(), base)
+		if !ok {
+			continue
+		}
+		if branch, ok := choiceBranch(declared, suffix); ok {
+			return branch, true
+		}
+	}
 	return nil, false
+}
+
+// choiceBranch picks the branch of a choice whose type name matches a suffix.
+func choiceBranch(declared Type, suffix string) (Type, bool) {
+	// A repeating choice element arrives as List<Choice<…>>; the branch it
+	// names is still a single value per element.
+	if list, ok := declared.(*List); ok {
+		if branch, ok := choiceBranch(list.Element, suffix); ok {
+			return &List{Element: branch}, true
+		}
+		return nil, false
+	}
+	choice, ok := declared.(*Choice)
+	if !ok {
+		return nil, false
+	}
+	for _, branch := range choice.Types {
+		// FHIR writes its primitives lower case — FHIR.dateTime against the
+		// effectiveDateTime that reads it — so the comparison ignores case.
+		if strings.EqualFold(unqualifiedName(branch), suffix) {
+			return branch, true
+		}
+	}
+	return nil, false
+}
+
+// unqualifiedName is a type's name without its model prefix.
+func unqualifiedName(t Type) string {
+	named, ok := t.(*Named)
+	if !ok {
+		return ""
+	}
+	return named.Name
 }
 
 // systemProperty covers the properties CQL defines on its own types.
