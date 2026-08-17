@@ -191,12 +191,32 @@ func identifierText(ctx grammar.IIdentifierContext) string {
 	if ctx == nil {
 		return ""
 	}
-	text := ctx.GetText()
-	if strings.HasPrefix(text, "`") && strings.HasSuffix(text, "`") {
-		return text[1 : len(text)-1]
+	return undelimitIdentifier(ctx.GetText())
+}
+
+// undelimitIdentifier removes the delimiters CQL allows around any identifier.
+//
+// A name may be written plainly, in double quotes, or in backticks, and the
+// three mean the same name. Keeping the delimiters makes it a different string
+// from the one everything else refers to, which is how `["Encounter"]` came to
+// ask a provider for a resource type spelled with quotes in it and
+// `define function "F"` came to define a function nothing could call.
+//
+// It is deliberately not unquoteString: that one also expands \n, \t and \uXXXX,
+// which belongs to string literals and not to identifiers.
+func undelimitIdentifier(text string) string {
+	if len(text) < 2 {
+		return text
 	}
-	if strings.HasPrefix(text, "\"") && strings.HasSuffix(text, "\"") {
-		return text[1 : len(text)-1]
+	switch text[0] {
+	case '`':
+		if text[len(text)-1] == '`' {
+			return text[1 : len(text)-1]
+		}
+	case '"':
+		if text[len(text)-1] == '"' {
+			return text[1 : len(text)-1]
+		}
 	}
 	return text
 }
@@ -325,7 +345,7 @@ func (b *builder) VisitLibrary(ctx *grammar.LibraryContext) interface{} {
 func (b *builder) VisitLibraryDefinition(ctx *grammar.LibraryDefinitionContext) interface{} {
 	id := &ast.LibraryIdentifier{}
 	if qi := ctx.QualifiedIdentifier(); qi != nil {
-		id.Name = qi.GetText()
+		id.Name = undelimitIdentifier(qi.GetText())
 	}
 	if vs := ctx.VersionSpecifier(); vs != nil {
 		id.Version = unquoteString(vs.GetText())
@@ -388,13 +408,13 @@ func (b *builder) visitDefinition(ctx grammar.IDefinitionContext, lib *ast.Libra
 func (b *builder) VisitUsingDefinition(ctx *grammar.UsingDefinitionContext) interface{} {
 	u := &ast.UsingDef{}
 	if qi := ctx.QualifiedIdentifier(); qi != nil {
-		u.Name = qi.GetText()
+		u.Name = undelimitIdentifier(qi.GetText())
 	}
 	if vs := ctx.VersionSpecifier(); vs != nil {
 		u.Version = unquoteString(vs.GetText())
 	}
 	if li := ctx.LocalIdentifier(); li != nil {
-		u.Alias = li.GetText()
+		u.Alias = undelimitIdentifier(li.GetText())
 	}
 	return u
 }
@@ -402,13 +422,13 @@ func (b *builder) VisitUsingDefinition(ctx *grammar.UsingDefinitionContext) inte
 func (b *builder) VisitIncludeDefinition(ctx *grammar.IncludeDefinitionContext) interface{} {
 	i := &ast.IncludeDef{}
 	if qi := ctx.QualifiedIdentifier(); qi != nil {
-		i.Name = qi.GetText()
+		i.Name = undelimitIdentifier(qi.GetText())
 	}
 	if vs := ctx.VersionSpecifier(); vs != nil {
 		i.Version = unquoteString(vs.GetText())
 	}
 	if li := ctx.LocalIdentifier(); li != nil {
-		i.Alias = li.GetText()
+		i.Alias = undelimitIdentifier(li.GetText())
 	}
 	return i
 }
@@ -553,7 +573,7 @@ func (b *builder) VisitExpressionDefinition(ctx *grammar.ExpressionDefinitionCon
 func (b *builder) VisitContextDefinition(ctx *grammar.ContextDefinitionContext) interface{} {
 	cd := &ast.ContextDef{}
 	if mi := ctx.ModelIdentifier(); mi != nil {
-		cd.Model = mi.GetText()
+		cd.Model = undelimitIdentifier(mi.GetText())
 	}
 	if id := ctx.Identifier(); id != nil {
 		cd.Name = identifierText(id)
@@ -564,7 +584,7 @@ func (b *builder) VisitContextDefinition(ctx *grammar.ContextDefinitionContext) 
 func (b *builder) VisitFunctionDefinition(ctx *grammar.FunctionDefinitionContext) interface{} {
 	fd := &ast.FunctionDef{}
 	if id := ctx.IdentifierOrFunctionIdentifier(); id != nil {
-		fd.Name = id.GetText()
+		fd.Name = undelimitIdentifier(id.GetText())
 	}
 	for _, od := range ctx.AllOperandDefinition() {
 		result := b.Visit(od)
@@ -632,13 +652,13 @@ func (b *builder) VisitNamedTypeSpecifier(ctx *grammar.NamedTypeSpecifierContext
 		// string from the one the model declares, so the type was not found and
 		// the retrieve reached the provider asking for a resource type spelled
 		// with quotes in it.
-		nt.Name = unquoteString(rot.GetText())
+		nt.Name = undelimitIdentifier(rot.GetText())
 	}
 	qualifiers := ctx.AllQualifier()
 	if len(qualifiers) > 0 {
 		parts := make([]string, len(qualifiers))
 		for i, q := range qualifiers {
-			parts[i] = unquoteString(q.GetText())
+			parts[i] = undelimitIdentifier(q.GetText())
 		}
 		nt.Namespace = strings.Join(parts, ".")
 	}
@@ -1639,7 +1659,7 @@ func (b *builder) VisitRetrieve(ctx *grammar.RetrieveContext) interface{} {
 		}
 	}
 	if cp := ctx.CodePath(); cp != nil {
-		r.CodePath = cp.GetText()
+		r.CodePath = undelimitIdentifier(cp.GetText())
 	}
 	if cc := ctx.CodeComparator(); cc != nil {
 		r.CodeComparator = cc.GetText()

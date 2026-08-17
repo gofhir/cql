@@ -8,11 +8,15 @@ import (
 	"github.com/gofhir/cql/eval"
 )
 
-// resourceTypeRecorder remembers the resource type each retrieve asked for.
-type resourceTypeRecorder struct{ types []string }
+// resourceTypeRecorder remembers what each retrieve asked for.
+type resourceTypeRecorder struct {
+	types []string
+	paths []string
+}
 
 func (r *resourceTypeRecorder) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
 	r.types = append(r.types, req.ResourceType)
+	r.paths = append(r.paths, req.CodePath)
 	return []json.RawMessage{json.RawMessage(
 		`{"resourceType":"Encounter","id":"e1","status":"finished"}`)}, nil
 }
@@ -61,6 +65,78 @@ func TestDelimitedTypeNamesResolveTheirElements(t *testing.T) {
 			t.Errorf("%s: want no findings, got %v", retrieve, errs)
 		}
 	}
+}
+
+// TestDelimitedIdentifiersAcrossTheDeclarations covers the rest of the class.
+// The first fix undelimited the retrieve's type and left the same leak in its
+// siblings — one of them a line below it — so these are the places a delimited
+// name still had its delimiters.
+func TestDelimitedIdentifiersAcrossTheDeclarations(t *testing.T) {
+	patient := []byte(`{"resourceType":"Patient","id":"p1"}`)
+
+	// A function nothing could call: the definition was named `"F"` and the
+	// call looked for F.
+	t.Run("function name", func(t *testing.T) {
+		src := "library T version '1.0'\n" +
+			"define function \"F\"(x Integer) returns Integer: x + 1\n" +
+			"define A: \"F\"(1)\n"
+		got, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil)
+		if err != nil {
+			t.Fatalf("calling a quoted function: %v", err)
+		}
+		if s := valueString(got); s != "2" {
+			t.Errorf("= %s, want 2", s)
+		}
+	})
+
+	// The code path travels to the provider beside the resource type, and was
+	// still carrying quotes when the type had stopped. No published measure
+	// writes it this way — they write `[Coverage: type in "Payer"]`, where the
+	// quoted name is the value set — so this one is for consistency rather than
+	// for a fault anyone has hit.
+	t.Run("code path", func(t *testing.T) {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\n" +
+			"valueset \"VS\": 'http://example.org/vs'\ncontext Patient\n" +
+			"define A: [\"Encounter\": \"status\" in \"VS\"]\n"
+		rec := &resourceTypeRecorder{}
+		if _, err := NewEngine(WithDataProvider(rec)).
+			EvaluateExpression(context.Background(), src, "A", patient, nil); err != nil {
+			t.Fatalf("evaluating: %v", err)
+		}
+		if rec.paths[0] != "status" {
+			t.Errorf("code path = %q, want status", rec.paths[0])
+		}
+	})
+
+	// Backticks are the other delimiter CQL allows, and the first fix only
+	// handled quotes.
+	t.Run("backticks", func(t *testing.T) {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
+			"define A: Count([`Encounter`])\n"
+		rec := &resourceTypeRecorder{}
+		if _, err := NewEngine(WithDataProvider(rec)).
+			EvaluateExpression(context.Background(), src, "A", patient, nil); err != nil {
+			t.Fatalf("evaluating: %v", err)
+		}
+		if rec.types[0] != "Encounter" {
+			t.Errorf("provider was asked for %q, want Encounter", rec.types[0])
+		}
+	})
+
+	// A quoted include alias has to match the name the calls use, or the
+	// semantic phase reports every call into that library again.
+	t.Run("include alias", func(t *testing.T) {
+		src := "library T version '1.0'\n" +
+			"include Common version '1.0' called \"C\"\n" +
+			"define A: \"C\".Helper(1)\n"
+		diags, err := NewEngine().Check(src)
+		if err != nil {
+			t.Fatalf("checking: %v", err)
+		}
+		if errs := diags.Errors(); len(errs) != 0 {
+			t.Errorf("want no findings, got %v", errs)
+		}
+	})
 }
 
 // A qualified type name written with quotes resolves the same way.
