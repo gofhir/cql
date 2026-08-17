@@ -143,7 +143,7 @@ if diagnostics.HasErrors() {
 | `WithMaxDepth` | Maximum recursion depth | 100 |
 | `WithTraceListener` | Trace listener for debugging | `nil` |
 | `WithCompiledCacheSize` | Parsed libraries kept; `0` disables, negative is unbounded | 64 |
-| `WithSemanticValidation` | Refuse to evaluate a library whose meaning does not check out | `true` |
+| `WithSemanticValidation` | Refuse to evaluate a library whose meaning does not check out | `false` |
 
 ## Error Handling
 

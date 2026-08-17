@@ -627,13 +627,18 @@ func (b *builder) VisitTypeSpecifier(ctx *grammar.TypeSpecifierContext) interfac
 func (b *builder) VisitNamedTypeSpecifier(ctx *grammar.NamedTypeSpecifierContext) interface{} {
 	nt := &ast.NamedType{}
 	if rot := ctx.ReferentialOrTypeNameIdentifier(); rot != nil {
-		nt.Name = rot.GetText()
+		// CQL lets any identifier be written in double quotes, and measures do
+		// write `["Encounter"]`. Keeping the quotes made the name a different
+		// string from the one the model declares, so the type was not found and
+		// the retrieve reached the provider asking for a resource type spelled
+		// with quotes in it.
+		nt.Name = unquoteString(rot.GetText())
 	}
 	qualifiers := ctx.AllQualifier()
 	if len(qualifiers) > 0 {
 		parts := make([]string, len(qualifiers))
 		for i, q := range qualifiers {
-			parts[i] = q.GetText()
+			parts[i] = unquoteString(q.GetText())
 		}
 		nt.Namespace = strings.Join(parts, ".")
 	}
