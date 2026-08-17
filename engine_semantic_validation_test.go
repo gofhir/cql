@@ -35,7 +35,8 @@ func TestSemanticValidationRefusesALibraryThatDoesNotCheckOut(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewEngine().EvaluateExpression(context.Background(), tt.src, "A", nil, nil)
+			_, err := NewEngine(WithSemanticValidation(true)).
+				EvaluateExpression(context.Background(), tt.src, "A", nil, nil)
 			if err == nil {
 				t.Fatal("the library evaluated, want it refused")
 			}
@@ -58,7 +59,8 @@ func TestSemanticErrorsCarryTheirLocation(t *testing.T) {
 define A: Bogus
 define B: ({1,2}) X sort by nope
 `
-	_, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil)
+	_, err := NewEngine(WithSemanticValidation(true)).
+		EvaluateExpression(context.Background(), src, "A", nil, nil)
 	var semantic *ErrSemantic
 	if !errors.As(err, &semantic) {
 		t.Fatalf("error is %T, want *ErrSemantic: %v", err, err)
@@ -80,19 +82,32 @@ define B: ({1,2}) X sort by nope
 	}
 }
 
-// TestSemanticValidationCanBeTurnedOff covers the way out. The risk of refusing
-// belongs to whoever runs other people's libraries, so they get to decide: with
-// it off the evaluator works types out as it goes, which is what it did before.
-func TestSemanticValidationCanBeTurnedOff(t *testing.T) {
+// TestSemanticValidationIsOffByDefault pins down a default that the
+// specification does not suggest and the measures require.
+//
+// Against the 19 published eCQM libraries in cqframework/ecqm-content-r4 the
+// phase reports findings on 8, all of them valid CQL: the model carries no
+// backbone elements, so Encounter.hospitalization and Observation.component are
+// unknown to it. Refusing on those grounds would reject published measures, so
+// the engine reports nothing until a caller asks it to.
+func TestSemanticValidationIsOffByDefault(t *testing.T) {
 	src := "library T version '1.0'\n\ndefine A: 1 + 'text'\n"
 
-	got, err := NewEngine(WithSemanticValidation(false)).
-		EvaluateExpression(context.Background(), src, "A", nil, nil)
+	got, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil)
 	if err != nil {
-		t.Fatalf("with validation off the library should still evaluate: %v", err)
+		t.Fatalf("by default the library should still evaluate: %v", err)
 	}
 	if s := valueString(got); s != "1" {
-		t.Errorf("= %s, want the 1 it answered before", s)
+		t.Errorf("= %s, want the 1 it answers without validation", s)
+	}
+
+	// And the findings are there for the asking, without evaluating anything.
+	diags, err := NewEngine().Check(src)
+	if err != nil {
+		t.Fatalf("checking: %v", err)
+	}
+	if len(diags.Errors()) != 1 {
+		t.Errorf("Check should report the mistake regardless: %v", diags)
 	}
 }
 
@@ -142,7 +157,7 @@ func TestParseAndCheckStillAcceptABrokenLibrary(t *testing.T) {
 // The refusal reaches every entry point, including the ones that take an
 // already-parsed library.
 func TestSemanticValidationCoversTheParsedEntryPoints(t *testing.T) {
-	engine := NewEngine()
+	engine := NewEngine(WithSemanticValidation(true))
 	parsed, err := engine.Parse("library T version '1.0'\n\ndefine A: Bogus\n")
 	if err != nil {
 		t.Fatalf("parsing: %v", err)

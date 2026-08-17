@@ -140,10 +140,10 @@ if diagnostics.HasErrors() {
 | `WithTimeout` | Per-evaluation timeout | 30s |
 | `WithMaxExpressionLen` | Maximum CQL source length | 100KB |
 | `WithMaxRetrieveSize` | Maximum resources per retrieve | 10000 |
-| `WithMaxDepth` | Maximum recursion depth | 100 |
+| `WithMaxDepth` | Maximum recursion depth | 10000 |
 | `WithTraceListener` | Trace listener for debugging | `nil` |
 | `WithCompiledCacheSize` | Parsed libraries kept; `0` disables, negative is unbounded | 64 |
-| `WithSemanticValidation` | Refuse to evaluate a library whose meaning does not check out | `true` |
+| `WithSemanticValidation` | Refuse to evaluate a library whose meaning does not check out | `false` |
 
 ## Error Handling
 
