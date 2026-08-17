@@ -82,26 +82,32 @@ define B: ({1,2}) X sort by nope
 	}
 }
 
-// TestSemanticValidationIsOffByDefault pins down a default that the
-// specification does not suggest and the measures require.
+// TestSemanticValidationIsOnByDefault pins down the default and the way out of
+// it.
 //
-// Against the 19 published eCQM libraries in cqframework/ecqm-content-r4 the
-// phase reports findings on 8, all of them valid CQL: the model carries no
-// backbone elements, so Encounter.hospitalization and Observation.component are
-// unknown to it. Refusing on those grounds would reject published measures, so
-// the engine reports nothing until a caller asks it to.
-func TestSemanticValidationIsOffByDefault(t *testing.T) {
+// It was off for one release, because 8 of the 19 published eCQM libraries
+// reported findings and refusing to evaluate published measures is worse than
+// evaluating a library that does not check out. Every one of those findings was
+// a defect on this side, and with them fixed all 19 check out — which is what
+// makes refusing defensible.
+func TestSemanticValidationIsOnByDefault(t *testing.T) {
 	src := "library T version '1.0'\n\ndefine A: 1 + 'text'\n"
 
-	got, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil)
+	if _, err := NewEngine().EvaluateExpression(context.Background(), src, "A", nil, nil); err == nil {
+		t.Error("the library evaluated by default, want it refused")
+	}
+
+	// And off, it answers what it always answered.
+	got, err := NewEngine(WithSemanticValidation(false)).
+		EvaluateExpression(context.Background(), src, "A", nil, nil)
 	if err != nil {
-		t.Fatalf("by default the library should still evaluate: %v", err)
+		t.Fatalf("with validation off the library should evaluate: %v", err)
 	}
 	if s := valueString(got); s != "1" {
 		t.Errorf("= %s, want the 1 it answers without validation", s)
 	}
 
-	// And the findings are there for the asking, without evaluating anything.
+	// Either way the findings are there for the asking, without evaluating.
 	diags, err := NewEngine().Check(src)
 	if err != nil {
 		t.Fatalf("checking: %v", err)
