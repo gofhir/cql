@@ -31,32 +31,103 @@ func (i Interval) Type() string {
 	return "Interval"
 }
 
-// Equal checks exact equality: same boundaries and same closure.
+// Start is the first point the interval includes.
+//
+// An open boundary excludes its own value, so the starting point is the
+// successor of it: the start of Interval(1, 5) is 2, not 1. A type with no
+// successor cannot name that point — String has none — so there the boundary
+// stands for itself rather than failing the expression.
+//
+// A boundary at the limit of its type is different: the successor of the last
+// representable DateTime does not exist, and answering with the excluded
+// boundary would name a point the interval does not contain. That is an error
+// and it travels.
+func (i Interval) Start() (fptypes.Value, error) {
+	if i.Low == nil || i.LowClosed || !HasSuccessor(i.Low) {
+		return i.Low, nil
+	}
+	return Successor(i.Low)
+}
+
+// End is the last point the interval includes, by the same rule.
+func (i Interval) End() (fptypes.Value, error) {
+	if i.High == nil || i.HighClosed || !HasSuccessor(i.High) {
+		return i.High, nil
+	}
+	return Predecessor(i.High)
+}
+
+// Equal reports whether two intervals cover the same points.
+//
+// The specification is explicit that this is decided by the boundaries "as
+// determined by the Start and End operators", so it compares those and not the
+// values as written: Interval(1, 5) and Interval[2, 4] are the same interval
+// over integers, and comparing the literal boundaries and their closures made
+// them unequal. That answer reached seven operations, since `=`, `~`, distinct,
+// contains, in, and list intersect and except all come through here.
 func (i Interval) Equal(other fptypes.Value) bool {
 	o, ok := other.(Interval)
 	if !ok {
 		return false
 	}
-	if i.LowClosed != o.LowClosed || i.HighClosed != o.HighClosed {
-		return false
-	}
-	lowEq := valuesEqual(i.Low, o.Low)
-	highEq := valuesEqual(i.High, o.High)
-	return lowEq && highEq
+	return samePoint(i.Low, i.LowClosed, o.Low, o.LowClosed, Successor, valuesEqual) &&
+		samePoint(i.High, i.HighClosed, o.High, o.HighClosed, Predecessor, valuesEqual)
 }
 
-// Equivalent checks equivalence.
+// Equivalent is Equal with equivalence for the points, which differs from
+// equality only in how it treats null.
 func (i Interval) Equivalent(other fptypes.Value) bool {
 	o, ok := other.(Interval)
 	if !ok {
 		return false
 	}
-	if i.LowClosed != o.LowClosed || i.HighClosed != o.HighClosed {
+	return samePoint(i.Low, i.LowClosed, o.Low, o.LowClosed, Successor, valuesEquivalent) &&
+		samePoint(i.High, i.HighClosed, o.High, o.HighClosed, Predecessor, valuesEquivalent)
+}
+
+// samePoint reports whether two boundaries name the same included point.
+//
+// Where the two are written the same way there is nothing to normalize and the
+// values are compared directly — which is also the common case, and keeps the
+// arithmetic off it. Where they differ, the open one is stepped inwards to the
+// point it actually includes.
+//
+// Two boundaries that differ in closure over a type with no successor are not
+// the same point and cannot be made so: Interval('a','z') and Interval['a','z']
+// differ at both ends, and dropping the closure from the comparison made them
+// equal. The same holds when the step fails at the limit of the type, where
+// there is no successor to name.
+func samePoint(
+	a fptypes.Value, aClosed bool,
+	b fptypes.Value, bClosed bool,
+	step func(fptypes.Value) (fptypes.Value, error),
+	eq func(x, y fptypes.Value) bool,
+) bool {
+	if aClosed == bClosed {
+		return eq(a, b)
+	}
+	pointOf := func(v fptypes.Value, closed bool) (fptypes.Value, bool) {
+		if v == nil || closed {
+			return v, true
+		}
+		if !HasSuccessor(v) {
+			return nil, false
+		}
+		stepped, err := step(v)
+		if err != nil || stepped == nil {
+			return nil, false
+		}
+		return stepped, true
+	}
+	aPoint, ok := pointOf(a, aClosed)
+	if !ok {
 		return false
 	}
-	lowEq := valuesEquivalent(i.Low, o.Low)
-	highEq := valuesEquivalent(i.High, o.High)
-	return lowEq && highEq
+	bPoint, ok := pointOf(b, bClosed)
+	if !ok {
+		return false
+	}
+	return eq(aPoint, bPoint)
 }
 
 // String returns a text representation.

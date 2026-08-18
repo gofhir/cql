@@ -2,7 +2,6 @@ package funcs
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/shopspring/decimal"
@@ -65,14 +64,19 @@ func IntervalOverlaps(a, b cqltypes.Interval) (fptypes.Value, error) {
 	return fptypes.NewBoolean(result), nil
 }
 
-// IntervalStartOf returns the low boundary of an interval.
-func IntervalStartOf(interval cqltypes.Interval) fptypes.Value {
-	return interval.Low
+// IntervalStartOf returns the first point an interval includes, which for an
+// open boundary is the successor of it rather than the boundary itself.
+//
+// The step fails at the limit of the point type, where there is no successor to
+// name, and that error travels rather than answering with a boundary the
+// interval excludes.
+func IntervalStartOf(interval cqltypes.Interval) (fptypes.Value, error) {
+	return interval.Start()
 }
 
-// IntervalEndOf returns the high boundary of an interval.
-func IntervalEndOf(interval cqltypes.Interval) fptypes.Value {
-	return interval.High
+// IntervalEndOf returns the last point an interval includes.
+func IntervalEndOf(interval cqltypes.Interval) (fptypes.Value, error) {
+	return interval.End()
 }
 
 // IntervalUnion returns the union of two intervals.
@@ -268,85 +272,12 @@ func intervalSuccessor(v fptypes.Value) (fptypes.Value, bool) {
 
 // TemporalUnit maps DateTime precision to a duration unit string.
 func TemporalUnit(prec fptypes.DateTimePrecision) string {
-	switch prec {
-	case fptypes.DTYearPrecision:
-		return "year"
-	case fptypes.DTMonthPrecision:
-		return "month"
-	case fptypes.DTDayPrecision:
-		return "day"
-	case fptypes.DTHourPrecision:
-		return "hour"
-	case fptypes.DTMinutePrecision:
-		return precMinute
-	case fptypes.DTSecondPrecision:
-		return precSecond
-	case fptypes.DTMillisPrecision:
-		return precMillisecond
-	default:
-		return "day"
-	}
+	return cqltypes.DateTimeUnit(prec)
 }
 
 // AdjustTime adds delta units at the Time's precision (e.g., +1 ms, -1 second).
 func AdjustTime(t fptypes.Time, delta int) fptypes.Value {
-	h, m, s, ms := t.Hour(), t.Minute(), t.Second(), t.Millisecond()
-	prec := t.Precision()
-	switch prec {
-	case fptypes.MillisPrecision:
-		ms += delta
-	case fptypes.SecondPrecision:
-		s += delta
-	case fptypes.MinutePrecision:
-		m += delta
-	case fptypes.HourPrecision:
-		h += delta
-	default:
-		ms += delta
-	}
-	// Carry/borrow
-	if ms < 0 {
-		ms += 1000
-		s--
-	} else if ms >= 1000 {
-		ms -= 1000
-		s++
-	}
-	if s < 0 {
-		s += 60
-		m--
-	} else if s >= 60 {
-		s -= 60
-		m++
-	}
-	if m < 0 {
-		m += 60
-		h--
-	} else if m >= 60 {
-		m -= 60
-		h++
-	}
-	// Detect overflow/underflow
-	if h >= 24 || h < 0 {
-		return nil // signal overflow/underflow
-	}
-	// Construct time string based on precision
-	var str string
-	switch prec {
-	case fptypes.HourPrecision:
-		str = fmt.Sprintf("T%02d", h)
-	case fptypes.MinutePrecision:
-		str = fmt.Sprintf("T%02d:%02d", h, m)
-	case fptypes.SecondPrecision:
-		str = fmt.Sprintf("T%02d:%02d:%02d", h, m, s)
-	default:
-		str = fmt.Sprintf("T%02d:%02d:%02d.%03d", h, m, s, ms)
-	}
-	result, err := fptypes.NewTime(str)
-	if err != nil {
-		return t // fallback to original
-	}
-	return result
+	return cqltypes.AdjustTime(t, delta)
 }
 
 // IntervalExcept returns a minus b for intervals.
