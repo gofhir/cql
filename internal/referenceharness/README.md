@@ -35,7 +35,25 @@ docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
   > elm.json
 ```
 
-Then fold `elm.json` into `testdata/reference/probe.expected.json`.
+Then fold it, which used to be a manual read of a 45KB document and is why the
+probe sat at five definitions for so long:
+
+```sh
+cd ../..
+go run ./internal/referenceharness/fold \
+  -in internal/referenceharness/elm.json \
+  -source probe.cql \
+  -out testdata/reference/probe.expected.json
+```
+
+The fold keeps the type, the locator and the FHIRHelpers calls, and marks whether
+each definition is an expression or a function — the translator types both, and
+`sema.Result` carries only the expressions.
+
+A translation that fails prints nothing and exits non-zero, so a reference cannot
+be derived from a failed run. That has already been useful: the translator
+refuses `Obs.valueQuantity`, which this engine accepts, and finding out that way
+is what `testdata/reference/probe.divergences.md` records.
 
 ## Two things worth knowing
 
