@@ -48,6 +48,90 @@ func temporalEqualityUnknown(left, right fptypes.Value) bool {
 	return isAmbiguousComparisonErr(err)
 }
 
+// uncertaintyEqualityUnknown reports whether comparing an uncertainty with a
+// value has no answer, which is only when the value falls inside it.
+//
+// A duration between two partly-specified DateTimes is an uncertainty, and CQL
+// represents it as an interval: `days between DateTime(2014, 1, 15) and
+// DateTime(2014, 2)` is Interval[16, 44]. Whether that equals 20 cannot be known
+// — it might. Whether it equals 100 can: it does not.
+//
+// That distinction is the corpus's, not mine. A first attempt answered null for
+// any such comparison and broke
+// `months between DateTime(2005) and DateTime(2006, 7) = 24`, which the official
+// tests fix at false because 24 lies outside the interval. The ordered
+// comparisons already worked this way — `> 5` is true where the whole interval
+// exceeds 5, `> 25` false where none of it does, and null where it straddles —
+// and only equality was reading an uncertainty as an ordinary value.
+//
+// Answering false throughout is how `where duration in days of E.period = 1`
+// came to silently stop matching.
+func uncertaintyEqualityUnknown(left, right fptypes.Value) bool {
+	return equalityUndecidable(left, right) || equalityUndecidable(right, left)
+}
+
+// equalityUndecidable reports whether a value falls strictly inside an
+// uncertainty, leaving equality unknowable.
+func equalityUndecidable(iv, other fptypes.Value) bool {
+	interval, ok := iv.(cqltypes.Interval)
+	if !ok || other == nil {
+		return false
+	}
+	if _, otherIsInterval := other.(cqltypes.Interval); otherIsInterval {
+		return false
+	}
+	if _, otherIsList := other.(cqltypes.List); otherIsList {
+		return false
+	}
+	point := interval.Low
+	if point == nil {
+		point = interval.High
+	}
+	if point == nil || !sameValueKind(point, other) {
+		return false
+	}
+	// Outside the interval, equality is knowable and false; a unit interval
+	// answers by its point. Only a value the interval could take is unknown.
+	contains, err := interval.Contains(other)
+	if err != nil || !contains {
+		return false
+	}
+	return !unitInterval(interval)
+}
+
+// unitInterval reports whether an interval admits exactly one value.
+//
+// Such a comparison is left to fall through to ordinary equality, which answers
+// false: an Interval is not an Integer, whatever it contains. That is what the
+// engine answered before and there is no case in the corpus asking for anything
+// else — and an uncertainty never takes this shape, since a duration the engine
+// can pin down comes back as a number rather than as Interval[n, n].
+func unitInterval(iv cqltypes.Interval) bool {
+	start, err := iv.Start()
+	if err != nil || start == nil {
+		return false
+	}
+	end, err := iv.End()
+	if err != nil || end == nil {
+		return false
+	}
+	return start.Equal(end)
+}
+
+// sameValueKind reports whether two values are of the same broad kind, which is
+// what makes comparing them a question rather than a category error.
+func sameValueKind(a, b fptypes.Value) bool {
+	switch a.(type) {
+	case fptypes.Integer, fptypes.Decimal, fptypes.Quantity:
+		switch b.(type) {
+		case fptypes.Integer, fptypes.Decimal, fptypes.Quantity:
+			return true
+		}
+		return false
+	}
+	return fptypes.IsTemporal(a) && fptypes.IsTemporal(b)
+}
+
 // calendarUCUMQuantities reports whether two values are quantities measured in a
 // calendar year or month on one side and the matching UCUM code on the other,
 // which is the pairing CQL declines to decide. See funcs.IsCalendarUCUMDurationPair.
@@ -756,7 +840,8 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return tupleEqual(lt, rt)
 			}
 		}
-		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
+		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) ||
+			uncertaintyEqualityUnknown(left, right) {
 			return nil, nil
 		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
@@ -773,7 +858,8 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return fptypes.NewBoolean(!isTrue(eq)), nil
 			}
 		}
-		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
+		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) ||
+			uncertaintyEqualityUnknown(left, right) {
 			return nil, nil
 		}
 		return fptypes.NewBoolean(!left.Equal(right)), nil
@@ -2494,6 +2580,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 			return medianQuantities(quantities)
+		}
+		if intervals, found, err := uncertaintyOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return medianUncertainties(intervals), nil
 		}
 		return funcs.Median(c), nil
 	case "geometricmean":
@@ -5408,6 +5500,14 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 		}
 		return sumQuantities(quantities)
 	}
+	// An uncertainty is an interval, and toDecimal answers zero for one. See
+	// aggregate_uncertainty.go.
+	if intervals, found, err := uncertaintyOperands(c); found {
+		if err != nil {
+			return nil, err
+		}
+		return sumUncertainties(intervals)
+	}
 	sum := decimal.Zero
 	allInt := true
 	for _, item := range c {
@@ -5440,6 +5540,12 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 			return nil, err
 		}
 		return avgQuantities(quantities)
+	}
+	if intervals, found, err := uncertaintyOperands(c); found {
+		if err != nil {
+			return nil, err
+		}
+		return avgUncertainties(intervals)
 	}
 	sum := decimal.Zero
 	count := int64(0)
