@@ -181,6 +181,24 @@ define A: First([Observation]).valueQuantity
 		t.Error("the warning carries no position")
 	}
 
+	// A backbone element's own name contains a dot, and the warning has to name
+	// the type that owns it: unqualifying it again said Component.valueQuantity
+	// for an Observation.Component.valueQuantity.
+	nested, err := NewEngine().Check(`library M version '1.0'
+using FHIR version '4.0.1'
+context Patient
+define A: First(First([Observation]).component).valueQuantity
+`)
+	if err != nil {
+		t.Fatalf("checking: %v", err)
+	}
+	if len(nested) != 1 {
+		t.Fatalf("want one warning, got %v", nested)
+	}
+	if !strings.Contains(nested[0].Message, "Observation.Component.valueQuantity") {
+		t.Errorf("the warning names %q, want the owning type in it", nested[0].Message)
+	}
+
 	// And the form the reference accepts warns about nothing.
 	clean, err := NewEngine().Check(`library M version '1.0'
 using FHIR version '4.0.1'

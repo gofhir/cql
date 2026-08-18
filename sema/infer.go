@@ -328,13 +328,20 @@ func (c *checker) namedProperty(s *Named, name string, at ast.Expression) (Type,
 	return c.choiceProperty(s, name, at)
 }
 
-// choiceProperty resolves the name FHIR gives one branch of a choice element.
+// choiceProperty resolves the name FHIR gives one branch of a choice element,
+// and warns that no other CQL tool will.
 //
-// The model declares Observation.value[x] as `value`, and both the JSON and the
-// CQL that reads it say `valueQuantity`. Without this, every access to a choice
-// element by its concrete name is reported as an element the type does not
-// have — which is what FHIRHelpers does eight times over, so the phase called
-// the official library wrong.
+// The model declares Observation.value[x] as `value`, and the FHIR JSON the
+// evaluator reads calls the field valueQuantity. Resolving it is what lets a
+// library written against this engine read that data; the reference translator
+// refuses the same name outright, with "Member valueQuantity not found for type
+// Observation".
+//
+// It was added believing FHIRHelpers wrote choice elements this way. It does not,
+// and neither does any published eCQM library: the accesses that prompted it were
+// in this repository's own tests. So the diagnostics it silenced were correct,
+// which is why resolving the name now comes with a warning rather than in
+// silence.
 func (c *checker) choiceProperty(s *Named, name string, at ast.Expression) (Type, bool) {
 	// The split point is where the type name begins, and FHIR capitalizes it.
 	for i := 1; i < len(name); i++ {
@@ -347,14 +354,34 @@ func (c *checker) choiceProperty(s *Named, name string, at ast.Expression) (Type
 			continue
 		}
 		if branch, ok := choiceBranch(declared, suffix); ok {
+			// s.Name already excludes the model qualifier, and a backbone
+			// element's name contains a dot of its own: unqualifying it again
+			// reported Component.valueQuantity for an
+			// Observation.Component.valueQuantity.
+			//
+			// The suggested form names the branch, not the branch wrapped in the
+			// List a repeating choice element resolves to — `value as
+			// List<FHIR.Quantity>` is not CQL anyone can write. No element of the
+			// embedded 4.0.1 model is both a choice and a list, but an injected
+			// model could have one.
 			c.reportf(at, SeverityWarning,
 				"%s.%s is the FHIR JSON field name, not an element the model declares; "+
 					"write `%s as %s` — the reference translator refuses this form",
-				unqualify(s.Name), name, base, branch)
+				s.Name, name, base, suggestedCast(branch))
 			return branch, true
 		}
 	}
 	return nil, false
+}
+
+// suggestedCast is the type to name in a cast that reaches this branch. A
+// repeating choice resolves to a list of branches, and the cast is written
+// against the branch.
+func suggestedCast(branch Type) Type {
+	if list, ok := branch.(*List); ok {
+		return list.Element
+	}
+	return branch
 }
 
 // choiceBranch picks the branch of a choice whose type name matches a suffix.
