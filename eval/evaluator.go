@@ -3590,7 +3590,13 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 		// The value comes out of JSON, where a FHIR dateTime and a FHIR date are
 		// both a string; the model is what says which. See asPlannedType.
 		result := obj.GetCollection(n.Member)
+		// The owner's type is only needed when there is a Date to reconsider,
+		// and obj.Type() infers it by walking the object's fields — paying that
+		// on every member access cost more than the whole promotion saves.
 		for i, v := range result {
+			if _, isDate := v.(fptypes.Date); !isDate {
+				continue
+			}
 			result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
 		}
 		if result.Count() > 0 {
