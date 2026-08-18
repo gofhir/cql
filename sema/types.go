@@ -33,11 +33,17 @@ type Type interface {
 	semaType()
 }
 
-// Named is a type identified by name inside a model: System.Integer,
-// FHIR.Encounter, FHIR.ObservationStatus.
-// systemModel is the model CQL's own types belong to.
+// systemModel is the model CQL's own types belong to. It is compared against in
+// six files, which is reason enough not to spell it out at each one.
 const systemModel = "System"
 
+// Named is a type identified by name inside a model: System.Integer,
+// FHIR.Encounter, FHIR.ObservationStatus.
+//
+// A nested type's Name contains a dot of its own —
+// FHIR.Encounter.Hospitalization is Model "FHIR", Name "Encounter.Hospitalization"
+// — since FHIR names a backbone element after the type that owns it. Model is
+// always the first segment.
 type Named struct {
 	Model string // systemModel, "FHIR", …
 	Name  string

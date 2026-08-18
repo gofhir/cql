@@ -72,6 +72,83 @@ define B: First([Encounter]).hospitalization as Encounter.Hospitalization
 	}
 }
 
+// TestQualifiedTypeNamesDoNotAssumeTheDeclaredModel covers the two ways the
+// first segment of a qualified name is a model without being the one the library
+// declared. Deciding by comparing against the declared model reported an element
+// missing on a type that plainly has it, and with validation on that stops
+// evaluation.
+func TestQualifiedTypeNamesDoNotAssumeTheDeclaredModel(t *testing.T) {
+	for _, tt := range []struct{ name, src string }{
+		{
+			// A `using` with an alias is referred to by the alias, so the first
+			// segment is F and the declared model is FHIR.
+			"a using declared with an alias",
+			`library T version '1.0'
+using FHIR version '4.0.1' called F
+context Patient
+define A: (First([Encounter]) as F.Encounter).status
+`,
+		},
+		{
+			// With no `using` at all the declared model is System, and FHIR.Period
+			// is still a qualified FHIR type.
+			"a qualified type with no using declared",
+			`library T version '1.0'
+define function "P"(p FHIR.Period) returns Boolean: p.start is not null
+define A: true
+`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			diags, err := NewEngine().Check(tt.src)
+			if err != nil {
+				t.Fatalf("the library should parse: %v", err)
+			}
+			if errs := diags.Errors(); len(errs) != 0 {
+				t.Errorf("want no findings, got %v", errs)
+			}
+		})
+	}
+}
+
+// TestNestedTypeIsNotItsTopLevelNamesake covers what one spelling must not
+// collapse. Encounter.Location and Location share a last segment and are
+// different types, and a subtype check that cut a qualified name at the last dot
+// read them as the same.
+func TestNestedTypeIsNotItsTopLevelNamesake(t *testing.T) {
+	const fn = `define function "L"(l FHIR.Encounter.Location) returns Boolean: l is not null
+`
+	// The top-level Location is not an Encounter.Location.
+	diags, err := NewEngine().Check(qualifiedPreamble + fn + "define A: L(First([Location]))\n")
+	if err != nil {
+		t.Fatalf("checking: %v", err)
+	}
+	if len(diags.Errors()) == 0 {
+		t.Error("a FHIR.Location was accepted as a FHIR.Encounter.Location")
+	}
+
+	// Its own type still is.
+	diags, err = NewEngine().Check(qualifiedPreamble + fn +
+		"define A: L(First(First([Encounter]).location))\n")
+	if err != nil {
+		t.Fatalf("checking: %v", err)
+	}
+	if errs := diags.Errors(); len(errs) != 0 {
+		t.Errorf("want no findings for the matching type, got %v", errs)
+	}
+
+	// And a real subtype relationship still holds.
+	diags, err = NewEngine().Check(qualifiedPreamble +
+		"define function \"D\"(d FHIR.DomainResource) returns Boolean: d is not null\n" +
+		"define A: D(First([Encounter]))\n")
+	if err != nil {
+		t.Fatalf("checking: %v", err)
+	}
+	if errs := diags.Errors(); len(errs) != 0 {
+		t.Errorf("want no findings for a real subtype, got %v", errs)
+	}
+}
+
 // The System model keeps its own spelling, qualified or not.
 func TestSystemTypeNamesStillResolve(t *testing.T) {
 	for _, src := range []string{

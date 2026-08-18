@@ -451,32 +451,40 @@ func (c *checker) resolveTypeSpecifier(spec ast.TypeSpecifier) Type {
 // `Integer` is System.Integer and FHIR.integer is a different type, spelled
 // differently. Which is why this asks the model rather than guessing from a
 // list of names.
-// resolveNamedType turns a written type specifier into a type, spelled the same
-// way every other route spells it.
 //
-// There is one canonical split and it is the model qualifier from the rest:
+// A qualified name is spelled the way every other route spells it: the model
+// qualifier is the first segment and the rest is the name, so
 // FHIR.Encounter.Hospitalization is model FHIR and name
-// Encounter.Hospitalization, because FHIR names a backbone element after the
-// type that owns it. The parser reports the last segment as the name and
-// everything before it as the namespace, which for a nested type puts the dot in
-// the wrong place — model "FHIR.Encounter", name "Hospitalization". That prints
-// identically to what ParseTypeName produces from the model document and
-// compares as a different type, so `define function "H"(h
-// FHIR.Encounter.Hospitalization)` rejected an argument of exactly that type.
+// Encounter.Hospitalization — FHIR names a backbone element after the type that
+// owns it. The parser divides it the other way, last segment as the name, which
+// for a nested type gave model "FHIR.Encounter" and name "Hospitalization":
+// identical when printed, a different type when compared, so a parameter
+// declared as exactly the argument's type was rejected.
 func (c *checker) resolveNamedType(n *ast.NamedType) Type {
 	if n == nil || n.Name == "" {
 		return Unknown
 	}
 	if n.Namespace != "" {
-		// Re-join, then split once at the qualifier — which is only there when
-		// the first segment names a model. `Encounter.Hospitalization` is a
-		// nested type of the model in force, not a type called Hospitalization
-		// in a model called Encounter.
+		// Two readings of the same text, and the model says which one exists.
+		// `FHIR.Encounter.Hospitalization` is model FHIR and name
+		// Encounter.Hospitalization; `Encounter.Hospitalization` on its own is
+		// that same name with the qualifier left off, not a Hospitalization in a
+		// model called Encounter. Deciding it by comparing the first segment
+		// against the declared model instead was wrong twice over: a `using`
+		// with an alias is referred to by the alias, and a library with no
+		// `using` at all still writes FHIR.Period.
 		full := n.Namespace + "." + n.Name
-		if first, _, _ := strings.Cut(full, "."); first == c.defaultModel() || first == systemModel {
-			return ParseTypeName(full)
+		if _, rest, _ := strings.Cut(full, "."); c.model != nil {
+			if c.model.HasType(rest) {
+				return ParseTypeName(full)
+			}
+			if c.model.HasType(full) {
+				return &Named{Model: c.defaultModel(), Name: full}
+			}
 		}
-		return &Named{Model: c.defaultModel(), Name: full}
+		// No model to ask, or neither reading names a type it declares. Take the
+		// text as the parser divided it rather than invent a division.
+		return &Named{Model: n.Namespace, Name: n.Name}
 	}
 	model := c.defaultModel()
 	if model != systemModel && c.model != nil && c.model.HasType(n.Name) {
