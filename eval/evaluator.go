@@ -1402,23 +1402,16 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		}
 		return nil, fmt.Errorf("singleton from requires 0 or 1 elements, got %d", c.Count())
 	case ast.OpStartOf:
+		// The interval knows where it starts: an open boundary excludes its own
+		// value, so the first included point is the successor of it. Interval
+		// equality needs the same answer, which is why it lives on the type.
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			// An open boundary excludes its own value, so the starting point is
-			// the successor of it: `start of Interval(1, 5)` is 2, not 1. A type
-			// with no successor cannot name that point, so the boundary stands
-			// for itself rather than failing the expression.
-			if iv.Low != nil && !iv.LowClosed && hasSuccessor(iv.Low) {
-				return e.evalSuccessorPredecessor(ast.OpSuccessorOf, iv.Low)
-			}
-			return iv.Low, nil
+			return iv.Start(), nil
 		}
 		return nil, nil
 	case ast.OpEndOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			if iv.High != nil && !iv.HighClosed && hasSuccessor(iv.High) {
-				return e.evalSuccessorPredecessor(ast.OpPredecessorOf, iv.High)
-			}
-			return iv.High, nil
+			return iv.End(), nil
 		}
 		return nil, nil
 	case ast.OpWidthOf:
@@ -1461,108 +1454,11 @@ func (e *Evaluator) evalFlatten(val fptypes.Value) fptypes.Value {
 
 // dateUnit names the unit a Date steps by at its own precision, the Date-side
 // counterpart of funcs.TemporalUnit.
-func dateUnit(prec fptypes.DatePrecision) string {
-	switch prec {
-	case fptypes.YearPrecision:
-		return "year"
-	case fptypes.MonthPrecision:
-		return "month"
-	default:
-		return "day"
-	}
-}
-
-// hasSuccessor reports whether a value's type defines a successor, which is what
-// an open interval boundary needs in order to name its first included point.
-// String and the like have none, so an open boundary over them can only stand
-// for itself.
-func hasSuccessor(v fptypes.Value) bool {
-	switch v.(type) {
-	case fptypes.Integer, fptypes.Decimal, fptypes.Date, fptypes.DateTime, fptypes.Time, fptypes.Quantity:
-		return true
-	}
-	return false
-}
-
 func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Value) (fptypes.Value, error) {
-	if operand == nil {
-		return nil, nil
+	if op == ast.OpSuccessorOf {
+		return cqltypes.Successor(operand)
 	}
-	if i, ok := operand.(fptypes.Integer); ok {
-		if op == ast.OpSuccessorOf {
-			return fptypes.NewInteger(i.Value() + 1), nil
-		}
-		return fptypes.NewInteger(i.Value() - 1), nil
-	}
-	d := toDecimal(operand)
-	if isDecimal(operand) {
-		epsilon := decimal.NewFromFloat(1e-8)
-		if op == ast.OpSuccessorOf {
-			return newDecimalFromD(d.Add(epsilon)), nil
-		}
-		return newDecimalFromD(d.Sub(epsilon)), nil
-	}
-	// DateTime successor/predecessor: add/subtract 1 unit at the datetime's precision
-	if dt, ok := operand.(fptypes.DateTime); ok {
-		// The unit comes from the value's own precision, so it is always one fptypes
-		// recognizes; the error is threaded through rather than assumed away.
-		unit := funcs.TemporalUnit(dt.Precision())
-		if op == ast.OpSuccessorOf {
-			result, err := dt.AddDuration(1, unit)
-			if err != nil {
-				return nil, err
-			}
-			// Check for overflow (year > 9999)
-			if result.Year() > 9999 {
-				return nil, fmt.Errorf("successor overflow: DateTime exceeds maximum")
-			}
-			return result, nil
-		}
-		result, err := dt.SubtractDuration(1, unit)
-		if err != nil {
-			return nil, err
-		}
-		// Check for underflow
-		if result.Year() < 1 {
-			return nil, fmt.Errorf("predecessor underflow: DateTime below minimum")
-		}
-		return result, nil
-	}
-	// Date successor/predecessor: add/subtract 1 unit at the date's precision.
-	// The step has to follow the precision the way the DateTime branch above
-	// does — the successor of @2020-01 is @2020-02, not @2020-01-02 — or the
-	// result claims a precision the operand never had.
-	if dt, ok := operand.(fptypes.Date); ok {
-		unit := dateUnit(dt.Precision())
-		if op == ast.OpSuccessorOf {
-			return dt.AddDuration(1, unit)
-		}
-		return dt.SubtractDuration(1, unit)
-	}
-	// Time successor/predecessor: add/subtract 1 unit at time's precision
-	if tv, ok := operand.(fptypes.Time); ok {
-		delta := 1
-		if op != ast.OpSuccessorOf {
-			delta = -1
-		}
-		result := funcs.AdjustTime(tv, delta)
-		if result == nil {
-			if op == ast.OpSuccessorOf {
-				return nil, fmt.Errorf("successor overflow: Time exceeds maximum")
-			}
-			return nil, fmt.Errorf("predecessor underflow: Time below minimum")
-		}
-		return result, nil
-	}
-	// Quantity successor/predecessor
-	if q, ok := operand.(fptypes.Quantity); ok {
-		epsilon := decimal.RequireFromString("0.00000001")
-		if op == ast.OpSuccessorOf {
-			return fptypes.NewQuantityFromDecimal(q.Value().Add(epsilon), q.Unit()), nil
-		}
-		return fptypes.NewQuantityFromDecimal(q.Value().Sub(epsilon), q.Unit()), nil
-	}
-	return nil, fmt.Errorf("successor/predecessor not supported for %s", operand.Type())
+	return cqltypes.Predecessor(operand)
 }
 
 // ---------------------------------------------------------------------------

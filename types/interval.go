@@ -31,32 +31,59 @@ func (i Interval) Type() string {
 	return "Interval"
 }
 
-// Equal checks exact equality: same boundaries and same closure.
+// Start is the first point the interval includes.
+//
+// An open boundary excludes its own value, so the starting point is the
+// successor of it: the start of Interval(1, 5) is 2, not 1. A type with no
+// successor cannot name that point, so the boundary stands for itself rather
+// than failing the expression, and a step that overflows does the same.
+func (i Interval) Start() fptypes.Value {
+	if i.Low == nil || i.LowClosed || !HasSuccessor(i.Low) {
+		return i.Low
+	}
+	next, err := Successor(i.Low)
+	if err != nil || next == nil {
+		return i.Low
+	}
+	return next
+}
+
+// End is the last point the interval includes, by the same rule.
+func (i Interval) End() fptypes.Value {
+	if i.High == nil || i.HighClosed || !HasSuccessor(i.High) {
+		return i.High
+	}
+	prev, err := Predecessor(i.High)
+	if err != nil || prev == nil {
+		return i.High
+	}
+	return prev
+}
+
+// Equal reports whether two intervals cover the same points.
+//
+// The specification is explicit that this is decided by the boundaries "as
+// determined by the Start and End operators", so it compares those and not the
+// values as written: Interval(1, 5) and Interval[2, 4] are the same interval
+// over integers, and comparing the literal boundaries and their closures made
+// them unequal. That answer reached seven operations, since `=`, `~`, distinct,
+// contains, in, and list intersect and except all come through here.
 func (i Interval) Equal(other fptypes.Value) bool {
 	o, ok := other.(Interval)
 	if !ok {
 		return false
 	}
-	if i.LowClosed != o.LowClosed || i.HighClosed != o.HighClosed {
-		return false
-	}
-	lowEq := valuesEqual(i.Low, o.Low)
-	highEq := valuesEqual(i.High, o.High)
-	return lowEq && highEq
+	return valuesEqual(i.Start(), o.Start()) && valuesEqual(i.End(), o.End())
 }
 
-// Equivalent checks equivalence.
+// Equivalent is Equal with equivalence for the points, which differs from
+// equality only in how it treats null.
 func (i Interval) Equivalent(other fptypes.Value) bool {
 	o, ok := other.(Interval)
 	if !ok {
 		return false
 	}
-	if i.LowClosed != o.LowClosed || i.HighClosed != o.HighClosed {
-		return false
-	}
-	lowEq := valuesEquivalent(i.Low, o.Low)
-	highEq := valuesEquivalent(i.High, o.High)
-	return lowEq && highEq
+	return valuesEquivalent(i.Start(), o.Start()) && valuesEquivalent(i.End(), o.End())
 }
 
 // String returns a text representation.
