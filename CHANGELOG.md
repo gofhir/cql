@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.2](https://github.com/gofhir/cql/compare/v1.15.1...v1.15.2) (2026-08-18)
+
+
+### Bug Fixes
+
+* **types:** decide interval equality by Start and End ([#45](https://github.com/gofhir/cql/issues/45)) ([ffea8a1](https://github.com/gofhir/cql/commit/ffea8a16dd7c5303dfdb403279de7ba69cd97b11))
+
 ## [1.15.1](https://github.com/gofhir/cql/compare/v1.15.0...v1.15.1) (2026-08-18)
 
 
