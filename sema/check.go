@@ -2,6 +2,7 @@ package sema
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gofhir/cql/ast"
 )
@@ -212,11 +213,11 @@ func (c *checker) resolveContext() {
 // declared with `using`, or System when it declared none.
 func (c *checker) defaultModel() string {
 	for _, u := range c.lib.Usings {
-		if u.Name != "" && u.Name != "System" {
+		if u.Name != "" && u.Name != systemModel {
 			return u.Name
 		}
 	}
-	return "System"
+	return systemModel
 }
 
 // typeOfDefine returns the type of a named expression, computing it on first
@@ -450,19 +451,39 @@ func (c *checker) resolveTypeSpecifier(spec ast.TypeSpecifier) Type {
 // `Integer` is System.Integer and FHIR.integer is a different type, spelled
 // differently. Which is why this asks the model rather than guessing from a
 // list of names.
+// resolveNamedType turns a written type specifier into a type, spelled the same
+// way every other route spells it.
+//
+// There is one canonical split and it is the model qualifier from the rest:
+// FHIR.Encounter.Hospitalization is model FHIR and name
+// Encounter.Hospitalization, because FHIR names a backbone element after the
+// type that owns it. The parser reports the last segment as the name and
+// everything before it as the namespace, which for a nested type puts the dot in
+// the wrong place — model "FHIR.Encounter", name "Hospitalization". That prints
+// identically to what ParseTypeName produces from the model document and
+// compares as a different type, so `define function "H"(h
+// FHIR.Encounter.Hospitalization)` rejected an argument of exactly that type.
 func (c *checker) resolveNamedType(n *ast.NamedType) Type {
 	if n == nil || n.Name == "" {
 		return Unknown
 	}
 	if n.Namespace != "" {
-		return &Named{Model: n.Namespace, Name: n.Name}
+		// Re-join, then split once at the qualifier — which is only there when
+		// the first segment names a model. `Encounter.Hospitalization` is a
+		// nested type of the model in force, not a type called Hospitalization
+		// in a model called Encounter.
+		full := n.Namespace + "." + n.Name
+		if first, _, _ := strings.Cut(full, "."); first == c.defaultModel() || first == systemModel {
+			return ParseTypeName(full)
+		}
+		return &Named{Model: c.defaultModel(), Name: full}
 	}
 	model := c.defaultModel()
-	if model != "System" && c.model != nil && c.model.HasType(n.Name) {
+	if model != systemModel && c.model != nil && c.model.HasType(n.Name) {
 		return &Named{Model: model, Name: n.Name}
 	}
 	if isSystemTypeName(n.Name) {
-		return &Named{Model: "System", Name: n.Name}
+		return &Named{Model: systemModel, Name: n.Name}
 	}
 	return &Named{Model: model, Name: n.Name}
 }

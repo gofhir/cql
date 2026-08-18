@@ -200,7 +200,7 @@ func convertNamed(from, to Type, m Model) (Conversion, bool) {
 				}
 			}
 		}
-		if m != nil && f.Model == t.Model && f.Model != "System" && m.IsSubtypeOf(f.String(), t.String()) {
+		if m != nil && f.Model == t.Model && f.Model != systemModel && m.IsSubtypeOf(f.String(), t.String()) {
 			return Conversion{Cost: costSubtype, Target: to}, true
 		}
 	}
@@ -210,7 +210,7 @@ func convertNamed(from, to Type, m Model) (Conversion, bool) {
 	// same table eval/conversion.go consults at evaluation, read here with the
 	// target type in hand — which is what lets it choose between the several
 	// conversions a type may declare, and the evaluator cannot.
-	if m != nil && f.Model != "System" {
+	if m != nil && f.Model != systemModel {
 		for _, mc := range m.ConversionsFrom(f.String()) {
 			target := ParseTypeName(mc.To)
 			if Equal(target, to) {
@@ -241,7 +241,7 @@ func elementwise(conv Conversion, to Type) Conversion {
 // isAny reports whether a type is System.Any, the supertype every value has.
 func isAny(t Type) bool {
 	n, ok := t.(*Named)
-	return ok && n.Model == "System" && n.Name == "Any"
+	return ok && n.Model == systemModel && n.Name == "Any"
 }
 
 // tupleConvertible reports whether one tuple can stand in for another: same

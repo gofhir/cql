@@ -95,7 +95,7 @@ func (c *checker) inferAdditive(e *ast.BinaryExpression) Type {
 func (c *checker) arithmeticOperand(expr ast.Expression) Type {
 	t := c.infer(expr)
 	named, ok := t.(*Named)
-	if !ok || named.Model == "System" || c.model == nil {
+	if !ok || named.Model == systemModel || c.model == nil {
 		return t
 	}
 	if converted, ok := c.convertToSystem(expr, named); ok {
@@ -287,7 +287,7 @@ func (c *checker) listOperand(expr, at ast.Expression) Type {
 
 func isNumeric(t Type) bool {
 	n, ok := t.(*Named)
-	if !ok || n.Model != "System" {
+	if !ok || n.Model != systemModel {
 		return false
 	}
 	switch n.Name {
@@ -299,7 +299,7 @@ func isNumeric(t Type) bool {
 
 func isTemporal(t Type) bool {
 	n, ok := t.(*Named)
-	if !ok || n.Model != "System" {
+	if !ok || n.Model != systemModel {
 		return false
 	}
 	switch n.Name {
