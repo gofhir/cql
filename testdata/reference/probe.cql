@@ -39,6 +39,11 @@ define EffectiveAsPeriod: Obs.effective as FHIR.Period
 define IdAsString: 'encounter: ' & Enc.id
 define StatusAsString: Enc.status
 
+// Two FHIR operands in one definition, which needs the conversion twice. The
+// fold deduplicated them and the engine did not, so this is where an invented
+// divergence would show up.
+define TwoConversions: Enc.id & Enc.status
+
 // A FHIR.Period reaching operators that work on intervals. overlaps converted
 // all along; the set operators did not.
 define PeriodIntersect: Enc.period intersect MP

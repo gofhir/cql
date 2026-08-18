@@ -27,6 +27,13 @@ type expected struct {
 	Definitions []definition `json:"definitions"`
 }
 
+// includeDef is one `include` the translator recorded, which is how an alias is
+// resolved back to the library it names.
+type includeDef struct {
+	LocalIdentifier string `json:"localIdentifier"`
+	Path            string `json:"path"`
+}
+
 type definition struct {
 	Name string `json:"name"`
 	// Kind is "expression" or "function". The translator reports both as
@@ -58,6 +65,9 @@ func main() {
 	}
 	var doc struct {
 		Library struct {
+			Includes struct {
+				Def []includeDef `json:"def"`
+			} `json:"includes"`
 			Statements struct {
 				Def []map[string]any `json:"def"`
 			} `json:"statements"`
@@ -76,22 +86,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	result := expected{Translator: *translator, Source: *source}
-	for _, def := range defs {
-		name, _ := def["name"].(string)
-		expr, _ := def["expression"].(map[string]any)
-		kind := "expression"
-		if def["type"] == "FunctionDef" {
-			kind = "function"
-		}
-		result.Definitions = append(result.Definitions, definition{
-			Name:        name,
-			Kind:        kind,
-			ResultType:  typeName(def),
-			Locator:     startOfLocator(expr),
-			Conversions: conversionsIn(expr),
-		})
+	result := expected{
+		Translator:  *translator,
+		Source:      *source,
+		Definitions: definitionsOf(defs, helperAliasesOf(doc.Library.Includes.Def)),
 	}
+	if blank := unannotated(result.Definitions); len(blank) > 0 {
+		fmt.Fprintf(os.Stderr,
+			"refusing to write: %d definition(s) have no type or no locator: %s\n"+
+				"the translator was probably run without EnableResultTypes or EnableLocators\n",
+			len(blank), strings.Join(blank, ", "))
+		os.Exit(1)
+	}
+
 	folded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "encoding: %v\n", err)
@@ -105,6 +112,68 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Fprintf(os.Stderr, "%d definitions folded into %s\n", len(result.Definitions), *out)
+}
+
+// helperAliasesOf reports the names this library can call FHIRHelpers by.
+//
+// A FunctionRef names the library by the alias the CQL gave it, so
+// `include FHIRHelpers called FH` produces libraryName "FH". Matching the alias
+// against "FHIRHelpers" found nothing and folded a probe written that way to zero
+// conversions — a silently empty answer, which is the one thing a reference must
+// not contain.
+func helperAliasesOf(includes []includeDef) map[string]bool {
+	aliases := map[string]bool{}
+	for _, inc := range includes {
+		if strings.Contains(inc.Path, "FHIRHelpers") {
+			aliases[inc.LocalIdentifier] = true
+		}
+	}
+	if len(aliases) == 0 {
+		fmt.Fprintln(os.Stderr,
+			"note: the library includes no FHIRHelpers, so no conversions will be recorded")
+	}
+	return aliases
+}
+
+// definitionsOf reduces each ELM definition to what is compared.
+func definitionsOf(defs []map[string]any, helperAliases map[string]bool) []definition {
+	out := make([]definition, 0, len(defs))
+	for _, def := range defs {
+		name, _ := def["name"].(string)
+		expr, _ := def["expression"].(map[string]any)
+		kind := "expression"
+		if def["type"] == "FunctionDef" {
+			kind = "function"
+		}
+		out = append(out, definition{
+			Name:        name,
+			Kind:        kind,
+			ResultType:  typeName(def),
+			Locator:     startOfLocator(expr),
+			Conversions: conversionsIn(expr, helperAliases),
+		})
+	}
+	return out
+}
+
+// unannotated names the definitions the translator recorded nothing about.
+//
+// A reference with nothing in it passes every comparison, which is worse than
+// having none: the tests skip a definition whose type is empty, so a
+// regeneration that lost the annotations would go green having compared nothing.
+// The README's own warning is that dropping EnableResultTypes empties every
+// result type, which puts this mistake within easy reach.
+func unannotated(defs []definition) []string {
+	var blank []string
+	for _, def := range defs {
+		if def.Name == "Patient" && def.ResultType == "" {
+			continue // the implicit context definition, which has no expression
+		}
+		if def.ResultType == "" || def.Locator == "" {
+			blank = append(blank, def.Name)
+		}
+	}
+	return blank
 }
 
 // typeName renders the type a definition resulted in, the way the tests spell
@@ -169,36 +238,42 @@ func startOfLocator(expr map[string]any) string {
 // conversionsIn collects the FHIRHelpers calls the translator inserted anywhere
 // under a definition, which is what this engine applies at evaluation instead.
 //
-// Sorted and deduplicated: the comparison is about which conversions a definition
-// needs, not how many times the tree mentions one or in what order a walk found
-// them.
-func conversionsIn(node any) []string {
-	seen := map[string]bool{}
-	walk(node, seen)
-	out := make([]string, 0, len(seen))
-	for name := range seen {
-		out = append(out, name)
-	}
-	sort.Strings(out)
-	return out
+// Sorted but not deduplicated. A definition with two FHIR operands needs two
+// conversions — `Enc.id & Enc.status` needs ToString twice — and the engine side
+// reports both, so folding them to one invented a divergence at every such
+// definition.
+func conversionsIn(node any, helperAliases map[string]bool) []string {
+	// Empty rather than nil, so a definition with no conversions reads as [] in
+	// the committed file instead of null.
+	found := []string{}
+	walk(node, helperAliases, &found)
+	sort.Strings(found)
+	return found
 }
 
-func walk(node any, seen map[string]bool) {
+func walk(node any, helperAliases map[string]bool, found *[]string) {
 	switch n := node.(type) {
 	case map[string]any:
 		if n["type"] == "FunctionRef" {
-			if lib, _ := n["libraryName"].(string); strings.Contains(lib, "FHIRHelpers") {
+			if lib, _ := n["libraryName"].(string); helperAliases[lib] {
 				if name, _ := n["name"].(string); name != "" {
-					seen[name] = true
+					*found = append(*found, name)
 				}
 			}
 		}
-		for _, v := range n {
-			walk(v, seen)
+		// Sorted keys, so a walk of the same document twice finds the same
+		// conversions in the same order and the fold is reproducible.
+		keys := make([]string, 0, len(n))
+		for k := range n {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			walk(n[k], helperAliases, found)
 		}
 	case []any:
 		for _, v := range n {
-			walk(v, seen)
+			walk(v, helperAliases, found)
 		}
 	}
 }

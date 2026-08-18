@@ -60,6 +60,11 @@ type the reference *inferred*, which is a different question and differs for
 reasons that are not defects:
 
 - a FHIR object evaluates to `Object` rather than to `Encounter.Hospitalization`;
+- a repeated element evaluates to `List`, where the reference names the element
+  type: `List<Encounter.Location>`. The fixture used to serve one location and a
+  single-element repeated element unwraps to a scalar, so this read as `Object`
+  and was filed under the line above — it is a different thing, and the fixture
+  serves two now;
 - a choice evaluates to the branch that was present — `Quantity`, not the whole
   `Choice<…>`;
 - `Enc.status` evaluates to `String` where the reference infers
