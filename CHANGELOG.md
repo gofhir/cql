@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.1](https://github.com/gofhir/cql/compare/v1.15.0...v1.15.1) (2026-08-18)
+
+
+### Bug Fixes
+
+* **sema:** spell a qualified type name one way ([#43](https://github.com/gofhir/cql/issues/43)) ([20aae0e](https://github.com/gofhir/cql/commit/20aae0e7c906c493c0cfe4d53ced95b63fdc2d70))
+
 ## [1.15.0](https://github.com/gofhir/cql/compare/v1.14.1...v1.15.0) (2026-08-18)
 
 
