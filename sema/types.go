@@ -310,6 +310,15 @@ func Unqualified(t Type) string {
 		return "List<" + Unqualified(x.Element) + ">"
 	case *Interval:
 		return "Interval<" + Unqualified(x.Point) + ">"
+	case *Choice:
+		// Without this a choice fell through to String(), which qualifies every
+		// branch, and the comparison against the reference read a difference in
+		// spelling as a difference in type.
+		parts := make([]string, 0, len(x.Types))
+		for _, branch := range x.Types {
+			parts = append(parts, Unqualified(branch))
+		}
+		return "Choice<" + strings.Join(parts, ", ") + ">"
 	}
 	if t == nil {
 		return "?"

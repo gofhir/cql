@@ -38,3 +38,9 @@ tmp/
 # Go workspace (local development)
 go.work
 go.work.sum
+
+# Reference harness build artifacts: the jars Maven copies and the class the
+# translator compiles to, both produced inside Docker and both regenerable.
+internal/referenceharness/lib/
+internal/referenceharness/out/
+internal/referenceharness/elm.json

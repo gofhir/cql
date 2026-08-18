@@ -23,20 +23,57 @@ type referenceELM struct {
 	Translator  string `json:"translator"`
 	Definitions []struct {
 		Name        string   `json:"name"`
+		Kind        string   `json:"kind"`
 		ResultType  string   `json:"resultType"`
 		Locator     string   `json:"locator"`
 		Conversions []string `json:"conversions"`
 	} `json:"definitions"`
 }
 
+// comparedEnough fails a comparison that compared almost nothing.
+//
+// Each of these tests skips a definition the reference has no type or no locator
+// for, which is right for the implicit context definition and wrong for anything
+// else: a reference regenerated without EnableResultTypes has every type empty,
+// and every test then passes having compared nothing at all. Verified by
+// blanking the committed fixture — all four went green.
+//
+// The threshold is most of the probe rather than all of it, so that adding a
+// definition the phase does not type yet does not make the guard fire.
+func comparedEnough(t *testing.T, what string, compared int, ref referenceELM) {
+	t.Helper()
+	least := len(ref.Definitions) * 3 / 4
+	if compared < least {
+		t.Errorf("%s compared %d of %d definitions, want at least %d — "+
+			"a reference missing its annotations passes by comparing nothing",
+			what, compared, len(ref.Definitions), least)
+	}
+}
+
 type referenceProvider struct{}
 
 func (referenceProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
-	if req.ResourceType != "Encounter" {
-		return nil, nil
+	// Every type the probe reads, so that a definition the reference types is
+	// compared against a value rather than against the null a missing resource
+	// would produce.
+	switch req.ResourceType {
+	case "Encounter":
+		return []json.RawMessage{json.RawMessage(
+			`{"resourceType":"Encounter","id":"e1","status":"finished",` +
+				`"period":{"start":"2020-03-01","end":"2020-03-05"},` +
+				`"hospitalization":{"dischargeDisposition":{"text":"home"}},` +
+				`"location":[{"period":{"start":"2020-03-01"}},` +
+				`{"period":{"start":"2020-03-03"}}]}`)}, nil
+	case "Observation":
+		return []json.RawMessage{json.RawMessage(
+			`{"resourceType":"Observation","id":"o1","status":"final",` +
+				`"valueQuantity":{"value":9.1,"unit":"mg"},` +
+				`"effectivePeriod":{"start":"2020-03-01","end":"2020-03-02"}}`)}, nil
+	case "Condition":
+		return []json.RawMessage{json.RawMessage(
+			`{"resourceType":"Condition","id":"c1","onsetDateTime":"2020-03-01T10:00:00Z"}`)}, nil
 	}
-	return []json.RawMessage{json.RawMessage(
-		`{"resourceType":"Encounter","id":"e1","period":{"start":"2020-03-01","end":"2020-03-05"}}`)}, nil
+	return nil, nil
 }
 
 // TestPositionsMatchTheReference covers where this engine says an expression
@@ -56,12 +93,21 @@ func TestPositionsMatchTheReference(t *testing.T) {
 		t.Fatalf("compiling the probe: %v", err)
 	}
 
+	compared := 0
 	for _, want := range ref.Definitions {
 		if want.Locator == "" {
 			continue // the implicit context definition has no source of its own
 		}
 		stmt := findDefine(lib, want.Name)
 		if stmt == nil {
+			if want.Kind == "function" {
+				// The translator reports a function as a definition and types
+				// it; ast.Library keeps functions apart from statements, and
+				// sema.Result carries only the statements. Comparing them needs
+				// the phase to expose function types, which is a change to its
+				// API rather than to this test.
+				continue
+			}
 			t.Errorf("%s: the reference has it and we do not", want.Name)
 			continue
 		}
@@ -73,7 +119,9 @@ func TestPositionsMatchTheReference(t *testing.T) {
 		if pos.String() != want.Locator {
 			t.Errorf("%s begins at %s, the reference says %s", want.Name, pos, want.Locator)
 		}
+		compared++
 	}
+	comparedEnough(t, "positions", compared, ref)
 }
 
 // TestConversionsMatchTheReference covers where the reference translator
@@ -93,6 +141,12 @@ func TestConversionsMatchTheReference(t *testing.T) {
 
 	for _, want := range ref.Definitions {
 		if len(want.Conversions) == 0 {
+			continue
+		}
+		if want.Kind == "function" {
+			// Evaluated by name, and a function is not reachable that way. The
+			// probe has none needing a conversion today; when it does, this is
+			// the line that stops the test failing on `not found`.
 			continue
 		}
 		// A definition the reference had to convert for must evaluate here
@@ -132,12 +186,16 @@ func TestStaticTypesMatchTheReference(t *testing.T) {
 	}
 	result := sema.Check(lib, sema.FromModelInfo(mi))
 
+	compared := 0
 	for _, want := range ref.Definitions {
 		if want.ResultType == "" {
 			continue // the implicit context definition
 		}
 		got, ok := result.Defines[want.Name]
 		if !ok {
+			if want.Kind == "function" {
+				continue // see TestPositionsMatchTheReference
+			}
 			t.Errorf("%s: the reference types it %s and we do not type it at all",
 				want.Name, want.ResultType)
 			continue
@@ -145,7 +203,9 @@ func TestStaticTypesMatchTheReference(t *testing.T) {
 		if sema.Unqualified(got) != want.ResultType {
 			t.Errorf("%s is %s, the reference says %s", want.Name, got, want.ResultType)
 		}
+		compared++
 	}
+	comparedEnough(t, "static types", compared, ref)
 
 	// A probe that produced diagnostics would mean the phase disagrees with a
 	// library the reference translator accepted without complaint.

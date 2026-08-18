@@ -4,18 +4,21 @@
   "definitions": [
     {
       "name": "Patient",
+      "kind": "expression",
       "resultType": "",
       "locator": "",
       "conversions": []
     },
     {
       "name": "Enc",
+      "kind": "expression",
       "resultType": "Encounter",
       "locator": "10:13",
       "conversions": []
     },
     {
       "name": "During",
+      "kind": "expression",
       "resultType": "Boolean",
       "locator": "11:16",
       "conversions": [
@@ -24,6 +27,7 @@
     },
     {
       "name": "StartOf",
+      "kind": "expression",
       "resultType": "DateTime",
       "locator": "12:17",
       "conversions": [
@@ -32,14 +36,218 @@
     },
     {
       "name": "Sum",
+      "kind": "expression",
       "resultType": "Integer",
       "locator": "13:13",
       "conversions": []
     },
     {
       "name": "Mixed",
+      "kind": "expression",
       "resultType": "Decimal",
       "locator": "14:15",
+      "conversions": []
+    },
+    {
+      "name": "Hospitalization",
+      "kind": "expression",
+      "resultType": "Encounter.Hospitalization",
+      "locator": "22:25",
+      "conversions": []
+    },
+    {
+      "name": "DischargeDisposition",
+      "kind": "expression",
+      "resultType": "CodeableConcept",
+      "locator": "23:30",
+      "conversions": []
+    },
+    {
+      "name": "Locations",
+      "kind": "expression",
+      "resultType": "List\u003cEncounter.Location\u003e",
+      "locator": "24:19",
+      "conversions": []
+    },
+    {
+      "name": "InheritedElement",
+      "kind": "expression",
+      "resultType": "List\u003cExtension\u003e",
+      "locator": "25:26",
+      "conversions": []
+    },
+    {
+      "name": "Obs",
+      "kind": "expression",
+      "resultType": "Observation",
+      "locator": "32:13",
+      "conversions": []
+    },
+    {
+      "name": "ChoiceElement",
+      "kind": "expression",
+      "resultType": "Choice\u003cQuantity, CodeableConcept, string, boolean, integer, Range, Ratio, SampledData, time, dateTime, Period\u003e",
+      "locator": "33:23",
+      "conversions": []
+    },
+    {
+      "name": "ValueAsQuantity",
+      "kind": "expression",
+      "resultType": "Quantity",
+      "locator": "34:25",
+      "conversions": []
+    },
+    {
+      "name": "EffectiveAsPeriod",
+      "kind": "expression",
+      "resultType": "Period",
+      "locator": "35:27",
+      "conversions": []
+    },
+    {
+      "name": "IdAsString",
+      "kind": "expression",
+      "resultType": "String",
+      "locator": "39:20",
+      "conversions": [
+        "ToString"
+      ]
+    },
+    {
+      "name": "StatusAsString",
+      "kind": "expression",
+      "resultType": "EncounterStatus",
+      "locator": "40:24",
+      "conversions": []
+    },
+    {
+      "name": "TwoConversions",
+      "kind": "expression",
+      "resultType": "String",
+      "locator": "45:24",
+      "conversions": [
+        "ToString",
+        "ToString"
+      ]
+    },
+    {
+      "name": "PeriodIntersect",
+      "kind": "expression",
+      "resultType": "Interval\u003cDateTime\u003e",
+      "locator": "49:25",
+      "conversions": [
+        "ToInterval"
+      ]
+    },
+    {
+      "name": "PeriodUnion",
+      "kind": "expression",
+      "resultType": "Interval\u003cDateTime\u003e",
+      "locator": "50:21",
+      "conversions": [
+        "ToInterval"
+      ]
+    },
+    {
+      "name": "PeriodOverlaps",
+      "kind": "expression",
+      "resultType": "Boolean",
+      "locator": "51:24",
+      "conversions": [
+        "ToInterval"
+      ]
+    },
+    {
+      "name": "EndOf",
+      "kind": "expression",
+      "resultType": "DateTime",
+      "locator": "52:15",
+      "conversions": [
+        "ToInterval"
+      ]
+    },
+    {
+      "name": "OpenClosedEqual",
+      "kind": "expression",
+      "resultType": "Boolean",
+      "locator": "56:25",
+      "conversions": []
+    },
+    {
+      "name": "OpenStart",
+      "kind": "expression",
+      "resultType": "Integer",
+      "locator": "57:19",
+      "conversions": []
+    },
+    {
+      "name": "OpenEnd",
+      "kind": "expression",
+      "resultType": "Integer",
+      "locator": "58:17",
+      "conversions": []
+    },
+    {
+      "name": "UnitInterval",
+      "kind": "expression",
+      "resultType": "Integer",
+      "locator": "59:22",
+      "conversions": []
+    },
+    {
+      "name": "SuccessorOf",
+      "kind": "expression",
+      "resultType": "Integer",
+      "locator": "60:21",
+      "conversions": []
+    },
+    {
+      "name": "QuantitySum",
+      "kind": "expression",
+      "resultType": "Quantity",
+      "locator": "64:21",
+      "conversions": []
+    },
+    {
+      "name": "QuantityAvg",
+      "kind": "expression",
+      "resultType": "Quantity",
+      "locator": "65:21",
+      "conversions": []
+    },
+    {
+      "name": "QuantityMedian",
+      "kind": "expression",
+      "resultType": "Quantity",
+      "locator": "66:24",
+      "conversions": []
+    },
+    {
+      "name": "TakesHospitalization",
+      "kind": "function",
+      "resultType": "Boolean",
+      "locator": "70:3",
+      "conversions": []
+    },
+    {
+      "name": "NestedParameter",
+      "kind": "expression",
+      "resultType": "Boolean",
+      "locator": "72:25",
+      "conversions": []
+    },
+    {
+      "name": "Cond",
+      "kind": "expression",
+      "resultType": "Condition",
+      "locator": "76:14",
+      "conversions": []
+    },
+    {
+      "name": "OnsetChoice",
+      "kind": "expression",
+      "resultType": "Choice\u003cdateTime, Age, Period, Range, string\u003e",
+      "locator": "77:21",
       "conversions": []
     }
   ]
