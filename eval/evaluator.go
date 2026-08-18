@@ -1406,12 +1406,12 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		// value, so the first included point is the successor of it. Interval
 		// equality needs the same answer, which is why it lives on the type.
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return iv.Start(), nil
+			return iv.Start()
 		}
 		return nil, nil
 	case ast.OpEndOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return iv.End(), nil
+			return iv.End()
 		}
 		return nil, nil
 	case ast.OpWidthOf:
@@ -1426,8 +1426,20 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 			return nil, nil
 		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			if iv.Low != nil && iv.High != nil && iv.Low.Equal(iv.High) {
-				return iv.Low, nil
+			// The included points, not the boundaries as written: Interval(0, 2)
+			// contains only 1 and is a unit interval, and reading Low and High
+			// said otherwise — the same contradiction interval equality had,
+			// where `Interval(0, 2) = Interval[1, 1]` is true.
+			start, err := iv.Start()
+			if err != nil {
+				return nil, err
+			}
+			end, err := iv.End()
+			if err != nil {
+				return nil, err
+			}
+			if start != nil && end != nil && start.Equal(end) {
+				return start, nil
 			}
 		}
 		return nil, fmt.Errorf("point from requires a unit interval")
@@ -1452,8 +1464,9 @@ func (e *Evaluator) evalFlatten(val fptypes.Value) fptypes.Value {
 	return cqltypes.NewList(result)
 }
 
-// dateUnit names the unit a Date steps by at its own precision, the Date-side
-// counterpart of funcs.TemporalUnit.
+// evalSuccessorPredecessor answers `successor of` and `predecessor of`. The
+// arithmetic lives in types, beside the interval that needs it to say where it
+// starts.
 func (e *Evaluator) evalSuccessorPredecessor(op ast.UnaryOp, operand fptypes.Value) (fptypes.Value, error) {
 	if op == ast.OpSuccessorOf {
 		return cqltypes.Successor(operand)

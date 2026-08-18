@@ -66,12 +66,16 @@ func IntervalOverlaps(a, b cqltypes.Interval) (fptypes.Value, error) {
 
 // IntervalStartOf returns the first point an interval includes, which for an
 // open boundary is the successor of it rather than the boundary itself.
-func IntervalStartOf(interval cqltypes.Interval) fptypes.Value {
+//
+// The step fails at the limit of the point type, where there is no successor to
+// name, and that error travels rather than answering with a boundary the
+// interval excludes.
+func IntervalStartOf(interval cqltypes.Interval) (fptypes.Value, error) {
 	return interval.Start()
 }
 
 // IntervalEndOf returns the last point an interval includes.
-func IntervalEndOf(interval cqltypes.Interval) fptypes.Value {
+func IntervalEndOf(interval cqltypes.Interval) (fptypes.Value, error) {
 	return interval.End()
 }
 

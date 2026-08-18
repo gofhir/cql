@@ -470,14 +470,36 @@ func TestIntervalMeets(t *testing.T) {
 
 func TestIntervalStartOf(t *testing.T) {
 	iv := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(10), true, true)
-	result := IntervalStartOf(iv)
+	result, err := IntervalStartOf(iv)
+	if err != nil {
+		t.Fatalf("IntervalStartOf: %v", err)
+	}
 	assertInteger(t, result, 1, "IntervalStartOf")
+
+	// An open boundary steps inwards, which is the whole point of asking the
+	// interval rather than reading Low.
+	open := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(10), false, false)
+	result, err = IntervalStartOf(open)
+	if err != nil {
+		t.Fatalf("IntervalStartOf open: %v", err)
+	}
+	assertInteger(t, result, 2, "IntervalStartOf open")
 }
 
 func TestIntervalEndOf(t *testing.T) {
 	iv := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(10), true, true)
-	result := IntervalEndOf(iv)
+	result, err := IntervalEndOf(iv)
+	if err != nil {
+		t.Fatalf("IntervalEndOf: %v", err)
+	}
 	assertInteger(t, result, 10, "IntervalEndOf")
+
+	open := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(10), false, false)
+	result, err = IntervalEndOf(open)
+	if err != nil {
+		t.Fatalf("IntervalEndOf open: %v", err)
+	}
+	assertInteger(t, result, 9, "IntervalEndOf open")
 }
 
 // ---------------------------------------------------------------------------

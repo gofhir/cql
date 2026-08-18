@@ -80,11 +80,28 @@ func step(v fptypes.Value, delta int) (fptypes.Value, error) {
 		return result, nil
 
 	case fptypes.Date:
+		// Guarded the way the DateTime branch above is: a Date has the same
+		// representable range, and stepping past it produced year 0 and year
+		// 10000 rather than saying there is no such date.
 		unit := DateUnit(t.Precision())
 		if delta > 0 {
-			return t.AddDuration(1, unit)
+			result, err := t.AddDuration(1, unit)
+			if err != nil {
+				return nil, err
+			}
+			if result.Year() > 9999 {
+				return nil, fmt.Errorf("successor overflow: Date exceeds maximum")
+			}
+			return result, nil
 		}
-		return t.SubtractDuration(1, unit)
+		result, err := t.SubtractDuration(1, unit)
+		if err != nil {
+			return nil, err
+		}
+		if result.Year() < 1 {
+			return nil, fmt.Errorf("predecessor underflow: Date below minimum")
+		}
+		return result, nil
 
 	case fptypes.Time:
 		result := AdjustTime(t, delta)
