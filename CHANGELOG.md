@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/gofhir/cql/compare/v1.15.2...v1.16.0) (2026-08-18)
+
+
+### Features
+
+* **referenceharness:** fold the reference automatically, and probe 32 definitions ([#47](https://github.com/gofhir/cql/issues/47)) ([ee4b952](https://github.com/gofhir/cql/commit/ee4b9524e74b4f0cdc276739f3f6fd04acc3161f))
+
 ## [1.15.2](https://github.com/gofhir/cql/compare/v1.15.1...v1.15.2) (2026-08-18)
 
 
