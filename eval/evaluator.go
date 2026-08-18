@@ -3587,7 +3587,12 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	}
 	// JSON object member access
 	if obj, ok := source.(*fptypes.ObjectValue); ok {
+		// The value comes out of JSON, where a FHIR dateTime and a FHIR date are
+		// both a string; the model is what says which. See asPlannedType.
 		result := obj.GetCollection(n.Member)
+		for i, v := range result {
+			result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
+		}
 		if result.Count() > 0 {
 			if result.Count() == 1 {
 				return result[0], nil

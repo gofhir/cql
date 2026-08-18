@@ -44,27 +44,42 @@ libraries that work. What was missing was telling the author that theirs will no
 translate anywhere else. Finding this is what the probe was for; it had been
 silent since v1.13.2.
 
-## `start of` on a FHIR.Period evaluates to Date where the reference says DateTime
+## `start of` on a FHIR.Period evaluated to Date where the reference says DateTime
 
-| | |
-| --- | --- |
-| reference `resultType` | `DateTime` |
-| this engine, statically | `DateTime` — agrees |
-| this engine, evaluated | `Date` |
+**Resolved.** Kept here because how it was found and what it cost are worth
+reading together.
 
-The model declares `FHIR.Period` converts to `Interval<System.DateTime>`, and
-both the translator and this engine's semantic phase say so. The evaluator types
-the value by its JSON text instead: `"2020-03-01"` becomes a Date and
-`"2020-03-05T10:00:00Z"` a DateTime, so one Period can have endpoints of two
-different types.
+The model declares that FHIR.dateTime holds a System.DateTime, and both the
+translator and this engine's semantic phase said so. The evaluator typed the
+value by its JSON text instead: `"2020-03-01"` became a Date because it carried
+no time, so one Period could have endpoints of two different types.
 
-`TestResultTypesAgainstTheReference` records it and does not fail, which is the
-right shape for it: the static comparison is the one that has to hold.
+The damage is where the type *is* the question:
 
-### This entry used to say no wrong answer came of it, and there was one
+    start of Enc.period is DateTime   was false
+    start of Enc.period as DateTime   was null
+    if x is DateTime then … else …    took the other branch
 
-The claim was that comparisons, `during`, `overlaps`, `duration in` and
-`difference in` all answer correctly across the boundary. They do not:
+Fixing it changes what a duration answers, and that is not a regression. A FHIR
+dateTime written to the day means the time is unknown, not midnight, so two
+indeterminate instants are an uncertain number of days apart — `duration in days`
+over such a Period is now Interval[3, 4] where it was 4. The conformance corpus
+holds the same rule: `years between DateTime(2005) and DateTime(2010)` is
+Interval[4, 5], while the same to month precision is exactly 4. A `Date` stays
+exact, because a Date *is* the day rather than an instant inside it.
+
+That distinction is what a detour nearly got wrong. The uncertainty looked like a
+contradiction — two spellings of the same instant giving different answers — and
+the corpus is what settled it: the engine passes all four official cases, and
+Date and DateTime differ here because they mean different things.
+
+Agreements with the reference went from 19 to 22.
+
+### The search for damage looked in the wrong place twice
+
+This entry used to say that no wrong answer came of the mixed endpoints at all,
+on the grounds that comparisons, `during`, `overlaps`, `duration in` and
+`difference in` answer correctly across the boundary. They do not:
 
 ```cql
 E.period during "Measurement Period"    →  null
