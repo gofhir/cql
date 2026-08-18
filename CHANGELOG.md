@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/gofhir/cql/compare/v1.16.0...v1.17.0) (2026-08-18)
+
+
+### Features
+
+* **sema:** warn that a concrete choice name is not portable ([#49](https://github.com/gofhir/cql/issues/49)) ([ac43126](https://github.com/gofhir/cql/commit/ac431260f6135b33243f5fc0665e8a6c8390026b))
+
 ## [1.16.0](https://github.com/gofhir/cql/compare/v1.15.2...v1.16.0) (2026-08-18)
 
 
