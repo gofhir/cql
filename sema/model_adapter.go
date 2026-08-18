@@ -65,9 +65,23 @@ func elementType(info *model.ElementInfo) Type {
 	return t
 }
 
+// baseOf reports the type a type extends, taking either spelling of the name.
+//
+// It unqualifies defensively rather than assuming: callers reach it both with
+// the name as the phase carries it (FHIR.Encounter) and with the name the
+// document indexes (Encounter.Hospitalization), and unqualifying an already
+// local one has to be a no-op. It was not, while the qualifier was cut at the
+// last dot: Encounter.Hospitalization became Hospitalization, so a backbone
+// element inherited nothing and every element it gets from Element or
+// BackboneElement — extension among them — was reported missing.
 func (a *modelInfoAdapter) baseOf(typeName string) (string, bool) {
-	ti, ok := a.mi.TypeInfo(unqualify(typeName))
-	if !ok || ti.BaseName == "" {
+	ti, ok := a.mi.TypeInfo(typeName)
+	if !ok {
+		if ti, ok = a.mi.TypeInfo(unqualify(typeName)); !ok {
+			return "", false
+		}
+	}
+	if ti.BaseName == "" {
 		return "", false
 	}
 	return ti.BaseName, true
@@ -77,14 +91,44 @@ func (a *modelInfoAdapter) IsSubtypeOf(concrete, target string) bool {
 	return a.mi.IsSubtypeOf(concrete, target)
 }
 
+// ConversionsFrom lists what a type converts to, inheriting from its base.
+//
+// The document declares a conversion where it is introduced, and FHIR's
+// primitives are a hierarchy: `id` extends `string`, which is what converts to
+// System.String. Asking only about the type itself found nothing for FHIR.id, so
+// `'discharged: ' & Encounter.id` was reported as a String operator applied to
+// something that is not one — while the evaluator converted it and answered
+// correctly, since it walks the same hierarchy at runtime.
+// The whole chain is collected rather than the nearest ancestor that declares
+// anything: a subtype declaring one conversion would otherwise hide every
+// conversion its base declares. The embedded 4.0.1 model has no such type today,
+// which is exactly why it is worth not depending on.
 func (a *modelInfoAdapter) ConversionsFrom(from string) []ModelConversion {
-	declared := a.mi.ConversionsFrom(from)
-	out := make([]ModelConversion, len(declared))
-	for i, c := range declared {
-		out[i] = ModelConversion{To: c.To, Function: c.Function}
+	var out []ModelConversion
+	seenTarget := map[string]bool{}
+	for name, depth := from, 0; depth < maxTypeHierarchyDepth; depth++ {
+		for _, c := range a.mi.ConversionsFrom(name) {
+			// A conversion declared closer to the type wins over the same
+			// target declared further up.
+			if seenTarget[c.To] {
+				continue
+			}
+			seenTarget[c.To] = true
+			out = append(out, ModelConversion{To: c.To, Function: c.Function})
+		}
+		base, ok := a.baseOf(name)
+		if !ok {
+			break
+		}
+		name = base
 	}
 	return out
 }
+
+// maxTypeHierarchyDepth bounds the walk up a base chain. FHIR's deepest is five
+// or so; the limit is there because a document that declared a cycle would
+// otherwise hang the phase rather than report anything.
+const maxTypeHierarchyDepth = 32
 
 // HasType reports whether the model declares this type, matched exactly: FHIR
 // declares `integer` and not `Integer`, and treating the two as one would make
@@ -98,8 +142,18 @@ func (a *modelInfoAdapter) ContextType(contextName string) string {
 	return a.mi.ContextType(contextName)
 }
 
+// unqualify drops the model qualifier from a type name, leaving the name the
+// document indexes it under.
+//
+// The qualifier is the first segment, not everything before the last dot. FHIR
+// names its backbone elements after the type that owns them —
+// FHIR.Encounter.Hospitalization is one type, whose name is
+// Encounter.Hospitalization — so cutting at the last dot left "Hospitalization",
+// which the document has never heard of. Every element of every backbone
+// element was reported missing on that basis: dischargeDisposition on a
+// hospitalization, code and value on an Observation.component.
 func unqualify(name string) string {
-	if i := strings.LastIndex(name, "."); i >= 0 {
+	if i := strings.Index(name, "."); i >= 0 {
 		return name[i+1:]
 	}
 	return name

@@ -164,6 +164,56 @@ func TestContextRelationSeparatesTheThreeSilences(t *testing.T) {
 	}
 }
 
+// TestElementInfoByPathReadsBackboneElements covers the 931 types the document
+// carries, half of which are backbone elements named after the type that owns
+// them. Splitting the path at the first dot looked for an element called
+// "Hospitalization.dischargeDisposition" on Encounter, so every element of every
+// backbone element was missing — the single largest source of false findings
+// against published measures.
+func TestElementInfoByPathReadsBackboneElements(t *testing.T) {
+	mi, err := LoadR4ModelInfo()
+	if err != nil {
+		t.Fatalf("loading: %v", err)
+	}
+	for _, tt := range []struct{ path, want string }{
+		// One level deep, which always worked.
+		{"Encounter.period", "FHIR.Period"},
+		{"Observation.status", "FHIR.ObservationStatus"},
+
+		// The element that names the backbone element.
+		{"Encounter.hospitalization", "FHIR.Encounter.Hospitalization"},
+		{"Observation.component", "FHIR.Observation.Component"},
+
+		// And the elements on it, which is what the measures read.
+		{"Encounter.Hospitalization.dischargeDisposition", "FHIR.CodeableConcept"},
+		{"Encounter.Diagnosis.condition", "FHIR.Reference"},
+		{"Encounter.Location.period", "FHIR.Period"},
+		{"MedicationRequest.DispenseRequest.validityPeriod", "FHIR.Period"},
+	} {
+		info, ok := mi.ElementInfoByPath(tt.path)
+		if !ok {
+			t.Errorf("ElementInfoByPath(%s) not found", tt.path)
+			continue
+		}
+		if info.Type != tt.want {
+			t.Errorf("ElementInfoByPath(%s) = %q, want %q", tt.path, info.Type, tt.want)
+		}
+	}
+
+	// A path that names no element is still not found, on a backbone element as
+	// anywhere else.
+	for _, path := range []string{
+		"Encounter.notAnElement",
+		"Encounter.Hospitalization.notAnElement",
+		"Encounter.NotABackboneElement.field",
+		"Encounter",
+	} {
+		if _, ok := mi.ElementInfoByPath(path); ok {
+			t.Errorf("ElementInfoByPath(%s) found something, want nothing", path)
+		}
+	}
+}
+
 // TestPrimaryCodePathDistinguishesSilence covers the 84 retrievable types that
 // declare no primary code path. Answering "code" for those would leave a
 // provider unable to tell what the model said from what it did not, and some

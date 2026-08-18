@@ -218,16 +218,20 @@ func WithCompiledCacheSize(n int) Option {
 // it. Warnings never block, as ELM has them "not critical enough to prevent
 // translation".
 //
-// It is off by default, which is not what the specification would suggest and
-// is what the measures require. Against the 19 published eCQM libraries in
-// cqframework/ecqm-content-r4 the phase reports findings on 8 of them, all of
-// them valid CQL: the model this engine loads carries no backbone elements, so
-// Encounter.hospitalization and Observation.component are unknown to it, and
-// several conversions the reference translator applies are not applied here.
-// Refusing on those grounds would reject published measures.
+// It is on by default, and the evidence for that is a corpus rather than an
+// argument: all 19 published eCQM libraries in cqframework/ecqm-content-r4 —
+// 2611 lines of measure CQL, MATGlobalCommonFunctions and FHIRHelpers among
+// them — check out with no findings at all.
 //
-// Turn it on once your libraries check out — Engine.Check reports what it would
-// refuse without evaluating anything.
+// It was off for one release, when 8 of those 19 still reported findings. Every
+// one of them turned out to be a defect on this side rather than a mistake in
+// the measures: backbone elements the model indexed under a name nobody asked
+// for, a conversion declared on a base type and looked for on the subtype, a
+// choice of intervals refused by an operator that takes intervals. Several were
+// wrong answers at evaluation too, not merely noisy diagnostics.
+//
+// Turn it off for a library that has to run despite its findings. Engine.Check
+// reports them without evaluating anything, either way.
 func WithSemanticValidation(enabled bool) Option {
 	return func(e *Engine) {
 		e.semanticValidation = enabled
@@ -237,9 +241,10 @@ func WithSemanticValidation(enabled bool) Option {
 // NewEngine creates a new CQL engine with the given options.
 func NewEngine(opts ...Option) *Engine {
 	e := &Engine{
-		maxExpressionLen: 100 * 1024, // 100KB default
-		evalTimeout:      30 * time.Second,
-		maxRetrieveSize:  10000,
+		semanticValidation: true,
+		maxExpressionLen:   100 * 1024, // 100KB default
+		evalTimeout:        30 * time.Second,
+		maxRetrieveSize:    10000,
 		// Measured, not guessed: a 100-term `or` chain and a chain of 50 defines
 		// each reach depth ~100, and both are ordinary clinical CQL. The limit
 		// exists to stop runaway recursion — `define A: A` crashed the process

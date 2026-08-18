@@ -17,6 +17,14 @@ type builder struct {
 	grammar.BasecqlVisitor
 	err            error
 	currentContext string // tracks the current 'context' (e.g. "Patient")
+
+	// includeNames are the names this library can refer another library by:
+	// each include's alias, or its own name when it has none. A retrieve's
+	// terminology position accepts `Common."Diabetes"` and `resource.id`
+	// alike, and only the includes say which of the two a qualified name is.
+	// Definitions are visited before statements, so this is populated by the
+	// time a retrieve needs it.
+	includeNames map[string]bool
 }
 
 func newBuilder() *builder {
@@ -295,16 +303,25 @@ func qualifiedIdentifierSource(ctx grammar.IQualifiedIdentifierExpressionContext
 // `[Condition: "VS"]` never found its value set and fell through to being
 // passed to the data provider as the literal string `"VS"`.
 func qualifiedIdentifierExpressionText(ctx grammar.IQualifiedIdentifierExpressionContext) string {
+	return strings.Join(qualifiedIdentifierExpressionParts(ctx), ".")
+}
+
+// qualifiedIdentifierExpressionParts returns the segments of a qualified name,
+// each already undelimited.
+//
+// The segments matter, not the joined text. A delimited name may contain a dot
+// of its own — `valueset "Diabetes.All"` is one name — so splitting the joined
+// string reads it as a qualifier and a member and finds neither.
+func qualifiedIdentifierExpressionParts(ctx grammar.IQualifiedIdentifierExpressionContext) []string {
 	if ctx == nil {
-		return ""
+		return nil
 	}
 	quals := ctx.AllQualifierExpression()
 	parts := make([]string, 0, len(quals)+1)
 	for _, q := range quals {
 		parts = append(parts, referentialIdentifierText(q.ReferentialIdentifier()))
 	}
-	parts = append(parts, referentialIdentifierText(ctx.ReferentialIdentifier()))
-	return strings.Join(parts, ".")
+	return append(parts, referentialIdentifierText(ctx.ReferentialIdentifier()))
 }
 
 func (b *builder) visitAccessModifier(ctx grammar.IAccessModifierContext) ast.AccessLevel {
@@ -429,8 +446,54 @@ func (b *builder) VisitIncludeDefinition(ctx *grammar.IncludeDefinitionContext) 
 	}
 	if li := ctx.LocalIdentifier(); li != nil {
 		i.Alias = undelimitIdentifier(li.GetText())
+		b.noteIncludeName(i.Alias)
+	} else {
+		// Without a `called` clause the library is referred to by its own name,
+		// and by its last qualified segment.
+		b.noteIncludeName(i.Name)
+		if j := strings.LastIndex(i.Name, "."); j >= 0 {
+			b.noteIncludeName(i.Name[j+1:])
+		}
 	}
 	return i
+}
+
+// qualifiedTerminology reads the name in a retrieve's terminology position.
+//
+// The grammar accepts a qualified name there and two different things are
+// written as one: `Common."Diabetes"` names a value set in an included library,
+// and `resource.id` reads a property of a function's operand. The whole text
+// used to become a single identifier called "resource.id", which nothing could
+// resolve — MATGlobalCommonFunctions' GetProvenance failed to evaluate on that
+// basis, and it is included by most measures.
+//
+// The includes settle it: a first segment this library declared as an include is
+// a library reference, and anything else is a property access.
+func (b *builder) qualifiedTerminology(parts []string) ast.Expression {
+	if len(parts) == 0 {
+		return nil
+	}
+	if len(parts) == 1 {
+		return &ast.IdentifierRef{Name: parts[0]}
+	}
+	if b.includeNames[parts[0]] {
+		return &ast.IdentifierRef{Library: parts[0], Name: strings.Join(parts[1:], ".")}
+	}
+	var expr ast.Expression = &ast.IdentifierRef{Name: parts[0]}
+	for _, member := range parts[1:] {
+		expr = &ast.MemberAccess{Source: expr, Member: member}
+	}
+	return expr
+}
+
+func (b *builder) noteIncludeName(name string) {
+	if name == "" {
+		return
+	}
+	if b.includeNames == nil {
+		b.includeNames = map[string]bool{}
+	}
+	b.includeNames[name] = true
 }
 
 func (b *builder) VisitCodesystemDefinition(ctx *grammar.CodesystemDefinitionContext) interface{} {
@@ -1667,7 +1730,7 @@ func (b *builder) VisitRetrieve(ctx *grammar.RetrieveContext) interface{} {
 	if t := ctx.Terminology(); t != nil {
 		// terminology can be a qualifiedIdentifierExpression or an expression
 		if qie := t.QualifiedIdentifierExpression(); qie != nil {
-			r.Codes = &ast.IdentifierRef{Name: qualifiedIdentifierExpressionText(qie)}
+			r.Codes = b.qualifiedTerminology(qualifiedIdentifierExpressionParts(qie))
 		} else if expr := t.Expression(); expr != nil {
 			r.Codes = b.visitExpression(expr)
 		}
