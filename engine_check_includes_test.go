@@ -1,6 +1,7 @@
 package cql
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -113,10 +114,17 @@ define B: Helper('x', 2)
 	}
 }
 
-// TestCheckResolvesChoiceElementsByTheirConcreteName covers the other half of
-// the same problem. The model declares Observation.value[x] as `value`, while
-// both the JSON and the CQL that reads it say `valueQuantity`, so every access
-// to a choice element was reported as an element the type does not have.
+// TestCheckResolvesChoiceElementsByTheirConcreteName covers a form this engine
+// resolves and no other CQL tool does. The model declares Observation.value[x]
+// as `value`, and the JSON the evaluator reads calls the field valueQuantity, so
+// the name resolves here — but it is not an element the model declares, and the
+// reference translator refuses it outright:
+//
+//	ERROR: CqlSemanticException: Member valueQuantity not found for type Observation.
+//
+// So it resolves and warns, which is checked in
+// TestConcreteChoiceNamesWarnThatTheyAreNotPortable. This test holds the half
+// that matters for evaluation: it is not an error, and a library using it runs.
 func TestCheckResolvesChoiceElementsByTheirConcreteName(t *testing.T) {
 	for _, expr := range []string{
 		`First([Observation]).valueQuantity`,
@@ -130,8 +138,79 @@ func TestCheckResolvesChoiceElementsByTheirConcreteName(t *testing.T) {
 	} {
 		src := "library M version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine A: " + expr + "\n"
 		if msgs := checkDiags(t, src); len(msgs) != 0 {
-			t.Errorf("%s: want no findings, got %v", expr, msgs)
+			t.Errorf("%s: want no errors, got %v", expr, msgs)
 		}
+	}
+}
+
+// TestConcreteChoiceNamesWarnThatTheyAreNotPortable covers what this engine says
+// about accepting a form nothing else accepts.
+//
+// It used to say nothing at all. The reference probe is what turned that up, and
+// with it how the support got here: the semantic phase learned these names to
+// stop it reporting findings that looked false, and they were not false — the
+// eight it reported came from this repository's own tests. Neither the published
+// eCQM libraries nor FHIRHelpers writes a choice element this way.
+//
+// A warning is the whole of the fix. Errors stop evaluation and this must not:
+// the evaluator reads FHIR JSON, where the field really is called valueQuantity.
+// What was missing was telling the author that their library will not translate
+// anywhere else.
+func TestConcreteChoiceNamesWarnThatTheyAreNotPortable(t *testing.T) {
+	const src = `library M version '1.0'
+using FHIR version '4.0.1'
+context Patient
+define A: First([Observation]).valueQuantity
+`
+	diags, err := NewEngine().Check(src)
+	if err != nil {
+		t.Fatalf("checking: %v", err)
+	}
+	if errs := diags.Errors(); len(errs) != 0 {
+		t.Fatalf("want no errors, got %v", errs)
+	}
+	if len(diags) != 1 {
+		t.Fatalf("want one warning, got %d: %v", len(diags), diags)
+	}
+	// The message has to carry the form that does translate, or it reports a
+	// problem and leaves the reader to guess the fix.
+	if !strings.Contains(diags[0].Message, "value as FHIR.Quantity") {
+		t.Errorf("the warning does not say what to write instead: %s", diags[0].Message)
+	}
+	if !diags[0].Position.Known() {
+		t.Error("the warning carries no position")
+	}
+
+	// And the form the reference accepts warns about nothing.
+	clean, err := NewEngine().Check(`library M version '1.0'
+using FHIR version '4.0.1'
+context Patient
+define A: First([Observation]).value as FHIR.Quantity
+`)
+	if err != nil {
+		t.Fatalf("checking: %v", err)
+	}
+	if len(clean) != 0 {
+		t.Errorf("the portable form should be silent, got %v", clean)
+	}
+}
+
+// A warning must not stop evaluation, which is the difference between saying
+// something is unportable and refusing to run it.
+func TestConcreteChoiceNamesStillEvaluate(t *testing.T) {
+	const src = `library M version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FH
+context Patient
+define A: First([Observation]).valueQuantity
+`
+	got, err := NewEngine(WithDataProvider(&requestRecorder{})).EvaluateExpression(
+		context.Background(), src, "A", []byte(`{"resourceType":"Patient","id":"p1"}`), nil)
+	if err != nil {
+		t.Fatalf("a warning stopped the evaluation: %v", err)
+	}
+	if got == nil {
+		t.Error("evaluated to null, want the quantity")
 	}
 }
 

@@ -325,7 +325,7 @@ func (c *checker) namedProperty(s *Named, name string, at ast.Expression) (Type,
 			return t, true
 		}
 	}
-	return c.choiceProperty(s, name)
+	return c.choiceProperty(s, name, at)
 }
 
 // choiceProperty resolves the name FHIR gives one branch of a choice element.
@@ -335,7 +335,7 @@ func (c *checker) namedProperty(s *Named, name string, at ast.Expression) (Type,
 // element by its concrete name is reported as an element the type does not
 // have — which is what FHIRHelpers does eight times over, so the phase called
 // the official library wrong.
-func (c *checker) choiceProperty(s *Named, name string) (Type, bool) {
+func (c *checker) choiceProperty(s *Named, name string, at ast.Expression) (Type, bool) {
 	// The split point is where the type name begins, and FHIR capitalizes it.
 	for i := 1; i < len(name); i++ {
 		if name[i] < 'A' || name[i] > 'Z' {
@@ -347,6 +347,10 @@ func (c *checker) choiceProperty(s *Named, name string) (Type, bool) {
 			continue
 		}
 		if branch, ok := choiceBranch(declared, suffix); ok {
+			c.reportf(at, SeverityWarning,
+				"%s.%s is the FHIR JSON field name, not an element the model declares; "+
+					"write `%s as %s` — the reference translator refuses this form",
+				unqualify(s.Name), name, base, branch)
 			return branch, true
 		}
 	}
