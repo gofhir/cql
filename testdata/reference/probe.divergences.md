@@ -27,8 +27,22 @@ names in v1.13.2, to stop it reporting findings on what looked like valid CQL.
 The findings were correct: the eight it reported came from **this repository's own
 tests**, and neither the published eCQM libraries nor FHIRHelpers writes a choice
 element that way. So the extension is real and useful for reading FHIR data, but
-it was added on the strength of a false premise, and a library written against it
-is not portable to any other CQL tool.
+it was added on the strength of a false premise.
+
+**The engine says so now.** Resolving one of these names produces a warning
+naming the portable form:
+
+```
+Observation.valueQuantity is the FHIR JSON field name, not an element the model
+declares; write `value as FHIR.Quantity` — the reference translator refuses this
+form
+```
+
+A warning and not an error, deliberately: the evaluator reads FHIR JSON, where
+the field really is called valueQuantity, and refusing to evaluate would break
+libraries that work. What was missing was telling the author that theirs will not
+translate anywhere else. Finding this is what the probe was for; it had been
+silent since v1.13.2.
 
 ## `start of` on a FHIR.Period evaluates to Date where the reference says DateTime
 
