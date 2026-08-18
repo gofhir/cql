@@ -303,16 +303,25 @@ func qualifiedIdentifierSource(ctx grammar.IQualifiedIdentifierExpressionContext
 // `[Condition: "VS"]` never found its value set and fell through to being
 // passed to the data provider as the literal string `"VS"`.
 func qualifiedIdentifierExpressionText(ctx grammar.IQualifiedIdentifierExpressionContext) string {
+	return strings.Join(qualifiedIdentifierExpressionParts(ctx), ".")
+}
+
+// qualifiedIdentifierExpressionParts returns the segments of a qualified name,
+// each already undelimited.
+//
+// The segments matter, not the joined text. A delimited name may contain a dot
+// of its own — `valueset "Diabetes.All"` is one name — so splitting the joined
+// string reads it as a qualifier and a member and finds neither.
+func qualifiedIdentifierExpressionParts(ctx grammar.IQualifiedIdentifierExpressionContext) []string {
 	if ctx == nil {
-		return ""
+		return nil
 	}
 	quals := ctx.AllQualifierExpression()
 	parts := make([]string, 0, len(quals)+1)
 	for _, q := range quals {
 		parts = append(parts, referentialIdentifierText(q.ReferentialIdentifier()))
 	}
-	parts = append(parts, referentialIdentifierText(ctx.ReferentialIdentifier()))
-	return strings.Join(parts, ".")
+	return append(parts, referentialIdentifierText(ctx.ReferentialIdentifier()))
 }
 
 func (b *builder) visitAccessModifier(ctx grammar.IAccessModifierContext) ast.AccessLevel {
@@ -460,8 +469,10 @@ func (b *builder) VisitIncludeDefinition(ctx *grammar.IncludeDefinitionContext) 
 //
 // The includes settle it: a first segment this library declared as an include is
 // a library reference, and anything else is a property access.
-func (b *builder) qualifiedTerminology(text string) ast.Expression {
-	parts := strings.Split(text, ".")
+func (b *builder) qualifiedTerminology(parts []string) ast.Expression {
+	if len(parts) == 0 {
+		return nil
+	}
 	if len(parts) == 1 {
 		return &ast.IdentifierRef{Name: parts[0]}
 	}
@@ -1719,7 +1730,7 @@ func (b *builder) VisitRetrieve(ctx *grammar.RetrieveContext) interface{} {
 	if t := ctx.Terminology(); t != nil {
 		// terminology can be a qualifiedIdentifierExpression or an expression
 		if qie := t.QualifiedIdentifierExpression(); qie != nil {
-			r.Codes = b.qualifiedTerminology(qualifiedIdentifierExpressionText(qie))
+			r.Codes = b.qualifiedTerminology(qualifiedIdentifierExpressionParts(qie))
 		} else if expr := t.Expression(); expr != nil {
 			r.Codes = b.visitExpression(expr)
 		}

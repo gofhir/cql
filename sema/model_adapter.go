@@ -65,9 +65,23 @@ func elementType(info *model.ElementInfo) Type {
 	return t
 }
 
+// baseOf reports the type a type extends, taking either spelling of the name.
+//
+// It unqualifies defensively rather than assuming: callers reach it both with
+// the name as the phase carries it (FHIR.Encounter) and with the name the
+// document indexes (Encounter.Hospitalization), and unqualifying an already
+// local one has to be a no-op. It was not, while the qualifier was cut at the
+// last dot: Encounter.Hospitalization became Hospitalization, so a backbone
+// element inherited nothing and every element it gets from Element or
+// BackboneElement — extension among them — was reported missing.
 func (a *modelInfoAdapter) baseOf(typeName string) (string, bool) {
-	ti, ok := a.mi.TypeInfo(unqualify(typeName))
-	if !ok || ti.BaseName == "" {
+	ti, ok := a.mi.TypeInfo(typeName)
+	if !ok {
+		if ti, ok = a.mi.TypeInfo(unqualify(typeName)); !ok {
+			return "", false
+		}
+	}
+	if ti.BaseName == "" {
 		return "", false
 	}
 	return ti.BaseName, true
@@ -85,23 +99,30 @@ func (a *modelInfoAdapter) IsSubtypeOf(concrete, target string) bool {
 // `'discharged: ' & Encounter.id` was reported as a String operator applied to
 // something that is not one — while the evaluator converted it and answered
 // correctly, since it walks the same hierarchy at runtime.
+// The whole chain is collected rather than the nearest ancestor that declares
+// anything: a subtype declaring one conversion would otherwise hide every
+// conversion its base declares. The embedded 4.0.1 model has no such type today,
+// which is exactly why it is worth not depending on.
 func (a *modelInfoAdapter) ConversionsFrom(from string) []ModelConversion {
-	for name, seen := from, 0; seen < maxTypeHierarchyDepth; seen++ {
-		declared := a.mi.ConversionsFrom(name)
-		if len(declared) > 0 {
-			out := make([]ModelConversion, len(declared))
-			for i, c := range declared {
-				out[i] = ModelConversion{To: c.To, Function: c.Function}
+	var out []ModelConversion
+	seenTarget := map[string]bool{}
+	for name, depth := from, 0; depth < maxTypeHierarchyDepth; depth++ {
+		for _, c := range a.mi.ConversionsFrom(name) {
+			// A conversion declared closer to the type wins over the same
+			// target declared further up.
+			if seenTarget[c.To] {
+				continue
 			}
-			return out
+			seenTarget[c.To] = true
+			out = append(out, ModelConversion{To: c.To, Function: c.Function})
 		}
 		base, ok := a.baseOf(name)
 		if !ok {
-			return nil
+			break
 		}
 		name = base
 	}
-	return nil
+	return out
 }
 
 // maxTypeHierarchyDepth bounds the walk up a base chain. FHIR's deepest is five

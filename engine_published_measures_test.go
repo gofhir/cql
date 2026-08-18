@@ -9,20 +9,26 @@ import (
 
 // TestSemanticPhaseAcceptsPublishedMeasures runs the semantic phase over real
 // measure CQL, which is the measurement that decides whether refusing to
-// evaluate a library that does not check out is defensible.
+// evaluate a library that does not check out is safe.
 //
-// It is skipped unless the content is on disk, because the libraries belong to
-// cqframework and are not vendored here. To run it:
+// It is skipped unless the content is on disk, so it runs when someone asks for
+// it rather than on every build. To run it:
 //
 //	git clone --depth 1 https://github.com/cqframework/ecqm-content-r4 /tmp/ecqm
 //	ECQM_CONTENT_DIR=/tmp/ecqm/input/cql go test -run PublishedMeasures ./...
 //
-// Why it is worth the trouble: this repo's own corpus is the conformance suite,
-// which is loose expressions rather than libraries. Zero findings across it says
-// nothing about a measure — includes, choice elements, backbone elements and
-// FHIR-to-System conversions only appear once you have a library. Turning
-// WithSemanticValidation on was justified against the wrong corpus once, and the
-// libraries here reported 137 findings at the time.
+// The 19 libraries there are CC0, so vendoring them is possible if this should
+// ever become a build-time check.
+//
+// What runs in CI instead is engine_measure_shapes_test.go, which pins down the
+// shapes these libraries are made of — a value set name containing a dot, a
+// property read where a value set name goes, an inherited element on a backbone
+// element, a primitive whose conversion is declared on its base, a Period in a
+// set operation. Those are the forms this engine has actually got wrong, and the
+// conformance corpus cannot see any of them: it is loose expressions, and a
+// measure is a library. Zero findings across the conformance suite is what
+// justified turning WithSemanticValidation on the first time, while these
+// libraries reported 137.
 func TestSemanticPhaseAcceptsPublishedMeasures(t *testing.T) {
 	dir := os.Getenv("ECQM_CONTENT_DIR")
 	if dir == "" {

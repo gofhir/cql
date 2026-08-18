@@ -3689,6 +3689,33 @@ func (e *Evaluator) evalIndexAccess(n *ast.IndexAccess) (fptypes.Value, error) {
 // Retrieve
 // ---------------------------------------------------------------------------
 
+// resolveRetrieveValueSet resolves the value set a retrieve filters by, in the
+// library the reference names.
+//
+// `[Condition: Common."Diabetes"]` means Common's value set, and resolving by
+// bare name meant the local one of that name was used instead — the wrong URL,
+// silently, where a measure and a shared library both define a set with the same
+// name. Which they do: "Diabetes" is exactly the sort of name two libraries
+// arrive at independently.
+func (e *Evaluator) resolveRetrieveValueSet(ref *ast.IdentifierRef) (string, bool) {
+	if ref.Library == "" {
+		return e.ctx.ResolveValueSetURL(ref.Name)
+	}
+	lib, ok := e.ctx.IncludedLibraries[ref.Library]
+	if !ok || lib == nil {
+		// The alias names no library this evaluation loaded. Falling back to a
+		// local set of the same name is how the wrong URL got used; leaving it
+		// unresolved lets the ordinary identifier path report the mistake.
+		return "", false
+	}
+	for _, vs := range lib.ValueSets {
+		if vs.Name == ref.Name {
+			return vs.ID, true
+		}
+	}
+	return "", false
+}
+
 func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 	if e.ctx.DataProvider == nil {
 		return cqltypes.NewList(nil), nil
@@ -3702,7 +3729,7 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 	if n.Codes != nil {
 		if ref, ok := n.Codes.(*ast.IdentifierRef); ok {
 			// Could be a valueset reference
-			if url, ok := e.ctx.ResolveValueSetURL(ref.Name); ok {
+			if url, ok := e.resolveRetrieveValueSet(ref); ok {
 				codes = url
 			} else {
 				val, err := e.Eval(n.Codes)
