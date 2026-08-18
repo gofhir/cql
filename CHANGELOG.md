@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/gofhir/cql/compare/v1.14.1...v1.15.0) (2026-08-18)
+
+
+### Features
+
+* **engine:** make the published measures check out, and validate by default ([#41](https://github.com/gofhir/cql/issues/41)) ([d62d959](https://github.com/gofhir/cql/commit/d62d9597d3c9159f4485ff16f73207a06f55de20))
+
 ## [1.14.1](https://github.com/gofhir/cql/compare/v1.14.0...v1.14.1) (2026-08-17)
 
 
