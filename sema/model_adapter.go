@@ -133,7 +133,14 @@ const maxTypeHierarchyDepth = 32
 // HasType reports whether the model declares this type, matched exactly: FHIR
 // declares `integer` and not `Integer`, and treating the two as one would make
 // every `x as Integer` refer to a FHIR primitive.
+//
+// Both spellings are tried, since a nested type's own name contains a dot:
+// Encounter.Hospitalization is how the document indexes it, and unqualifying
+// that leaves "Hospitalization", which the document does not have.
 func (a *modelInfoAdapter) HasType(name string) bool {
+	if _, ok := a.mi.TypeInfo(name); ok {
+		return true
+	}
 	_, ok := a.mi.TypeInfo(unqualify(name))
 	return ok
 }

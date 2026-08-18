@@ -59,7 +59,7 @@ func systemFormOf(t Type, m Model) Type {
 			return &Interval{Point: inner}
 		}
 	case *Named:
-		if x.Model == "System" {
+		if x.Model == systemModel {
 			return nil
 		}
 		for _, mc := range m.ConversionsFrom(x.String()) {
@@ -324,7 +324,7 @@ func valueRule(args []Type, m Model) Type {
 		return Decimal
 	}
 	named, ok := args[0].(*Named)
-	if !ok || m == nil || named.Model == "System" {
+	if !ok || m == nil || named.Model == systemModel {
 		return Unknown
 	}
 	for _, mc := range m.ConversionsFrom(named.String()) {

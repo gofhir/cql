@@ -337,7 +337,8 @@ func (m *StaticModelInfo) IsSubtypeOf(concrete, target string) bool {
 	if concrete == "" || target == "" {
 		return false
 	}
-	if strings.EqualFold(unqualify(concrete), unqualify(target)) {
+	wanted := m.localName(target)
+	if strings.EqualFold(m.localName(concrete), wanted) {
 		return true
 	}
 	seen := 0
@@ -346,11 +347,11 @@ func (m *StaticModelInfo) IsSubtypeOf(concrete, target string) bool {
 		if seen > 64 {
 			return false
 		}
-		ti, ok := m.types[unqualify(name)]
+		ti, ok := m.types[m.localName(name)]
 		if !ok {
 			return false
 		}
-		if strings.EqualFold(unqualify(ti.BaseName), unqualify(target)) {
+		if strings.EqualFold(m.localName(ti.BaseName), wanted) {
 			return true
 		}
 		name = ti.BaseName
@@ -359,11 +360,31 @@ func (m *StaticModelInfo) IsSubtypeOf(concrete, target string) bool {
 }
 
 // unqualify drops a namespace prefix: "FHIR.Patient" becomes "Patient".
+// unqualify drops the model qualifier from a type name, which is the first
+// segment and not everything before the last dot.
+//
+// A nested type's own name contains a dot: FHIR.Encounter.Hospitalization is one
+// type, named Encounter.Hospitalization. Cutting at the last dot left
+// "Hospitalization" — a name the document does not have — and made every nested
+// type look like the top-level type of the same last segment, so
+// Encounter.Location and Location compared equal.
 func unqualify(name string) string {
-	if i := strings.LastIndex(name, "."); i >= 0 {
+	if i := strings.Index(name, "."); i >= 0 {
 		return name[i+1:]
 	}
 	return name
+}
+
+// localName is the key a type is indexed under, whichever spelling arrives.
+//
+// Callers reach here with the name qualified (FHIR.Encounter) and already local
+// (Encounter.Hospitalization), and unqualifying one that is already local has to
+// be a no-op — which cutting at a fixed dot cannot guarantee on its own.
+func (m *StaticModelInfo) localName(name string) string {
+	if _, ok := m.types[name]; ok {
+		return name
+	}
+	return unqualify(name)
 }
 
 // AddType registers a type.

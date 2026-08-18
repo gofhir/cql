@@ -33,10 +33,19 @@ type Type interface {
 	semaType()
 }
 
+// systemModel is the model CQL's own types belong to. It is compared against in
+// six files, which is reason enough not to spell it out at each one.
+const systemModel = "System"
+
 // Named is a type identified by name inside a model: System.Integer,
 // FHIR.Encounter, FHIR.ObservationStatus.
+//
+// A nested type's Name contains a dot of its own —
+// FHIR.Encounter.Hospitalization is Model "FHIR", Name "Encounter.Hospitalization"
+// — since FHIR names a backbone element after the type that owns it. Model is
+// always the first segment.
 type Named struct {
-	Model string // "System", "FHIR", …
+	Model string // systemModel, "FHIR", …
 	Name  string
 }
 
@@ -176,22 +185,22 @@ func IsUnknown(t Type) bool {
 
 // The System types, as the specification names them.
 var (
-	Any        = &Named{Model: "System", Name: "Any"}
-	Boolean    = &Named{Model: "System", Name: "Boolean"}
-	Integer    = &Named{Model: "System", Name: "Integer"}
-	Long       = &Named{Model: "System", Name: "Long"}
-	Decimal    = &Named{Model: "System", Name: "Decimal"}
-	String     = &Named{Model: "System", Name: "String"}
-	Date       = &Named{Model: "System", Name: "Date"}
-	DateTime   = &Named{Model: "System", Name: "DateTime"}
-	Time       = &Named{Model: "System", Name: "Time"}
-	Quantity   = &Named{Model: "System", Name: "Quantity"}
-	Ratio      = &Named{Model: "System", Name: "Ratio"}
-	Code       = &Named{Model: "System", Name: "Code"}
-	Concept    = &Named{Model: "System", Name: "Concept"}
-	Vocabulary = &Named{Model: "System", Name: "Vocabulary"}
-	ValueSet   = &Named{Model: "System", Name: "ValueSet"}
-	CodeSystem = &Named{Model: "System", Name: "CodeSystem"}
+	Any        = &Named{Model: systemModel, Name: "Any"}
+	Boolean    = &Named{Model: systemModel, Name: "Boolean"}
+	Integer    = &Named{Model: systemModel, Name: "Integer"}
+	Long       = &Named{Model: systemModel, Name: "Long"}
+	Decimal    = &Named{Model: systemModel, Name: "Decimal"}
+	String     = &Named{Model: systemModel, Name: "String"}
+	Date       = &Named{Model: systemModel, Name: "Date"}
+	DateTime   = &Named{Model: systemModel, Name: "DateTime"}
+	Time       = &Named{Model: systemModel, Name: "Time"}
+	Quantity   = &Named{Model: systemModel, Name: "Quantity"}
+	Ratio      = &Named{Model: systemModel, Name: "Ratio"}
+	Code       = &Named{Model: systemModel, Name: "Code"}
+	Concept    = &Named{Model: systemModel, Name: "Concept"}
+	Vocabulary = &Named{Model: systemModel, Name: "Vocabulary"}
+	ValueSet   = &Named{Model: systemModel, Name: "ValueSet"}
+	CodeSystem = &Named{Model: systemModel, Name: "CodeSystem"}
 )
 
 // Equal reports whether two types are the same type.
@@ -273,7 +282,7 @@ func ParseTypeName(name string) Type {
 	}
 	// An unqualified name in a model document means a System type; anywhere
 	// else the caller has already qualified it.
-	return &Named{Model: "System", Name: name}
+	return &Named{Model: systemModel, Name: name}
 }
 
 // unwrap strips a "Wrapper<" prefix and its closing angle bracket.
@@ -288,7 +297,7 @@ func unwrap(name, prefix string) (string, bool) {
 // one drawn from a data model.
 func IsSystem(t Type) bool {
 	n, ok := t.(*Named)
-	return ok && n.Model == "System"
+	return ok && n.Model == systemModel
 }
 
 // Unqualified is the type's name without its model, which is how the reference

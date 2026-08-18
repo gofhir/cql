@@ -307,7 +307,7 @@ func (c *checker) propertyOf(source Type, name string, at ast.Expression) (Type,
 // namedProperty resolves a property of a named type: an element the model
 // declares, or the identity accessors CQL puts on its own types.
 func (c *checker) namedProperty(s *Named, name string, at ast.Expression) (Type, bool) {
-	if s.Model == "System" {
+	if s.Model == systemModel {
 		return systemProperty(s, name)
 	}
 	if c.model == nil {
@@ -608,7 +608,7 @@ func (c *checker) inferTimingOperand(expr ast.Expression) Type {
 // reference translator would have inserted a FHIRHelpers call.
 func (c *checker) convertToInterval(expr ast.Expression, t Type) (Type, bool) {
 	named, ok := t.(*Named)
-	if !ok || c.model == nil || named.Model == "System" {
+	if !ok || c.model == nil || named.Model == systemModel {
 		return nil, false
 	}
 	for _, mc := range c.model.ConversionsFrom(named.String()) {
@@ -740,7 +740,7 @@ func (c *checker) expectTemporalOrNumeric(expr ast.Expression) {
 		return
 	}
 	t := c.infer(expr)
-	if named, ok := t.(*Named); ok && named.Model != "System" && c.model != nil {
+	if named, ok := t.(*Named); ok && named.Model != systemModel && c.model != nil {
 		// A FHIR dateTime is a System.DateTime once converted, and every
 		// duration between two of them depends on it.
 		c.convertToSystem(expr, named)
