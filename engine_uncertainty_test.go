@@ -235,3 +235,82 @@ func TestUncertaintyIsStillARange(t *testing.T) {
 		}
 	}
 }
+
+// TestMinMaxDeclineOverUncertainties covers the defect that justified Median
+// declining, found by asking whether Median could have picked a middle at all.
+//
+// It could not, and Min and Max were already answering as though it could:
+//
+//	A = [17, 44]   B = [22, 49]   C = [12, 39]
+//	Min({A, B, C}) was Interval[17, 44]   — A, the first element
+//	Max({A, B, C}) was Interval[17, 44]   — A again, the same answer
+//	Min({C, B, A}) was Interval[12, 39]   — C, because C came first
+//
+// Min and Max walk the collection asking each value to Compare, and an
+// uncertainty is not Comparable, so every comparison was skipped and the first
+// element survived as the answer. Not a wrong ordering: no ordering, plus a
+// plausible value that changes when the input is reordered.
+//
+// There is no ordering to be had. `A < B` is null, because the ranges overlap and
+// which is smaller is precisely what CQL could not determine. An aggregate that
+// needs an order over values that have none has no answer to give, so these say
+// so — as Median, Variance and the rest already do.
+func TestMinMaxDeclineOverUncertainties(t *testing.T) {
+	const (
+		a = "(days between @2014-01-15 and @2014-02)" // [17, 44]
+		b = "(days between @2014-01-10 and @2014-02)" // [22, 49]
+		c = "(days between @2014-01-20 and @2014-02)" // [12, 39]
+	)
+
+	// The premise: the ranges overlap, so neither is knowably the smaller.
+	for _, expr := range []string{a + " < " + b, a + " < " + c, b + " < " + c} {
+		got, err := evalCQL(t, expr)
+		if err != nil {
+			t.Fatalf("%s: %v", expr, err)
+		}
+		if got != nil {
+			t.Fatalf("%s = %v, want null — the test's premise is that these do not order", expr, got)
+		}
+	}
+
+	for _, expr := range []string{
+		"Min({" + a + ", " + b + ", " + c + "})",
+		"Max({" + a + ", " + b + ", " + c + "})",
+		"Min({" + c + ", " + b + ", " + a + "})",
+		"Max({" + c + ", " + b + ", " + a + "})",
+	} {
+		got, err := evalCQL(t, expr)
+		if err != nil {
+			continue // declining is the answer wanted
+		}
+		t.Errorf("%s = %v, want an error: there is no order over these", expr, got)
+	}
+
+	// An interval an author wrote had the same defect, and the fix is the same
+	// rule rather than a special case for uncertainties: the specification lists
+	// the types Min and Max are defined over — Integer, Long, Decimal, Quantity,
+	// Date, DateTime, Time, String — and an interval is not among them.
+	// `Min({Interval[5, 9], Interval[1, 3]})` used to answer Interval[5, 9], the
+	// first element.
+	if got, err := evalCQL(t, "Min({Interval[5, 9], Interval[1, 3]})"); err == nil {
+		t.Errorf("Min over intervals = %v, want an error", got)
+	}
+
+	// The types the specification does define them over are untouched.
+	for _, tt := range []struct{ expr, want string }{
+		{"Min({3, 1, 2})", "1"},
+		{"Max({3, 1, 2})", "3"},
+		{"Min({1 'mg', 3 'mg'})", "1 'mg'"},
+		{"Max({@2014-01-01, @2014-06-01})", "2014-06-01"},
+		{"Min({'b', 'a'})", "a"},
+	} {
+		got, err := evalCQL(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		}
+	}
+}

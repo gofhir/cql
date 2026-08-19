@@ -5545,6 +5545,10 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 	if c.Empty() {
 		return nil, nil
 	}
+	name := "Max"
+	if isMin {
+		name = "Min"
+	}
 	var result fptypes.Value
 	for _, item := range c {
 		if item == nil {
@@ -5554,13 +5558,25 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 			result = item
 			continue
 		}
+		// A value that cannot be compared cannot be the smallest or the largest,
+		// and skipping the comparison is not a smaller mistake than getting it
+		// wrong. It left the first element standing as the answer, so Min and Max
+		// over a list of uncertainties returned the same value as each other, and
+		// a different one when the list was reordered:
+		//
+		//	Min({A, B, C}) was A   Max({A, B, C}) was A   Min({C, B, A}) was C
+		//
+		// The specification lists the types these are defined over — Integer,
+		// Long, Decimal, Quantity, Date, DateTime, Time, String — and neither an
+		// interval nor an uncertainty is among them. So say so.
 		comp, ok := result.(fptypes.Comparable)
 		if !ok {
-			continue
+			return nil, fmt.Errorf("%s is not defined over %s: it cannot be ordered, "+
+				"and the value that happened to come first is not an answer", name, result.Type())
 		}
 		cmp, err := comp.Compare(item)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("%s: cannot compare %s with %s: %w", name, result.Type(), item.Type(), err)
 		}
 		if (isMin && cmp > 0) || (!isMin && cmp < 0) {
 			result = item
