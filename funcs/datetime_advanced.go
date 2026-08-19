@@ -350,10 +350,12 @@ func durationBetweenUncertain(low, high fptypes.Value, precision string, _ int) 
 		return minVal, nil // no uncertainty
 	}
 
-	return cqltypes.NewInterval(
+	// An uncertainty rather than an interval: the duration is one of these
+	// values and the engine cannot say which. See cqltypes.Uncertainty for why
+	// the distinction is a type.
+	return cqltypes.NewUncertainty(
 		fptypes.NewInteger(minInt),
 		fptypes.NewInteger(maxInt),
-		true, true,
 	), nil
 }
 

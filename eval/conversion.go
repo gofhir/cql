@@ -79,7 +79,7 @@ func (e *Evaluator) asIntervals(left, right fptypes.Value) (
 	if err != nil {
 		return cqltypes.Interval{}, cqltypes.Interval{}, false, err
 	}
-	lIv, ok := converted.(cqltypes.Interval)
+	lIv, ok := asRange(converted)
 	if !ok {
 		return cqltypes.Interval{}, cqltypes.Interval{}, false, nil
 	}
@@ -87,7 +87,7 @@ func (e *Evaluator) asIntervals(left, right fptypes.Value) (
 	if err != nil {
 		return cqltypes.Interval{}, cqltypes.Interval{}, false, err
 	}
-	rIv, ok := converted.(cqltypes.Interval)
+	rIv, ok := asRange(converted)
 	if !ok {
 		return cqltypes.Interval{}, cqltypes.Interval{}, false, nil
 	}
