@@ -5583,13 +5583,20 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 		// order; answering unknown there would drop values from a result rather
 		// than describe them, so they keep ordering at the shared precision."
 		//
-		// Min and Max were not keeping it. They asked fptypes directly and
-		// skipped the error with a bare continue, which is not ordering at the
-		// shared precision — it is not ordering at all, and it left whichever
-		// element came first standing as the answer. So Min and Max over the same
-		// list returned the same value as each other, and a different one when
-		// the list was reordered. sort had the fallback all along; now there is
-		// one implementation of the policy instead of two readings of it.
+		// Min and Max were not keeping it. They asked fptypes directly and skipped
+		// the error with a bare continue, which is not ordering at the shared
+		// precision — it is not ordering at all, and it left whichever element came
+		// first standing as the answer:
+		//
+		//	Min({A, B, C}) was A   Max({A, B, C}) was A   Min({C, B, A}) was C
+		//
+		// sort had the fallback all along; now there is one implementation of the
+		// policy instead of two readings of it.
+		//
+		// A value the fallback cannot place either is an error rather than a guess.
+		// The specification lists the types Min and Max are defined over — Integer,
+		// Long, Decimal, Quantity, Date, DateTime, Time, String — and neither an
+		// interval nor an uncertainty is among them.
 		cmp, err := compareValues(result, item)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", minMaxName(isMin), err)
