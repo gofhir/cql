@@ -759,6 +759,9 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
 			return nil, nil
 		}
+		if res, handled := uncertainEquality(left, right); handled {
+			return res, nil
+		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
 	case ast.OpNotEqual:
 		if lt, lok := left.(cqltypes.Tuple); lok {
@@ -775,6 +778,12 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		}
 		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
 			return nil, nil
+		}
+		if res, handled := uncertainEquality(left, right); handled {
+			if res == nil {
+				return nil, nil
+			}
+			return fptypes.NewBoolean(!isTrue(res)), nil
 		}
 		return fptypes.NewBoolean(!left.Equal(right)), nil
 	case ast.OpEquivalent:
@@ -799,11 +808,14 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		return fptypes.NewBoolean(!cqlEquivalent(left, right)), nil
 
 	case ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
-		// Handle uncertainty intervals: Interval compared to scalar
-		if iv, ok := left.(cqltypes.Interval); ok {
+		// An uncertainty answers where the whole range agrees and null where it
+		// straddles the value, which is what the corpus asks of `months between
+		// … > 5`. An interval takes the same path: the comparison is about the
+		// range either way.
+		if iv, ok := asRange(left); ok {
 			return compareIntervalWithScalar(iv, right, n.Operator)
 		}
-		if iv, ok := right.(cqltypes.Interval); ok {
+		if iv, ok := asRange(right); ok {
 			// Flip the comparison direction
 			flipped := n.Operator
 			switch flipped {
@@ -892,19 +904,22 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 
 func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
 	// Handle uncertainty intervals: Interval op scalar → apply op to both bounds
-	leftIsIv, _ := left.(cqltypes.Interval)
-	rightIsIv, _ := right.(cqltypes.Interval)
-	_, leftIsInterval := left.(cqltypes.Interval)
-	_, rightIsInterval := right.(cqltypes.Interval)
-	if leftIsInterval || rightIsInterval {
+	leftRange, leftIsRange := asRange(left)
+	rightRange, rightIsRange := asRange(right)
+	if leftIsRange || rightIsRange {
 		// div and mod are not supported on uncertainty intervals
 		if op == ast.OpDiv || op == ast.OpMod {
 			return nil, fmt.Errorf("integer division (div/mod) is not supported on uncertainty intervals")
 		}
-		if leftIsInterval {
-			return intervalArithmetic(e, leftIsIv, right, op, false)
+		// Uncertain in, uncertain out: an arithmetic result built from a value
+		// the engine could not pin down cannot be pinned down either, and it has
+		// to stay distinguishable from an interval for equality and the
+		// aggregates to keep answering correctly.
+		uncertain := isUncertainty(left) || isUncertainty(right)
+		if leftIsRange {
+			return intervalArithmetic(e, leftRange, right, op, false, uncertain)
 		}
-		return intervalArithmetic(e, rightIsIv, left, op, true)
+		return intervalArithmetic(e, rightRange, left, op, true, uncertain)
 	}
 
 	// Try integer arithmetic first
@@ -1589,6 +1604,14 @@ func (e *Evaluator) evalAs(n *ast.AsExpression) (fptypes.Value, error) {
 			return list, nil
 		}
 	case *ast.IntervalType:
+		// An uncertainty casts to the interval the specification writes it as,
+		// and this is the only way to ask for that. The conformance corpus notes
+		// the gap it fills — "CQL/ELM seem to provide no direct way of selecting
+		// the same value" — so an author who needs the bounds as a plain interval
+		// says so here, and gets one that compares as an interval.
+		if u, ok := operand.(cqltypes.Uncertainty); ok {
+			return u.AsInterval(), nil
+		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
 			return iv, nil
 		}
@@ -2366,6 +2389,22 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		// This was the one of the five statistics the Quantity fix did not
+		// reach: PopulationVariance answered 1 'mg2' and StdDev answered
+		// 1.41 'mg', while this answered the bare number 0. The helper it
+		// needed already existed.
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return stdDevOfQuantities(quantities, false)
+		}
+		if _, found, err := uncertainOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return nil, undefinedOverUncertainty("PopulationStdDev")
+		}
 		return funcs.PopulationStdDev(c), nil
 	case "populationvariance":
 		src, err := resolveSource()
@@ -2378,6 +2417,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 			return varianceOfQuantities(quantities, false)
+		}
+		if _, found, err := uncertainOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return nil, undefinedOverUncertainty("PopulationVariance")
 		}
 		return funcs.PopulationVariance(c), nil
 	case "stddev":
@@ -2392,6 +2437,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return stdDevOfQuantities(quantities, true)
 		}
+		if _, found, err := uncertainOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return nil, undefinedOverUncertainty("StdDev")
+		}
 		return funcs.StdDev(c), nil
 	case "variance":
 		src, err := resolveSource()
@@ -2404,6 +2455,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 			return varianceOfQuantities(quantities, true)
+		}
+		if _, found, err := uncertainOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return nil, undefinedOverUncertainty("Variance")
 		}
 		return funcs.Variance(c), nil
 
@@ -2494,6 +2551,12 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 			return medianQuantities(quantities)
+		}
+		if _, found, err := uncertainOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return nil, undefinedOverUncertainty("Median")
 		}
 		return funcs.Median(c), nil
 	case "geometricmean":
@@ -4593,8 +4656,14 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		return e.evalTemporalComparison(left, right, n.Operator)
 	}
 
-	leftIv, leftOk := left.(cqltypes.Interval)
-	rightIv, rightOk := right.(cqltypes.Interval)
+	// asRange, not a type assertion: an uncertainty is a range of possibilities,
+	// and `U overlaps Interval[10, 30]` is a question about that range. Missing it
+	// here made the uncertainty look like a single point, so the timing operators
+	// asked the interval to compare against it and reported "cannot compare
+	// Interval" — the Type() an uncertainty reports, which is what made it read as
+	// a point in the first place.
+	leftIv, leftOk := asRange(left)
+	rightIv, rightOk := asRange(right)
 
 	// Handle Interval vs scalar DateTime for timing operations
 	if leftOk && !rightOk && isTemporalType(right) {
@@ -5291,7 +5360,7 @@ func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Val
 		// Two overloads:
 		// 1. expand Interval[a, b] → returns list of point values
 		// 2. expand { Interval[a, b] } → returns list of unit intervals
-		if iv, ok := operand.(cqltypes.Interval); ok {
+		if iv, ok := asRange(operand); ok {
 			// Single interval overload — returns point values
 			points, err := funcs.IntervalExpandPoints(iv, perVal)
 			if err != nil {
@@ -5408,6 +5477,14 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 		}
 		return sumQuantities(quantities)
 	}
+	// Same defect, same fix: toDecimal answers zero for an uncertainty, so a
+	// total of durations between imprecise dates came out as 0 months.
+	if uncertainties, found, err := uncertainOperands(c); found {
+		if err != nil {
+			return nil, err
+		}
+		return e.sumUncertainties(uncertainties)
+	}
 	sum := decimal.Zero
 	allInt := true
 	for _, item := range c {
@@ -5440,6 +5517,12 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 			return nil, err
 		}
 		return avgQuantities(quantities)
+	}
+	if uncertainties, found, err := uncertainOperands(c); found {
+		if err != nil {
+			return nil, err
+		}
+		return e.avgUncertainties(uncertainties)
 	}
 	sum := decimal.Zero
 	count := int64(0)
@@ -5499,6 +5582,12 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 			return nil, err
 		}
 		return productOfQuantities(quantities), nil
+	}
+	if _, found, err := uncertainOperands(c); found {
+		if err != nil {
+			return nil, err
+		}
+		return nil, undefinedOverUncertainty("Product")
 	}
 	allInt := true
 	product := decimal.NewFromInt(1)
@@ -5667,11 +5756,14 @@ func isDecimal(v fptypes.Value) bool {
 // intervalArithmetic applies a binary arithmetic op to an uncertainty interval and a value.
 // If scalarIsLeft is true, the scalar is the left operand (e.g., scalar + Interval).
 // When the other operand is also an interval, computes all combinations and returns min/max.
-func intervalArithmetic(e *Evaluator, iv cqltypes.Interval, other fptypes.Value, op ast.BinaryOp, scalarIsLeft bool) (fptypes.Value, error) {
+func intervalArithmetic(
+	e *Evaluator, iv cqltypes.Interval, other fptypes.Value,
+	op ast.BinaryOp, scalarIsLeft, uncertain bool,
+) (fptypes.Value, error) {
 	// Collect the bounds of both operands
 	leftBounds := []fptypes.Value{iv.Low, iv.High}
 	var rightBounds []fptypes.Value
-	if iv2, ok := other.(cqltypes.Interval); ok {
+	if iv2, ok := asRange(other); ok {
 		rightBounds = []fptypes.Value{iv2.Low, iv2.High}
 	} else {
 		rightBounds = []fptypes.Value{other}
@@ -5715,9 +5807,33 @@ func intervalArithmetic(e *Evaluator, iv cqltypes.Interval, other fptypes.Value,
 	}
 
 	if minVal.Equal(maxVal) {
+		// The combinations agreed, so there is nothing uncertain left to carry.
 		return minVal, nil
 	}
+	if uncertain {
+		return cqltypes.NewUncertainty(minVal, maxVal), nil
+	}
 	return cqltypes.NewInterval(minVal, maxVal, true, true), nil
+}
+
+// isUncertainty reports whether a value is one the engine could not pin down, as
+// opposed to an interval an author wrote.
+func isUncertainty(v fptypes.Value) bool {
+	_, ok := v.(cqltypes.Uncertainty)
+	return ok
+}
+
+// asRange reads a value as a range of possibilities, whichever of the two
+// spellings it uses: an uncertainty, or the interval the specification writes one
+// as.
+func asRange(v fptypes.Value) (cqltypes.Interval, bool) {
+	switch r := v.(type) {
+	case cqltypes.Uncertainty:
+		return r.AsInterval(), true
+	case cqltypes.Interval:
+		return r, true
+	}
+	return cqltypes.Interval{}, false
 }
 
 // compareIntervalWithScalar compares an uncertainty interval with a scalar value.
@@ -5866,4 +5982,111 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 		}
 	}
 	return nil, fmt.Errorf("cannot convert %s to %s", v.Type(), typeName)
+}
+
+// uncertainEquality answers `=` where one side is a value the engine could not
+// pin down. It reports handled=false when neither side is an uncertainty, leaving
+// the ordinary comparison to run.
+//
+// The question an uncertainty makes answerable is narrower than equality usually
+// is. `U = 24` where U is somewhere in [7, 18] has an answer — no, 24 is not one
+// of the possibilities — and the conformance corpus states it
+// (DateTimeDurationBetweenMonthUncertain5 expects false). `U = 10` does not,
+// because it might be 10, and answering false there is how
+// `where duration in days of E.period = 1` came to silently match nothing.
+//
+// So: knowable where the possibilities cannot coincide, unknown where they can.
+//
+// This is the CQL operator, not the Go Equal method. An uncertainty's Equal
+// reports true against an interval with the same bounds, because that is one
+// value spelled two ways and the conformance harness compares the corpus's
+// `Interval[7, 18]` that way. The operator declines, which is what the corpus
+// records the reference implementation doing: "currently Equivalent() results in
+// null from comparing with an Interval".
+func uncertainEquality(left, right fptypes.Value) (fptypes.Value, bool) {
+	if !isUncertainty(left) && !isUncertainty(right) {
+		return nil, false
+	}
+	uncertain, other := left, right
+	if !isUncertainty(left) {
+		uncertain, other = right, left
+	}
+	lo, hi, ok := rangeOf(uncertain)
+	if !ok {
+		return nil, false
+	}
+
+	// Against another range, including a second uncertainty: they can coincide
+	// wherever they overlap.
+	if otherLo, otherHi, isRange := rangeOf(other); isRange {
+		if rangesOverlap(lo, hi, otherLo, otherHi) {
+			return nil, true
+		}
+		return fptypes.NewBoolean(false), true
+	}
+
+	// Against a single value: it is a possibility iff it falls within the bounds,
+	// which are themselves possibilities.
+	within, ok := valueWithin(other, lo, hi)
+	if !ok {
+		return nil, true
+	}
+	if within {
+		return nil, true
+	}
+	return fptypes.NewBoolean(false), true
+}
+
+// rangeOf reads the bounds of a value that stands for a range of possibilities.
+func rangeOf(v fptypes.Value) (low, high fptypes.Value, ok bool) {
+	r, isRange := asRange(v)
+	if !isRange || r.Low == nil || r.High == nil {
+		return nil, nil, false
+	}
+	return r.Low, r.High, true
+}
+
+// valueWithin reports whether a value falls inside a closed range. It reports
+// ok=false when the comparison cannot be made, which is itself unknown rather
+// than outside.
+func valueWithin(v, low, high fptypes.Value) (within, ok bool) {
+	lowC, lowOk := low.(fptypes.Comparable)
+	highC, highOk := high.(fptypes.Comparable)
+	if !lowOk || !highOk {
+		return false, false
+	}
+	lowCmp, lowErr := lowC.Compare(v)
+	highCmp, highErr := highC.Compare(v)
+	if lowErr != nil || highErr != nil {
+		return false, false
+	}
+	return lowCmp <= 0 && highCmp >= 0, true
+}
+
+// rangesOverlap reports whether two closed ranges share at least one value. An
+// uncomparable bound is treated as overlapping: not knowing they are apart is
+// not knowing they are equal either.
+func rangesOverlap(lowA, highA, lowB, highB fptypes.Value) bool {
+	// They are apart when one ends before the other begins.
+	if before, ok := strictlyBefore(highA, lowB); ok && before {
+		return false
+	}
+	if before, ok := strictlyBefore(highB, lowA); ok && before {
+		return false
+	}
+	return true
+}
+
+// strictlyBefore reports whether a sorts before b, and whether the comparison
+// could be made at all.
+func strictlyBefore(a, b fptypes.Value) (before, ok bool) {
+	ac, ok := a.(fptypes.Comparable)
+	if !ok {
+		return false, false
+	}
+	cmp, err := ac.Compare(b)
+	if err != nil {
+		return false, false
+	}
+	return cmp < 0, true
 }
