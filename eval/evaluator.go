@@ -5471,11 +5471,13 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 			result = item
 			continue
 		}
-		comp, ok := result.(fptypes.Comparable)
-		if !ok {
-			continue
-		}
-		cmp, err := comp.Compare(item)
+		// CompareTemporal, not Compare: it is the only implementation that knows
+		// CQL's rules, and asking fptypes directly meant Min and Max did not.
+		// A pair where one side writes a timezone offset and the other does not
+		// came back an error, the error was skipped by this loop, and the first
+		// element stood as the answer — so Min and Max over the same two
+		// DateTimes returned the same value as each other.
+		cmp, err := cqltypes.CompareTemporal(result, item)
 		if err != nil {
 			continue
 		}

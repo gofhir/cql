@@ -121,6 +121,9 @@ func CompareTemporal(a, b fptypes.Value) (int, error) {
 	}
 	cmp, err := ordered.Compare(b)
 	if err != nil {
+		if decided, ok := compareAcrossAbsentOffset(a, b); ok {
+			return decided, nil
+		}
 		return cmp, err
 	}
 
@@ -148,4 +151,116 @@ func CompareTemporal(a, b fptypes.Value) (int, error) {
 		}
 	}
 	return 0, fptypes.ErrPrecisionMismatch
+}
+
+// Legal timezone offsets run from -12:00 to +14:00, so a value that does not
+// write one names an instant somewhere in a 26-hour window.
+const (
+	offsetWindowEarliest = 14 * 60 // minutes: the offset that puts the instant earliest at UTC
+	offsetWindowLatest   = 12 * 60 // and the one that puts it latest
+)
+
+// compareAcrossAbsentOffset orders a pair where one value writes a timezone
+// offset and the other does not.
+//
+// fptypes declines this pair, reporting the precision mismatch it reports for a
+// value specified to a coarser precision — and reporting it even where both are
+// specified to the same precision, which is what gives the diagnosis away. It is
+// not a precision that is missing, it is an offset. (Present in fhirpath v1.6.0
+// and v1.8.0 alike, and reported upstream. This delegates first, so when Compare
+// stops declining, none of this is reached.)
+//
+// Declining is wrong because an absent offset resolves rather than invalidates:
+//
+//	CQL, DateTime Literals: "If no timezone offset is specified, the timezone
+//	offset of the evaluation request timestamp is used" — and extracting it gives
+//	"the timezone offset of the evaluation request, not null".
+//
+//	FHIRPath, Comparison: "either both values have no timezone offset specified,
+//	or both values are converted to a common timezone offset".
+//
+// This does not reach for the evaluation request's offset, which types has no way
+// to ask for. It answers only where the answer does not depend on it: the
+// unwritten offset leaves an instant uncertain across a 26-hour window, so the
+// order is knowable exactly when that whole window — widened by whatever the
+// coarser precision leaves open — falls on one side. Ten months apart is
+// knowable; an hour apart is not, and stays unknown.
+//
+// That is the same rule the uncertainty operators follow, for the same reason:
+// knowable outside the range, unknown inside. Widening rather than narrowing is
+// deliberate. Every value this declines was already being declined, so the only
+// thing an over-wide margin costs is an answer that was not being given anyway,
+// while an over-narrow one would state an order that the offset could reverse.
+func compareAcrossAbsentOffset(a, b fptypes.Value) (int, bool) {
+	left, leftOK := temporalPartsOf(a)
+	right, rightOK := temporalPartsOf(b)
+	if !leftOK || !rightOK || left.hasOffset == right.hasOffset {
+		return 0, false
+	}
+	// A Date writes no offset because it has no time of day to place, which is a
+	// different thing from a DateTime that omitted one. Comparing those two is
+	// the mixed Date/DateTime question, and not this one.
+	if _, aIsDate := a.(fptypes.Date); aIsDate {
+		return 0, false
+	}
+	if _, bIsDate := b.(fptypes.Date); bIsDate {
+		return 0, false
+	}
+
+	// Both sides on one clock: the written offset resolved, the unwritten one
+	// read as if it were UTC so the window below can be measured from it.
+	leftAt := left.inUTC().instant()
+	rightAt := right.inUTC().instant()
+
+	// How far apart they have to be for no offset to reorder them. The window is
+	// one-sided per operand, and the coarser precision widens it because a value
+	// specified to the day names any instant within that day.
+	margin := time.Duration(offsetWindowEarliest+offsetWindowLatest) * time.Minute
+	margin += coarserSpan(left.precision, right.precision)
+
+	gap := leftAt.Sub(rightAt)
+	switch {
+	case gap <= -margin:
+		return -1, true
+	case gap >= margin:
+		return 1, true
+	}
+	return 0, false
+}
+
+// instant places the components on the clock. The components are already at UTC
+// by the time this is called, so the zone is fixed rather than assumed.
+func (v temporalValue) instant() time.Time {
+	return time.Date(
+		v.parts[precYear], time.Month(v.parts[precMonth]), v.parts[precDay],
+		v.parts[precHour], v.parts[precMinute], v.parts[precSecond],
+		v.parts[precMillisecond]*1e6, time.UTC)
+}
+
+// coarserSpan reports how much the coarser of two precisions leaves open. A value
+// written to the day names any instant in that day, so the span is what has to be
+// added to the offset window before an order can be called.
+//
+// The year and month spans take their longest reading — 366 and 31 days — since
+// widening only ever declines an answer, never states a wrong one.
+func coarserSpan(a, b int) time.Duration {
+	coarser := a
+	if b < coarser {
+		coarser = b
+	}
+	switch coarser {
+	case precYear:
+		return 366 * 24 * time.Hour
+	case precMonth:
+		return 31 * 24 * time.Hour
+	case precDay:
+		return 24 * time.Hour
+	case precHour:
+		return time.Hour
+	case precMinute:
+		return time.Minute
+	case precSecond:
+		return time.Second
+	}
+	return time.Millisecond
 }
