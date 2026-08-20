@@ -39,13 +39,34 @@ func (e *Evaluator) asPlannedType(node ast.Expression, owner, member string, v f
 	if !e.declaredDateTime(node, owner, member) {
 		return v
 	}
-	// Through the text, which is what carries the precision: a Date written to
-	// the year yields a DateTime to the year.
+	return asDateTime(date)
+}
+
+// AsDeclaredType gives a value the type a named FHIR element declares, for the
+// caller that already knows which one it read.
+//
+// The choice-element path knows exactly that: resolving `Observation.effective`
+// walks the declared branches until one names a field the JSON has, so the branch
+// is in hand rather than inferred. It is a separate entry point because the path
+// above has to ask two sources which type applies, and this one does not have to
+// ask at all.
+func AsDeclaredType(declared string, v fptypes.Value) fptypes.Value {
+	date, isDate := v.(fptypes.Date)
+	if !isDate || !holdsDateTime(sema.ParseTypeName(declared)) {
+		return v
+	}
+	return asDateTime(date)
+}
+
+// asDateTime retypes a Date through its text, which is what carries the
+// precision: a Date written to the year yields a DateTime to the year. Nothing is
+// invented — the value is the same and only its type changes.
+func asDateTime(date fptypes.Date) fptypes.Value {
 	promoted, err := fptypes.NewDateTime(date.String())
 	if err != nil {
 		// Unreachable for a value that parsed as a Date; keeping the original is
 		// the safe answer if it ever is not.
-		return v
+		return date
 	}
 	return promoted
 }

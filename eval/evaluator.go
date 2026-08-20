@@ -3625,6 +3625,18 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 						concreteKey := n.Member + capitalizeFirst(suffix)
 						result = obj.GetCollection(concreteKey)
 						if result.Count() > 0 {
+							// The branch that matched is the declared type of
+							// what was just read, so a FHIR dateTime written
+							// without a time is a DateTime here too. Missing this
+							// left the two spellings of one value disagreeing
+							// about its type — and this is the spelling the
+							// measures use: 36 uses of `.effective`, 10 of
+							// `.onset` and 16 of `.performed` across the 19
+							// published eCQM libraries, against zero of any
+							// concrete spelling.
+							for i, v := range result {
+								result[i] = AsDeclaredType(choiceType, v)
+							}
 							if result.Count() == 1 {
 								return result[0], nil
 							}
