@@ -5188,6 +5188,22 @@ func precisionIndex(precision string) int {
 // they share while one is specified more finely leaves the result unknown, which
 // is the rule types.CompareTemporal applies to the ordering operators.
 func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (int, bool) {
+	// One side writing an offset and the other not is not a pair of components to
+	// line up: temporalComponents normalizes the written one to UTC and leaves the
+	// other in its local digits, which compares two different frames — the
+	// mistake CompareTemporal's own comment warns about. Resolve it before
+	// reading any components.
+	if lo, hi, asymmetric := offsetWindowOf(left, right); asymmetric {
+		low, lowOK := temporalCompareAtPrecision(lo.left, lo.right, precision)
+		high, highOK := temporalCompareAtPrecision(hi.left, hi.right, precision)
+		// Truncating to a precision is monotonic in the instant, so agreement at
+		// the two ends of the window is agreement across it.
+		if lowOK && highOK && low == high {
+			return low, true
+		}
+		return 0, false
+	}
+
 	lComps, lMaxPrec := temporalComponents(left)
 	rComps, rMaxPrec := temporalComponents(right)
 	if lComps == nil || rComps == nil {

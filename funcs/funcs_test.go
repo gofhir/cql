@@ -23,23 +23,6 @@ func TestCount(t *testing.T) {
 	assertInteger(t, result, 3, "Count")
 }
 
-func TestSum(t *testing.T) {
-	c := fptypes.Collection{
-		fptypes.NewInteger(10),
-		fptypes.NewInteger(20),
-		fptypes.NewInteger(30),
-	}
-	result := Sum(c)
-	assertDecimalString(t, result, "60", "Sum")
-}
-
-func TestSum_Empty(t *testing.T) {
-	result := Sum(fptypes.Collection{})
-	if result != nil {
-		t.Error("Sum of empty collection should be nil")
-	}
-}
-
 func TestAvg(t *testing.T) {
 	c := fptypes.Collection{
 		fptypes.NewInteger(10),
@@ -48,26 +31,6 @@ func TestAvg(t *testing.T) {
 	}
 	result := Avg(c)
 	assertDecimalString(t, result, "20", "Avg")
-}
-
-func TestMin(t *testing.T) {
-	c := fptypes.Collection{
-		fptypes.NewInteger(30),
-		fptypes.NewInteger(10),
-		fptypes.NewInteger(20),
-	}
-	result := Min(c)
-	assertInteger(t, result, 10, "Min")
-}
-
-func TestMax(t *testing.T) {
-	c := fptypes.Collection{
-		fptypes.NewInteger(30),
-		fptypes.NewInteger(10),
-		fptypes.NewInteger(20),
-	}
-	result := Max(c)
-	assertInteger(t, result, 30, "Max")
 }
 
 func TestAllTrue(t *testing.T) {

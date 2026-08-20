@@ -19,22 +19,16 @@ func Count(c fptypes.Collection) fptypes.Value {
 	return fptypes.NewInteger(count)
 }
 
-// Sum returns the sum of all numeric values in a collection (skipping nulls).
-func Sum(c fptypes.Collection) fptypes.Value {
-	if c.Empty() {
-		return nil
-	}
-	sum := decimal.Zero
-	for _, item := range c {
-		if item == nil {
-			continue
-		}
-		sum = sum.Add(numericVal(item))
-	}
-	return decimalToValue(sum)
-}
-
 // Avg returns the average of all numeric values in a collection (skipping nulls).
+//
+// Not the CQL Avg operator, which the evaluator implements: this reads a value
+// through numericVal, which reports zero for a Quantity or anything else that is
+// not an Integer or a Decimal. It stays because Variance and PopulationVariance
+// need a mean, and they are only reached on the numeric path — the evaluator
+// intercepts quantities before either is called.
+//
+// Sum, Min and Max sat beside it with the same limitation and nothing calling
+// them, which is how a caller comes to use the version that answers zero.
 func Avg(c fptypes.Collection) fptypes.Value {
 	if c.Empty() {
 		return nil
@@ -52,64 +46,6 @@ func Avg(c fptypes.Collection) fptypes.Value {
 		return nil
 	}
 	return decimalToValue(sum.Div(decimal.NewFromInt(count)))
-}
-
-// Min returns the minimum value in a collection (skipping nulls).
-func Min(c fptypes.Collection) fptypes.Value {
-	if c.Empty() {
-		return nil
-	}
-	var result fptypes.Value
-	for _, item := range c {
-		if item == nil {
-			continue
-		}
-		if result == nil {
-			result = item
-			continue
-		}
-		comp, ok := result.(fptypes.Comparable)
-		if !ok {
-			continue
-		}
-		cmp, err := comp.Compare(item)
-		if err != nil {
-			continue
-		}
-		if cmp > 0 {
-			result = item
-		}
-	}
-	return result
-}
-
-// Max returns the maximum value in a collection (skipping nulls).
-func Max(c fptypes.Collection) fptypes.Value {
-	if c.Empty() {
-		return nil
-	}
-	var result fptypes.Value
-	for _, item := range c {
-		if item == nil {
-			continue
-		}
-		if result == nil {
-			result = item
-			continue
-		}
-		comp, ok := result.(fptypes.Comparable)
-		if !ok {
-			continue
-		}
-		cmp, err := comp.Compare(item)
-		if err != nil {
-			continue
-		}
-		if cmp < 0 {
-			result = item
-		}
-	}
-	return result
 }
 
 // AllTrue returns true if all non-null items in the collection are true.

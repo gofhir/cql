@@ -176,70 +176,37 @@ func TestOneOrderAcrossEveryOperator(t *testing.T) {
 	}
 }
 
-// TestOrderInsideTheWindowDivergesByOperator records what a decidable pair cannot
-// show, and is the reason the test above is not the whole story.
+// TestMinMaxKeepATotalOrderInsideTheWindow covers the one operation that does
+// NOT decline inside the offset window, and must not.
 //
-// Inside the 26-hour window the ordered comparisons decline, which is the answer
-// this branch argues for. `before`, `after`, `same as` and `same day as` do not
-// decline: they reach the temporal comparison by their own route
-// (temporalCompareAtPrecision) and never see CompareTemporal at all, so they read
-// the written components and answer from them.
+// The ordered comparisons and the timing operators all answer null there — the
+// unwritten offset moves the pair either way, and the operators say so.
+// TestTimingOperatorsAgreeWithTheOrderedComparisons pins that agreement.
 //
-// That divergence is pre-existing and this branch does not change it — the
-// conformance corpus writes an offset on both sides of every `same as` case it
-// has, so it says nothing about this pair, and the published measures use
-// `same day as` on real data, so quietly turning those into null is not a change
-// to make without its own measurement.
-//
-// It is asserted rather than merely described so that closing it fails here and
-// whoever closes it reads this. What must not happen is the ordered comparisons
-// drifting apart from each other, which the test above pins.
-func TestOrderInsideTheWindowDivergesByOperator(t *testing.T) {
+// Min and Max are held to a different rule, written down where it is enforced:
+// "Min, Max and sort need a total order; answering unknown there would drop
+// values from a result rather than describe them, so they keep ordering at the
+// shared precision." So they still place this pair. What they must not do is what
+// they used to: return the same value as each other, or a different one when the
+// list is reordered.
+func TestMinMaxKeepATotalOrderInsideTheWindow(t *testing.T) {
 	const (
 		a = "@2020-03-05T10:00:00Z"  // offset written
-		b = "@2020-03-05T11:00:00.0" // none written, one hour later as written
+		b = "@2020-03-05T11:00:00.0" // none written, an hour later as written
 	)
 
-	// The ordered comparisons decline together: an unwritten offset of anything
-	// from -12:00 to +14:00 moves this pair either way.
-	for _, expr := range []string{
-		a + " < " + b, a + " <= " + b, a + " > " + b, a + " >= " + b,
-		a + " = " + b, a + " != " + b,
-	} {
+	// The premise: no operator can order this pair.
+	for _, expr := range []string{a + " < " + b, a + " before " + b} {
 		got, err := evalCQL(t, expr)
 		if err != nil {
-			t.Errorf("%s: %v", expr, err)
-			continue
+			t.Fatalf("%s: %v", expr, err)
 		}
 		if got != nil {
-			t.Errorf("%s = %v, want null — the offset could put this either way", expr, got)
+			t.Fatalf("%s = %v, want null — this test's premise is that the pair does not order", expr, got)
 		}
 	}
 
-	// And the timing operators do not, which is the divergence. Change these
-	// only with a measurement of what it does to `same day as` in the published
-	// measures.
-	for _, tt := range []struct{ expr, want string }{
-		{a + " before " + b, "true"},
-		{a + " after " + b, "false"},
-		{a + " same as " + b, "false"},
-		{a + " same day as " + b, "true"},
-	} {
-		got, err := evalCQL(t, tt.expr)
-		if err != nil {
-			t.Errorf("%s: %v", tt.expr, err)
-			continue
-		}
-		if got == nil || got.String() != tt.want {
-			t.Errorf("%s = %v, want %s — if this now agrees with `<` above, "+
-				"the divergence is closed and this test should say so", tt.expr, got, tt.want)
-		}
-	}
-
-	// Min and Max still order the pair, because the policy for them is a total
-	// order rather than CQL's comparison: "answering unknown there would drop
-	// values from a result rather than describe them". They must differ from each
-	// other, and must not depend on the input order.
+	// And Min and Max place it anyway, consistently, in either input order.
 	for _, tt := range []struct{ expr, want string }{
 		{"Min({" + a + ", " + b + "}) = " + a, "true"},
 		{"Max({" + a + ", " + b + "}) = " + b, "true"},
