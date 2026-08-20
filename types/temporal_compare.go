@@ -192,18 +192,26 @@ const (
 // thing an over-wide margin costs is an answer that was not being given anyway,
 // while an over-narrow one would state an order that the offset could reverse.
 func compareAcrossAbsentOffset(a, b fptypes.Value) (int, bool) {
+	// Both sides have to be a DateTime. Only a DateTime can write an offset, so
+	// only a DateTime can have omitted one — a Date has no time of day to place
+	// and a Time has no day to place it on, and neither absence is the one this
+	// resolves. Naming the type that qualifies rather than listing the ones that
+	// do not is what keeps this from widening on its own: a first version excluded
+	// Date and forgot Time, and since a Time reports no offset and lands at year
+	// zero on the clock below, the gap cleared the margin and an order was
+	// returned for a pair fhirpath had refused outright. `@2020-03-05T10:00:00Z >
+	// @T10:00:00` answered true, while the same pair with no offset written kept
+	// erroring — so the compensation invented both an order and a disagreement.
+	if _, ok := a.(fptypes.DateTime); !ok {
+		return 0, false
+	}
+	if _, ok := b.(fptypes.DateTime); !ok {
+		return 0, false
+	}
+
 	left, leftOK := temporalPartsOf(a)
 	right, rightOK := temporalPartsOf(b)
 	if !leftOK || !rightOK || left.hasOffset == right.hasOffset {
-		return 0, false
-	}
-	// A Date writes no offset because it has no time of day to place, which is a
-	// different thing from a DateTime that omitted one. Comparing those two is
-	// the mixed Date/DateTime question, and not this one.
-	if _, aIsDate := a.(fptypes.Date); aIsDate {
-		return 0, false
-	}
-	if _, bIsDate := b.(fptypes.Date); bIsDate {
 		return 0, false
 	}
 

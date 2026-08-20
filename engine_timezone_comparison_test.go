@@ -47,7 +47,8 @@ func TestComparisonAcrossWrittenTimezone(t *testing.T) {
 		{"@2020-03-05T10:00:00.0Z < @2021-01-01T00:00:00.0", "true"},
 		// The offset written on the other side instead.
 		{"@2020-03-05T10:00:00.0 < @2021-01-01T00:00:00Z", "true"},
-		// A day apart is still outside the window.
+		// Two days apart clears the window; one day does not, and is asserted
+		// below.
 		{"@2020-03-05T10:00:00Z < @2020-03-07T10:00:00.0", "true"},
 
 		// Inside the window, where the answer really does depend on the offset
@@ -171,6 +172,119 @@ func TestOneOrderAcrossEveryOperator(t *testing.T) {
 		}
 		if got == nil || got.String() != tt.want {
 			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
+
+// TestOrderInsideTheWindowDivergesByOperator records what a decidable pair cannot
+// show, and is the reason the test above is not the whole story.
+//
+// Inside the 26-hour window the ordered comparisons decline, which is the answer
+// this branch argues for. `before`, `after`, `same as` and `same day as` do not
+// decline: they reach the temporal comparison by their own route
+// (temporalCompareAtPrecision) and never see CompareTemporal at all, so they read
+// the written components and answer from them.
+//
+// That divergence is pre-existing and this branch does not change it — the
+// conformance corpus writes an offset on both sides of every `same as` case it
+// has, so it says nothing about this pair, and the published measures use
+// `same day as` on real data, so quietly turning those into null is not a change
+// to make without its own measurement.
+//
+// It is asserted rather than merely described so that closing it fails here and
+// whoever closes it reads this. What must not happen is the ordered comparisons
+// drifting apart from each other, which the test above pins.
+func TestOrderInsideTheWindowDivergesByOperator(t *testing.T) {
+	const (
+		a = "@2020-03-05T10:00:00Z"  // offset written
+		b = "@2020-03-05T11:00:00.0" // none written, one hour later as written
+	)
+
+	// The ordered comparisons decline together: an unwritten offset of anything
+	// from -12:00 to +14:00 moves this pair either way.
+	for _, expr := range []string{
+		a + " < " + b, a + " <= " + b, a + " > " + b, a + " >= " + b,
+		a + " = " + b, a + " != " + b,
+	} {
+		got, err := evalCQL(t, expr)
+		if err != nil {
+			t.Errorf("%s: %v", expr, err)
+			continue
+		}
+		if got != nil {
+			t.Errorf("%s = %v, want null — the offset could put this either way", expr, got)
+		}
+	}
+
+	// And the timing operators do not, which is the divergence. Change these
+	// only with a measurement of what it does to `same day as` in the published
+	// measures.
+	for _, tt := range []struct{ expr, want string }{
+		{a + " before " + b, "true"},
+		{a + " after " + b, "false"},
+		{a + " same as " + b, "false"},
+		{a + " same day as " + b, "true"},
+	} {
+		got, err := evalCQL(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s = %v, want %s — if this now agrees with `<` above, "+
+				"the divergence is closed and this test should say so", tt.expr, got, tt.want)
+		}
+	}
+
+	// Min and Max still order the pair, because the policy for them is a total
+	// order rather than CQL's comparison: "answering unknown there would drop
+	// values from a result rather than describe them". They must differ from each
+	// other, and must not depend on the input order.
+	for _, tt := range []struct{ expr, want string }{
+		{"Min({" + a + ", " + b + "}) = " + a, "true"},
+		{"Max({" + a + ", " + b + "}) = " + b, "true"},
+		{"Min({" + b + ", " + a + "}) = " + a, "true"},
+		{"Max({" + b + ", " + a + "}) = " + b, "true"},
+	} {
+		got, err := evalCQL(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
+
+// TestTimeIsNotADateTimeMissingAnOffset guards the regression the review caught.
+//
+// The compensation first excluded Date and forgot Time. A Time reports no offset
+// and has no day to place, so it landed at year zero on the clock, the gap
+// cleared the margin, and an order came back for a pair fhirpath refuses
+// outright: `@2020-03-05T10:00:00Z > @T10:00:00` answered true, while the same
+// pair written without an offset kept erroring. The compensation had invented
+// both an order and a disagreement.
+//
+// It requires a DateTime on both sides now — naming what qualifies rather than
+// listing what does not, which is what let a type slip through the first time.
+func TestTimeIsNotADateTimeMissingAnOffset(t *testing.T) {
+	for _, expr := range []string{
+		"@2020-03-05T10:00:00Z > @T10:00:00",
+		"@T10:00:00 < @2020-03-05T10:00:00Z",
+		"@T10:00:00 in Interval[@2020-01-01T00:00:00Z, @2021-01-01T00:00:00Z]",
+		"Min({@2020-03-05T10:00:00Z, @T10:00:00})",
+		// A Date writes no offset either, and comparing it against a DateTime is
+		// the mixed Date/DateTime question, which this does not answer.
+		"@2020-03-05T10:00:00Z = @2020-03-05",
+	} {
+		got, err := evalCQL(t, expr)
+		if err != nil {
+			continue // refusing is what main does, and what this must keep doing
+		}
+		if got != nil {
+			t.Errorf("%s = %v, want an error or null: a Time has no day and a Date "+
+				"has no time of day, so neither is a DateTime that omitted an offset", expr, got)
 		}
 	}
 }
