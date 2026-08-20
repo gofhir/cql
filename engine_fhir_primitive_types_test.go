@@ -143,3 +143,88 @@ func TestDurationBecomesUncertain(t *testing.T) {
 		t.Errorf("days between two Dates = %s, want 4", s)
 	}
 }
+
+// choiceProvider serves the choice elements the eCQM libraries actually read:
+// Observation.effective[x], Condition.onset[x] and Procedure.performed[x], each
+// written to the day so the JSON text carries no time.
+type choiceProvider struct{}
+
+func (choiceProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
+	switch req.ResourceType {
+	case "Patient":
+		return []json.RawMessage{json.RawMessage(
+			`{"resourceType":"Patient","id":"p1","birthDate":"1980-05-15"}`)}, nil
+	case "Observation":
+		return []json.RawMessage{json.RawMessage(
+			`{"resourceType":"Observation","id":"o1","status":"final",` +
+				`"effectiveDateTime":"2020-03-01"}`)}, nil
+	case "Condition":
+		return []json.RawMessage{json.RawMessage(
+			`{"resourceType":"Condition","id":"c1","onsetDateTime":"2020-03-01"}`)}, nil
+	case "Procedure":
+		return []json.RawMessage{json.RawMessage(
+			`{"resourceType":"Procedure","id":"pr1","status":"completed",` +
+				`"performedDateTime":"2020-03-01"}`)}, nil
+	}
+	return nil, nil
+}
+
+func evalChoice(t *testing.T, expr string) string {
+	t.Helper()
+	src := primitivePreamble + "define A: " + expr + "\n"
+	got, err := NewEngine(WithDataProvider(choiceProvider{})).EvaluateExpression(
+		context.Background(), src, "A",
+		[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"1980-05-15"}`), nil)
+	if err != nil {
+		t.Fatalf("%s: %v", expr, err)
+	}
+	return valueString(got)
+}
+
+// TestChoiceElementsPromoteToo covers the spelling the measures use, which the
+// promotion missed.
+//
+// A choice element's declared type is Choice<…>, not a named type, so the check
+// for a declared dateTime never looked inside it. The result was that two
+// spellings of one value disagreed about its type, and the one that worked was
+// the one nothing writes:
+//
+//	O.effectiveDateTime is DateTime   was true    ← the reference translator refuses this form
+//	O.effective is DateTime           was false   ← what the eCQM libraries write
+//
+// Counted across the 19 published libraries: 36 uses of `.effective`, 10 of
+// `.onset`, 16 of `.performed`, and zero of any concrete spelling.
+//
+// Reading the branch off the value is not needed and would not be sound. What
+// makes this answerable is that these choices have exactly one temporal scalar
+// branch: Observation.effective[x] is dateTime | Period | Timing | instant, and
+// Condition.onset[x] is dateTime | Age | Period | Range | string. Neither offers
+// FHIR.date. So a scalar temporal value read from one of them came from the
+// dateTime branch, whichever branch that was — Period and Timing do not yield a
+// Date. Where a choice does offer both date and dateTime the text cannot say
+// which, and the value is left alone.
+func TestChoiceElementsPromoteToo(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		// The two spellings of one value now agree.
+		{"First([Observation] O return O.effective is DateTime)", "true"},
+		{"First([Observation] O return O.effectiveDateTime is DateTime)", "true"},
+
+		{"First([Condition] C return C.onset is DateTime)", "true"},
+		{"First([Procedure] P return P.performed is DateTime)", "true"},
+
+		// A Date element is still a Date: the promotion is what the model
+		// declares, not a blanket rule about temporal values.
+		{"Patient.birthDate is Date", "true"},
+		{"Patient.birthDate is DateTime", "false"},
+	} {
+		if got := evalChoice(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// The value itself is unchanged — same instant, same precision, only the
+	// type is the one the model declares.
+	if got := evalChoice(t, "First([Observation] O return O.effective)"); got != "2020-03-01" {
+		t.Errorf("O.effective = %s, want 2020-03-01", got)
+	}
+}
