@@ -117,7 +117,16 @@ define Compared: end of Enc.period > start of MP
 		{"IncludedIn", "true"},
 		{"StartOf", "2020-03-01"},
 		{"EndOf", "2020-03-05"},
-		{"Duration", "4"},
+		// Both endpoints are written to the day, and a FHIR dateTime without a
+		// time means the time is unknown rather than midnight. Two indeterminate
+		// instants a few days apart are 3 or 4 days apart, which is what CQL
+		// models as an uncertainty and what the conformance corpus confirms:
+		// `years between DateTime(2005) and DateTime(2010)` is Interval[4, 5].
+		//
+		// It answered 4 while the endpoints came back as Dates — a Date *is* the
+		// day, so counting days off it is exact. Reading them as the dateTimes
+		// the model declares is what moved this onto the honest answer.
+		{"Duration", "Interval[3, 4]"},
 		{"Compared", "true"},
 	} {
 		got, err := engine.EvaluateExpression(context.Background(), src, tt.name, nil, nil)

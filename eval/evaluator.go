@@ -3587,7 +3587,18 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	}
 	// JSON object member access
 	if obj, ok := source.(*fptypes.ObjectValue); ok {
+		// The value comes out of JSON, where a FHIR dateTime and a FHIR date are
+		// both a string; the model is what says which. See asPlannedType.
 		result := obj.GetCollection(n.Member)
+		// The owner's type is only needed when there is a Date to reconsider,
+		// and obj.Type() infers it by walking the object's fields — paying that
+		// on every member access cost more than the whole promotion saves.
+		for i, v := range result {
+			if _, isDate := v.(fptypes.Date); !isDate {
+				continue
+			}
+			result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
+		}
 		if result.Count() > 0 {
 			if result.Count() == 1 {
 				return result[0], nil
@@ -3614,6 +3625,18 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 						concreteKey := n.Member + capitalizeFirst(suffix)
 						result = obj.GetCollection(concreteKey)
 						if result.Count() > 0 {
+							// The branch that matched is the declared type of
+							// what was just read, so a FHIR dateTime written
+							// without a time is a DateTime here too. Missing this
+							// left the two spellings of one value disagreeing
+							// about its type — and this is the spelling the
+							// measures use: 36 uses of `.effective`, 10 of
+							// `.onset` and 16 of `.performed` across the 19
+							// published eCQM libraries, against zero of any
+							// concrete spelling.
+							for i, v := range result {
+								result[i] = AsDeclaredType(choiceType, v)
+							}
 							if result.Count() == 1 {
 								return result[0], nil
 							}
