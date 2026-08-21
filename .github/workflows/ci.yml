@@ -3,8 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+  # Every pull request, not only the ones targeting main. A PR stacked on another
+  # branch got no checks at all — `gh pr checks` reported "no checks reported"
+  # while the PR itself showed mergeable and clean, which reads exactly like a
+  # PR that passed. Two of four open PRs were in that state.
   pull_request:
-    branches: [main]
 
 env:
   GO_VERSION: "1.24"
