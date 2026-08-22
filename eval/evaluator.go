@@ -5457,6 +5457,14 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 	return newDecimalFromD(sum.Div(decimal.NewFromInt(count))), nil
 }
 
+// minMaxName names the operator in an error, since the two share an implementation.
+func minMaxName(isMin bool) string {
+	if isMin {
+		return "Min"
+	}
+	return "Max"
+}
+
 func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptypes.Value, error) {
 	c := toCollection(source)
 	if c.Empty() {
@@ -5471,13 +5479,21 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 			result = item
 			continue
 		}
-		comp, ok := result.(fptypes.Comparable)
-		if !ok {
-			continue
-		}
-		cmp, err := comp.Compare(item)
+		// compareValues, which is the total order sort already uses. These three
+		// were named together as needing one: "Min, Max and sort need a total
+		// order; answering unknown there would drop values from a result rather
+		// than describe them, so they keep ordering at the shared precision."
+		//
+		// Min and Max were not keeping it. They asked fptypes directly and
+		// skipped the error with a bare continue, which is not ordering at the
+		// shared precision — it is not ordering at all, and it left whichever
+		// element came first standing as the answer. So Min and Max over the same
+		// list returned the same value as each other, and a different one when
+		// the list was reordered. sort had the fallback all along; now there is
+		// one implementation of the policy instead of two readings of it.
+		cmp, err := compareValues(result, item)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("%s: %w", minMaxName(isMin), err)
 		}
 		if (isMin && cmp > 0) || (!isMin && cmp < 0) {
 			result = item
