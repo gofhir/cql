@@ -32,41 +32,46 @@ import (
 // It defines no aggregate over uncertainties at all. The rest therefore have no
 // rule, and rather than invent one they say so.
 
-// uncertainOperands reports the uncertainties in a collection.
+// uncertainOperands reports the values of a collection that holds at least one
+// uncertainty, and found=false when none of them is one.
 //
-// Mixing them with plain numbers is refused, for the reason mixing Quantities
-// with numbers is: the aggregate would have to decide what the bare number means
-// alongside a range, and nothing in the collection says. Silently skipping either
-// side is how these came to answer 0.
-func uncertainOperands(c fptypes.Collection) (uncertainties []cqltypes.Uncertainty, found bool, err error) {
-	var others int
+// A plain number beside an uncertainty is kept rather than refused. A first
+// version refused it, modeled on refusing a bare number beside a Quantity, and
+// the two are not alike: a number next to a Quantity has no unit and the
+// collection cannot supply one, while a certain number next to an uncertainty has
+// an obvious sum — add it to both bounds, which is what `+` already does.
+//
+// The mistake could not show until the FHIR dateTime promotion landed. A Period
+// whose endpoints were typed off their JSON text always yielded a certain
+// duration, so Sum never saw a mixture; promote the endpoints and a patient with
+// one complete encounter and one partially dated one — the ordinary case —
+// produces one. CumulativeDays went from answering 0 to answering an error.
+//
+// What cannot be added is still refused, one operand at a time, by the operator
+// that knows: sumUncertainties asks `+`, and `1 'mg' + 1 's'` is an error there
+// already. Deciding it here would be a second policy on what may be summed.
+func uncertainOperands(c fptypes.Collection) (values []fptypes.Value, found bool) {
 	for _, item := range c {
 		if item == nil {
 			continue
 		}
-		u, ok := item.(cqltypes.Uncertainty)
-		if !ok {
-			others++
-			continue
+		if _, isUncertain := item.(cqltypes.Uncertainty); isUncertain {
+			found = true
 		}
-		uncertainties = append(uncertainties, u)
+		values = append(values, item)
 	}
-	if len(uncertainties) == 0 {
-		return nil, false, nil
+	if !found {
+		return nil, false
 	}
-	if others > 0 {
-		return nil, true, fmt.Errorf(
-			"cannot aggregate uncertain values together with %d value(s) that are not uncertain", others)
-	}
-	return uncertainties, true, nil
+	return values, true
 }
 
 // sumUncertainties adds uncertainties the way the + operator does, so there is
 // one policy on propagating a range rather than two.
-func (e *Evaluator) sumUncertainties(uncertainties []cqltypes.Uncertainty) (fptypes.Value, error) {
-	var total fptypes.Value = uncertainties[0]
-	for _, u := range uncertainties[1:] {
-		sum, err := e.evalArithmetic(ast.OpAdd, total, u)
+func (e *Evaluator) sumUncertainties(values []fptypes.Value) (fptypes.Value, error) {
+	total := values[0]
+	for _, v := range values[1:] {
+		sum, err := e.evalArithmetic(ast.OpAdd, total, v)
 		if err != nil {
 			return nil, err
 		}
@@ -79,12 +84,12 @@ func (e *Evaluator) sumUncertainties(uncertainties []cqltypes.Uncertainty) (fpty
 }
 
 // avgUncertainties is the sum over the count, through the same operators.
-func (e *Evaluator) avgUncertainties(uncertainties []cqltypes.Uncertainty) (fptypes.Value, error) {
-	total, err := e.sumUncertainties(uncertainties)
+func (e *Evaluator) avgUncertainties(values []fptypes.Value) (fptypes.Value, error) {
+	total, err := e.sumUncertainties(values)
 	if err != nil || total == nil {
 		return nil, err
 	}
-	count := fptypes.NewInteger(int64(len(uncertainties)))
+	count := fptypes.NewInteger(int64(len(values)))
 	return e.evalArithmetic(ast.OpDivide, total, count)
 }
 

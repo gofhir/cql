@@ -96,3 +96,119 @@ define Days: "CumulativeDays"(Periods)
 		t.Errorf("CumulativeDays >= 100 = %s, want null: 100 is inside [90, 123]", got)
 	}
 }
+
+// mixedPrecisionPeriods serves what a real patient looks like: some encounters
+// with a full timestamp, some with a partial date. Both are valid FHIR, and a
+// server returns whatever was recorded.
+type mixedPrecisionPeriods struct{}
+
+func (mixedPrecisionPeriods) Retrieve(_ context.Context, req eval.RetrieveRequest) ([]json.RawMessage, error) {
+	if req.ResourceType != "Encounter" {
+		return nil, nil
+	}
+	return []json.RawMessage{
+		// Exact: 60 days.
+		json.RawMessage(`{"resourceType":"Encounter","id":"e1","status":"finished",` +
+			`"period":{"start":"2020-03-01T08:00:00Z","end":"2020-04-30T08:00:00Z"}}`),
+		// Partial start, so this duration is a range.
+		json.RawMessage(`{"resourceType":"Encounter","id":"e2","status":"finished",` +
+			`"period":{"start":"2020-06","end":"2020-07-15T10:00:00Z"}}`),
+	}, nil
+}
+
+// TestSumMixesCertainWithUncertain covers the case that appears only once the
+// FHIR dateTime promotion and the uncertainty type are both in place, and that
+// broke the very measure the uncertainty type was written for.
+//
+// Refusing to aggregate an uncertainty beside a plain number was modeled on
+// refusing to aggregate a Quantity beside one, and the two are not alike. A bare
+// number next to a Quantity has no unit and the collection cannot supply one. A
+// certain number next to an uncertainty has an obvious sum: add it to both
+// bounds, which is exactly what `+` already does.
+//
+// It went unnoticed because it could not happen before. A FHIR Period whose
+// endpoints were typed off their JSON text always yielded a certain duration, so
+// Sum never saw a mixture. Promote the endpoints and a patient with one complete
+// encounter and one partially dated one — the ordinary case — produces one.
+//
+// So CumulativeDays, the function this was all measured against, went from
+// answering 0 to answering an error.
+func TestSumMixesCertainWithUncertain(t *testing.T) {
+	src := primitivePreamble + `
+define function "CumulativeDays"(Intervals List<Interval<DateTime>> ):
+  Sum((collapse Intervals) CollapsedInterval
+        return all duration in days of CollapsedInterval
+  )
+
+define Periods: [Encounter] E return E.period
+define Days: "CumulativeDays"(Periods)
+`
+	ask := func(expr string) (string, error) {
+		t.Helper()
+		got, err := NewEngine(WithDataProvider(mixedPrecisionPeriods{})).EvaluateExpression(
+			context.Background(), src+"define A: "+expr+"\n", "A",
+			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"1980-05-15"}`), nil)
+		if err != nil {
+			return "", err
+		}
+		return valueString(got), nil
+	}
+
+	// 60 exact days, plus a range for the encounter whose start is written to the
+	// month. June is a month, so that second duration is Interval[14, 44] and the
+	// total is Interval[74, 104].
+	//
+	// Not [75, 104], which is what the same expression written with a Date literal
+	// gives. `@2020-06` is a Date and a Date *is* the month; a promoted FHIR
+	// dateTime written to the month is an indeterminate instant inside it, one day
+	// wider at the near end. Checked by asking both:
+	//
+	//	duration in days of Interval[@2020-06, @2020-07-15T10:00:00Z]          → [15, 44]
+	//	duration in days of Interval[DateTime(2020, 6), @2020-07-15T10:00:00Z] → [14, 44]
+	got, err := ask("Days")
+	if err != nil {
+		t.Fatalf("CumulativeDays over a mixture: %v", err)
+	}
+	if got != "Interval[74, 104]" {
+		t.Errorf("CumulativeDays = %s, want Interval[74, 104]", got)
+	}
+
+	// The thresholds still resolve, which is the whole point of carrying the range
+	// rather than refusing it — and they decline where the range straddles.
+	for _, tt := range []struct{ expr, want string }{
+		{"Days >= 70", "true"},
+		{"Days < 200", "true"},
+		{"Days > 200", "false"},
+		{"Days >= 105", "false"},
+		{"Days >= 90", "null"},
+	} {
+		got, askErr := ask(tt.expr)
+		if askErr != nil {
+			t.Errorf("%s: %v", tt.expr, askErr)
+			continue
+		}
+		if tt.want == "null" {
+			if got != "null" {
+				t.Errorf("%s = %s, want null: 90 is inside [74, 104]", tt.expr, got)
+			}
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// Sum answers exactly what the + operator answers, which is the property that
+	// makes delegating to it worth doing rather than reimplementing it.
+	viaSum, err := ask("Sum({60, duration in days of Interval[DateTime(2020, 6), @2020-07-15T10:00:00Z]})")
+	if err != nil {
+		t.Fatalf("Sum: %v", err)
+	}
+	viaOperator, err := ask("60 + (duration in days of Interval[DateTime(2020, 6), @2020-07-15T10:00:00Z])")
+	if err != nil {
+		t.Fatalf("operator: %v", err)
+	}
+	if viaSum != viaOperator {
+		t.Errorf("Sum gave %s, + gave %s", viaSum, viaOperator)
+	}
+}

@@ -139,11 +139,32 @@ func TestUncertaintyAggregates(t *testing.T) {
 		}
 	})
 
-	// Mixing an uncertainty with a number is refused for the same reason mixing a
-	// Quantity with one is: the collection cannot say what to do with either.
-	t.Run("mixing is refused", func(t *testing.T) {
-		if _, err := evalCQL(t, "Sum({"+U+", 3})"); err == nil {
-			t.Error("Sum({U, 3}) was answered, want an error")
+	// A certain number beside an uncertainty is summed, not refused. This test
+	// used to assert the opposite, on the theory that it was like mixing a
+	// Quantity with a bare number. It is not: a number next to a Quantity has no
+	// unit and the collection cannot supply one, while a certain number next to
+	// an uncertainty has an obvious sum — add it to both bounds, which is what
+	// `+` already does.
+	//
+	// The cost of getting that wrong only appeared once FHIR dateTime values were
+	// promoted: a patient with one complete encounter and one partially dated one
+	// produces exactly this mixture, and CumulativeDays went from answering 0 to
+	// answering an error. See TestSumMixesCertainWithUncertain.
+	t.Run("a certain number is added to both bounds", func(t *testing.T) {
+		got, err := evalCQL(t, "Sum({"+U+", 3})")
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if got == nil || got.String() != "Interval[9, 21]" {
+			t.Errorf("Sum({U, 3}) = %v, want Interval[9, 21]", got)
+		}
+	})
+
+	// What genuinely cannot be added is still refused, by the operator that
+	// knows: `+` rejects incompatible units, and Sum asks it.
+	t.Run("what + refuses, Sum refuses", func(t *testing.T) {
+		if _, err := evalCQL(t, "Sum({"+U+", 3 's'})"); err == nil {
+			t.Error("Sum({U, 3 's'}) was answered, want the error + gives")
 		}
 	})
 

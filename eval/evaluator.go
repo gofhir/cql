@@ -2399,10 +2399,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return stdDevOfQuantities(quantities, false)
 		}
-		if _, found, err := uncertainOperands(c); found {
-			if err != nil {
-				return nil, err
-			}
+		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("PopulationStdDev")
 		}
 		return funcs.PopulationStdDev(c), nil
@@ -2418,10 +2415,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return varianceOfQuantities(quantities, false)
 		}
-		if _, found, err := uncertainOperands(c); found {
-			if err != nil {
-				return nil, err
-			}
+		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("PopulationVariance")
 		}
 		return funcs.PopulationVariance(c), nil
@@ -2437,10 +2431,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return stdDevOfQuantities(quantities, true)
 		}
-		if _, found, err := uncertainOperands(c); found {
-			if err != nil {
-				return nil, err
-			}
+		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("StdDev")
 		}
 		return funcs.StdDev(c), nil
@@ -2456,10 +2447,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return varianceOfQuantities(quantities, true)
 		}
-		if _, found, err := uncertainOperands(c); found {
-			if err != nil {
-				return nil, err
-			}
+		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("Variance")
 		}
 		return funcs.Variance(c), nil
@@ -2552,10 +2540,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			}
 			return medianQuantities(quantities)
 		}
-		if _, found, err := uncertainOperands(c); found {
-			if err != nil {
-				return nil, err
-			}
+		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("Median")
 		}
 		return funcs.Median(c), nil
@@ -5518,11 +5503,8 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 	}
 	// Same defect, same fix: toDecimal answers zero for an uncertainty, so a
 	// total of durations between imprecise dates came out as 0 months.
-	if uncertainties, found, err := uncertainOperands(c); found {
-		if err != nil {
-			return nil, err
-		}
-		return e.sumUncertainties(uncertainties)
+	if values, found := uncertainOperands(c); found {
+		return e.sumUncertainties(values)
 	}
 	sum := decimal.Zero
 	allInt := true
@@ -5557,11 +5539,8 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 		}
 		return avgQuantities(quantities)
 	}
-	if uncertainties, found, err := uncertainOperands(c); found {
-		if err != nil {
-			return nil, err
-		}
-		return e.avgUncertainties(uncertainties)
+	if values, found := uncertainOperands(c); found {
+		return e.avgUncertainties(values)
 	}
 	sum := decimal.Zero
 	count := int64(0)
@@ -5645,10 +5624,7 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 		}
 		return productOfQuantities(quantities), nil
 	}
-	if _, found, err := uncertainOperands(c); found {
-		if err != nil {
-			return nil, err
-		}
+	if _, found := uncertainOperands(c); found {
 		return nil, undefinedOverUncertainty("Product")
 	}
 	allInt := true
