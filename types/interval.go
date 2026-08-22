@@ -66,6 +66,11 @@ func (i Interval) End() (fptypes.Value, error) {
 // them unequal. That answer reached seven operations, since `=`, `~`, distinct,
 // contains, in, and list intersect and except all come through here.
 func (i Interval) Equal(other fptypes.Value) bool {
+	// An uncertainty is written as a closed interval, so one with these bounds is
+	// this interval. See Uncertainty.
+	if u, isUncertainty := other.(Uncertainty); isUncertainty {
+		return u.Equal(i)
+	}
 	o, ok := other.(Interval)
 	if !ok {
 		return false
@@ -77,6 +82,9 @@ func (i Interval) Equal(other fptypes.Value) bool {
 // Equivalent is Equal with equivalence for the points, which differs from
 // equality only in how it treats null.
 func (i Interval) Equivalent(other fptypes.Value) bool {
+	if u, isUncertainty := other.(Uncertainty); isUncertainty {
+		return u.Equivalent(i)
+	}
 	o, ok := other.(Interval)
 	if !ok {
 		return false

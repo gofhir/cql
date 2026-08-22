@@ -113,12 +113,21 @@ func TestProductCompoundsUnits(t *testing.T) {
 //
 // A variance is in the square of the unit and its root is back in the original,
 // which is why these do not share a return type.
+//
+// PopulationStdDev was the fifth, and this test not naming it is why it stayed
+// broken: it went on answering the bare number 0 while the other four were fixed,
+// so PopulationVariance said 1 'mg2' and its own square root said 0. All five are
+// listed now.
 func TestSpreadAggregatesUnderstandQuantities(t *testing.T) {
 	for _, tt := range []struct{ expr, want string }{
 		{`Variance({ 1 'mg', 2 'mg', 3 'mg' })`, "1 'mg2'"},
 		{`Variance({ 1 'mg', 2 'mg' })`, "0.5 'mg2'"},
 		{`PopulationVariance({ 1 'mg', 3 'mg' })`, "1 'mg2'"},
 		{`StdDev({ 1 'mg', 2 'mg', 3 'mg' })`, "1 'mg'"},
+
+		// The root of PopulationVariance's 1 'mg2', in the original unit.
+		{`PopulationStdDev({ 1 'mg', 3 'mg' })`, "1 'mg'"},
+		{`PopulationStdDev({ 1 'g', 1000 'mg' })`, "0 'g'"},
 
 		// Converted first, so two ways of writing the same amount have no
 		// spread between them.
