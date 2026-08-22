@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.18.0](https://github.com/gofhir/cql/compare/v1.17.0...v1.18.0) (2026-08-22)
+
+
+### Features
+
+* **eval:** tell a value we could not pin down apart from an interval ([#53](https://github.com/gofhir/cql/issues/53)) ([9310a0b](https://github.com/gofhir/cql/commit/9310a0bf2afe080f32b2e4c89defbef2d8206c0e))
+
+
+### Bug Fixes
+
+* **eval:** the timing operators read instants too ([#55](https://github.com/gofhir/cql/issues/55)) ([ac51e2b](https://github.com/gofhir/cql/commit/ac51e2b69cd0874f5f1fc02c6c28b74bf1e648a8))
+* **types:** a timezone that was not written is not a precision that is missing ([#54](https://github.com/gofhir/cql/issues/54)) ([d30e181](https://github.com/gofhir/cql/commit/d30e1814914cfe65d20ceb3d3c698bf788ad29f1))
+
 ## [1.17.0](https://github.com/gofhir/cql/compare/v1.16.0...v1.17.0) (2026-08-18)
 
 
