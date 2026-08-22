@@ -58,14 +58,35 @@ the value by its JSON text instead: `"2020-03-01"` becomes a Date and
 `"2020-03-05T10:00:00Z"` a DateTime, so one Period can have endpoints of two
 different types.
 
-Measured, and worth knowing before anyone prioritizes it: no wrong answer was
-found from it. Comparisons, `during`, `overlaps`, `duration in`, and
-`difference in` all answer correctly across the boundary, and comparing a Date
-endpoint against an explicit DateTime gives null — which is what the
-specification requires of mixed precision, not a defect.
-
 `TestResultTypesAgainstTheReference` records it and does not fail, which is the
 right shape for it: the static comparison is the one that has to hold.
+
+### This entry used to say no wrong answer came of it, and there was one
+
+The claim was that comparisons, `during`, `overlaps`, `duration in` and
+`difference in` all answer correctly across the boundary. They do not:
+
+```cql
+E.period during "Measurement Period"    →  null
+```
+
+That is the comparison deciding which population a patient belongs to, and 11 of
+the 19 published eCQM libraries write it, 38 times between them.
+
+**The cause is not the mixed types.** A FHIR dateTime carrying a time must carry
+a timezone offset, so a served period reads `"2020-03-05T10:00:00Z"`, while every
+published library declares its measurement period without one. Comparing a value
+that writes an offset against one that does not reported a precision mismatch —
+even where both were specified to the same precision, which is what gave the
+diagnosis away. It was never a precision that was missing.
+
+Two things are worth keeping from how the claim came to be wrong. It was measured,
+and the measurement was real: a Date endpoint against an explicit DateTime does
+give null, and that is the specification's mixed-precision rule rather than a
+defect. What was not measured was the pair that actually occurs in production —
+both endpoints DateTime, one carrying an offset. **The probe compares types. It
+has no data, so it cannot find a wrong answer, and an entry in this file saying
+none exists is claiming something the probe was never able to check.**
 
 ## Not divergences, though the evaluated comparison lists them
 
