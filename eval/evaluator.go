@@ -33,19 +33,41 @@ func isAmbiguousComparisonErr(err error) bool {
 		strings.Contains(err.Error(), "ambiguous comparison")
 }
 
-// temporalEqualityUnknown reports whether two temporal values agree on everything
-// they share while one is specified more precisely, which leaves equality unknown.
+// temporalEquality decides equality for two temporal values the same way the
+// ordering operators decide their comparison, and reports handled=false for
+// anything that is not a pair of temporals.
 //
-// Value.Equal answers with a bool and has nowhere to say "unknown", so the question
-// is asked here instead: @2017-09-01T00:00:00 = @2017-09-01T00:00:00.000 is null in
-// CQL, the same answer the ordering operators give for that pair. Non-temporal
-// values are none of this function's business and always compare as they did.
-func temporalEqualityUnknown(left, right fptypes.Value) bool {
+// It exists because Value.Equal answers with a bool and has nowhere to say
+// "unknown": @2017-09-01T00:00:00 = @2017-09-01T00:00:00.000 is null in CQL, the
+// answer the ordering operators already give for that pair.
+//
+// It returns the comparison as well as the uncertainty, which is what fixed a
+// contradiction. Equal reads the types and Compare reads the values, so a Date
+// and a DateTime naming the same day to the same precision were ordered as equal
+// and reported as unequal:
+//
+//	@2020-03-01 <  @2020-03-01T   false     — not less
+//	@2020-03-01 >  @2020-03-01T   false     — not greater
+//	@2020-03-01 <= @2020-03-01T   true      — less or equal
+//	@2020-03-01 >= @2020-03-01T   true      — greater or equal
+//	@2020-03-01 =  @2020-03-01T   false     ← cannot be
+//
+// Four operators placed the pair as equal and the fifth disagreed. There is no
+// case in the conformance corpus comparing a Date against a DateTime, so nothing
+// external settles it — and nothing needs to, because the engine's own answers do.
+// This is how v1.15.2 settled interval equality too.
+func temporalEquality(left, right fptypes.Value) (fptypes.Value, bool) {
 	if !fptypes.IsTemporal(left) || !fptypes.IsTemporal(right) {
-		return false
+		return nil, false
 	}
-	_, err := cqltypes.CompareTemporal(left, right)
-	return isAmbiguousComparisonErr(err)
+	cmp, err := cqltypes.CompareTemporal(left, right)
+	if isAmbiguousComparisonErr(err) {
+		return nil, true // unknown: they agree as far as both are specified
+	}
+	if err != nil {
+		return nil, false // not this function's to answer
+	}
+	return fptypes.NewBoolean(cmp == 0), true
 }
 
 // calendarUCUMQuantities reports whether two values are quantities measured in a
@@ -756,8 +778,11 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return tupleEqual(lt, rt)
 			}
 		}
-		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
+		if calendarUCUMQuantities(left, right) {
 			return nil, nil
+		}
+		if res, handled := temporalEquality(left, right); handled {
+			return res, nil
 		}
 		if res, handled := uncertainEquality(left, right); handled {
 			return res, nil
@@ -776,8 +801,14 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return fptypes.NewBoolean(!isTrue(eq)), nil
 			}
 		}
-		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
+		if calendarUCUMQuantities(left, right) {
 			return nil, nil
+		}
+		if res, handled := temporalEquality(left, right); handled {
+			if res == nil {
+				return nil, nil
+			}
+			return fptypes.NewBoolean(!isTrue(res)), nil
 		}
 		if res, handled := uncertainEquality(left, right); handled {
 			if res == nil {
@@ -1161,6 +1192,25 @@ func cqlEquivalent(left, right fptypes.Value) bool {
 		lq := left.(fptypes.Quantity)
 		rq := right.(fptypes.Quantity)
 		return lq.Value().Equal(rq.Value())
+	}
+	// Equivalence cannot differ from equality about whether a Date and a DateTime
+	// name the same day — that is a question about the values, not about null.
+	//
+	// Where it does differ is the answer it gives when equality is unknown.
+	// "Equivalence never yields null in CQL, whatever the precisions", and
+	// CompareTemporal reports the mismatch precisely when every component both
+	// values specify agrees, so unknown here means equivalent:
+	//
+	//	@2017-09-01T00:00:00 =  @2017-09-01T00:00:00.000   null
+	//	@2017-09-01T00:00:00 ~  @2017-09-01T00:00:00.000   true
+	//
+	// A first attempt read unknown as false, which is the opposite, and the test
+	// that carries this policy is what said so.
+	if res, handled := temporalEquality(left, right); handled {
+		if res == nil {
+			return true
+		}
+		return isTrue(res)
 	}
 	return left.Equivalent(right)
 }
