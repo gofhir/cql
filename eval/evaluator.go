@@ -2550,6 +2550,17 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		// The last of the aggregates that read a Quantity as zero. See
+		// geometricMeanOfQuantities for why that showed up as null.
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return geometricMeanOfQuantities(quantities)
+		}
+		if _, found := uncertainOperands(c); found {
+			return nil, undefinedOverUncertainty("GeometricMean")
+		}
 		return funcs.GeometricMean(c), nil
 	case "tail":
 		src, err := resolveSource()

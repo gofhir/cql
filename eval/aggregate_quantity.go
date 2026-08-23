@@ -156,6 +156,50 @@ func stdDevOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Val
 	return fptypes.NewQuantityFromDecimal(root, quantities[0].Unit()), nil
 }
 
+// geometricMeanOfQuantities is the nth root of the product, which comes back in
+// the original unit: n values in mg multiply to a product in mg^n, and the nth
+// root of that is mg again.
+//
+// This was the last aggregate that did not understand a Quantity, and it was
+// recorded as deliberately left out — "returns null, which does not lie". It did
+// lie, by accident. numericVal reports zero for a Quantity, funcs.GeometricMean
+// guards non-positive values because the geometric mean of zero is undefined, so
+// the dose was read as zero and the zero produced the null. Had the conversion
+// answered 1 the aggregate would have returned a number.
+//
+// Units are brought together first, the way Sum and StdDev bring them together,
+// so two spellings of one amount have that amount as their geometric mean.
+func geometricMeanOfQuantities(quantities []fptypes.Quantity) (fptypes.Value, error) {
+	unit := quantities[0].Unit()
+	product := decimal.NewFromInt(1)
+	for _, q := range quantities {
+		converted := q
+		if q.Unit() != unit {
+			c, ok := q.ConvertTo(unit)
+			if !ok {
+				return nil, fmt.Errorf("incompatible units: cannot take a geometric mean over %q and %q",
+					unit, q.Unit())
+			}
+			converted = c
+		}
+		// A geometric mean is not defined where a value is not positive, and the
+		// numeric path answers null for that. A quantity must not answer where a
+		// plain number would not.
+		if converted.Value().Sign() <= 0 {
+			return nil, nil
+		}
+		product = product.Mul(converted.Value())
+	}
+
+	// Through float64 and rounded to 8 places, the same way stdDevOfQuantities
+	// takes its root, so a quantity and a plain number do not disagree in the
+	// last digits over the same figures.
+	f, _ := product.Float64()
+	root := math.Pow(f, 1.0/float64(len(quantities)))
+	return fptypes.NewQuantityFromDecimal(
+		trimTrailingZeros(decimal.NewFromFloat(root).Round(8)), unit), nil
+}
+
 // meanQuantity is the average, kept separate because variance needs it before
 // it can measure anything.
 func meanQuantity(quantities []fptypes.Quantity) (fptypes.Quantity, error) {
