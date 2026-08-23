@@ -320,12 +320,30 @@ func (i Interval) containsBound(val fptypes.Value, closed, isLow bool) (bool, er
 
 // helpers
 
+// valuesEqual is where a list, a tuple, a ratio and an interval boundary all
+// decide whether two of their elements are the same, which is why the temporal
+// rule belongs here rather than at each of them.
+//
+// Value.Equal compares types, so a Date and a DateTime naming the same day were
+// unequal — and fixing that for the `=` operator alone left every composite
+// holding one contradicting the operator, in the same shape the fix was argued
+// from:
+//
+//	start of A = start of B   true
+//	end of A   = end of B     true
+//	A = B                     false
+//
+// Also list equality, `in`, `distinct`, `IndexOf` and tuples, all of which read
+// their elements through here.
 func valuesEqual(a, b fptypes.Value) bool {
 	if a == nil && b == nil {
 		return true
 	}
 	if a == nil || b == nil {
 		return false
+	}
+	if equal, decided := temporalValuesEqual(a, b); decided {
+		return equal
 	}
 	return a.Equal(b)
 }
@@ -337,7 +355,33 @@ func valuesEquivalent(a, b fptypes.Value) bool {
 	if a == nil || b == nil {
 		return false
 	}
+	if equal, decided := temporalValuesEqual(a, b); decided {
+		return equal
+	}
 	return a.Equivalent(b)
+}
+
+// TemporalValuesEqual is temporalValuesEqual, exported so that the equality
+// paths in eval — list membership, distinct, IndexOf, tuple equality — reach the
+// same decision. They hold the same kinds of value and must not disagree with a
+// list about whether two of them are the same.
+func TemporalValuesEqual(a, b fptypes.Value) (equal, decided bool) {
+	return temporalValuesEqual(a, b)
+}
+
+// temporalValuesEqual answers equality for two temporals by comparing them, and
+// reports decided=false for anything else — including a pair the comparison
+// cannot settle, which is left to answer as it did before. There is no null to
+// return here: a list either holds a value or it does not.
+func temporalValuesEqual(a, b fptypes.Value) (equal, decided bool) {
+	if !fptypes.IsTemporal(a) || !fptypes.IsTemporal(b) {
+		return false, false
+	}
+	cmp, err := CompareTemporal(a, b)
+	if err != nil {
+		return false, false
+	}
+	return cmp == 0, true
 }
 
 func compareValues(a, b fptypes.Value) (int, error) {

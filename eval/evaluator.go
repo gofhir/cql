@@ -33,19 +33,41 @@ func isAmbiguousComparisonErr(err error) bool {
 		strings.Contains(err.Error(), "ambiguous comparison")
 }
 
-// temporalEqualityUnknown reports whether two temporal values agree on everything
-// they share while one is specified more precisely, which leaves equality unknown.
+// temporalEquality decides equality for two temporal values the same way the
+// ordering operators decide their comparison, and reports handled=false for
+// anything that is not a pair of temporals.
 //
-// Value.Equal answers with a bool and has nowhere to say "unknown", so the question
-// is asked here instead: @2017-09-01T00:00:00 = @2017-09-01T00:00:00.000 is null in
-// CQL, the same answer the ordering operators give for that pair. Non-temporal
-// values are none of this function's business and always compare as they did.
-func temporalEqualityUnknown(left, right fptypes.Value) bool {
+// It exists because Value.Equal answers with a bool and has nowhere to say
+// "unknown": @2017-09-01T00:00:00 = @2017-09-01T00:00:00.000 is null in CQL, the
+// answer the ordering operators already give for that pair.
+//
+// It returns the comparison as well as the uncertainty, which is what fixed a
+// contradiction. Equal reads the types and Compare reads the values, so a Date
+// and a DateTime naming the same day to the same precision were ordered as equal
+// and reported as unequal:
+//
+//	@2020-03-01 <  @2020-03-01T   false     — not less
+//	@2020-03-01 >  @2020-03-01T   false     — not greater
+//	@2020-03-01 <= @2020-03-01T   true      — less or equal
+//	@2020-03-01 >= @2020-03-01T   true      — greater or equal
+//	@2020-03-01 =  @2020-03-01T   false     ← cannot be
+//
+// Four operators placed the pair as equal and the fifth disagreed. There is no
+// case in the conformance corpus comparing a Date against a DateTime, so nothing
+// external settles it — and nothing needs to, because the engine's own answers do.
+// This is how v1.15.2 settled interval equality too.
+func temporalEquality(left, right fptypes.Value) (fptypes.Value, bool) {
 	if !fptypes.IsTemporal(left) || !fptypes.IsTemporal(right) {
-		return false
+		return nil, false
 	}
-	_, err := cqltypes.CompareTemporal(left, right)
-	return isAmbiguousComparisonErr(err)
+	cmp, err := cqltypes.CompareTemporal(left, right)
+	if isAmbiguousComparisonErr(err) {
+		return nil, true // unknown: they agree as far as both are specified
+	}
+	if err != nil {
+		return nil, false // not this function's to answer
+	}
+	return fptypes.NewBoolean(cmp == 0), true
 }
 
 // calendarUCUMQuantities reports whether two values are quantities measured in a
@@ -756,8 +778,11 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return tupleEqual(lt, rt)
 			}
 		}
-		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
+		if calendarUCUMQuantities(left, right) {
 			return nil, nil
+		}
+		if res, handled := temporalEquality(left, right); handled {
+			return res, nil
 		}
 		if res, handled := uncertainEquality(left, right); handled {
 			return res, nil
@@ -776,8 +801,14 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return fptypes.NewBoolean(!isTrue(eq)), nil
 			}
 		}
-		if temporalEqualityUnknown(left, right) || calendarUCUMQuantities(left, right) {
+		if calendarUCUMQuantities(left, right) {
 			return nil, nil
+		}
+		if res, handled := temporalEquality(left, right); handled {
+			if res == nil {
+				return nil, nil
+			}
+			return fptypes.NewBoolean(!isTrue(res)), nil
 		}
 		if res, handled := uncertainEquality(left, right); handled {
 			if res == nil {
@@ -1122,6 +1153,21 @@ func nullSafeExclude(lc, rc fptypes.Collection) fptypes.Collection {
 }
 
 // nullSafeContains checks if collection contains value, handling nil properly.
+// sameValue is element equality for the collection and tuple operations, which
+// have no null to return and so cannot use the `=` operator directly.
+//
+// It exists because fixing `=` for a Date against a DateTime left every operation
+// that holds values disagreeing with it: `{@2020-03-01} = {@2020-03-01T}` was
+// false, `in` did not match, `distinct` kept both, and IndexOf returned -1. The
+// decision comes from cqltypes so that lists inside types and lists here cannot
+// answer differently.
+func sameValue(a, b fptypes.Value) bool {
+	if equal, decided := cqltypes.TemporalValuesEqual(a, b); decided {
+		return equal
+	}
+	return a.Equal(b)
+}
+
 func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
 	if v == nil {
 		for _, item := range c {
@@ -1132,7 +1178,7 @@ func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
 		return false
 	}
 	for _, item := range c {
-		if item != nil && item.Equal(v) {
+		if item != nil && sameValue(item, v) {
 			return true
 		}
 	}
@@ -1161,6 +1207,23 @@ func cqlEquivalent(left, right fptypes.Value) bool {
 		lq := left.(fptypes.Quantity)
 		rq := right.(fptypes.Quantity)
 		return lq.Value().Equal(rq.Value())
+	}
+	// Equivalence cannot differ from equality about whether a Date and a DateTime
+	// name the same day — that is a question about the values, not about null. So it
+	// takes the shared decision where there is one, and only there.
+	//
+	// A first version took it everywhere, reading "unknown" as equivalent on the
+	// strength of a test expecting `@2017-09-01T00:00:00 ~ @2017-09-01T00:00:00.000`
+	// to be true. That test held for a different reason — fhirpath folds seconds and
+	// milliseconds into one precision, so Equivalent already matched the instant —
+	// and it licensed nothing about a year against a day. The generalization made
+	// every precision gap equivalent (`@2020-06-15 ~ @2020` became true, which makes
+	// `~` intransitive) and made an unwritten timezone offset equivalent too, for
+	// pairs whose instants may be 26 hours apart.
+	//
+	// Where equality is unknown, equivalence answers what it always answered.
+	if res, handled := temporalEquality(left, right); handled && res != nil {
+		return isTrue(res)
 	}
 	return left.Equivalent(right)
 }
@@ -1233,7 +1296,9 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 		if av == nil || bv == nil {
 			return nil, nil // one null, one not → indeterminate
 		}
-		if !av.Equal(bv) {
+		// Through sameValue, so a tuple holding a Date does not disagree with the
+		// `=` operator about a tuple holding the same day as a DateTime.
+		if !sameValue(av, bv) {
 			return fptypes.NewBoolean(false), nil
 		}
 	}
@@ -2291,7 +2356,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if _, isList := src.(cqltypes.List); isList {
 				c := toCollection(src)
 				for i, item := range c {
-					if item != nil && item.Equal(arg) {
+					if item != nil && sameValue(item, arg) {
 						return fptypes.NewInteger(int64(i)), nil
 					}
 				}
@@ -2550,6 +2615,17 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
+		// The last of the aggregates that read a Quantity as zero. See
+		// geometricMeanOfQuantities for why that showed up as null.
+		if quantities, found, err := quantityOperands(c); found {
+			if err != nil {
+				return nil, err
+			}
+			return geometricMeanOfQuantities(quantities)
+		}
+		if _, found := uncertainOperands(c); found {
+			return nil, undefinedOverUncertainty("GeometricMean")
+		}
 		return funcs.GeometricMean(c), nil
 	case "tail":
 		src, err := resolveSource()
@@ -5026,7 +5102,11 @@ func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found, 
 		if item == nil {
 			continue
 		}
-		if item.Equal(val) {
+		// sameValue, so the timing phrases over a list — includes, included in,
+		// during, properly includes — agree with `in` and `contains` about
+		// whether a Date and a DateTime name the same day. Routing those two and
+		// not these left them contradicting each other.
+		if sameValue(item, val) {
 			return true, false
 		}
 		// Check for ambiguous comparison (different precisions in temporal types)
