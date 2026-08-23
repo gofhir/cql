@@ -255,3 +255,59 @@ func TestTimeIsNotADateTimeMissingAnOffset(t *testing.T) {
 		}
 	}
 }
+
+// TestOffsetMismatchIsRecognizedWhicheverWayUpstreamReportsIt guards a break that
+// would have arrived with a dependency bump and passed the whole conformance
+// corpus on the way in.
+//
+// fhirpath used to report an absent timezone offset with its precision-mismatch
+// sentinel, which is a false diagnosis — the precisions usually agree — and that
+// is fixed upstream: an offset mismatch has its own sentinel now, and
+// IsUnknownTemporalComparison asks about both.
+//
+// This engine recognized only the precision sentinel. Measured against the merge
+// commit before any release existed, that turned:
+//
+//	Z < bare    from null into a raised error
+//	Min / Max   from a value into a raised error
+//	Z = bare    from null into TRUE
+//
+// The last is a wrong answer rather than a loud failure. And the conformance
+// corpus stays at 2084 passing through all of it, because no case in it pairs a
+// written offset with a missing one — so nothing would have caught it.
+//
+// The assertions below are about behavior rather than about which sentinel came
+// back, so they hold on both versions and will keep holding when the text match
+// they currently rely on is replaced by IsUnknownTemporalComparison.
+func TestOffsetMismatchIsRecognizedWhicheverWayUpstreamReportsIt(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		// Inside the window: no answer, and not an error either.
+		{"@2020-03-05T10:00:00Z < @2020-03-05T11:00:00.0", "null"},
+		{"@2020-03-05T10:00:00Z = @2020-03-05T10:00:00.0", "null"},
+		{"@2020-03-05T10:00:00Z > @2020-03-05T11:00:00.0", "null"},
+
+		// Outside it: an answer, from the compensation rather than from upstream.
+		{"@2020-03-05T10:00:00Z < @2021-01-01T00:00:00.0", "true"},
+		{"@2020-03-05T10:00:00Z > @2019-01-01T00:00:00.0", "true"},
+
+		// And the aggregates still place the pair instead of failing.
+		{"Min({@2020-03-05T10:00:00Z, @2021-01-01T00:00:00.0}) = @2020-03-05T10:00:00Z", "true"},
+		{"Max({@2020-03-05T10:00:00Z, @2021-01-01T00:00:00.0}) = @2021-01-01T00:00:00.0", "true"},
+	} {
+		got, err := evalCQL(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s raised %v — an unplaceable comparison has no answer, "+
+				"which is not the same as failing", tt.expr, err)
+			continue
+		}
+		if tt.want == "null" {
+			if got != nil {
+				t.Errorf("%s = %v, want null", tt.expr, got)
+			}
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
