@@ -1153,6 +1153,21 @@ func nullSafeExclude(lc, rc fptypes.Collection) fptypes.Collection {
 }
 
 // nullSafeContains checks if collection contains value, handling nil properly.
+// sameValue is element equality for the collection and tuple operations, which
+// have no null to return and so cannot use the `=` operator directly.
+//
+// It exists because fixing `=` for a Date against a DateTime left every operation
+// that holds values disagreeing with it: `{@2020-03-01} = {@2020-03-01T}` was
+// false, `in` did not match, `distinct` kept both, and IndexOf returned -1. The
+// decision comes from cqltypes so that lists inside types and lists here cannot
+// answer differently.
+func sameValue(a, b fptypes.Value) bool {
+	if equal, decided := cqltypes.TemporalValuesEqual(a, b); decided {
+		return equal
+	}
+	return a.Equal(b)
+}
+
 func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
 	if v == nil {
 		for _, item := range c {
@@ -1163,7 +1178,7 @@ func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
 		return false
 	}
 	for _, item := range c {
-		if item != nil && item.Equal(v) {
+		if item != nil && sameValue(item, v) {
 			return true
 		}
 	}
@@ -1194,22 +1209,20 @@ func cqlEquivalent(left, right fptypes.Value) bool {
 		return lq.Value().Equal(rq.Value())
 	}
 	// Equivalence cannot differ from equality about whether a Date and a DateTime
-	// name the same day — that is a question about the values, not about null.
+	// name the same day — that is a question about the values, not about null. So it
+	// takes the shared decision where there is one, and only there.
 	//
-	// Where it does differ is the answer it gives when equality is unknown.
-	// "Equivalence never yields null in CQL, whatever the precisions", and
-	// CompareTemporal reports the mismatch precisely when every component both
-	// values specify agrees, so unknown here means equivalent:
+	// A first version took it everywhere, reading "unknown" as equivalent on the
+	// strength of a test expecting `@2017-09-01T00:00:00 ~ @2017-09-01T00:00:00.000`
+	// to be true. That test held for a different reason — fhirpath folds seconds and
+	// milliseconds into one precision, so Equivalent already matched the instant —
+	// and it licensed nothing about a year against a day. The generalization made
+	// every precision gap equivalent (`@2020-06-15 ~ @2020` became true, which makes
+	// `~` intransitive) and made an unwritten timezone offset equivalent too, for
+	// pairs whose instants may be 26 hours apart.
 	//
-	//	@2017-09-01T00:00:00 =  @2017-09-01T00:00:00.000   null
-	//	@2017-09-01T00:00:00 ~  @2017-09-01T00:00:00.000   true
-	//
-	// A first attempt read unknown as false, which is the opposite, and the test
-	// that carries this policy is what said so.
-	if res, handled := temporalEquality(left, right); handled {
-		if res == nil {
-			return true
-		}
+	// Where equality is unknown, equivalence answers what it always answered.
+	if res, handled := temporalEquality(left, right); handled && res != nil {
 		return isTrue(res)
 	}
 	return left.Equivalent(right)
@@ -1283,7 +1296,9 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 		if av == nil || bv == nil {
 			return nil, nil // one null, one not → indeterminate
 		}
-		if !av.Equal(bv) {
+		// Through sameValue, so a tuple holding a Date does not disagree with the
+		// `=` operator about a tuple holding the same day as a DateTime.
+		if !sameValue(av, bv) {
 			return fptypes.NewBoolean(false), nil
 		}
 	}
@@ -2341,7 +2356,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if _, isList := src.(cqltypes.List); isList {
 				c := toCollection(src)
 				for i, item := range c {
-					if item != nil && item.Equal(arg) {
+					if item != nil && sameValue(item, arg) {
 						return fptypes.NewInteger(int64(i)), nil
 					}
 				}

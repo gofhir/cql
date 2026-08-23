@@ -117,25 +117,91 @@ func GeometricMean(c fptypes.Collection) fptypes.Value {
 	if c.Empty() {
 		return nil
 	}
-	product := 1.0
-	count := 0
+	var values []float64
 	for _, item := range c {
 		if item == nil {
 			continue
 		}
-		n := numericVal(item)
-		f, _ := n.Float64()
-		if f <= 0 {
-			return nil // geometric mean undefined for non-positive values
-		}
-		product *= f
-		count++
+		f, _ := numericVal(item).Float64()
+		values = append(values, f)
 	}
-	if count == 0 {
+	if len(values) == 0 {
 		return nil
 	}
-	result := math.Pow(product, 1.0/float64(count))
-	return fptypes.NewDecimalFromFloat(result)
+	root, ok := GeometricMeanOfFloats(values)
+	if !ok {
+		return nil
+	}
+	return decimalToValue(GeometricMeanRound(root))
+}
+
+// GeometricMeanRound trims the noise the float arithmetic leaves in the last
+// bits, at twelve significant digits.
+//
+// Significant digits rather than decimal places, which is the distinction that
+// matters here. Rounding to a fixed number of places turned a geometric mean of
+// 1e-9 into zero, while leaving the value alone entirely reported the cube root
+// of 8 as 1.9999999999999998 — noise from the method, not a figure from the data.
+// Scaling the rounding to the magnitude handles both.
+//
+// Both the numeric and the Quantity path round here, so the two cannot drift
+// apart in their last digits.
+func GeometricMeanRound(root float64) decimal.Decimal {
+	d := decimal.NewFromFloat(root)
+	if d.IsZero() {
+		return d
+	}
+	// The exponent of the leading digit, so the rounding follows the magnitude.
+	leading := int32(math.Floor(math.Log10(math.Abs(root))))
+	rounded := d.Round(significantDigits - 1 - leading)
+	// Drop the zeros the rounding leaves, so a clean answer prints as one.
+	for rounded.Exponent() < 0 {
+		shorter := rounded.Truncate(-rounded.Exponent() - 1)
+		if !shorter.Equal(rounded) {
+			break
+		}
+		rounded = shorter
+	}
+	return rounded
+}
+
+// Twelve digits keeps far more of the figure than the eight decimal places a
+// first attempt used, while still landing on 2 for the cube root of 8.
+const significantDigits = 12
+
+// GeometricMeanOfFloats is the nth root of the product, reporting ok=false where
+// the geometric mean is not defined — a value of zero or less.
+//
+// It is exported so that the Quantity aggregate computes the same figures by
+// calling it rather than by reimplementing it. Claiming that a quantity and a
+// plain number agree in their digits is not the same as their sharing the
+// arithmetic that produces those digits, and a reimplementation had already
+// drifted: it rounded absolutely to 8 places, which turned a dose of 1e-9 into
+// zero.
+//
+// The product is taken directly where it fits a float64, which is the common case
+// and the exact one. Where it does not, the logs are summed instead: multiplying
+// 400 values of 100 overflows to +Inf, and +Inf reached decimal.NewFromFloat,
+// which panics rather than erroring — a panic with nothing to recover it, out of
+// an aggregate a measure could reach with about 110 patients.
+func GeometricMeanOfFloats(values []float64) (float64, bool) {
+	product := 1.0
+	for _, v := range values {
+		if v <= 0 {
+			return 0, false
+		}
+		product *= v
+	}
+	if !math.IsInf(product, 0) && product != 0 {
+		return math.Pow(product, 1.0/float64(len(values))), true
+	}
+	// Summing logs holds a product no float64 can: log turns the multiplication
+	// into an addition, and the mean of the logs exponentiates back.
+	sum := 0.0
+	for _, v := range values {
+		sum += math.Log(v)
+	}
+	return math.Exp(sum / float64(len(values))), true
 }
 
 // First returns the first element of a collection.

@@ -7,6 +7,8 @@ import (
 	"github.com/shopspring/decimal"
 
 	fptypes "github.com/gofhir/fhirpath/types"
+
+	"github.com/gofhir/cql/funcs"
 )
 
 // The aggregates did not understand Quantity, and the way they did not was the
@@ -164,14 +166,21 @@ func stdDevOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Val
 // recorded as deliberately left out — "returns null, which does not lie". It did
 // lie, by accident. numericVal reports zero for a Quantity, funcs.GeometricMean
 // guards non-positive values because the geometric mean of zero is undefined, so
-// the dose was read as zero and the zero produced the null. Had the conversion
-// answered 1 the aggregate would have returned a number.
+// the dose was read as zero and the zero produced the null.
 //
-// Units are brought together first, the way Sum and StdDev bring them together,
-// so two spellings of one amount have that amount as their geometric mean.
+// The arithmetic is funcs.GeometricMeanOfFloats, the same call the numeric path
+// makes. A first version reimplemented it and drifted immediately: it rounded
+// absolutely to 8 places, so two doses of 1e-9 'mg' had a geometric mean of
+// 0 'mg' — a dose that was never measured, out of the very file that exists to
+// stop that — and it disagreed with the plain numbers in the last digits while
+// claiming to agree. Sharing the call is what makes the agreement true rather
+// than asserted.
 func geometricMeanOfQuantities(quantities []fptypes.Quantity) (fptypes.Value, error) {
+	// Units first, and all of them, before any value is looked at. Checking signs
+	// as it went meant a zero short-circuited before a later element's unit was
+	// ever read, so mg with s was an error in one order and null in the other.
 	unit := quantities[0].Unit()
-	product := decimal.NewFromInt(1)
+	values := make([]float64, 0, len(quantities))
 	for _, q := range quantities {
 		converted := q
 		if q.Unit() != unit {
@@ -182,22 +191,18 @@ func geometricMeanOfQuantities(quantities []fptypes.Quantity) (fptypes.Value, er
 			}
 			converted = c
 		}
-		// A geometric mean is not defined where a value is not positive, and the
-		// numeric path answers null for that. A quantity must not answer where a
-		// plain number would not.
-		if converted.Value().Sign() <= 0 {
-			return nil, nil
-		}
-		product = product.Mul(converted.Value())
+		f, _ := converted.Value().Float64()
+		values = append(values, f)
 	}
 
-	// Through float64 and rounded to 8 places, the same way stdDevOfQuantities
-	// takes its root, so a quantity and a plain number do not disagree in the
-	// last digits over the same figures.
-	f, _ := product.Float64()
-	root := math.Pow(f, 1.0/float64(len(quantities)))
-	return fptypes.NewQuantityFromDecimal(
-		trimTrailingZeros(decimal.NewFromFloat(root).Round(8)), unit), nil
+	root, ok := funcs.GeometricMeanOfFloats(values)
+	if !ok {
+		// A value of zero or less has no geometric mean, and the numeric path
+		// answers null for that. A quantity must not answer where a number
+		// would not.
+		return nil, nil
+	}
+	return fptypes.NewQuantityFromDecimal(funcs.GeometricMeanRound(root), unit), nil
 }
 
 // meanQuantity is the average, kept separate because variance needs it before
