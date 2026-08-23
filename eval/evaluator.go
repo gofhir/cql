@@ -5102,7 +5102,11 @@ func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found, 
 		if item == nil {
 			continue
 		}
-		if item.Equal(val) {
+		// sameValue, so the timing phrases over a list — includes, included in,
+		// during, properly includes — agree with `in` and `contains` about
+		// whether a Date and a DateTime name the same day. Routing those two and
+		// not these left them contradicting each other.
+		if sameValue(item, val) {
 			return true, false
 		}
 		// Check for ambiguous comparison (different precisions in temporal types)

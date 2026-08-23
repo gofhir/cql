@@ -162,3 +162,58 @@ func TestGeometricMeanChecksUnitsBeforeSigns(t *testing.T) {
 		t.Error("mg and s was answered, want an error whichever comes first")
 	}
 }
+
+// TestGeometricMeanKeepsMeasuredDigits covers two defects review found in the
+// previous round's fix, both of them mine.
+//
+// The log-sum fallback stopped the *product* overflowing but not a value that is
+// already +Inf by the time Decimal.Float64() has run, so a number beyond float64
+// range still reached decimal.NewFromFloat and still panicked — where main
+// answered null. A guard on the value, not just on the product.
+//
+// And rounding to twelve significant digits threw away digits that were measured:
+// float64 carries about fifteen, so twelve discarded three of them. The comments
+// justifying that rounding said it existed to stop a dose being reported that was
+// never measured, and it was doing exactly that at the other end of the scale —
+// 1000000000001 'mg' came back 1000000000000 'mg'.
+func TestGeometricMeanKeepsMeasuredDigits(t *testing.T) {
+	// Fifteen significant digits is what a float64 can carry, so nothing inside
+	// that may be dropped.
+	for _, tt := range []struct{ expr, want string }{
+		{`GeometricMean({ 1000000000001 'mg' })`, "1000000000001 'mg'"},
+		{`GeometricMean({ 12345678901234.5, 12345678901234.5 })`, "12345678901234.5"},
+		// And the noise beyond it still goes: the cube root of 8 is 2, not
+		// 1.9999999999999998.
+		{`GeometricMean({ 1, 2, 4 })`, "2"},
+		{`GeometricMean({ 1 'mg', 2 'mg', 4 'mg' })`, "2 'mg'"},
+	} {
+		got, err := evalAggregate(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// A value larger than float64 can hold has no geometric mean this can
+	// compute, and null is what main answered. What it must not do is panic.
+	huge := strings.Repeat("9", 401)
+	for _, expr := range []string{
+		"GeometricMean({" + huge + " 'mg'})",
+		"GeometricMean({" + huge + "})",
+		"GeometricMean({2 'mg', " + huge + " 'mg'})",
+	} {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("%s panicked: %v", expr[:34]+"…", r)
+				}
+			}()
+			if got, err := evalAggregate(t, expr); err == nil && got != "null" {
+				t.Errorf("%s = %s, want null or an error", expr[:34]+"…", got)
+			}
+		}()
+	}
+}

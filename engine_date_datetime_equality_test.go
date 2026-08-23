@@ -251,3 +251,37 @@ func TestEqualityPropagatesToCompositeValues(t *testing.T) {
 		}
 	}
 }
+
+// TestTimingPhraseMembershipAgreesWithIn is the third round of the same mistake,
+// and worth naming as such: fixing equality in one place and leaving the operator
+// beside it disagreeing.
+//
+// `in` and `contains` were routed through the shared decision. The timing phrases
+// over a list — `includes`, `included in`, `during`, `properly includes` — go
+// through listContainsValueTriState, which was not, so they answered false where
+// `in` answered true. On main all of them agreed, so this was introduced by the
+// fix rather than found by it.
+func TestTimingPhraseMembershipAgreesWithIn(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"@2020-03-01 in {@2020-03-01T}", "true"},
+		{"{@2020-03-01T} contains @2020-03-01", "true"},
+		{"{@2020-03-01T} includes @2020-03-01", "true"},
+		{"@2020-03-01 included in {@2020-03-01T}", "true"},
+		{"@2020-03-01 during {@2020-03-01T}", "true"},
+		{"{@2020-03-01T, @2020-03-05T} properly includes @2020-03-01", "true"},
+
+		// And a day that is genuinely absent stays absent for all of them.
+		{"@2020-03-02 in {@2020-03-01T}", "false"},
+		{"{@2020-03-01T} includes @2020-03-02", "false"},
+		{"@2020-03-02 during {@2020-03-01T}", "false"},
+	} {
+		got, err := evalCQL(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
