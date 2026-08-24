@@ -29,8 +29,29 @@ func isAmbiguousComparisonErr(err error) bool {
 	if err == nil {
 		return false
 	}
-	return errors.Is(err, fptypes.ErrPrecisionMismatch) ||
-		strings.Contains(err.Error(), "ambiguous comparison")
+	if errors.Is(err, fptypes.ErrPrecisionMismatch) {
+		return true
+	}
+	// An absent timezone offset is the other reason a temporal comparison has no
+	// answer, and upstream used to report it with the precision sentinel — a false
+	// diagnosis, since the precisions usually agree. That is fixed in fhirpath:
+	// there is a distinct ErrOffsetMismatch, and IsUnknownTemporalComparison asks
+	// about both.
+	//
+	// Matched by text rather than by that helper, because the helper does not
+	// exist in v1.8.0 and this has to work on the version go.mod names as well as
+	// the one after it. Replace both lines below with
+	// fptypes.IsUnknownTemporalComparison once the minimum carries it.
+	//
+	// Worth having measured before the release rather than after: against the
+	// merge commit, matching only the precision sentinel made `Z < bare` raise the
+	// error instead of answering null, made Min and Max raise it, and made
+	// `Z = bare` answer true where it had answered null. The conformance corpus
+	// stays green through all of that, because no case in it pairs a written
+	// offset with a missing one.
+	msg := err.Error()
+	return strings.Contains(msg, "timezone offset") ||
+		strings.Contains(msg, "ambiguous comparison")
 }
 
 // temporalEquality decides equality for two temporal values the same way the
