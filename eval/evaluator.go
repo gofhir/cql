@@ -4001,9 +4001,19 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 				if err != nil {
 					return nil, err
 				}
-				if val != nil {
-					results = append(results, val)
-				}
+				// Appended whatever it evaluated to, null included. A query
+				// produces one element per source row, and dropping the nulls
+				// made the list shorter than the thing it describes: three
+				// observations where one has no value returned two elements, so
+				// Count answered 2.
+				//
+				// The two branches below never filtered, and a list written by
+				// hand keeps its nulls — `{null, true}` has two elements here.
+				// `return all` settles it: its purpose is to remove nothing,
+				// since `return` alone already means `return distinct`, so a
+				// `return all` that removes elements does the one thing the
+				// keyword rules out.
+				results = append(results, val)
 			case len(n.Sources) > 1:
 				// Multi-source query without return: produce a Tuple with all aliases
 				tupleElems := make(map[string]fptypes.Value, len(n.Sources))
