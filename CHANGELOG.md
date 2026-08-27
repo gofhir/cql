@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.18.1](https://github.com/gofhir/cql/compare/v1.18.0...v1.18.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* **eval:** GeometricMean over quantities, and Date = DateTime ([#58](https://github.com/gofhir/cql/issues/58)) ([8923897](https://github.com/gofhir/cql/commit/8923897040adbd2847ecd6b1343d411dbb5f9927))
+* **eval:** recognize an offset mismatch however upstream reports it ([#59](https://github.com/gofhir/cql/issues/59)) ([62a53ba](https://github.com/gofhir/cql/commit/62a53bac330d50349ebcd41029bb5f83cd987a9b))
+
 ## [1.18.0](https://github.com/gofhir/cql/compare/v1.17.0...v1.18.0) (2026-08-22)
 
 
