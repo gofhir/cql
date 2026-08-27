@@ -32,6 +32,16 @@ jobs:
           # touched nothing, and makes CI disagree with whatever developers run.
           version: v2.11.4
           args: --timeout=5m
+          # The action runs `golangci-lint config verify` before linting, and that
+          # fetches a JSON schema from golangci-lint.run. It has failed the Lint
+          # job three times here on a network timeout, with the code untouched and
+          # every other check green — a failure that reads like a real one and
+          # needs a rerun to clear, when the rerun works at all.
+          #
+          # Nothing is lost by skipping it: an invalid config makes the linter
+          # itself fail on the next line, locally as well as here, so the schema
+          # check only moves the error earlier at the cost of a network call.
+          verify: false
 
   test:
     name: Test
