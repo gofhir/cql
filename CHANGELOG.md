@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.2](https://github.com/gofhir/cql/compare/v1.18.1...v1.18.2) (2026-08-27)
+
+
+### Bug Fixes
+
+* **eval:** a query's return clause keeps its nulls ([#61](https://github.com/gofhir/cql/issues/61)) ([79c7581](https://github.com/gofhir/cql/commit/79c75819f5f6df081e240bfdc5436f7a746acb63))
+
 ## [1.18.1](https://github.com/gofhir/cql/compare/v1.18.0...v1.18.1) (2026-08-24)
 
 
