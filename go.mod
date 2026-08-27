@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1
-	github.com/gofhir/fhirpath v1.8.0
+	github.com/gofhir/fhirpath v1.9.0
 	github.com/shopspring/decimal v1.4.0
 )
 
