@@ -91,9 +91,15 @@ func DateTimeComponentFrom(operand fptypes.Value, component string) (fptypes.Val
 	// component, so both answer with the offset in hours.
 	case "timezone", "timezoneoffset":
 		if dt, ok := operand.(fptypes.DateTime); ok {
-			if dt.HasTZ() {
-				offset := dt.TZOffset()
-				return fptypes.NewDecimalFromFloat(float64(offset) / 60.0), nil
+			// EffectiveOffset rather than HasTZ plus TZOffset, which reported
+			// null for a value that states no offset. CQL says otherwise: where
+			// the offset was defaulted from the evaluation request, "the result
+			// of extracting the timezone offset component will be the timezone
+			// offset of the evaluation request, not null". EffectiveOffset
+			// answers for a stated offset and a defaulted one alike, and reports
+			// ok=false only when there is neither.
+			if minutes, ok := dt.EffectiveOffset(); ok {
+				return fptypes.NewDecimalFromFloat(float64(minutes) / 60.0), nil
 			}
 			return nil, nil
 		}
@@ -524,6 +530,20 @@ func nominalComponents(v fptypes.Value) []int {
 func toGoTime(v fptypes.Value) time.Time {
 	switch t := v.(type) {
 	case fptypes.DateTime:
+		// EffectiveOffset rather than ToTime alone. ToTime places a value that
+		// states no offset at UTC, which ignores any default the caller supplied —
+		// so at an evaluation offset of UTC-5 the comparison operators answered
+		// from the default while every duration here still measured from UTC. The
+		// engine said a bare value was both later than an instant and two hours
+		// earlier than it.
+		//
+		// This is the single conversion the duration and difference operators go
+		// through, which is why the fix belongs here rather than in each of them.
+		if minutes, ok := t.EffectiveOffset(); ok && !t.HasTZ() {
+			at := t.ToTime()
+			return time.Date(at.Year(), at.Month(), at.Day(), at.Hour(), at.Minute(),
+				at.Second(), at.Nanosecond(), time.FixedZone("", minutes*60))
+		}
 		return t.ToTime()
 	case fptypes.Date:
 		return t.ToTime()
