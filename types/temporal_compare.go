@@ -51,12 +51,17 @@ func temporalPartsOf(v fptypes.Value) (value temporalValue, ok bool) {
 		if precision > precMillisecond {
 			precision = precMillisecond
 		}
+		// EffectiveOffset, so an offset the caller supplied as a default counts as
+		// known. Reading HasTZ alone made this treat a defaulted value as having
+		// no offset, which sent the pair to compareAcrossAbsentOffset and its
+		// 26-hour window when the offset was in fact settled.
+		offset, hasOffset := t.EffectiveOffset()
 		return temporalValue{
 			parts: [7]int{t.Year(), lowest(t.Month()), lowest(t.Day()),
 				t.Hour(), t.Minute(), t.Second(), t.Millisecond()},
 			precision: precision,
-			hasOffset: t.HasTZ(),
-			offset:    t.TZOffset(),
+			hasOffset: hasOffset,
+			offset:    offset,
 		}, true
 	case fptypes.Date:
 		// A date carries no offset, and its precision is already on the shared scale

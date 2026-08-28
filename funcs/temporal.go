@@ -15,7 +15,13 @@ func Now() (fptypes.Value, error) {
 // the evaluation request rather than the clock's reading at the moment of the
 // call, so that every Now in one evaluation agrees with every other.
 func NowAt(t time.Time) (fptypes.Value, error) {
-	return fptypes.NewDateTime(t.UTC().Format("2006-01-02T15:04:05.000Z07:00"))
+	// Formatted in the request's own zone, not at UTC. CQL defines this as "the
+	// date and time of the start timestamp associated with the evaluation
+	// request", and converting to UTC first kept the instant while discarding the
+	// frame it was asked in — so a request at 23:30 on the 1st at UTC-5 reported
+	// 04:30 on the 2nd. The instant is the same either way; what was lost is the
+	// offset, which CQL expects to be the request's.
+	return fptypes.NewDateTime(t.Format("2006-01-02T15:04:05.000Z07:00"))
 }
 
 // Today returns the current date as a Date value.
@@ -25,7 +31,10 @@ func Today() (fptypes.Value, error) {
 
 // TodayAt returns the given instant's date. See NowAt.
 func TodayAt(t time.Time) (fptypes.Value, error) {
-	return fptypes.NewDate(t.UTC().Format("2006-01-02"))
+	// The date of the request in its own zone. At UTC this dated a late-evening
+	// request in a western zone to the following day, which is the answer a
+	// measure reads when it asks what "today" is.
+	return fptypes.NewDate(t.Format("2006-01-02"))
 }
 
 // TimeOfDay returns the current time as a Time value.
@@ -35,7 +44,8 @@ func TimeOfDay() (fptypes.Value, error) {
 
 // TimeOfDayAt returns the given instant's time of day. See NowAt.
 func TimeOfDayAt(t time.Time) (fptypes.Value, error) {
-	return fptypes.NewTime(t.UTC().Format("15:04:05.000"))
+	// The time of day of the request in its own zone. See NowAt.
+	return fptypes.NewTime(t.Format("15:04:05.000"))
 }
 
 // YearsBetween calculates the number of whole years between two dates.

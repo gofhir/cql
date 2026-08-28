@@ -157,14 +157,10 @@ func TestEquivalenceDoesNotSwallowPrecisionGaps(t *testing.T) {
 		// Nor is an offset nobody wrote down, where the written one is not UTC.
 		{"@2020-03-01T10:00:00 ~ @2020-03-01T10:00:00+05:00", "false"},
 
-		// Against Z it answers true, and that is pre-existing rather than
-		// introduced here: main answers the same, because fptypes.Equivalent
-		// reads the unwritten offset as UTC and the two then name one instant.
-		// Review reported this as a regression; measuring both sides is what
-		// showed it is not one. Left alone deliberately — `=` gives null for the
-		// same pair, and reconciling that is its own change with its own
-		// measurement, not a correction to this one.
-		{"@2020-03-01T00:00:00 ~ @2020-03-01T00:00:00Z", "true"},
+		// Against Z the answer now depends on the evaluation request's offset,
+		// since that is what a bare literal assumes — so it is pinned in
+		// TestEquivalenceAcrossOffsetsIsZoneDependent below, where the zone is
+		// fixed, rather than here where it would follow the machine's.
 
 		// The case that does hold, and the one the policy was quoted from.
 		{"@2017-09-01T00:00:00 ~ @2017-09-01T00:00:00.000", "true"},
@@ -282,6 +278,36 @@ func TestTimingPhraseMembershipAgreesWithIn(t *testing.T) {
 		}
 		if got == nil || got.String() != tt.want {
 			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
+
+// TestEquivalenceAcrossOffsetsIsZoneDependent pins a case that used to be a fixed
+// answer and is now a consequence of the evaluation request's offset.
+//
+// `@2020-03-01T00:00:00 ~ @2020-03-01T00:00:00Z` was true because a bare value
+// was read as UTC. A bare value now assumes the request's offset, so the two name
+// one instant only where that offset is UTC. Asserting it without fixing the zone
+// would make the test follow whatever machine ran it.
+func TestEquivalenceAcrossOffsetsIsZoneDependent(t *testing.T) {
+	for _, tt := range []struct {
+		offset int
+		want   string
+	}{
+		{0, "true"},   // the bare value is 00:00Z, the same instant
+		{-5, "false"}, // it is 05:00Z, five hours later
+		{9, "false"},
+	} {
+		got := evalAtZone(t, tt.offset, "@2020-03-01T00:00:00 ~ @2020-03-01T00:00:00Z")
+		if got != tt.want {
+			t.Errorf("at UTC%+d = %s, want %s", tt.offset, got, tt.want)
+		}
+	}
+
+	// Two stated offsets do not depend on the request at all.
+	for _, offset := range []int{0, -5, 9} {
+		if got := evalAtZone(t, offset, "@2020-03-01T00:00:00Z ~ @2020-03-01T00:00:00Z"); got != "true" {
+			t.Errorf("both stated at UTC%+d = %s, want true", offset, got)
 		}
 	}
 }

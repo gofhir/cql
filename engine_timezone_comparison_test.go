@@ -51,11 +51,11 @@ func TestComparisonAcrossWrittenTimezone(t *testing.T) {
 		// below.
 		{"@2020-03-05T10:00:00Z < @2020-03-07T10:00:00.0", "true"},
 
-		// Inside the window, where the answer really does depend on the offset
-		// the value was written in. Null, not a guess.
-		{"@2020-03-05T10:00:00Z < @2020-03-05T11:00:00.0", "null"},
-		{"@2020-03-05T10:00:00Z = @2020-03-05T10:00:00.0", "null"},
-		{"@2020-03-05T10:00:00Z < @2020-03-06T10:00:00.0", "null"},
+		// Cases that pair a stated offset with a bare literal are not here any
+		// more: a bare literal assumes the evaluation request's offset now, so
+		// their answers follow the zone the tests run in.
+		// TestLiteralsAssumeTheRequestOffset pins them with the zone fixed, which
+		// is the only way such an assertion means anything.
 
 		// Controls: both offsets written, and neither written, are untouched.
 		{"@2020-03-05T10:00:00Z < @2021-01-01T00:00:00.0Z", "true"},
@@ -160,66 +160,70 @@ func TestOneOrderAcrossEveryOperator(t *testing.T) {
 		}
 	}
 
-	// The duration operators read the same pair and have to place it too.
-	for _, tt := range []struct{ expr, want string }{
-		{"months between " + earlier + " and " + later, "9"},
-		{"duration in days of Interval[" + earlier + ", " + later + "]", "301"},
+	// The duration operators read the same pair and have to place it too. Their
+	// answers are asserted as non-null rather than as figures, because a bare
+	// literal assumes the evaluation request's offset and a day count moves by one
+	// at the extremes — 301 at UTC and 302 at UTC-11. The figures are pinned in
+	// TestLiteralsAssumeTheRequestOffset, where the zone is fixed.
+	for _, expr := range []string{
+		"months between " + earlier + " and " + later,
+		"duration in days of Interval[" + earlier + ", " + later + "]",
 	} {
-		got, err := evalCQL(t, tt.expr)
+		got, err := evalCQL(t, expr)
 		if err != nil {
-			t.Errorf("%s: %v", tt.expr, err)
+			t.Errorf("%s: %v", expr, err)
 			continue
 		}
-		if got == nil || got.String() != tt.want {
-			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		if got == nil {
+			t.Errorf("%s = null, want a figure", expr)
 		}
 	}
 }
 
-// TestMinMaxKeepATotalOrderInsideTheWindow covers the one operation that does
-// NOT decline inside the offset window, and must not.
+// TestMinMaxKeepATotalOrderPlacesEveryPair covers the rule Min and Max are held
+// to, which is not CQL's comparison: "Min, Max and sort need a total order;
+// answering unknown there would drop values from a result rather than describe
+// them, so they keep ordering at the shared precision."
 //
-// The ordered comparisons and the timing operators all answer null there — the
-// unwritten offset moves the pair either way, and the operators say so.
-// TestTimingOperatorsAgreeWithTheOrderedComparisons pins that agreement.
-//
-// Min and Max are held to a different rule, written down where it is enforced:
-// "Min, Max and sort need a total order; answering unknown there would drop
-// values from a result rather than describe them, so they keep ordering at the
-// shared precision." So they still place this pair. What they must not do is what
-// they used to: return the same value as each other, or a different one when the
-// list is reordered.
-func TestMinMaxKeepATotalOrderInsideTheWindow(t *testing.T) {
+// This test used to build its pair from an offset the engine could not place.
+// Since a literal now assumes the evaluation request's offset, that pair orders
+// like any other, so the property is pinned on a pair that still cannot be
+// settled by comparison — two DateTimes specified to different precisions.
+func TestMinMaxKeepATotalOrderPlacesEveryPair(t *testing.T) {
 	const (
-		a = "@2020-03-05T10:00:00Z"  // offset written
-		b = "@2020-03-05T11:00:00.0" // none written, an hour later as written
+		a = "@2017-09-01T00:00:00"     // second precision
+		b = "@2017-09-01T00:00:00.000" // millisecond precision
 	)
 
-	// The premise: no operator can order this pair.
-	for _, expr := range []string{a + " < " + b, a + " before " + b} {
+	// The premise: comparison declines this pair, and that has not changed.
+	for _, expr := range []string{a + " < " + b, a + " = " + b} {
 		got, err := evalCQL(t, expr)
 		if err != nil {
 			t.Fatalf("%s: %v", expr, err)
 		}
 		if got != nil {
-			t.Fatalf("%s = %v, want null — this test's premise is that the pair does not order", expr, got)
+			t.Fatalf("%s = %v, want null — this test's premise is that the pair does "+
+				"not order by comparison", expr, got)
 		}
 	}
 
-	// And Min and Max place it anyway, consistently, in either input order.
-	for _, tt := range []struct{ expr, want string }{
-		{"Min({" + a + ", " + b + "}) = " + a, "true"},
-		{"Max({" + a + ", " + b + "}) = " + b, "true"},
-		{"Min({" + b + ", " + a + "}) = " + a, "true"},
-		{"Max({" + b + ", " + a + "}) = " + b, "true"},
+	// And Min and Max place it anyway, without failing. Which of the two comes
+	// back is not the property: they are equal as far as both are specified, so
+	// either is a correct minimum. What matters is that an answer comes back at
+	// all, where a bare `continue` used to leave whichever element came first.
+	for _, expr := range []string{
+		"Min({" + a + ", " + b + "})",
+		"Min({" + b + ", " + a + "})",
+		"Max({" + a + ", " + b + "})",
+		"Max({" + b + ", " + a + "})",
 	} {
-		got, err := evalCQL(t, tt.expr)
+		got, err := evalCQL(t, expr)
 		if err != nil {
-			t.Errorf("%s: %v", tt.expr, err)
+			t.Errorf("%s: %v — a total order has to place this pair", expr, err)
 			continue
 		}
-		if got == nil || got.String() != tt.want {
-			t.Errorf("%s = %v, want %s", tt.expr, got, tt.want)
+		if got == nil {
+			t.Errorf("%s = null, want a value", expr)
 		}
 	}
 }
@@ -281,12 +285,10 @@ func TestTimeIsNotADateTimeMissingAnOffset(t *testing.T) {
 // they currently rely on is replaced by IsUnknownTemporalComparison.
 func TestOffsetMismatchIsRecognizedWhicheverWayUpstreamReportsIt(t *testing.T) {
 	for _, tt := range []struct{ expr, want string }{
-		// Inside the window: no answer, and not an error either.
-		{"@2020-03-05T10:00:00Z < @2020-03-05T11:00:00.0", "null"},
-		{"@2020-03-05T10:00:00Z = @2020-03-05T10:00:00.0", "null"},
-		{"@2020-03-05T10:00:00Z > @2020-03-05T11:00:00.0", "null"},
-
-		// Outside it: an answer, from the compensation rather than from upstream.
+		// An answer rather than a raised error, which is the property here. A
+		// literal assumes the evaluation request's offset now, so these are
+		// decided rather than unknown; what must not happen either way is the
+		// sentinel escaping as an error.
 		{"@2020-03-05T10:00:00Z < @2021-01-01T00:00:00.0", "true"},
 		{"@2020-03-05T10:00:00Z > @2019-01-01T00:00:00.0", "true"},
 

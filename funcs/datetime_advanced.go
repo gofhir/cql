@@ -365,11 +365,34 @@ func durationBetweenUncertain(low, high fptypes.Value, precision string, _ int) 
 	), nil
 }
 
+// dateTimeInstant places a DateTime on the clock, at the offset it states or the
+// one it was told to assume.
+//
+// ToTime alone puts a value that states no offset at UTC, which is right for
+// ToTime and wrong for anything asking where the value sits: the caller may have
+// supplied a default, and CQL says a bare value carries the evaluation request's
+// offset. Every path here that turns a DateTime into an instant goes through
+// this, so they cannot disagree about it — they already did once, with the
+// duration operators measuring from UTC while comparison measured from the
+// default.
+func dateTimeInstant(t fptypes.DateTime) time.Time {
+	at := t.ToTime()
+	if t.HasTZ() {
+		return at
+	}
+	minutes, ok := t.EffectiveOffset()
+	if !ok {
+		return at
+	}
+	return time.Date(at.Year(), at.Month(), at.Day(), at.Hour(), at.Minute(),
+		at.Second(), at.Nanosecond(), time.FixedZone("", minutes*60))
+}
+
 // temporalRange returns the earliest and latest possible time.Time for a temporal value.
 func temporalRange(v fptypes.Value) (earliest, latest time.Time) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
-		earliest := t.ToTime()
+		earliest := dateTimeInstant(t)
 		latest := earliest
 		switch t.Precision() {
 		case 0: // year
@@ -539,12 +562,7 @@ func toGoTime(v fptypes.Value) time.Time {
 		//
 		// This is the single conversion the duration and difference operators go
 		// through, which is why the fix belongs here rather than in each of them.
-		if minutes, ok := t.EffectiveOffset(); ok && !t.HasTZ() {
-			at := t.ToTime()
-			return time.Date(at.Year(), at.Month(), at.Day(), at.Hour(), at.Minute(),
-				at.Second(), at.Nanosecond(), time.FixedZone("", minutes*60))
-		}
-		return t.ToTime()
+		return dateTimeInstant(t)
 	case fptypes.Date:
 		return t.ToTime()
 	case fptypes.Time:
