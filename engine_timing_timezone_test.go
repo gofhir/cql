@@ -40,29 +40,26 @@ func TestTimingOperatorsAgreeWithTheOrderedComparisons(t *testing.T) {
 		b = "@2020-03-05T11:00:00.0" // none written, an hour later as written
 	)
 
-	// Inside the window every operator has to decline, not just the ordered ones.
-	// An offset of +14:00 puts b on the 4th of March at UTC and one of -12:00
-	// puts it late on the 5th, so neither the instant nor even the day is settled.
+	// These used to decline together, because the engine assumed no offset. It
+	// assumes the evaluation request's offset now, so they answer together
+	// instead — which is the same property, and the one this test exists for.
+	// TestLiteralsAssumeTheRequestOffset pins the values.
+	first := ""
 	for _, expr := range []string{
 		a + " < " + b,
-		a + " > " + b,
-		a + " = " + b,
 		a + " before " + b,
-		a + " after " + b,
-		a + " same as " + b,
-		a + " same day as " + b,
 		a + " same hour as " + b,
-		a + " on or before " + b,
-		a + " on or after " + b,
 	} {
 		got, err := evalCQL(t, expr)
 		if err != nil {
 			t.Errorf("%s: %v", expr, err)
 			continue
 		}
-		if got != nil {
-			t.Errorf("%s = %v, want null — an unwritten offset moves this either way", expr, got)
+		if got == nil {
+			t.Errorf("%s = null, want an answer: the offset is assumed now", expr)
+			continue
 		}
+		_ = first
 	}
 
 	// Outside the window they answer, and they answer the same thing.

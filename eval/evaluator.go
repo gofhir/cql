@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/shopspring/decimal"
@@ -470,7 +471,20 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 	case ast.LiteralDateTime:
 		// Strip trailing 'T' when no time component follows (e.g., "2015-02-10T" -> "2015-02-10")
 		dtVal := strings.TrimSuffix(n.Value, "T")
-		return fptypes.NewDateTime(dtVal)
+		dt, err := fptypes.NewDateTime(dtVal)
+		if err != nil {
+			return nil, err
+		}
+		// CQL: "If no timezone offset is supplied, the timezone offset of the
+		// evaluation request timestamp is assumed." A written offset is left
+		// alone, and this does not rewrite what the value prints as — 22
+		// conformance cases require a bare literal to evaluate to itself.
+		//
+		// Without it a comparison the engine could not place had no answer, which
+		// is right for FHIRPath and wrong here: FHIRPath makes the default a
+		// policy decision and provides none, CQL names it.
+		_, seconds := e.ctx.EvaluationTimestamp.Zone()
+		return dt.WithDefaultOffset(time.Duration(seconds) * time.Second), nil
 	case ast.LiteralTime:
 		// Time carries no finer precision than the millisecond, so anything written past
 		// the third fractional digit is dropped rather than rejected: @T23:59:59.10000 is
@@ -5313,16 +5327,48 @@ func (e *Evaluator) evalTemporalComparison(left, right fptypes.Value, op ast.Tim
 // from a temporal value. Returns the components and the maximum valid precision index.
 // Precision indices: 0=year, 1=month, 2=day, 3=hour, 4=minute, 5=second, 6=millisecond
 // For DateTime values with timezone info, normalizes to UTC first.
+// temporalComponents breaks a temporal into components, normalizing to UTC when
+// the value's offset is known and the value it is being compared against has a
+// frame of its own. See the Date note inside.
 func temporalComponents(v fptypes.Value) (components []int, maxPrec int) {
+	return temporalComponentsAgainst(v, false)
+}
+
+// framelessTemporal reports whether a value names something with no timezone
+// frame — a Date, which is a day, or a Time, which is a time of day.
+func framelessTemporal(v fptypes.Value) bool {
+	switch v.(type) {
+	case fptypes.Date, fptypes.Time:
+		return true
+	}
+	return false
+}
+
+func temporalComponentsAgainst(v fptypes.Value, otherIsFrameless bool) (components []int, maxPrec int) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		maxPrec := int(t.Precision())
 		if maxPrec > 6 {
 			maxPrec = 6
 		}
-		// If the DateTime has a timezone, normalize to UTC for comparison
-		if t.HasTZ() {
-			utc := t.ToTime().UTC()
+		// Normalized to UTC whenever the value's offset is known — stated, or
+		// assumed from the evaluation request. Asking HasTZ alone meant the timing
+		// operators read the local digits of a value whose offset had been
+		// supplied, so `before` declined where `<` answered.
+		//
+		// Not normalized against a Date, though. A Date names a day and not an
+		// instant, so it has no frame to be moved into, and placing only one side
+		// at UTC compares two frames — `@2020-01-01 same as @2020-01-01T10:00:00`
+		// turned false at UTC+14 because the DateTime landed on the 31st while the
+		// Date stayed on the 1st. Where one side is frameless, both are read as
+		// written.
+		if minutes, ok := t.EffectiveOffset(); ok && !otherIsFrameless {
+			at := t.ToTime()
+			if !t.HasTZ() {
+				at = time.Date(at.Year(), at.Month(), at.Day(), at.Hour(), at.Minute(),
+					at.Second(), at.Nanosecond(), time.FixedZone("", minutes*60))
+			}
+			utc := at.UTC()
 			comps := []int{utc.Year(), int(utc.Month()), utc.Day(), utc.Hour(), utc.Minute(), utc.Second(), utc.Nanosecond() / 1e6}
 			return comps, maxPrec
 		}
@@ -5392,8 +5438,8 @@ func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (in
 		return 0, false
 	}
 
-	lComps, lMaxPrec := temporalComponents(left)
-	rComps, rMaxPrec := temporalComponents(right)
+	lComps, lMaxPrec := temporalComponentsAgainst(left, framelessTemporal(right))
+	rComps, rMaxPrec := temporalComponentsAgainst(right, framelessTemporal(left))
 	if lComps == nil || rComps == nil {
 		return 0, false
 	}

@@ -32,12 +32,21 @@ type offsetPair struct{ left, right fptypes.Value }
 func offsetWindowOf(left, right fptypes.Value) (low, high offsetPair, asymmetric bool) {
 	l, lIsDateTime := left.(fptypes.DateTime)
 	r, rIsDateTime := right.(fptypes.DateTime)
-	if !lIsDateTime || !rIsDateTime || l.HasTZ() == r.HasTZ() {
+	if !lIsDateTime || !rIsDateTime {
+		return low, high, false
+	}
+	// EffectiveOffset rather than HasTZ: a value told what offset to assume has a
+	// known one, so the pair is not asymmetric and there is no window to bound.
+	// Asking HasTZ alone meant the window still fired for a defaulted value, and
+	// `before` declined where `<` answered.
+	_, lKnown := l.EffectiveOffset()
+	_, rKnown := r.EffectiveOffset()
+	if lKnown == rKnown {
 		return low, high, false
 	}
 
 	// Resolve whichever side left it out, at each end of the window.
-	if !l.HasTZ() {
+	if !lKnown {
 		earliest, ok1 := atOffset(l, earliestOffsetMinutes)
 		latest, ok2 := atOffset(l, latestOffsetMinutes)
 		if !ok1 || !ok2 {
