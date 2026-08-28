@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.19.0](https://github.com/gofhir/cql/compare/v1.18.2...v1.19.0) (2026-08-28)
+
+
+### Features
+
+* **eval:** assume the evaluation request's offset where CQL says to ([#64](https://github.com/gofhir/cql/issues/64)) ([929d76a](https://github.com/gofhir/cql/commit/929d76ad458117fadbab69baeaf3b80b97f1d79e))
+
+
+### Bug Fixes
+
+* **funcs:** the duration operators and offset extraction consult the default ([#63](https://github.com/gofhir/cql/issues/63)) ([018d609](https://github.com/gofhir/cql/commit/018d609b893bc87de5b4234701685e0464f7df77))
+
 ## [1.18.2](https://github.com/gofhir/cql/compare/v1.18.1...v1.18.2) (2026-08-27)
 
 
