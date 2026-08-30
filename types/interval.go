@@ -2,6 +2,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -355,8 +356,14 @@ func valuesEquivalent(a, b fptypes.Value) bool {
 	if a == nil || b == nil {
 		return false
 	}
-	if equal, decided := temporalValuesEqual(a, b); decided {
-		return equal
+	// Only the settled case is taken from the comparison. Equivalence answers
+	// where equality will not — "equivalence never yields null in CQL, whatever
+	// the precisions" — so a pair the comparison declines is handed to Equivalent
+	// rather than called unequal. Routing it through the same rule as valuesEqual
+	// made `@2012-03-10T10:20:00` stop being equivalent to itself once one side
+	// carried a default, and cost 15 conformance cases.
+	if equal, decided := temporalValuesEqual(a, b); decided && equal {
+		return true
 	}
 	return a.Equivalent(b)
 }
@@ -370,15 +377,39 @@ func TemporalValuesEqual(a, b fptypes.Value) (equal, decided bool) {
 }
 
 // temporalValuesEqual answers equality for two temporals by comparing them, and
-// reports decided=false for anything else — including a pair the comparison
-// cannot settle, which is left to answer as it did before. There is no null to
-// return here: a list either holds a value or it does not.
+// reports decided=false only for values that are not both temporal.
+//
+// A pair the comparison cannot settle is answered "not equal" rather than handed
+// on. There is no null to return here — a list either holds a value or it does
+// not — and falling through meant Value.Equal answered the question the temporal
+// comparison had just declined, without CQL's precision rule:
+//
+//	@2020-06-15T23:00:00.0 = @2020-06-16T04:00:00Z       null
+//	@2020-06-15T23:00:00.0 in { @2020-06-16T04:00:00Z }  true      ← claimed more
+//
+// So `distinct` folded two values into one, `union` and `intersect` treated them
+// as one item, and list equality returned true where the elements' own equality
+// returns null. Two values not known to be equal stay two values.
+//
+// Equivalence is the one operator entitled to answer here, and it does not come
+// through this path: it never yields null, so agreeing as far as both are
+// specified makes them equivalent.
 func temporalValuesEqual(a, b fptypes.Value) (equal, decided bool) {
 	if !fptypes.IsTemporal(a) || !fptypes.IsTemporal(b) {
 		return false, false
 	}
 	cmp, err := CompareTemporal(a, b)
+	if errors.Is(err, fptypes.ErrPrecisionMismatch) {
+		// Specified to different precisions: equality is unknown, and a list has
+		// no null to hold. Two values not known to be equal stay two values.
+		return false, true
+	}
 	if err != nil {
+		// Any other reason the comparison could not be made — an offset one side
+		// was told to assume and the other was not, which is what a literal
+		// compared against a value from a data provider looks like. Answering
+		// "not equal" there would make a literal stop matching the data it
+		// describes, and cost 15 conformance cases when a first attempt did.
 		return false, false
 	}
 	return cmp == 0, true
