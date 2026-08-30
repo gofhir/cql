@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/shopspring/decimal"
 
@@ -241,6 +242,17 @@ func Precision(v fptypes.Value) (fptypes.Value, error) {
 
 // HighBoundary returns the high boundary of a value at the given precision.
 func HighBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
+	// A boundary describes the value it was given, so it sits where that value
+	// sits: an offset the caller supplied for v applies to the result. Rebuilding
+	// through NewDateTime inside would otherwise lose it.
+	out, err := highboundaryOf(v, precision)
+	if err != nil {
+		return nil, err
+	}
+	return carryDefaultOffset(v, out), nil
+}
+
+func highboundaryOf(v, precision fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -291,6 +303,17 @@ func HighBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
 
 // LowBoundary returns the low boundary of a value at the given precision.
 func LowBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
+	// A boundary describes the value it was given, so it sits where that value
+	// sits: an offset the caller supplied for v applies to the result. Rebuilding
+	// through NewDateTime inside would otherwise lose it.
+	out, err := lowboundaryOf(v, precision)
+	if err != nil {
+		return nil, err
+	}
+	return carryDefaultOffset(v, out), nil
+}
+
+func lowboundaryOf(v, precision fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -423,4 +446,25 @@ func fillTemporalBoundary(existing, boundary string, targetDigits int) string {
 	}
 	// Include any trailing non-digit separators
 	return result[:cutoff]
+}
+
+// carryDefaultOffset copies the offset a source value was told to assume onto a
+// value derived from it.
+//
+// A boundary, a rounding, a shifted instant — these transform a value rather than
+// make a new one, so the caller's answer about where the original sat applies to
+// the result too. Rebuilding through NewDateTime loses it, which left
+// `LowBoundary(v)` unplaced while `v` itself was placed, and the two then
+// compared as different things.
+func carryDefaultOffset(from, to fptypes.Value) fptypes.Value {
+	src, srcOK := from.(fptypes.DateTime)
+	dst, dstOK := to.(fptypes.DateTime)
+	if !srcOK || !dstOK || src.HasTZ() || dst.HasTZ() {
+		return to
+	}
+	minutes, ok := src.EffectiveOffset()
+	if !ok {
+		return to
+	}
+	return dst.WithDefaultOffset(time.Duration(minutes) * time.Minute)
 }

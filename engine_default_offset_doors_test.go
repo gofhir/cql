@@ -59,6 +59,7 @@ func TestEveryDoorPlacesADateTime(t *testing.T) {
 		{"a CQL literal", "timezoneoffset from @2020-06-15T23:00:00"},
 		{"FHIR JSON", "First([Encounter] E return timezoneoffset from E.period.start)"},
 		{"a string conversion", "timezoneoffset from ToDateTime('2020-06-15T23:00:00')"},
+		{"the DateTime constructor", "timezoneoffset from DateTime(2020, 6, 15, 23, 0, 0, 0)"},
 	} {
 		for _, tz := range []struct {
 			hours int
@@ -90,7 +91,6 @@ func TestEveryDoorPlacesADateTime(t *testing.T) {
 // the corpus parser as well. They only cancel once every door is shut.
 func TestDoorsStillOpen(t *testing.T) {
 	for _, tt := range []struct{ door, expr string }{
-		{"the DateTime constructor", "timezoneoffset from DateTime(2020, 6, 15, 23, 0, 0, 0)"},
 		{"temporal arithmetic", "timezoneoffset from (@2020-06-15T23:00:00 + 1 day)"},
 	} {
 		got := askAtOffset(t, -5, tt.expr)

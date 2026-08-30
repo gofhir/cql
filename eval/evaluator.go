@@ -2889,7 +2889,14 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 					return nil, err
 				}
 			}
-			return funcs.DateTimeConstructor(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+			// A constructor makes a value, so it is a door: unless the caller
+			// passed an offset argument, the result assumes the request's. See
+			// situate.
+			built, err := funcs.DateTimeConstructor(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+			if err != nil {
+				return nil, err
+			}
+			return e.situate(built), nil
 		}
 		return nil, nil
 	case "time":
