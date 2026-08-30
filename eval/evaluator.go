@@ -3098,7 +3098,13 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		return funcs.ToDateTime(src)
+		// Placed at the request's offset like any other DateTime entering the
+		// engine: a string conversion is a door too. See situate.
+		converted, err := funcs.ToDateTime(src)
+		if err != nil {
+			return nil, err
+		}
+		return e.situate(converted), nil
 	case "totime":
 		src, err := resolveSource()
 		if err != nil {
@@ -3690,10 +3696,13 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 		// and obj.Type() infers it by walking the object's fields — paying that
 		// on every member access cost more than the whole promotion saves.
 		for i, v := range result {
-			if _, isDate := v.(fptypes.Date); !isDate {
-				continue
+			if _, isDate := v.(fptypes.Date); isDate {
+				result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
 			}
-			result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
+			// Every DateTime out of JSON is placed at the request's offset, not
+			// only the ones promoted from a Date above. A value that already
+			// states an offset is untouched. See situate.
+			result[i] = e.situate(result[i])
 		}
 		if result.Count() > 0 {
 			if result.Count() == 1 {
@@ -3731,7 +3740,7 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 							// published eCQM libraries, against zero of any
 							// concrete spelling.
 							for i, v := range result {
-								result[i] = AsDeclaredType(choiceType, v)
+								result[i] = e.situate(AsDeclaredType(choiceType, v))
 							}
 							if result.Count() == 1 {
 								return result[0], nil
