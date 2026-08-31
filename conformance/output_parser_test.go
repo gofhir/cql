@@ -417,6 +417,9 @@ func TestParseAssumesTheRequestOffset(t *testing.T) {
 		if e.String() != w.String() {
 			t.Fatalf("the assumed offset must not be written into the value: %v vs %v", e, w)
 		}
+		if e.Equal(w) {
+			t.Error("10:20 at UTC+9 and 10:20 at UTC-5 are different instants and must not compare equal")
+		}
 	})
 
 	t.Run("a stated offset is left alone", func(t *testing.T) {

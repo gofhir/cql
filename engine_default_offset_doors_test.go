@@ -51,15 +51,20 @@ func askAtOffset(t *testing.T, hours int, expr string) string {
 // a tidiness question, and the way to find the next open door is to have written
 // the list down.
 //
-// Not all of them are closed. The engine builds a DateTime in fifteen places; the
-// doors below are the three that data actually arrives through. What remains is
-// recorded in the test that follows, not left to be rediscovered.
+// The list is now closed, which is what let the engine move to fhirpath v1.9.1.
+// Temporal arithmetic was the last one open and upstream closed it there; `convert
+// to DateTime` was found by enumerating the fifteen places the engine builds a
+// DateTime rather than by a failing run, and was answering differently from
+// ToDateTime about the same string.
 func TestEveryDoorPlacesADateTime(t *testing.T) {
 	for _, tt := range []struct{ door, expr string }{
 		{"a CQL literal", "timezoneoffset from @2020-06-15T23:00:00"},
 		{"FHIR JSON", "First([Encounter] E return timezoneoffset from E.period.start)"},
 		{"a string conversion", "timezoneoffset from ToDateTime('2020-06-15T23:00:00')"},
 		{"the DateTime constructor", "timezoneoffset from DateTime(2020, 6, 15, 23, 0, 0, 0)"},
+		{"a convert expression", "timezoneoffset from (convert '2020-06-15T23:00:00' to DateTime)"},
+		{"temporal arithmetic", "timezoneoffset from (@2020-06-15T23:00:00 + 1 day)"},
+		{"a derived boundary", "timezoneoffset from HighBoundary(@2020-06-15T23, 17)"},
 	} {
 		for _, tz := range []struct {
 			hours int
@@ -81,22 +86,37 @@ func TestEveryDoorPlacesADateTime(t *testing.T) {
 	}
 }
 
-// TestDoorsStillOpen records what is not done, measured rather than guessed, so
-// the next person starts from the list instead of from a failing conformance run.
+// TestWhatIsNotADoor holds the other end of the same rule, because "place every
+// DateTime" taken literally gives wrong answers in three places, and each was
+// checked rather than assumed.
 //
-// Closing these is what unblocks fhirpath v1.9.1. On v1.9.0 the engine holds at
-// 2084 conformance cases because that version's equality ignores the default; on
-// v1.9.1 it drops to 2069, and closing doors one at a time moves the failures
-// around rather than reducing them — 15 with none closed, 19 with three, 43 with
-// the corpus parser as well. They only cancel once every door is shut.
-func TestDoorsStillOpen(t *testing.T) {
-	for _, tt := range []struct{ door, expr string }{
-		{"temporal arithmetic", "timezoneoffset from (@2020-06-15T23:00:00 + 1 day)"},
+// It is the counterpart of TestEveryDoorPlacesADateTime and exists for the same
+// reason: the two populations of value cost this engine several releases, and the
+// way not to repeat that is to write down where the line falls instead of
+// rediscovering it from a failing run.
+func TestWhatIsNotADoor(t *testing.T) {
+	for _, tt := range []struct{ what, expr, why string }{
+		{
+			"the maximum of the type", "timezoneoffset from maximum DateTime",
+			"9999-12-31T23:59:59.999 is the largest value the type holds, not a value someone " +
+				"wrote without an offset; placing it at a western offset would put it past the " +
+				"end of the range it defines",
+		},
+		{
+			"the minimum of the type", "timezoneoffset from minimum DateTime",
+			"same, at the other end",
+		},
+		{
+			"a DateTime no finer than the day", "timezoneoffset from ToDateTime(@2020-06-15)",
+			"a value with no hour names a day rather than an instant, so there is nothing for " +
+				"an offset to move — the rule framelessTemporal applies, and fhirpath reports no " +
+				"effective offset for one either",
+		},
 	} {
-		got := askAtOffset(t, -5, tt.expr)
-		if got != "null" {
-			t.Errorf("%s now answers %s at UTC-5 — if this door is closed, move it "+
-				"into TestEveryDoorPlacesADateTime and re-measure v1.9.1", tt.door, got)
+		for _, hours := range []int{0, -5, 9} {
+			if got := askAtOffset(t, hours, tt.expr); got != "null" {
+				t.Errorf("%s answers %s at UTC%+d, want null — %s", tt.what, got, hours, tt.why)
+			}
 		}
 	}
 }

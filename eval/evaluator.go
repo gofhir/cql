@@ -1749,7 +1749,15 @@ func (e *Evaluator) evalConvert(n *ast.ConvertExpression) (fptypes.Value, error)
 	}
 	if n.ToType != nil {
 		if nt, ok := n.ToType.(*ast.NamedType); ok {
-			return convertToType(operand, nt.Name)
+			converted, err := convertToType(operand, nt.Name)
+			if err != nil {
+				return nil, err
+			}
+			// A conversion makes a DateTime out of text, so it is a door like any
+			// other: `convert '2020-06-15T23:00:00' to DateTime` and ToDateTime of
+			// the same string are the same operation and were answering
+			// differently about the offset.
+			return e.situate(converted), nil
 		}
 	}
 	return operand, nil
@@ -1768,7 +1776,7 @@ func (e *Evaluator) evalCast(n *ast.CastExpression) (fptypes.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cast failed: %w", err)
 		}
-		return val, nil
+		return e.situate(val), nil
 	}
 	return operand, nil
 }
