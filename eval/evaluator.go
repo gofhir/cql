@@ -1753,11 +1753,7 @@ func (e *Evaluator) evalConvert(n *ast.ConvertExpression) (fptypes.Value, error)
 			if err != nil {
 				return nil, err
 			}
-			// A conversion makes a DateTime out of text, so it is a door like any
-			// other: `convert '2020-06-15T23:00:00' to DateTime` and ToDateTime of
-			// the same string are the same operation and were answering
-			// differently about the offset.
-			return e.situate(converted), nil
+			return e.situateConversion(operand, converted), nil
 		}
 	}
 	return operand, nil
@@ -1776,9 +1772,27 @@ func (e *Evaluator) evalCast(n *ast.CastExpression) (fptypes.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cast failed: %w", err)
 		}
-		return e.situate(val), nil
+		return e.situateConversion(operand, val), nil
 	}
 	return operand, nil
+}
+
+// situateConversion places the result of a convert or a cast, but only where the
+// conversion actually made a DateTime out of something else.
+//
+// Making one out of text is a door like any other: `convert '2020-06-15T23:00:00'
+// to DateTime` and ToDateTime of the same string are the same operation, and they
+// were answering differently about the offset. Naming the type a DateTime already
+// has is not a door — it produces the value it was given, and placing that value
+// would place whatever it happens to be. `maximum DateTime` is the case that
+// shows it: the largest value the type holds is not one someone wrote without an
+// offset, and `maximum DateTime = (cast (maximum DateTime) as DateTime)` stopped
+// being true once the cast placed it.
+func (e *Evaluator) situateConversion(from, to fptypes.Value) fptypes.Value {
+	if _, wasDateTime := from.(fptypes.DateTime); wasDateTime {
+		return to
+	}
+	return e.situate(to)
 }
 
 func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {

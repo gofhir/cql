@@ -9,17 +9,19 @@ import (
 	cqltypes "github.com/gofhir/cql/types"
 )
 
-// parseAsWritten reads expected-output text with no assumed offset, which is what
-// the cases below are about: how the corpus's notation maps onto values. The
-// offset a bare DateTime assumes is a separate rule, fixed by
+// parseNotation reads expected-output text with the assumed offset left at zero,
+// which is UTC rather than the absence of one — fhirpath reports (0, true) for
+// such a value, not (0, false). The difference does not reach the cases below,
+// which are about how the corpus's notation maps onto values and compare equal
+// either way, and the offset a bare DateTime assumes is fixed separately by
 // TestParseAssumesTheRequestOffset.
-func parseAsWritten(raw string) (fptypes.Value, error) {
+func parseNotation(raw string) (fptypes.Value, error) {
 	return outputParser{}.parse(raw)
 }
 
 func TestParseExpectedOutput(t *testing.T) {
 	t.Run("null", func(t *testing.T) {
-		v, err := parseAsWritten("null")
+		v, err := parseNotation("null")
 		assertNoError(t, err)
 		if v != nil {
 			t.Errorf("expected nil, got %v", v)
@@ -27,7 +29,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("empty string", func(t *testing.T) {
-		v, err := parseAsWritten("")
+		v, err := parseNotation("")
 		assertNoError(t, err)
 		if v != nil {
 			t.Errorf("expected nil, got %v", v)
@@ -35,7 +37,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("boolean true", func(t *testing.T) {
-		v, err := parseAsWritten("true")
+		v, err := parseNotation("true")
 		assertNoError(t, err)
 		expected := fptypes.NewBoolean(true)
 		if !expected.Equal(v) {
@@ -44,7 +46,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("boolean false", func(t *testing.T) {
-		v, err := parseAsWritten("false")
+		v, err := parseNotation("false")
 		assertNoError(t, err)
 		expected := fptypes.NewBoolean(false)
 		if !expected.Equal(v) {
@@ -53,7 +55,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("integer 42", func(t *testing.T) {
-		v, err := parseAsWritten("42")
+		v, err := parseNotation("42")
 		assertNoError(t, err)
 		expected := fptypes.NewInteger(42)
 		if !expected.Equal(v) {
@@ -62,7 +64,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("integer -1", func(t *testing.T) {
-		v, err := parseAsWritten("-1")
+		v, err := parseNotation("-1")
 		assertNoError(t, err)
 		expected := fptypes.NewInteger(-1)
 		if !expected.Equal(v) {
@@ -71,7 +73,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("integer 0", func(t *testing.T) {
-		v, err := parseAsWritten("0")
+		v, err := parseNotation("0")
 		assertNoError(t, err)
 		expected := fptypes.NewInteger(0)
 		if !expected.Equal(v) {
@@ -80,7 +82,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("decimal 5.0", func(t *testing.T) {
-		v, err := parseAsWritten("5.0")
+		v, err := parseNotation("5.0")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDecimal("5.0")
 		if !expected.Equal(v) {
@@ -89,7 +91,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("decimal 3.33333333", func(t *testing.T) {
-		v, err := parseAsWritten("3.33333333")
+		v, err := parseNotation("3.33333333")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDecimal("3.33333333")
 		if !expected.Equal(v) {
@@ -98,7 +100,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("string hello", func(t *testing.T) {
-		v, err := parseAsWritten("'hello'")
+		v, err := parseNotation("'hello'")
 		assertNoError(t, err)
 		expected := fptypes.NewString("hello")
 		if !expected.Equal(v) {
@@ -107,7 +109,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("string abc", func(t *testing.T) {
-		v, err := parseAsWritten("'abc'")
+		v, err := parseNotation("'abc'")
 		assertNoError(t, err)
 		expected := fptypes.NewString("abc")
 		if !expected.Equal(v) {
@@ -116,7 +118,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("string empty", func(t *testing.T) {
-		v, err := parseAsWritten("''")
+		v, err := parseNotation("''")
 		assertNoError(t, err)
 		expected := fptypes.NewString("")
 		if !expected.Equal(v) {
@@ -125,7 +127,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("empty list", func(t *testing.T) {
-		v, err := parseAsWritten("{}")
+		v, err := parseNotation("{}")
 		assertNoError(t, err)
 		list, ok := v.(cqltypes.List)
 		if !ok {
@@ -137,7 +139,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("list of integers", func(t *testing.T) {
-		v, err := parseAsWritten("{1, 2, 3}")
+		v, err := parseNotation("{1, 2, 3}")
 		assertNoError(t, err)
 		list, ok := v.(cqltypes.List)
 		if !ok {
@@ -155,7 +157,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("list of strings", func(t *testing.T) {
-		v, err := parseAsWritten("{'a','b','c'}")
+		v, err := parseNotation("{'a','b','c'}")
 		assertNoError(t, err)
 		list, ok := v.(cqltypes.List)
 		if !ok {
@@ -173,7 +175,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("interval closed-closed", func(t *testing.T) {
-		v, err := parseAsWritten("Interval[2, 7]")
+		v, err := parseNotation("Interval[2, 7]")
 		assertNoError(t, err)
 		iv, ok := v.(cqltypes.Interval)
 		if !ok {
@@ -194,7 +196,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("interval open-closed", func(t *testing.T) {
-		v, err := parseAsWritten("Interval(2, 7]")
+		v, err := parseNotation("Interval(2, 7]")
 		assertNoError(t, err)
 		iv, ok := v.(cqltypes.Interval)
 		if !ok {
@@ -209,7 +211,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("interval open-open", func(t *testing.T) {
-		v, err := parseAsWritten("Interval(2, 7)")
+		v, err := parseNotation("Interval(2, 7)")
 		assertNoError(t, err)
 		iv, ok := v.(cqltypes.Interval)
 		if !ok {
@@ -224,7 +226,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("interval with null bounds", func(t *testing.T) {
-		v, err := parseAsWritten("Interval[null, 7]")
+		v, err := parseNotation("Interval[null, 7]")
 		assertNoError(t, err)
 		iv, ok := v.(cqltypes.Interval)
 		if !ok {
@@ -239,7 +241,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("date year only", func(t *testing.T) {
-		v, err := parseAsWritten("@2014")
+		v, err := parseNotation("@2014")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDate("2014")
 		if !expected.Equal(v) {
@@ -248,7 +250,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("date year-month", func(t *testing.T) {
-		v, err := parseAsWritten("@2014-01")
+		v, err := parseNotation("@2014-01")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDate("2014-01")
 		if !expected.Equal(v) {
@@ -257,7 +259,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("date full", func(t *testing.T) {
-		v, err := parseAsWritten("@2014-01-01")
+		v, err := parseNotation("@2014-01-01")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDate("2014-01-01")
 		if !expected.Equal(v) {
@@ -266,7 +268,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("datetime year with T", func(t *testing.T) {
-		v, err := parseAsWritten("@2014T")
+		v, err := parseNotation("@2014T")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDateTime("2014")
 		if !expected.Equal(v) {
@@ -275,7 +277,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("datetime date with T suffix", func(t *testing.T) {
-		v, err := parseAsWritten("@2014-01-01T")
+		v, err := parseNotation("@2014-01-01T")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDateTime("2014-01-01")
 		if !expected.Equal(v) {
@@ -284,7 +286,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("datetime full", func(t *testing.T) {
-		v, err := parseAsWritten("@2016-07-07T06:25:33.910")
+		v, err := parseNotation("@2016-07-07T06:25:33.910")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewDateTime("2016-07-07T06:25:33.910")
 		if !expected.Equal(v) {
@@ -293,7 +295,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("time", func(t *testing.T) {
-		v, err := parseAsWritten("@T09:00:00.000")
+		v, err := parseNotation("@T09:00:00.000")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewTime("T09:00:00.000")
 		if !expected.Equal(v) {
@@ -302,7 +304,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("quantity simple", func(t *testing.T) {
-		v, err := parseAsWritten("5.0'g'")
+		v, err := parseNotation("5.0'g'")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewQuantity("5.0 'g'")
 		if !expected.Equal(v) {
@@ -311,7 +313,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("quantity with space", func(t *testing.T) {
-		v, err := parseAsWritten("19.99 '[lb_av]'")
+		v, err := parseNotation("19.99 '[lb_av]'")
 		assertNoError(t, err)
 		expected, _ := fptypes.NewQuantity("19.99 '[lb_av]'")
 		if !expected.Equal(v) {
@@ -320,7 +322,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("tuple simple", func(t *testing.T) {
-		v, err := parseAsWritten("Tuple { id: 5, name: 'Chris'}")
+		v, err := parseNotation("Tuple { id: 5, name: 'Chris'}")
 		assertNoError(t, err)
 		tup, ok := v.(cqltypes.Tuple)
 		if !ok {
@@ -335,7 +337,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("tuple empty", func(t *testing.T) {
-		v, err := parseAsWritten("Tuple {}")
+		v, err := parseNotation("Tuple {}")
 		assertNoError(t, err)
 		tup, ok := v.(cqltypes.Tuple)
 		if !ok {
@@ -347,7 +349,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("long literal parsed as integer", func(t *testing.T) {
-		v, err := parseAsWritten("3L")
+		v, err := parseNotation("3L")
 		assertNoError(t, err)
 		expected := fptypes.NewInteger(3)
 		if !expected.Equal(v) {
@@ -356,7 +358,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("whitespace trimming", func(t *testing.T) {
-		v, err := parseAsWritten("  42  ")
+		v, err := parseNotation("  42  ")
 		assertNoError(t, err)
 		expected := fptypes.NewInteger(42)
 		if !expected.Equal(v) {
@@ -365,7 +367,7 @@ func TestParseExpectedOutput(t *testing.T) {
 	})
 
 	t.Run("list with nested interval", func(t *testing.T) {
-		v, err := parseAsWritten("{Interval[1, 3], Interval[5, 7]}")
+		v, err := parseNotation("{Interval[1, 3], Interval[5, 7]}")
 		assertNoError(t, err)
 		list, ok := v.(cqltypes.List)
 		if !ok {

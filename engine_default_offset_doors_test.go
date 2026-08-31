@@ -112,11 +112,31 @@ func TestWhatIsNotADoor(t *testing.T) {
 				"an offset to move — the rule framelessTemporal applies, and fhirpath reports no " +
 				"effective offset for one either",
 		},
+		// Naming the type a value already has is not a door, and these two say so
+		// where it is easiest to get wrong: a conversion that converts nothing.
+		// Placing the result of one placed whatever it was handed.
+		{
+			"a cast that converts nothing", "timezoneoffset from (cast (maximum DateTime) as DateTime)",
+			"`cast X as DateTime` where X is already a DateTime produces X — the door is a " +
+				"conversion that makes a DateTime out of something else, not the naming of a type",
+		},
+		{
+			"a convert that converts nothing", "timezoneoffset from (convert (maximum DateTime) to DateTime)",
+			"same, through the other spelling",
+		},
 	} {
-		for _, hours := range []int{0, -5, 9} {
+		for _, hours := range []int{0, -5, 9, 14, -11} {
 			if got := askAtOffset(t, hours, tt.expr); got != "null" {
 				t.Errorf("%s answers %s at UTC%+d, want null — %s", tt.what, got, hours, tt.why)
 			}
+		}
+	}
+
+	// What the boundary case costs if it goes wrong is not the offset but the
+	// value: a placed maximum is no longer equal to the maximum.
+	for _, hours := range []int{0, 14, -11} {
+		if got := askAtOffset(t, hours, "maximum DateTime = (cast (maximum DateTime) as DateTime)"); got != "true" {
+			t.Errorf("maximum DateTime is not equal to itself cast to its own type at UTC%+d: %s", hours, got)
 		}
 	}
 }

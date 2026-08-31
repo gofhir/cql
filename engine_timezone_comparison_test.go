@@ -1,6 +1,9 @@
 package cql
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 // TestComparisonAcrossWrittenTimezone covers the comparison that decides which
 // population a patient belongs to, and answered null.
@@ -370,6 +373,19 @@ func TestOneFrameAcrossEveryComponentReader(t *testing.T) {
 		{
 			"an ordering that cannot be settled", day + " < " + hour, "null",
 		},
+
+		// Reading both sides as written is not the same as discarding a stated
+		// offset, and these two say which it is. The first pair is read as written
+		// and agrees on the day; the second is read the same way and does not,
+		// because 02:00 at UTC is written on the 2nd.
+		{
+			"a stated offset against a value with no frame",
+			"@2020-01-01T23:00:00-05:00 same day as " + day, "true",
+		},
+		{
+			"a stated offset that lands on another day",
+			"@2020-01-02T02:00:00Z same day as " + day, "false",
+		},
 	} {
 		for _, hours := range []int{0, -5, 9, 14, -11} {
 			got := askAtOffset(t, hours, tt.expr)
@@ -377,6 +393,27 @@ func TestOneFrameAcrossEveryComponentReader(t *testing.T) {
 				t.Errorf("%s: %s = %s at UTC%+d, want %s — a value with no hour has no "+
 					"frame to be moved into, so neither side is normalized against it",
 					tt.reader, tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+
+	// The claim underneath all of the above is that a DateTime with no hour is a
+	// Date in every way that matters to a comparison. So the two have to answer
+	// alike, and this asks rather than assumes: the Date answers are what the
+	// engine gave before any of this, which is what makes them the reference.
+	for _, form := range []struct{ what, expr string }{
+		{"against a stated offset", "@2020-01-01T23:00:00-05:00 same day as %s"},
+		{"against an offset on another day", "@2020-01-02T02:00:00Z same day as %s"},
+		{"against a placed instant", hour + " same day as %s"},
+		{"ordered against a placed instant", "%s < " + hour},
+	} {
+		for _, hours := range []int{0, 14, -11} {
+			asDate := askAtOffset(t, hours, fmt.Sprintf(form.expr, "@2020-01-01"))
+			asDateTime := askAtOffset(t, hours, fmt.Sprintf(form.expr, day))
+			if asDate != asDateTime {
+				t.Errorf("%s at UTC%+d: a Date answers %s and a day-precision DateTime answers %s "+
+					"— they name the same thing and cannot answer differently",
+					form.what, hours, asDate, asDateTime)
 			}
 		}
 	}
