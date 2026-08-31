@@ -4295,9 +4295,17 @@ func compareValues(a, b fptypes.Value) (int, error) {
 	}
 	result, err := ac.Compare(b)
 	if err != nil && isAmbiguousComparisonErr(err) {
-		// Fall back to component-wise comparison at shared precision
-		aComps, aMaxPrec := temporalComponents(a)
-		bComps, bMaxPrec := temporalComponents(b)
+		// Fall back to component-wise comparison at shared precision.
+		//
+		// Each side is read against the other, the way the timing operators read
+		// them. Asking temporalComponents alone said "the other side has a frame"
+		// whatever the other side was, so one value was normalized to UTC while the
+		// frameless one kept its local digits — two frames lined up component by
+		// component. At UTC+14 that put `DateTime(2012, 1, 1)` in 2012 and
+		// `DateTime(2012, 1, 1, 12)` in 2011, and `sort asc` ordered the finer value
+		// first on the strength of a year the offset had rolled back.
+		aComps, aMaxPrec := temporalComponentsAgainst(a, framelessTemporal(b))
+		bComps, bMaxPrec := temporalComponentsAgainst(b, framelessTemporal(a))
 		if aComps != nil && bComps != nil {
 			minPrec := aMaxPrec
 			if bMaxPrec < minPrec {
@@ -4973,8 +4981,10 @@ func intervalIncludesAtPrecision(outer, inner cqltypes.Interval, precision strin
 	}
 
 	cmpAtPrec := func(a, b fptypes.Value) (int, bool) {
-		aComps, aMax := temporalComponents(a)
-		bComps, bMax := temporalComponents(b)
+		// Read against each other, so a bound with no timezone frame is not lined
+		// up against a point that has been moved into one. See compareValues.
+		aComps, aMax := temporalComponentsAgainst(a, framelessTemporal(b))
+		bComps, bMax := temporalComponentsAgainst(b, framelessTemporal(a))
 		if aComps == nil || bComps == nil {
 			return 0, false
 		}
@@ -5082,6 +5092,10 @@ func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fp
 	if pIdx < 0 {
 		return nil, nil
 	}
+	// The point is read against each bound separately: its components depend on
+	// whether the bound it is being compared with has a timezone frame, and the
+	// two bounds need not agree about that. Its precision does not depend on the
+	// bound, so the guard below can be settled once.
 	pointComps, pointMaxPrec := temporalComponents(point)
 	if pointComps == nil {
 		return nil, nil
@@ -5094,7 +5108,8 @@ func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fp
 
 	// Check low bound
 	if iv.Low != nil {
-		lowComps, _ := temporalComponents(iv.Low)
+		lowComps, _ := temporalComponentsAgainst(iv.Low, framelessTemporal(point))
+		pointComps, _ := temporalComponentsAgainst(point, framelessTemporal(iv.Low))
 		if lowComps != nil {
 			cmpResult := 0
 			for i := 0; i <= cmpPrec; i++ {
@@ -5121,7 +5136,8 @@ func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fp
 	}
 	// Check high bound
 	if iv.High != nil {
-		highComps, _ := temporalComponents(iv.High)
+		highComps, _ := temporalComponentsAgainst(iv.High, framelessTemporal(point))
+		pointComps, _ := temporalComponentsAgainst(point, framelessTemporal(iv.High))
 		if highComps != nil {
 			cmpResult := 0
 			for i := 0; i <= cmpPrec; i++ {
@@ -5352,10 +5368,20 @@ func temporalComponents(v fptypes.Value) (components []int, maxPrec int) {
 
 // framelessTemporal reports whether a value names something with no timezone
 // frame — a Date, which is a day, or a Time, which is a time of day.
+//
+// A DateTime specified no finer than the day is the same animal. It names a day
+// and not an instant, so there is no hour for an offset to move, and placing it at
+// UTC only invents one: `DateTime(2014, 12, 20)` read at UTC-11 becomes the 20th
+// at 11:00 while `DateTime(2014, 12, 20, 15)` becomes the 21st, and a comparison
+// that should have declined for want of precision was settled by a day the offset
+// had shifted. fhirpath says the same thing in its own terms — a DateTime coarser
+// than the hour reports no effective offset at all, however it was placed.
 func framelessTemporal(v fptypes.Value) bool {
-	switch v.(type) {
+	switch t := v.(type) {
 	case fptypes.Date, fptypes.Time:
 		return true
+	case fptypes.DateTime:
+		return t.Precision() < fptypes.DTHourPrecision
 	}
 	return false
 }

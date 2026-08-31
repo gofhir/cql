@@ -313,3 +313,71 @@ func TestOffsetMismatchIsRecognizedWhicheverWayUpstreamReportsIt(t *testing.T) {
 		}
 	}
 }
+
+// TestOneFrameAcrossEveryComponentReader pins a value that has a timezone frame
+// against one that has none, through every path that lines temporal values up
+// component by component.
+//
+// A DateTime specified no finer than the day names a day, not an instant. The
+// engine normalizes a value into UTC once it knows its offset — stated, or assumed
+// from the evaluation request — and normalizing only the side that has an hour
+// compares two different frames. At UTC+14 that rolls the placed side back a day,
+// which does not merely leave a comparison unknown but answers it wrongly:
+//
+//	DateTime(2020,1,1,12) during day of Interval[DateTime(2020,1,1), DateTime(2020,1,3)]
+//	  true at UTC, UTC-5 and UTC+9; false at UTC+14
+//
+// There were four readers, not one — sorting, interval-against-interval,
+// point-against-interval, and the timing operators — and each had its own copy of
+// the mistake. That is the same shape of defect this engine has had to correct
+// three times now (v1.15.2's seven paths to interval equality, v1.18.x's eleven
+// operators deciding element equality), so the test enumerates the readers rather
+// than covering one and trusting the rest.
+//
+// Every case is asserted across the zones because the answers only diverge at the
+// extremes: a one-zone run of any of this is green while three of the four readers
+// are wrong.
+func TestOneFrameAcrossEveryComponentReader(t *testing.T) {
+	const (
+		day  = "DateTime(2020,1,1)"    // no hour: names a day, has no frame
+		hour = "DateTime(2020,1,1,12)" // an instant, placed at the request's offset
+	)
+
+	for _, tt := range []struct{ reader, expr, want string }{
+		{
+			"sorting", "First(({" + hour + ", " + day + "}) S sort asc) = " + day, "true",
+		},
+		{
+			"point against an interval",
+			hour + " during day of Interval[" + day + ", DateTime(2020,1,3)]", "true",
+		},
+		{
+			"point against an interval, properly",
+			hour + " properly during day of Interval[DateTime(2019,12,30), DateTime(2020,1,3)]", "true",
+		},
+		{
+			"interval against an interval",
+			"Interval[" + hour + ", DateTime(2020,1,3,14)] included in day of Interval[" +
+				day + ", DateTime(2020,1,3)]", "true",
+		},
+		{
+			"the timing operators",
+			hour + " same day as " + day, "true",
+		},
+		// And the pair whose comparison must stay unknown: agreeing on every
+		// component they share while one is specified more finely is not equality,
+		// and no offset makes it one.
+		{
+			"an ordering that cannot be settled", day + " < " + hour, "null",
+		},
+	} {
+		for _, hours := range []int{0, -5, 9, 14, -11} {
+			got := askAtOffset(t, hours, tt.expr)
+			if got != tt.want {
+				t.Errorf("%s: %s = %s at UTC%+d, want %s — a value with no hour has no "+
+					"frame to be moved into, so neither side is normalized against it",
+					tt.reader, tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+}
