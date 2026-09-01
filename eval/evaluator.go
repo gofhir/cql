@@ -4792,11 +4792,60 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 			return nil, err
 		}
 	}
+	// `x in day of I` is the membership spelling of `x during day of I`, and the
+	// precision has to reach the comparison for either of them to answer.
+	if n.Precision != "" {
+		iv, point := right, left
+		if n.Operator != "in" {
+			iv, point = left, right
+		}
+		if res, handled := membershipAtPrecision(iv, point, n.Precision); handled {
+			return res, nil
+		}
+	}
+
 	// Pass through to evalInContains which handles null properly
 	if n.Operator == "in" {
 		return e.evalInContains(ast.OpIn, left, right)
 	}
 	return e.evalInContains(ast.OpContains, left, right)
+}
+
+// membershipAtPrecision answers `in` and `contains` where the phrase names a
+// precision, which is the same question the timing operators answer.
+//
+// The parser reads the precision off `x in day of I` and evalMembership dropped
+// it, so the two spellings of one question disagreed wherever the precision was
+// what made it answerable:
+//
+//	DateTime(2020,1,1,12) during day of Interval[DateTime(2020,1,1), …]   true
+//	DateTime(2020,1,1,12) in day of     Interval[DateTime(2020,1,1), …]   null
+//
+// A stated precision says how far to look, so agreeing that far settles the
+// question — the rule temporalCompareAtPrecision already applies, and the reason
+// `during` could answer. Without one both spellings decline together, which they
+// already did.
+//
+// The point is promoted to the interval [p, p] and asked the same way `during`
+// asks it, so the two cannot drift apart again.
+func membershipAtPrecision(interval, point fptypes.Value, precision string) (fptypes.Value, bool) {
+	iv, isInterval := interval.(cqltypes.Interval)
+	if !isInterval || point == nil || !isTemporalType(point) {
+		return nil, false
+	}
+	pointIv := cqltypes.NewInterval(point, point, true, true)
+	result, err := iv.Includes(pointIv)
+	if err == nil {
+		return fptypes.NewBoolean(result), true
+	}
+	if !isAmbiguousComparisonErr(err) {
+		return nil, false
+	}
+	res, atErr := intervalIncludesAtPrecision(iv, pointIv, precision, false)
+	if atErr != nil {
+		return nil, false
+	}
+	return res, true
 }
 
 func (e *Evaluator) evalBetween(n *ast.BetweenExpression) (fptypes.Value, error) {
