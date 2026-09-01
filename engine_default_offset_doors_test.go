@@ -140,3 +140,35 @@ func TestWhatIsNotADoor(t *testing.T) {
 		}
 	}
 }
+
+// TestBoundaryKeepsWhatTheValueStates covers a boundary of a value that writes its
+// own offset, which aborted the expression rather than answering:
+//
+//	HighBoundary(@2020-06-15T23:00:00Z, 17)
+//	  invalid datetime format: 2020-06-15T23:00:00Z999
+//
+// The fill counts digits and appends more of them, and the offset sat at the end
+// being counted as precision. It is not precision — it says where the value sits,
+// not how finely it is stated — so it comes off before the fill and back on after.
+//
+// A FHIR dateTime that carries a time must carry an offset, so this is the shape
+// every boundary over served data has.
+func TestBoundaryKeepsWhatTheValueStates(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"HighBoundary(@2020-06-15T23:00:00Z, 17)", "2020-06-15T23:00:00.999Z"},
+		{"LowBoundary(@2020-06-15T23:00:00Z, 17)", "2020-06-15T23:00:00.000Z"},
+		// An offset that is not whole hours, since the fill is digit-counting and
+		// this one has the most digits to miscount.
+		{"HighBoundary(@2020-06-15T23:00:00+05:30, 17)", "2020-06-15T23:00:00.999+05:30"},
+		{"timezoneoffset from HighBoundary(@2020-06-15T23:00:00Z, 17)", "0"},
+		// Unchanged by any of this: no stated offset, and the non-temporal path.
+		{"HighBoundary(@2020-06-15T23, 17)", "2020-06-15T23:59:59.999"},
+		{"HighBoundary(1.5, 3)", "1.599"},
+	} {
+		for _, hours := range []int{0, -5, 14} {
+			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
+				t.Errorf("%s = %s at UTC%+d, want %s", tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+}

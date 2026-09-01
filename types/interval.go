@@ -372,47 +372,88 @@ func valuesEquivalent(a, b fptypes.Value) bool {
 // paths in eval — list membership, distinct, IndexOf, tuple equality — reach the
 // same decision. They hold the same kinds of value and must not disagree with a
 // list about whether two of them are the same.
+//
+// It reports a pair that cannot be settled as not equal, which is the answer for
+// somewhere that has no null to hold. Callers that do have one — the `=` operator
+// — ask TemporalEquality instead and keep the third case.
 func TemporalValuesEqual(a, b fptypes.Value) (equal, decided bool) {
-	return temporalValuesEqual(a, b)
+	switch TemporalEquality(a, b) {
+	case TemporallyEqual:
+		return true, true
+	case TemporallyUnequal, TemporallyUnknown:
+		return false, true
+	default:
+		return false, false
+	}
 }
 
-// temporalValuesEqual answers equality for two temporals by comparing them, and
-// reports decided=false only for values that are not both temporal.
+// TemporalVerdict is what comparing two temporal values settles, kept apart from
+// what any one operator does about it.
+type TemporalVerdict int
+
+const (
+	// NotTemporal means the pair is not two temporal values and this rule has
+	// nothing to say about it.
+	NotTemporal TemporalVerdict = iota
+	// TemporallyEqual and TemporallyUnequal are settled answers.
+	TemporallyEqual
+	TemporallyUnequal
+	// TemporallyUnknown is the pair CQL cannot settle: specified to different
+	// precisions, agreeing on everything they share. `=` answers null here and
+	// membership answers "not the same value" — the same verdict, two policies,
+	// which is why the verdict is reported rather than decided here.
+	TemporallyUnknown
+)
+
+// TemporalEquality answers equality for two temporal values without choosing what
+// an operator should do with an unsettled pair.
 //
-// A pair the comparison cannot settle is answered "not equal" rather than handed
-// on. There is no null to return here — a list either holds a value or it does
-// not — and falling through meant Value.Equal answered the question the temporal
-// comparison had just declined, without CQL's precision rule:
-//
-//	@2020-06-15T23:00:00.0 = @2020-06-16T04:00:00Z       null
-//	@2020-06-15T23:00:00.0 in { @2020-06-16T04:00:00Z }  true      ← claimed more
-//
-// So `distinct` folded two values into one, `union` and `intersect` treated them
-// as one item, and list equality returned true where the elements' own equality
-// returns null. Two values not known to be equal stay two values.
-//
-// Equivalence is the one operator entitled to answer here, and it does not come
-// through this path: it never yields null, so agreeing as far as both are
-// specified makes them equivalent.
-func temporalValuesEqual(a, b fptypes.Value) (equal, decided bool) {
+// Collapsing "unknown" into "not equal" for everyone made a container claim what
+// its own elements decline: `@2020-01-01T10:00:00Z = @2020-01-01T10:00:00.0Z` is
+// null, and an interval with those bounds answered false while `start of` and
+// `end of` both answered null — the very contradiction interval equality was
+// fixed to remove in v1.15.2, one level up.
+func TemporalEquality(a, b fptypes.Value) TemporalVerdict {
+	if a == nil || b == nil {
+		return NotTemporal
+	}
 	if !fptypes.IsTemporal(a) || !fptypes.IsTemporal(b) {
-		return false, false
+		return NotTemporal
 	}
 	cmp, err := CompareTemporal(a, b)
 	if errors.Is(err, fptypes.ErrPrecisionMismatch) {
-		// Specified to different precisions: equality is unknown, and a list has
-		// no null to hold. Two values not known to be equal stay two values.
-		return false, true
+		return TemporallyUnknown
 	}
 	if err != nil {
 		// Any other reason the comparison could not be made — an offset one side
 		// was told to assume and the other was not, which is what a literal
 		// compared against a value from a data provider looks like. Answering
-		// "not equal" there would make a literal stop matching the data it
+		// anything there would make a literal stop matching the data it
 		// describes, and cost 15 conformance cases when a first attempt did.
-		return false, false
+		return NotTemporal
 	}
-	return cmp == 0, true
+	if cmp == 0 {
+		return TemporallyEqual
+	}
+	return TemporallyUnequal
+}
+
+// temporalValuesEqual answers equality for two temporals for the places inside
+// types that hold values — a list, a tuple, a ratio, an interval boundary. None
+// of them has a null to return: a list either holds a value or it does not. So a
+// pair that cannot be settled is two values rather than one.
+//
+//	@2020-06-15T23:00:00.0 = @2020-06-16T04:00:00Z       null
+//	@2020-06-15T23:00:00.0 in { @2020-06-16T04:00:00Z }  true      ← claimed more
+//
+// Before this, `distinct` folded two such values into one, `union` and `intersect`
+// treated them as one item, and IndexOf matched. Two values not known to be equal
+// stay two values.
+//
+// The `=` operator is not one of these places. It can return null and has to, so
+// it asks TemporalEquality and keeps the unknown.
+func temporalValuesEqual(a, b fptypes.Value) (equal, decided bool) {
+	return TemporalValuesEqual(a, b)
 }
 
 func compareValues(a, b fptypes.Value) (int, error) {

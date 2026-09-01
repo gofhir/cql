@@ -92,6 +92,118 @@ func temporalEquality(left, right fptypes.Value) (fptypes.Value, bool) {
 	return fptypes.NewBoolean(cmp == 0), true
 }
 
+// elementVerdict is what comparing two elements of a container settles.
+type elementVerdict int
+
+const (
+	elementsEqual elementVerdict = iota
+	elementsUnequal
+	elementsUnknown
+)
+
+// elementEquality compares two values held inside a container, keeping the case
+// neither equal nor unequal rather than folding it into one of them.
+func elementEquality(a, b fptypes.Value) elementVerdict {
+	if a == nil && b == nil {
+		return elementsEqual
+	}
+	if a == nil || b == nil {
+		return elementsUnknown
+	}
+	switch cqltypes.TemporalEquality(a, b) {
+	case cqltypes.TemporallyEqual:
+		return elementsEqual
+	case cqltypes.TemporallyUnequal:
+		return elementsUnequal
+	case cqltypes.TemporallyUnknown:
+		return elementsUnknown
+	}
+	if v, nested := containerVerdict(a, b); nested {
+		return v
+	}
+	if a.Equal(b) {
+		return elementsEqual
+	}
+	return elementsUnequal
+}
+
+// containerVerdict compares two values that hold other values, element by
+// element, and reports what their elements settle.
+//
+// A container cannot be more certain than the values it holds. `=` on a pair of
+// DateTimes specified to different precisions is null, and an interval with those
+// bounds answered false while `start of` and `end of` on the same pair both
+// answered null — the contradiction interval equality was fixed to remove in
+// v1.15.2, one level up. Membership is the other case and keeps its own answer:
+// it has no null to hold, so two values not known to be equal stay two values.
+//
+// Order decides, as tuple equality already decided it: an element that differs
+// settles the answer even when a later one is unknown, and an unknown one settles
+// it when it comes first.
+func containerVerdict(left, right fptypes.Value) (elementVerdict, bool) {
+	verdictOf := func(pairs [][2]fptypes.Value) elementVerdict {
+		for _, p := range pairs {
+			switch elementEquality(p[0], p[1]) {
+			case elementsUnequal:
+				return elementsUnequal
+			case elementsUnknown:
+				return elementsUnknown
+			}
+		}
+		return elementsEqual
+	}
+
+	switch l := left.(type) {
+	case cqltypes.List:
+		r, ok := right.(cqltypes.List)
+		if !ok {
+			return elementsUnequal, false
+		}
+		if len(l.Values) != len(r.Values) {
+			return elementsUnequal, true
+		}
+		pairs := make([][2]fptypes.Value, 0, len(l.Values))
+		for i := range l.Values {
+			pairs = append(pairs, [2]fptypes.Value{l.Values[i], r.Values[i]})
+		}
+		return verdictOf(pairs), true
+
+	case cqltypes.Interval:
+		r, ok := right.(cqltypes.Interval)
+		// An uncertainty is written as a closed interval and answers for itself.
+		if !ok || l.LowClosed != r.LowClosed || l.HighClosed != r.HighClosed {
+			return elementsUnequal, false
+		}
+		if _, isUncertainty := right.(cqltypes.Uncertainty); isUncertainty {
+			return elementsUnequal, false
+		}
+		return verdictOf([][2]fptypes.Value{{l.Low, r.Low}, {l.High, r.High}}), true
+
+	case cqltypes.Ratio:
+		r, ok := right.(cqltypes.Ratio)
+		if !ok {
+			return elementsUnequal, false
+		}
+		return verdictOf([][2]fptypes.Value{
+			{l.Numerator, r.Numerator},
+			{l.Denominator, r.Denominator},
+		}), true
+	}
+	return elementsUnequal, false
+}
+
+// containerEquality is containerVerdict as the `=` operator answers it.
+func containerEquality(left, right fptypes.Value) (fptypes.Value, bool) {
+	v, handled := containerVerdict(left, right)
+	if !handled {
+		return nil, false
+	}
+	if v == elementsUnknown {
+		return nil, true
+	}
+	return fptypes.NewBoolean(v == elementsEqual), true
+}
+
 // calendarUCUMQuantities reports whether two values are quantities measured in a
 // calendar year or month on one side and the matching UCUM code on the other,
 // which is the pairing CQL declines to decide. See funcs.IsCalendarUCUMDurationPair.
@@ -822,6 +934,9 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		if res, handled := uncertainEquality(left, right); handled {
 			return res, nil
 		}
+		if res, handled := containerEquality(left, right); handled {
+			return res, nil
+		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
 	case ast.OpNotEqual:
 		if lt, lok := left.(cqltypes.Tuple); lok {
@@ -846,6 +961,12 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 			return fptypes.NewBoolean(!isTrue(res)), nil
 		}
 		if res, handled := uncertainEquality(left, right); handled {
+			if res == nil {
+				return nil, nil
+			}
+			return fptypes.NewBoolean(!isTrue(res)), nil
+		}
+		if res, handled := containerEquality(left, right); handled {
 			if res == nil {
 				return nil, nil
 			}
@@ -1325,16 +1446,15 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 		if !exists {
 			return fptypes.NewBoolean(false), nil
 		}
-		if av == nil && bv == nil {
-			continue // both null → matching
-		}
-		if av == nil || bv == nil {
-			return nil, nil // one null, one not → indeterminate
-		}
-		// Through sameValue, so a tuple holding a Date does not disagree with the
-		// `=` operator about a tuple holding the same day as a DateTime.
-		if !sameValue(av, bv) {
+		// Through elementEquality, so a tuple holding a Date does not disagree with
+		// the `=` operator about a tuple holding the same day as a DateTime, and a
+		// pair the comparison cannot settle leaves the tuple unsettled too rather
+		// than being reported as a difference.
+		switch elementEquality(av, bv) {
+		case elementsUnequal:
 			return fptypes.NewBoolean(false), nil
+		case elementsUnknown:
+			return nil, nil
 		}
 	}
 	return fptypes.NewBoolean(true), nil

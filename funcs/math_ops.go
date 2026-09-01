@@ -243,8 +243,18 @@ func Precision(v fptypes.Value) (fptypes.Value, error) {
 // HighBoundary returns the high boundary of a value at the given precision.
 func HighBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
 	// A boundary describes the value it was given, so it sits where that value
-	// sits: an offset the caller supplied for v applies to the result. Rebuilding
-	// through NewDateTime inside would otherwise lose it.
+	// sits: an offset supplied as v's default applies to the result, and rebuilding
+	// through NewDateTime inside would otherwise lose it. An offset v states for
+	// itself is kept by splitTemporalBoundary's own handling, which is a different
+	// mechanism for a different thing.
+	//
+	// What this cannot do is give a boundary a frame its source never had.
+	// `HighBoundary(@2020-06-15T, 17)` refines a value with no hour into one with a
+	// millisecond, and there is no offset on the source to carry — funcs cannot ask
+	// for the evaluation request's. So that result comes back unplaced. It is the
+	// one derived value that is still in the wrong population, and closing it is a
+	// decision about whether a refinement may take the asking party's offset, which
+	// is the question this whole line of work exists to be careful about.
 	out, err := highboundaryOf(v, precision)
 	if err != nil {
 		return nil, err
@@ -341,6 +351,31 @@ func lowboundaryOf(v, precision fptypes.Value) (fptypes.Value, error) {
 	}
 }
 
+// splitWrittenOffset separates a written timezone offset from the digits that say
+// how finely a value is specified.
+//
+// The boundary fill works by counting digits and appending more, and an offset
+// left on the end was counted as precision and filled after:
+// `HighBoundary(@2020-06-15T23:00:00Z, 17)` built "2020-06-15T23:00:00Z999" and
+// parsing that aborted the whole expression rather than returning a boundary. An
+// offset says where a value sits, not how precisely it is stated, so it comes off
+// before the fill and goes back on after.
+func splitWrittenOffset(s string) (body, offset string) {
+	start := 0
+	if i := strings.IndexByte(s, 'T'); i >= 0 {
+		start = i + 1
+	} else if !strings.Contains(s, ":") {
+		return s, "" // a date carries no offset
+	}
+	for i := start; i < len(s); i++ {
+		switch s[i] {
+		case 'Z', '+', '-':
+			return s[:i], s[i:]
+		}
+	}
+	return s, ""
+}
+
 // temporalHighBoundary fills in missing components of a temporal value with maximum values.
 func temporalHighBoundary(s string, targetDigits int, kind string) (fptypes.Value, error) {
 	// Max components: for datetime "9999-12-31T23:59:59.999", date "9999-12-31", time "23:59:59.999"
@@ -351,17 +386,19 @@ func temporalHighBoundary(s string, targetDigits int, kind string) (fptypes.Valu
 	}
 	maxStr := maxParts[kind]
 
+	s, writtenOffset := splitWrittenOffset(s)
+
 	// Count current digits
 	currentDigits := countDigits(s)
 	if currentDigits >= targetDigits {
 		// Already at or beyond target precision
 		switch kind {
 		case "datetime":
-			return fptypes.NewDateTime(s)
+			return fptypes.NewDateTime(s + writtenOffset)
 		case "date":
 			return fptypes.NewDate(s)
 		case "time":
-			return fptypes.NewTime(s)
+			return fptypes.NewTime(s + writtenOffset)
 		}
 		return nil, nil
 	}
@@ -370,11 +407,11 @@ func temporalHighBoundary(s string, targetDigits int, kind string) (fptypes.Valu
 	result := fillTemporalBoundary(s, maxStr, targetDigits)
 	switch kind {
 	case "datetime":
-		return fptypes.NewDateTime(result)
+		return fptypes.NewDateTime(result + writtenOffset)
 	case "date":
 		return fptypes.NewDate(result)
 	case "time":
-		return fptypes.NewTime(result)
+		return fptypes.NewTime(result + writtenOffset)
 	}
 	return nil, nil
 }
@@ -388,15 +425,16 @@ func temporalLowBoundary(s string, targetDigits int, kind string) (fptypes.Value
 	}
 	minStr := minParts[kind]
 
+	s, writtenOffset := splitWrittenOffset(s)
 	currentDigits := countDigits(s)
 	if currentDigits >= targetDigits {
 		switch kind {
 		case "datetime":
-			return fptypes.NewDateTime(s)
+			return fptypes.NewDateTime(s + writtenOffset)
 		case "date":
 			return fptypes.NewDate(s)
 		case "time":
-			return fptypes.NewTime(s)
+			return fptypes.NewTime(s + writtenOffset)
 		}
 		return nil, nil
 	}
@@ -404,11 +442,11 @@ func temporalLowBoundary(s string, targetDigits int, kind string) (fptypes.Value
 	result := fillTemporalBoundary(s, minStr, targetDigits)
 	switch kind {
 	case "datetime":
-		return fptypes.NewDateTime(result)
+		return fptypes.NewDateTime(result + writtenOffset)
 	case "date":
 		return fptypes.NewDate(result)
 	case "time":
-		return fptypes.NewTime(result)
+		return fptypes.NewTime(result + writtenOffset)
 	}
 	return nil, nil
 }

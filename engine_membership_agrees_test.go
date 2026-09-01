@@ -49,6 +49,10 @@ func evalMinus5(t *testing.T, expr string) string {
 // A collection has no null to return; it either holds an item or it does not. So
 // where equality is unknown, membership does not get to claim it: two values that
 // are not known to be equal stay two values.
+//
+// The `=` operator is the other side of that sentence and the reason it has to be
+// said carefully: it does have a null, so a container compared with `=` keeps the
+// unknown its elements report rather than resolving it either way.
 func TestMembershipDoesNotClaimWhatEqualityWontSay(t *testing.T) {
 	const (
 		bare   = "@2020-06-15T23:00:00.0" // millisecond precision
@@ -69,10 +73,39 @@ func TestMembershipDoesNotClaimWhatEqualityWontSay(t *testing.T) {
 		{"Count(distinct {" + bare + ", " + stated + "})", "2"},
 		{"Count({" + bare + "} intersect {" + stated + "})", "0"},
 		{"IndexOf({" + stated + "}, " + bare + ")", "-1"},
-		{"{" + bare + "} = {" + stated + "}", "false"},
 	} {
 		if got := evalMinus5(t, tt.expr); got != tt.want {
 			t.Errorf("%s = %s, want %s — equality says null for these two", tt.expr, got, tt.want)
+		}
+	}
+
+	// The `=` operator is the other case, and this test used to require false of
+	// it — which contradicted its own premise above. "A collection has no null to
+	// return" is true of membership and false of equality: `=` has one, gives it
+	// for these two elements, and a container cannot be more certain than the
+	// values it holds. An interval said it loudest, answering false while `start
+	// of` and `end of` on the same bounds both answered null, which is the
+	// contradiction interval equality was fixed to remove in v1.15.2.
+	for _, expr := range []string{
+		"{" + bare + "} = {" + stated + "}",
+		"{" + bare + "} != {" + stated + "}",
+		"Tuple{x: " + bare + "} = Tuple{x: " + stated + "}",
+		"Interval[" + bare + ", " + bare + "] = Interval[" + stated + ", " + stated + "]",
+	} {
+		if got := evalMinus5(t, expr); got != "null" {
+			t.Errorf("%s = %s, want null — a container is as certain as its elements, "+
+				"and these two elements are not settled", expr, got)
+		}
+	}
+
+	// A difference that IS settled still settles the container, so this is not
+	// "any unknown anywhere means null".
+	for _, tt := range []struct{ expr, want string }{
+		{"{" + bare + "} = {@2021-01-01T00:00:00.0}", "false"},
+		{"{" + bare + "} = {" + bare + "}", "true"},
+	} {
+		if got := evalMinus5(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
 		}
 	}
 
