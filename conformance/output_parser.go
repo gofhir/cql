@@ -5,16 +5,40 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	cqltypes "github.com/gofhir/cql/types"
 )
 
-// parseExpectedOutput converts an expected output string from a CQL conformance
-// test XML file into the corresponding fptypes.Value (or cqltypes value).
+// outputParser reads the expected output of a conformance case as the CQL text
+// it is, which includes the offset a DateTime written without one assumes.
+//
+// The corpus states an expected value the same way a library states a literal —
+// `@2012-03-10T10:20:00` is CQL either way — so the same rule applies to both:
+// "if no timezone offset is supplied, the timezone offset of the evaluation
+// request timestamp is assumed". Reading the text without it built a value
+// nobody had placed and compared it against one the engine had, which is a
+// comparison between two different things that only looked right while fhirpath
+// ignored the offset. It stopped ignoring it in v1.9.1, and 38 cases printing
+// `got` and `want` identically began to fail.
+//
+// So the assumed offset belongs here, at the point the value is built, rather
+// than in a second pass over the result: a container this parser learns to read
+// later cannot forget to apply it.
+type outputParser struct {
+	// assumedOffset is what a DateTime with no offset of its own takes, and has
+	// to be the offset of the same instant the engine was given. Taking it from
+	// two readings of the clock would let the two drift apart across a DST
+	// boundary, which is a failure nobody could reproduce.
+	assumedOffset time.Duration
+}
+
+// parse converts an expected output string from a CQL conformance test XML file
+// into the corresponding fptypes.Value (or cqltypes value).
 // Returns nil for "null". Returns an error for unsupported formats.
-func parseExpectedOutput(raw string) (fptypes.Value, error) {
+func (p outputParser) parse(raw string) (fptypes.Value, error) {
 	s := strings.TrimSpace(raw)
 
 	if s == "" || s == "null" {
@@ -36,22 +60,22 @@ func parseExpectedOutput(raw string) (fptypes.Value, error) {
 
 	// List: {elem, elem, ...}
 	if strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}") {
-		return parseList(s)
+		return p.parseList(s)
 	}
 
 	// Interval: Interval[2, 7] or Interval(2, 7]
 	if strings.HasPrefix(s, "Interval") {
-		return parseInterval(s)
+		return p.parseInterval(s)
 	}
 
 	// Tuple: Tuple { key: val, ... }
 	if strings.HasPrefix(s, "Tuple") {
-		return parseTuple(s)
+		return p.parseTuple(s)
 	}
 
 	// Concept: Concept { codes: Code { ... } ... }
 	if strings.HasPrefix(s, "Concept") {
-		return parseConcept(s)
+		return p.parseConcept(s)
 	}
 
 	// Code: Code { code: '...', system: '...', ... }
@@ -71,7 +95,7 @@ func parseExpectedOutput(raw string) (fptypes.Value, error) {
 
 	// DateTime or Date starting with @
 	if strings.HasPrefix(s, "@") {
-		return parseDateTimeOrDate(s[1:]) // strip '@'
+		return p.parseDateTimeOrDate(s[1:]) // strip '@'
 	}
 
 	// Long literal (e.g., "1L", "3L") — parse as Integer (fits in int64)
@@ -146,7 +170,7 @@ var (
 // parseDateTimeOrDate parses a string (already stripped of leading '@') as
 // either a DateTime or Date. The rule: if the string contains 'T', it's a
 // DateTime; otherwise it's a Date.
-func parseDateTimeOrDate(s string) (fptypes.Value, error) {
+func (p outputParser) parseDateTimeOrDate(s string) (fptypes.Value, error) {
 	if strings.Contains(s, "T") {
 		// DateTime. Strip trailing 'T' if no time component follows.
 		// e.g., "2014T" -> "2014", "2014-01-01T" -> "2014-01-01"
@@ -160,6 +184,12 @@ func parseDateTimeOrDate(s string) (fptypes.Value, error) {
 		dt, err := fptypes.NewDateTime(s)
 		if err != nil {
 			return nil, fmt.Errorf("parsing datetime %q: %w", s, err)
+		}
+		// The same rule the engine applies to a literal: a stated offset stands,
+		// and an absent one is the evaluation request's. Nothing is written into
+		// the value, so it still prints as the corpus wrote it.
+		if !dt.HasTZ() {
+			dt = dt.WithDefaultOffset(p.assumedOffset)
 		}
 		return dt, nil
 	}
@@ -208,7 +238,7 @@ func looksLikeBareTuple(_ string, elements []string) bool {
 
 // parseList parses a list literal like `{1, 2, 3}` or `{'a','b','c'}`.
 // Also handles bare tuple syntax like `{ A: 2, B: 5 }`.
-func parseList(s string) (fptypes.Value, error) {
+func (p outputParser) parseList(s string) (fptypes.Value, error) {
 	inner := strings.TrimSpace(s[1 : len(s)-1]) // strip { and }
 	if inner == "" {
 		return cqltypes.NewList(fptypes.Collection{}), nil
@@ -221,12 +251,12 @@ func parseList(s string) (fptypes.Value, error) {
 
 	// Check if this is a bare tuple (all elements are key: value pairs)
 	if looksLikeBareTuple(inner, elements) {
-		return parseBareTuple(elements)
+		return p.parseBareTuple(elements)
 	}
 
 	values := make(fptypes.Collection, 0, len(elements))
 	for _, elem := range elements {
-		v, err := parseExpectedOutput(strings.TrimSpace(elem))
+		v, err := p.parse(strings.TrimSpace(elem))
 		if err != nil {
 			return nil, fmt.Errorf("parsing list element %q: %w", elem, err)
 		}
@@ -236,7 +266,7 @@ func parseList(s string) (fptypes.Value, error) {
 }
 
 // parseBareTuple parses a bare tuple from pre-split key:value elements.
-func parseBareTuple(parts []string) (fptypes.Value, error) {
+func (p outputParser) parseBareTuple(parts []string) (fptypes.Value, error) {
 	elements := make(map[string]fptypes.Value, len(parts))
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
@@ -246,7 +276,7 @@ func parseBareTuple(parts []string) (fptypes.Value, error) {
 		}
 		key := strings.TrimSpace(part[:colonIdx])
 		valStr := strings.TrimSpace(part[colonIdx+1:])
-		val, err := parseExpectedOutput(valStr)
+		val, err := p.parse(valStr)
 		if err != nil {
 			return nil, fmt.Errorf("parsing tuple element %q: %w", key, err)
 		}
@@ -256,7 +286,7 @@ func parseBareTuple(parts []string) (fptypes.Value, error) {
 }
 
 // parseInterval parses an interval literal like `Interval[2, 7]` or `Interval(2, 7]`.
-func parseInterval(s string) (fptypes.Value, error) {
+func (p outputParser) parseInterval(s string) (fptypes.Value, error) {
 	// Strip "Interval" prefix
 	rest := strings.TrimPrefix(s, "Interval")
 	rest = strings.TrimSpace(rest)
@@ -288,11 +318,11 @@ func parseInterval(s string) (fptypes.Value, error) {
 		return nil, fmt.Errorf("interval must have exactly 2 bounds, got %d in %q", len(parts), s)
 	}
 
-	low, err := parseExpectedOutput(strings.TrimSpace(parts[0]))
+	low, err := p.parse(strings.TrimSpace(parts[0]))
 	if err != nil {
 		return nil, fmt.Errorf("parsing interval low bound: %w", err)
 	}
-	high, err := parseExpectedOutput(strings.TrimSpace(parts[1]))
+	high, err := p.parse(strings.TrimSpace(parts[1]))
 	if err != nil {
 		return nil, fmt.Errorf("parsing interval high bound: %w", err)
 	}
@@ -301,7 +331,7 @@ func parseInterval(s string) (fptypes.Value, error) {
 }
 
 // parseTuple parses a tuple literal like `Tuple { id: 5, name: 'Chris'}`.
-func parseTuple(s string) (fptypes.Value, error) {
+func (p outputParser) parseTuple(s string) (fptypes.Value, error) {
 	// Strip "Tuple" prefix and find the braces
 	rest := strings.TrimPrefix(s, "Tuple")
 	rest = strings.TrimSpace(rest)
@@ -329,7 +359,7 @@ func parseTuple(s string) (fptypes.Value, error) {
 		}
 		key := strings.TrimSpace(part[:colonIdx])
 		valStr := strings.TrimSpace(part[colonIdx+1:])
-		val, err := parseExpectedOutput(valStr)
+		val, err := p.parse(valStr)
 		if err != nil {
 			return nil, fmt.Errorf("parsing tuple element %q: %w", key, err)
 		}
@@ -383,7 +413,7 @@ func splitTopLevel(s string) ([]string, error) {
 // parseConcept parses a Concept literal like:
 //
 //	Concept { codes: Code { code: '8480-6' } }
-func parseConcept(s string) (fptypes.Value, error) {
+func (p outputParser) parseConcept(s string) (fptypes.Value, error) {
 	rest := strings.TrimPrefix(s, "Concept")
 	rest = strings.TrimSpace(rest)
 	if !strings.HasPrefix(rest, "{") || !strings.HasSuffix(rest, "}") {
@@ -408,7 +438,7 @@ func parseConcept(s string) (fptypes.Value, error) {
 		switch key {
 		case "codes":
 			// valStr could be a single Code or multiple; parse it
-			codeVal, err := parseExpectedOutput(valStr)
+			codeVal, err := p.parse(valStr)
 			if err != nil {
 				return nil, fmt.Errorf("parsing Concept codes: %w", err)
 			}

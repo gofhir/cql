@@ -1,11 +1,35 @@
 package eval
 
 import (
+	"time"
+
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
 	"github.com/gofhir/cql/sema"
 )
+
+// situate gives a DateTime the offset the evaluation request assumes, where the
+// value states none of its own.
+//
+// CQL says a DateTime written without an offset carries the request's, and until
+// now the engine only applied that to literals. That left two populations of
+// value: the ones a literal produced, which were placed, and the ones that came
+// in any other way — from FHIR JSON, from a string conversion — which were not.
+// The two compare correctly only while the comparison ignores the default, which
+// fhirpath did until v1.9.1 and no longer does.
+//
+// So every door a DateTime comes through calls this. A stated offset is left
+// alone, and nothing is written into the value: the default is remembered
+// alongside, which is what keeps a literal printing as it was written.
+func (e *Evaluator) situate(v fptypes.Value) fptypes.Value {
+	dt, isDateTime := v.(fptypes.DateTime)
+	if !isDateTime || dt.HasTZ() {
+		return v
+	}
+	_, seconds := e.ctx.EvaluationTimestamp.Zone()
+	return dt.WithDefaultOffset(time.Duration(seconds) * time.Second)
+}
 
 // asPlannedType gives a value the type the semantic phase decided the expression
 // has, where the two can disagree about a FHIR primitive.

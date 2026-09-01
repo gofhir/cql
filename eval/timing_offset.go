@@ -39,6 +39,17 @@ func offsetWindowOf(left, right fptypes.Value) (low, high offsetPair, asymmetric
 	// known one, so the pair is not asymmetric and there is no window to bound.
 	// Asking HasTZ alone meant the window still fired for a defaulted value, and
 	// `before` declined where `<` answered.
+	// And a value with no timezone frame is not a side that left its offset out.
+	// A DateTime specified no finer than the day names a day, so there is no
+	// offset that would turn it into an instant and nothing for the window to
+	// bound: widening it across 26 hours turns a question the day settles —
+	// `DateTime(2020,1,1,12) same day as DateTime(2020,1,1)` — into one nobody can
+	// answer. Both sides are read as written instead, which is what
+	// temporalComponentsAgainst does with them.
+	if framelessTemporal(left) || framelessTemporal(right) {
+		return low, high, false
+	}
+
 	_, lKnown := l.EffectiveOffset()
 	_, rKnown := r.EffectiveOffset()
 	if lKnown == rKnown {

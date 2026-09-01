@@ -92,6 +92,118 @@ func temporalEquality(left, right fptypes.Value) (fptypes.Value, bool) {
 	return fptypes.NewBoolean(cmp == 0), true
 }
 
+// elementVerdict is what comparing two elements of a container settles.
+type elementVerdict int
+
+const (
+	elementsEqual elementVerdict = iota
+	elementsUnequal
+	elementsUnknown
+)
+
+// elementEquality compares two values held inside a container, keeping the case
+// neither equal nor unequal rather than folding it into one of them.
+func elementEquality(a, b fptypes.Value) elementVerdict {
+	if a == nil && b == nil {
+		return elementsEqual
+	}
+	if a == nil || b == nil {
+		return elementsUnknown
+	}
+	switch cqltypes.TemporalEquality(a, b) {
+	case cqltypes.TemporallyEqual:
+		return elementsEqual
+	case cqltypes.TemporallyUnequal:
+		return elementsUnequal
+	case cqltypes.TemporallyUnknown:
+		return elementsUnknown
+	}
+	if v, nested := containerVerdict(a, b); nested {
+		return v
+	}
+	if a.Equal(b) {
+		return elementsEqual
+	}
+	return elementsUnequal
+}
+
+// containerVerdict compares two values that hold other values, element by
+// element, and reports what their elements settle.
+//
+// A container cannot be more certain than the values it holds. `=` on a pair of
+// DateTimes specified to different precisions is null, and an interval with those
+// bounds answered false while `start of` and `end of` on the same pair both
+// answered null — the contradiction interval equality was fixed to remove in
+// v1.15.2, one level up. Membership is the other case and keeps its own answer:
+// it has no null to hold, so two values not known to be equal stay two values.
+//
+// Order decides, as tuple equality already decided it: an element that differs
+// settles the answer even when a later one is unknown, and an unknown one settles
+// it when it comes first.
+func containerVerdict(left, right fptypes.Value) (elementVerdict, bool) {
+	verdictOf := func(pairs [][2]fptypes.Value) elementVerdict {
+		for _, p := range pairs {
+			switch elementEquality(p[0], p[1]) {
+			case elementsUnequal:
+				return elementsUnequal
+			case elementsUnknown:
+				return elementsUnknown
+			}
+		}
+		return elementsEqual
+	}
+
+	switch l := left.(type) {
+	case cqltypes.List:
+		r, ok := right.(cqltypes.List)
+		if !ok {
+			return elementsUnequal, false
+		}
+		if len(l.Values) != len(r.Values) {
+			return elementsUnequal, true
+		}
+		pairs := make([][2]fptypes.Value, 0, len(l.Values))
+		for i := range l.Values {
+			pairs = append(pairs, [2]fptypes.Value{l.Values[i], r.Values[i]})
+		}
+		return verdictOf(pairs), true
+
+	case cqltypes.Interval:
+		r, ok := right.(cqltypes.Interval)
+		// An uncertainty is written as a closed interval and answers for itself.
+		if !ok || l.LowClosed != r.LowClosed || l.HighClosed != r.HighClosed {
+			return elementsUnequal, false
+		}
+		if _, isUncertainty := right.(cqltypes.Uncertainty); isUncertainty {
+			return elementsUnequal, false
+		}
+		return verdictOf([][2]fptypes.Value{{l.Low, r.Low}, {l.High, r.High}}), true
+
+	case cqltypes.Ratio:
+		r, ok := right.(cqltypes.Ratio)
+		if !ok {
+			return elementsUnequal, false
+		}
+		return verdictOf([][2]fptypes.Value{
+			{l.Numerator, r.Numerator},
+			{l.Denominator, r.Denominator},
+		}), true
+	}
+	return elementsUnequal, false
+}
+
+// containerEquality is containerVerdict as the `=` operator answers it.
+func containerEquality(left, right fptypes.Value) (fptypes.Value, bool) {
+	v, handled := containerVerdict(left, right)
+	if !handled {
+		return nil, false
+	}
+	if v == elementsUnknown {
+		return nil, true
+	}
+	return fptypes.NewBoolean(v == elementsEqual), true
+}
+
 // calendarUCUMQuantities reports whether two values are quantities measured in a
 // calendar year or month on one side and the matching UCUM code on the other,
 // which is the pairing CQL declines to decide. See funcs.IsCalendarUCUMDurationPair.
@@ -822,6 +934,9 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		if res, handled := uncertainEquality(left, right); handled {
 			return res, nil
 		}
+		if res, handled := containerEquality(left, right); handled {
+			return res, nil
+		}
 		return fptypes.NewBoolean(left.Equal(right)), nil
 	case ast.OpNotEqual:
 		if lt, lok := left.(cqltypes.Tuple); lok {
@@ -846,6 +961,12 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 			return fptypes.NewBoolean(!isTrue(res)), nil
 		}
 		if res, handled := uncertainEquality(left, right); handled {
+			if res == nil {
+				return nil, nil
+			}
+			return fptypes.NewBoolean(!isTrue(res)), nil
+		}
+		if res, handled := containerEquality(left, right); handled {
 			if res == nil {
 				return nil, nil
 			}
@@ -1325,16 +1446,15 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 		if !exists {
 			return fptypes.NewBoolean(false), nil
 		}
-		if av == nil && bv == nil {
-			continue // both null → matching
-		}
-		if av == nil || bv == nil {
-			return nil, nil // one null, one not → indeterminate
-		}
-		// Through sameValue, so a tuple holding a Date does not disagree with the
-		// `=` operator about a tuple holding the same day as a DateTime.
-		if !sameValue(av, bv) {
+		// Through elementEquality, so a tuple holding a Date does not disagree with
+		// the `=` operator about a tuple holding the same day as a DateTime, and a
+		// pair the comparison cannot settle leaves the tuple unsettled too rather
+		// than being reported as a difference.
+		switch elementEquality(av, bv) {
+		case elementsUnequal:
 			return fptypes.NewBoolean(false), nil
+		case elementsUnknown:
+			return nil, nil
 		}
 	}
 	return fptypes.NewBoolean(true), nil
@@ -1749,7 +1869,11 @@ func (e *Evaluator) evalConvert(n *ast.ConvertExpression) (fptypes.Value, error)
 	}
 	if n.ToType != nil {
 		if nt, ok := n.ToType.(*ast.NamedType); ok {
-			return convertToType(operand, nt.Name)
+			converted, err := convertToType(operand, nt.Name)
+			if err != nil {
+				return nil, err
+			}
+			return e.situateConversion(operand, converted), nil
 		}
 	}
 	return operand, nil
@@ -1768,9 +1892,27 @@ func (e *Evaluator) evalCast(n *ast.CastExpression) (fptypes.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cast failed: %w", err)
 		}
-		return val, nil
+		return e.situateConversion(operand, val), nil
 	}
 	return operand, nil
+}
+
+// situateConversion places the result of a convert or a cast, but only where the
+// conversion actually made a DateTime out of something else.
+//
+// Making one out of text is a door like any other: `convert '2020-06-15T23:00:00'
+// to DateTime` and ToDateTime of the same string are the same operation, and they
+// were answering differently about the offset. Naming the type a DateTime already
+// has is not a door — it produces the value it was given, and placing that value
+// would place whatever it happens to be. `maximum DateTime` is the case that
+// shows it: the largest value the type holds is not one someone wrote without an
+// offset, and `maximum DateTime = (cast (maximum DateTime) as DateTime)` stopped
+// being true once the cast placed it.
+func (e *Evaluator) situateConversion(from, to fptypes.Value) fptypes.Value {
+	if _, wasDateTime := from.(fptypes.DateTime); wasDateTime {
+		return to
+	}
+	return e.situate(to)
 }
 
 func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
@@ -2889,7 +3031,14 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 					return nil, err
 				}
 			}
-			return funcs.DateTimeConstructor(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+			// A constructor makes a value, so it is a door: unless the caller
+			// passed an offset argument, the result assumes the request's. See
+			// situate.
+			built, err := funcs.DateTimeConstructor(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+			if err != nil {
+				return nil, err
+			}
+			return e.situate(built), nil
 		}
 		return nil, nil
 	case "time":
@@ -3098,7 +3247,13 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		return funcs.ToDateTime(src)
+		// Placed at the request's offset like any other DateTime entering the
+		// engine: a string conversion is a door too. See situate.
+		converted, err := funcs.ToDateTime(src)
+		if err != nil {
+			return nil, err
+		}
+		return e.situate(converted), nil
 	case "totime":
 		src, err := resolveSource()
 		if err != nil {
@@ -3690,10 +3845,13 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 		// and obj.Type() infers it by walking the object's fields — paying that
 		// on every member access cost more than the whole promotion saves.
 		for i, v := range result {
-			if _, isDate := v.(fptypes.Date); !isDate {
-				continue
+			if _, isDate := v.(fptypes.Date); isDate {
+				result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
 			}
-			result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
+			// Every DateTime out of JSON is placed at the request's offset, not
+			// only the ones promoted from a Date above. A value that already
+			// states an offset is untouched. See situate.
+			result[i] = e.situate(result[i])
 		}
 		if result.Count() > 0 {
 			if result.Count() == 1 {
@@ -3731,7 +3889,7 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 							// published eCQM libraries, against zero of any
 							// concrete spelling.
 							for i, v := range result {
-								result[i] = AsDeclaredType(choiceType, v)
+								result[i] = e.situate(AsDeclaredType(choiceType, v))
 							}
 							if result.Count() == 1 {
 								return result[0], nil
@@ -4279,9 +4437,17 @@ func compareValues(a, b fptypes.Value) (int, error) {
 	}
 	result, err := ac.Compare(b)
 	if err != nil && isAmbiguousComparisonErr(err) {
-		// Fall back to component-wise comparison at shared precision
-		aComps, aMaxPrec := temporalComponents(a)
-		bComps, bMaxPrec := temporalComponents(b)
+		// Fall back to component-wise comparison at shared precision.
+		//
+		// Each side is read against the other, the way the timing operators read
+		// them. Asking temporalComponents alone said "the other side has a frame"
+		// whatever the other side was, so one value was normalized to UTC while the
+		// frameless one kept its local digits — two frames lined up component by
+		// component. At UTC+14 that put `DateTime(2012, 1, 1)` in 2012 and
+		// `DateTime(2012, 1, 1, 12)` in 2011, and `sort asc` ordered the finer value
+		// first on the strength of a year the offset had rolled back.
+		aComps, aMaxPrec := temporalComponentsAgainst(a, framelessTemporal(b))
+		bComps, bMaxPrec := temporalComponentsAgainst(b, framelessTemporal(a))
 		if aComps != nil && bComps != nil {
 			minPrec := aMaxPrec
 			if bMaxPrec < minPrec {
@@ -4957,8 +5123,10 @@ func intervalIncludesAtPrecision(outer, inner cqltypes.Interval, precision strin
 	}
 
 	cmpAtPrec := func(a, b fptypes.Value) (int, bool) {
-		aComps, aMax := temporalComponents(a)
-		bComps, bMax := temporalComponents(b)
+		// Read against each other, so a bound with no timezone frame is not lined
+		// up against a point that has been moved into one. See compareValues.
+		aComps, aMax := temporalComponentsAgainst(a, framelessTemporal(b))
+		bComps, bMax := temporalComponentsAgainst(b, framelessTemporal(a))
 		if aComps == nil || bComps == nil {
 			return 0, false
 		}
@@ -5066,6 +5234,10 @@ func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fp
 	if pIdx < 0 {
 		return nil, nil
 	}
+	// The point is read against each bound separately: its components depend on
+	// whether the bound it is being compared with has a timezone frame, and the
+	// two bounds need not agree about that. Its precision does not depend on the
+	// bound, so the guard below can be settled once.
 	pointComps, pointMaxPrec := temporalComponents(point)
 	if pointComps == nil {
 		return nil, nil
@@ -5078,7 +5250,8 @@ func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fp
 
 	// Check low bound
 	if iv.Low != nil {
-		lowComps, _ := temporalComponents(iv.Low)
+		lowComps, _ := temporalComponentsAgainst(iv.Low, framelessTemporal(point))
+		pointComps, _ := temporalComponentsAgainst(point, framelessTemporal(iv.Low))
 		if lowComps != nil {
 			cmpResult := 0
 			for i := 0; i <= cmpPrec; i++ {
@@ -5105,7 +5278,8 @@ func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fp
 	}
 	// Check high bound
 	if iv.High != nil {
-		highComps, _ := temporalComponents(iv.High)
+		highComps, _ := temporalComponentsAgainst(iv.High, framelessTemporal(point))
+		pointComps, _ := temporalComponentsAgainst(point, framelessTemporal(iv.High))
 		if highComps != nil {
 			cmpResult := 0
 			for i := 0; i <= cmpPrec; i++ {
@@ -5336,10 +5510,20 @@ func temporalComponents(v fptypes.Value) (components []int, maxPrec int) {
 
 // framelessTemporal reports whether a value names something with no timezone
 // frame — a Date, which is a day, or a Time, which is a time of day.
+//
+// A DateTime specified no finer than the day is the same animal. It names a day
+// and not an instant, so there is no hour for an offset to move, and placing it at
+// UTC only invents one: `DateTime(2014, 12, 20)` read at UTC-11 becomes the 20th
+// at 11:00 while `DateTime(2014, 12, 20, 15)` becomes the 21st, and a comparison
+// that should have declined for want of precision was settled by a day the offset
+// had shifted. fhirpath says the same thing in its own terms — a DateTime coarser
+// than the hour reports no effective offset at all, however it was placed.
 func framelessTemporal(v fptypes.Value) bool {
-	switch v.(type) {
+	switch t := v.(type) {
 	case fptypes.Date, fptypes.Time:
 		return true
+	case fptypes.DateTime:
+		return t.Precision() < fptypes.DTHourPrecision
 	}
 	return false
 }

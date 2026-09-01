@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	cql "github.com/gofhir/cql"
 	cqltypes "github.com/gofhir/cql/types"
@@ -42,7 +43,19 @@ func TestConformance(t *testing.T) {
 		t.Fatal("no XML test files found in testdata/")
 	}
 
-	engine := cql.NewEngine()
+	// One reading of the clock, handed to both sides. The engine places a bare
+	// DateTime at the evaluation request's offset and the parser reads the
+	// expected text under the same rule, so the two are always comparing values
+	// placed the same way. Two readings would agree except across a DST boundary,
+	// where they would produce a failure nobody could reproduce.
+	//
+	// The offset still comes from the process zone, so TZ decides what is
+	// measured — and it has to: with a default offset in play the answers depend
+	// on it, and one zone proves nothing.
+	now := time.Now()
+	_, offsetSeconds := now.Zone()
+	parser := outputParser{assumedOffset: time.Duration(offsetSeconds) * time.Second}
+	engine := cql.NewEngine(cql.WithEvaluationTimestamp(now))
 
 	for _, file := range files {
 		data, err := os.ReadFile(file)
@@ -75,7 +88,7 @@ func TestConformance(t *testing.T) {
 						}
 						t.Run(testName, func(t *testing.T) {
 							t.Parallel()
-							runTestCase(t, engine, tc)
+							runTestCase(t, engine, parser, tc)
 						})
 					}
 				})
@@ -103,7 +116,7 @@ var upstreamContradictions = map[string]string{
 	"FloorIntegerLessThanMinInteger": "expects null for Floor(-2147483649); see FloorIntegerGreaterThanMaxInteger.",
 }
 
-func runTestCase(t *testing.T, engine *cql.Engine, tc TestCase) {
+func runTestCase(t *testing.T, engine *cql.Engine, parser outputParser, tc TestCase) {
 	t.Helper()
 
 	expr := strings.TrimSpace(tc.Expression.Value)
@@ -112,7 +125,7 @@ func runTestCase(t *testing.T, engine *cql.Engine, tc TestCase) {
 	}
 
 	if reason, known := upstreamContradictions[tc.Name]; known {
-		if runsClean(engine, tc) {
+		if runsClean(engine, parser, tc) {
 			t.Fatalf("%s passes now, so upstream has settled it — remove this entry from "+
 				"upstreamContradictions.\n\nRecorded reason: %s", tc.Name, reason)
 		}
@@ -145,7 +158,7 @@ func runTestCase(t *testing.T, engine *cql.Engine, tc TestCase) {
 
 	if len(tc.Outputs) == 1 {
 		outputStr := strings.TrimSpace(tc.Outputs[0].Value)
-		want, err := parseExpectedOutput(outputStr)
+		want, err := parser.parse(outputStr)
 		if err != nil {
 			t.Fatalf("parse expected output %q: %v", outputStr, err)
 		}
@@ -160,7 +173,7 @@ func runTestCase(t *testing.T, engine *cql.Engine, tc TestCase) {
 	wantValues := make(fptypes.Collection, 0, len(tc.Outputs))
 	for _, out := range tc.Outputs {
 		outputStr := strings.TrimSpace(out.Value)
-		w, err := parseExpectedOutput(outputStr)
+		w, err := parser.parse(outputStr)
 		if err != nil {
 			t.Fatalf("parse expected output %q: %v", outputStr, err)
 		}
@@ -176,7 +189,7 @@ func runTestCase(t *testing.T, engine *cql.Engine, tc TestCase) {
 // runsClean answers whether a test case would pass, without reporting anything. It
 // mirrors the verdicts of runTestCase and exists only so an entry in
 // upstreamContradictions can be checked for still being contradictory.
-func runsClean(engine *cql.Engine, tc TestCase) bool {
+func runsClean(engine *cql.Engine, parser outputParser, tc TestCase) bool {
 	expr := strings.TrimSpace(tc.Expression.Value)
 	cqlSource := wrapExpression(expr)
 	got, err := engine.EvaluateExpression(context.Background(), cqlSource, "result", nil, nil)
@@ -191,13 +204,13 @@ func runsClean(engine *cql.Engine, tc TestCase) bool {
 		return true
 	}
 	if len(tc.Outputs) == 1 {
-		want, perr := parseExpectedOutput(strings.TrimSpace(tc.Outputs[0].Value))
+		want, perr := parser.parse(strings.TrimSpace(tc.Outputs[0].Value))
 		return perr == nil && valuesEqual(got, want)
 	}
 
 	wantValues := make(fptypes.Collection, 0, len(tc.Outputs))
 	for _, out := range tc.Outputs {
-		w, perr := parseExpectedOutput(strings.TrimSpace(out.Value))
+		w, perr := parser.parse(strings.TrimSpace(out.Value))
 		if perr != nil {
 			return false
 		}
