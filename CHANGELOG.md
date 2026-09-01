@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/gofhir/cql/compare/v1.19.0...v1.20.0) (2026-09-01)
+
+
+### Features
+
+* a DateTime assumes the request's offset wherever it comes from, and the engine moves to fhirpath v1.9.1 ([#66](https://github.com/gofhir/cql/issues/66)) ([5055d9d](https://github.com/gofhir/cql/commit/5055d9d0590f7813b0f664dd6172ed6e875beed1))
+
 ## [1.19.0](https://github.com/gofhir/cql/compare/v1.18.2...v1.19.0) (2026-08-28)
 
 
