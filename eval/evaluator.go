@@ -3175,7 +3175,8 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 		}
-		return funcs.HighBoundary(src, prec)
+		bound, err := funcs.HighBoundary(src, prec)
+		return e.situateRefinement(src, bound, err)
 
 	case "lowboundary":
 		src, err := resolveSource()
@@ -3189,7 +3190,8 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 		}
-		return funcs.LowBoundary(src, prec)
+		bound, err := funcs.LowBoundary(src, prec)
+		return e.situateRefinement(src, bound, err)
 
 	// Indexer
 	case "indexer":

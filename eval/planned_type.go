@@ -31,6 +31,34 @@ func (e *Evaluator) situate(v fptypes.Value) fptypes.Value {
 	return dt.WithDefaultOffset(time.Duration(seconds) * time.Second)
 }
 
+// situateRefinement places a boundary that is specified more finely than the value
+// it was derived from.
+//
+// A derived value carries its source's offset rather than the request's, which is
+// the distinction that keeps a value read from data from silently acquiring the
+// offset of whoever asked, and funcs.HighBoundary does that copying. What it
+// cannot do is give a boundary a frame its source never had:
+// `HighBoundary(@2020-06-15T, 17)` refines a value with no hour into one with a
+// millisecond, and there is no offset on the source to copy because a day does not
+// have one.
+//
+// The result does need a frame — it names an instant now — and the only one there
+// is belongs to the evaluation request. That is not the confusion the rule guards
+// against: there is no frame of the source's to contradict, and "the last instant
+// of the 15th" is a question about the asking party's day. Left unplaced it would
+// sit in exactly the population of values this line of work exists to empty.
+func (e *Evaluator) situateRefinement(source, out fptypes.Value, err error) (fptypes.Value, error) {
+	if err != nil || out == nil {
+		return out, err
+	}
+	if src, isDateTime := source.(fptypes.DateTime); isDateTime {
+		if _, framed := src.EffectiveOffset(); framed {
+			return out, nil // the source had a frame; funcs carried it across
+		}
+	}
+	return e.situate(out), nil
+}
+
 // asPlannedType gives a value the type the semantic phase decided the expression
 // has, where the two can disagree about a FHIR primitive.
 //

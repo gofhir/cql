@@ -251,10 +251,8 @@ func HighBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
 	// What this cannot do is give a boundary a frame its source never had.
 	// `HighBoundary(@2020-06-15T, 17)` refines a value with no hour into one with a
 	// millisecond, and there is no offset on the source to carry — funcs cannot ask
-	// for the evaluation request's. So that result comes back unplaced. It is the
-	// one derived value that is still in the wrong population, and closing it is a
-	// decision about whether a refinement may take the asking party's offset, which
-	// is the question this whole line of work exists to be careful about.
+	// for the evaluation request's. The evaluator finishes that case in
+	// situateRefinement, which is where the request's offset is reachable.
 	out, err := highboundaryOf(v, precision)
 	if err != nil {
 		return nil, err

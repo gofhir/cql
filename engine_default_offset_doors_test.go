@@ -172,3 +172,54 @@ func TestBoundaryKeepsWhatTheValueStates(t *testing.T) {
 		}
 	}
 }
+
+// TestARefinementTakesTheRequestsFrame covers the one derived value that had no
+// offset to inherit.
+//
+// A derived value carries its source's offset rather than the request's, which is
+// what keeps a value read from data from silently acquiring the offset of whoever
+// asked. A boundary that refines a value with no hour is the case that rule does
+// not reach: `HighBoundary(@2020-06-15T, 17)` turns a day into a millisecond, and
+// a day has no offset to carry. The result named an instant while sitting in no
+// frame at all, so comparing it to anything placed was unknown:
+//
+//	HighBoundary(@2020-06-15T, 17) < @2020-06-16T00:00:00     was null
+//
+// The request's offset is the only frame there is, and "the last instant of the
+// 15th" is a question about the asking party's day. The rule still holds where it
+// applies, which is what the second half of this test is for: a source that states
+// its own offset keeps it, and does not pick up the request's.
+func TestARefinementTakesTheRequestsFrame(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"timezoneoffset from HighBoundary(@2020-06-15T, 17)", "OFFSET"},
+		{"timezoneoffset from LowBoundary(@2020-06-15T, 17)", "OFFSET"},
+		{"HighBoundary(@2020-06-15T, 17) < @2020-06-16T00:00:00", "true"},
+	} {
+		for _, tz := range []struct {
+			hours int
+			want  string
+		}{{0, "0"}, {-5, "-5"}, {9, "9"}} {
+			want := tt.want
+			if want == "OFFSET" {
+				want = tz.want
+			}
+			if got := askAtOffset(t, tz.hours, tt.expr); got != want {
+				t.Errorf("%s at UTC%+d = %s, want %s — a refinement with no frame to "+
+					"inherit takes the request's", tt.expr, tz.hours, got, want)
+			}
+		}
+	}
+
+	// And where there IS a frame to inherit, it is inherited rather than replaced.
+	for _, expr := range []string{
+		"timezoneoffset from HighBoundary(@2020-06-15T23:00:00Z, 17)",
+		"timezoneoffset from LowBoundary(@2020-06-15T23:00:00Z, 17)",
+	} {
+		for _, hours := range []int{0, -5, 9} {
+			if got := askAtOffset(t, hours, expr); got != "0" {
+				t.Errorf("%s at UTC%+d = %s, want 0 — a stated offset is the source's "+
+					"frame and a derived value keeps it, whoever is asking", expr, hours, got)
+			}
+		}
+	}
+}
