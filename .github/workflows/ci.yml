@@ -42,6 +42,22 @@ jobs:
           # itself fail on the next line, locally as well as here, so the schema
           # check only moves the error earlier at the cost of a network call.
           verify: false
+          # The analysis cache the action carries between runs went bad and started
+          # reporting six SA5011 nil-dereference findings in test files, on code
+          # that had not changed: the release commit for v1.20.0 failed with them
+          # while the commit before it — same Go 1.24.13, same pinned linter, a
+          # CHANGELOG line apart — passed. Every run after that restored the same
+          # cache and failed the same way, which is what made a poisoned cache look
+          # like a real finding.
+          #
+          # The findings are false: each one is `if x == nil { t.Fatal(...) }`
+          # followed by a use, and t.Fatal ends the test. Running the same linter
+          # version and config locally with a cleared cache reports none of them.
+          #
+          # So the cache is dropped rather than the findings suppressed. It costs
+          # about ten seconds per run and removes a state that can disagree with
+          # both a clean CI run and every developer's machine.
+          skip-cache: true
 
   test:
     name: Test
