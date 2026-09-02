@@ -172,3 +172,99 @@ func TestBoundaryKeepsWhatTheValueStates(t *testing.T) {
 		}
 	}
 }
+
+// TestARefinementTakesTheRequestsFrame covers the one derived value that had no
+// offset to inherit.
+//
+// A derived value carries its source's offset rather than the request's, which is
+// what keeps a value read from data from silently acquiring the offset of whoever
+// asked. A boundary that refines a value with no hour is the case that rule does
+// not reach: `HighBoundary(@2020-06-15T, 17)` turns a day into a millisecond, and
+// a day has no offset to carry. The result named an instant while sitting in no
+// frame at all, so comparing it to anything placed was unknown:
+//
+//	HighBoundary(@2020-06-15T, 17) < @2020-06-16T00:00:00     was null
+//
+// The request's offset is the only frame there is, and "the last instant of the
+// 15th" is a question about the asking party's day. The rule still holds where it
+// applies, which is what the second half of this test is for: a source that states
+// its own offset keeps it, and does not pick up the request's.
+func TestARefinementTakesTheRequestsFrame(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"timezoneoffset from HighBoundary(@2020-06-15T, 17)", "OFFSET"},
+		{"timezoneoffset from LowBoundary(@2020-06-15T, 17)", "OFFSET"},
+		{"HighBoundary(@2020-06-15T, 17) < @2020-06-16T00:00:00", "true"},
+	} {
+		for _, tz := range []struct {
+			hours int
+			want  string
+		}{{0, "0"}, {-5, "-5"}, {9, "9"}} {
+			want := tt.want
+			if want == "OFFSET" {
+				want = tz.want
+			}
+			if got := askAtOffset(t, tz.hours, tt.expr); got != want {
+				t.Errorf("%s at UTC%+d = %s, want %s — a refinement with no frame to "+
+					"inherit takes the request's", tt.expr, tz.hours, got, want)
+			}
+		}
+	}
+
+	// And where there IS a frame to inherit, it is inherited rather than replaced.
+	for _, expr := range []string{
+		"timezoneoffset from HighBoundary(@2020-06-15T23:00:00Z, 17)",
+		"timezoneoffset from LowBoundary(@2020-06-15T23:00:00Z, 17)",
+	} {
+		for _, hours := range []int{0, -5, 9} {
+			if got := askAtOffset(t, hours, expr); got != "0" {
+				t.Errorf("%s at UTC%+d = %s, want 0 — a stated offset is the source's "+
+					"frame and a derived value keeps it, whoever is asking", expr, hours, got)
+			}
+		}
+	}
+}
+
+// TestBoundaryFillsARealLastDay covers the day a high boundary supplies for a
+// value written only to the month.
+//
+// The fill takes missing components from the constant "9999-12-31T23:59:59.999",
+// so the day it supplied was always the 31st:
+//
+//	HighBoundary(@2021-02T, 17)   was 2021-02-31T23:59:59.999
+//
+// February has no 31st, and neither do April, June, September or November. While
+// such a value stayed unplaced the comparisons it reached declined, which hid it;
+// once a boundary takes the request's offset the engine answers with it, and
+// `days between @2021-02-01 and that` said 30 where the month has 27 left.
+//
+// The year and month are known from the value, and they determine the last day —
+// so the calendar is asked rather than a table, which is what gets a leap year and
+// the century rule right.
+func TestBoundaryFillsARealLastDay(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"HighBoundary(@2021-02T, 17)", "2021-02-28T23:59:59.999"},
+		{"HighBoundary(@2020-02T, 17)", "2020-02-29T23:59:59.999"}, // leap year
+		{"HighBoundary(@2000-02T, 17)", "2000-02-29T23:59:59.999"}, // divisible by 400
+		{"HighBoundary(@1900-02T, 17)", "1900-02-28T23:59:59.999"}, // divisible by 100
+		{"HighBoundary(@2021-04T, 17)", "2021-04-30T23:59:59.999"},
+		{"HighBoundary(@2021-12T, 17)", "2021-12-31T23:59:59.999"},
+		// Only the year is written, so the month is filled too and the constant's
+		// own December is the right answer.
+		{"HighBoundary(@2021T, 17)", "2021-12-31T23:59:59.999"},
+		// A day already written is not touched, and the low boundary is always the
+		// 1st so it never had this problem.
+		{"HighBoundary(@2021-06-15T, 17)", "2021-06-15T23:59:59.999"},
+		{"LowBoundary(@2021-02T, 17)", "2021-02-01T00:00:00.000"},
+		// A Date, which takes the same fill through a different kind.
+		{"HighBoundary(@2021-02, 8)", "2021-02-28"},
+		// What the malformed day cost: an arithmetic answer nobody could see was
+		// wrong, since 2021-02-31 parses and prints.
+		{"days between @2021-02-01T00:00:00.000 and HighBoundary(@2021-02T, 17)", "27"},
+	} {
+		for _, hours := range []int{0, -5, 14} {
+			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
+				t.Errorf("%s = %s at UTC%+d, want %s", tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+}

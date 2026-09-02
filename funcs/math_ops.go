@@ -3,6 +3,7 @@ package funcs
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 
@@ -251,10 +252,8 @@ func HighBoundary(v, precision fptypes.Value) (fptypes.Value, error) {
 	// What this cannot do is give a boundary a frame its source never had.
 	// `HighBoundary(@2020-06-15T, 17)` refines a value with no hour into one with a
 	// millisecond, and there is no offset on the source to carry — funcs cannot ask
-	// for the evaluation request's. So that result comes back unplaced. It is the
-	// one derived value that is still in the wrong population, and closing it is a
-	// decision about whether a refinement may take the asking party's offset, which
-	// is the question this whole line of work exists to be careful about.
+	// for the evaluation request's. The evaluator finishes that case in
+	// situateRefinement, which is where the request's offset is reachable.
 	out, err := highboundaryOf(v, precision)
 	if err != nil {
 		return nil, err
@@ -376,6 +375,42 @@ func splitWrittenOffset(s string) (body, offset string) {
 	return s, ""
 }
 
+// lastDayOfMonthFill adjusts the constant a high boundary is filled from, because
+// one component of it is not constant.
+//
+// The fill takes missing components from "9999-12-31T23:59:59.999", so the day it
+// supplies was always the 31st whatever month the value names:
+//
+//	HighBoundary(@2021-02T, 17)   was 2021-02-31T23:59:59.999
+//
+// February has no 31st, and neither do April, June, September or November. The
+// value was malformed, and while it stayed unplaced the comparisons it reached
+// declined; once a boundary takes the request's offset it is a value the engine
+// answers with, so `days between @2021-02-01 and that` reported 30 where the month
+// has 27 left.
+//
+// The year and month are already known from the value itself, and they are what
+// determines the last day — including February in a leap year, which is why this
+// asks the calendar rather than a table.
+func lastDayOfMonthFill(existing, boundary string) string {
+	// A day can only be determined once a year and a month are both stated. Where
+	// the month is itself being filled in, the constant's own December is right.
+	if len(existing) < 7 || existing[4] != '-' || len(boundary) < 10 {
+		return boundary
+	}
+	year, err := strconv.Atoi(existing[:4])
+	if err != nil {
+		return boundary
+	}
+	month, err := strconv.Atoi(existing[5:7])
+	if err != nil || month < 1 || month > 12 {
+		return boundary
+	}
+	// Day zero of the next month is the last day of this one, leap years included.
+	last := time.Date(year, time.Month(month)+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	return fmt.Sprintf("%s%02d%s", boundary[:8], last, boundary[10:])
+}
+
 // temporalHighBoundary fills in missing components of a temporal value with maximum values.
 func temporalHighBoundary(s string, targetDigits int, kind string) (fptypes.Value, error) {
 	// Max components: for datetime "9999-12-31T23:59:59.999", date "9999-12-31", time "23:59:59.999"
@@ -384,9 +419,8 @@ func temporalHighBoundary(s string, targetDigits int, kind string) (fptypes.Valu
 		"date":     "9999-12-31",
 		"time":     "23:59:59.999",
 	}
-	maxStr := maxParts[kind]
-
 	s, writtenOffset := splitWrittenOffset(s)
+	maxStr := lastDayOfMonthFill(s, maxParts[kind])
 
 	// Count current digits
 	currentDigits := countDigits(s)

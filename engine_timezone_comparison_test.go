@@ -418,3 +418,101 @@ func TestOneFrameAcrossEveryComponentReader(t *testing.T) {
 		}
 	}
 }
+
+// TestOneMembershipAcrossEverySpelling asks one question four ways, since CQL
+// makes `during` a synonym of `included in` and `in`, and `contains` the same
+// question with the operands swapped.
+//
+// The parser reads the precision off `x in day of I` and the evaluator dropped it,
+// so two of the four spellings never reached the comparison that a stated
+// precision settles:
+//
+//	DateTime(2020,1,1,12) during day of Interval[DateTime(2020,1,1), …]   true
+//	DateTime(2020,1,1,12) in day of     Interval[DateTime(2020,1,1), …]   null
+//
+// It only shows on a boundary — with the point in the interval's interior all four
+// already agreed — which is why it outlived several passes over this area.
+//
+// This repository has had to restore the same property three times now: one rule
+// reached by several paths, fixed in one of them. So the test asks all four rather
+// than one and trusting the rest.
+func TestOneMembershipAcrossEverySpelling(t *testing.T) {
+	const iv = "Interval[DateTime(2020,1,1), DateTime(2020,1,3)]"
+
+	spellings := func(point string) []string {
+		return []string{
+			point + " during day of " + iv,
+			point + " included in day of " + iv,
+			point + " in day of " + iv,
+			iv + " contains day of " + point,
+		}
+	}
+
+	// On the low boundary, on the high one, in the interior, and outside at each end.
+	for _, tt := range []struct{ point, want string }{
+		{"DateTime(2020,1,1,12)", "true"},
+		{"DateTime(2020,1,3,12)", "true"},
+		{"DateTime(2020,1,2,12)", "true"},
+		{"DateTime(2019,12,31,12)", "false"},
+		{"DateTime(2020,1,4,12)", "false"},
+	} {
+		for _, expr := range spellings(tt.point) {
+			for _, hours := range []int{0, -5, 14, -11} {
+				if got := askAtOffset(t, hours, expr); got != tt.want {
+					t.Errorf("%s = %s at UTC%+d, want %s — four spellings of one question",
+						expr, got, hours, tt.want)
+				}
+			}
+		}
+	}
+
+	// A precision the bounds do not reach is still unknown, and without a precision
+	// at all every spelling declines together. Answering more than the values
+	// support is the other way to get this wrong.
+	for _, expr := range []string{
+		"DateTime(2020,1,1,12) in hour of " + iv,
+		"DateTime(2020,1,1,12) in " + iv,
+		"DateTime(2020,1,1,12) during " + iv,
+		iv + " contains DateTime(2020,1,1,12)",
+	} {
+		for _, hours := range []int{0, -5, 14, -11} {
+			if got := askAtOffset(t, hours, expr); got != "null" {
+				t.Errorf("%s = %s at UTC%+d, want null — the bounds do not reach that far",
+					expr, got, hours)
+			}
+		}
+	}
+
+	// An interval operand, which is the spelling the published measures use for one
+	// period inside another. The first version of this fix only handled a point,
+	// so `I in day of J` still disagreed with `I during day of J` — the same defect
+	// one operand shape over.
+	const inner = "Interval[DateTime(2020,1,1,12), DateTime(2020,1,2,12)]"
+	for _, tt := range []struct{ expr, want string }{
+		{inner + " during day of " + iv, "true"},
+		{inner + " included in day of " + iv, "true"},
+		{inner + " in day of " + iv, "true"},
+		{iv + " contains day of " + inner, "true"},
+		// And an interval that is outside it, so this is not answering true to
+		// everything it now reaches.
+		{"Interval[DateTime(2019,12,1,12), DateTime(2019,12,2,12)] in day of " + iv, "false"},
+	} {
+		for _, hours := range []int{0, -5, 14, -11} {
+			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
+				t.Errorf("%s = %s at UTC%+d, want %s — an interval operand is the same "+
+					"question as a point one", tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+
+	// Unchanged: membership that is not about an interval of temporals.
+	for _, tt := range []struct{ expr, want string }{
+		{"5 in {1, 5, 9}", "true"},
+		{"{1, 5, 9} contains 5", "true"},
+		{"5 in Interval[1, 9]", "true"},
+	} {
+		if got := askAtOffset(t, 0, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}

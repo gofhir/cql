@@ -3175,7 +3175,8 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 		}
-		return funcs.HighBoundary(src, prec)
+		bound, err := funcs.HighBoundary(src, prec)
+		return e.situateRefinement(src, bound, err)
 
 	case "lowboundary":
 		src, err := resolveSource()
@@ -3189,7 +3190,8 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 				return nil, err
 			}
 		}
-		return funcs.LowBoundary(src, prec)
+		bound, err := funcs.LowBoundary(src, prec)
+		return e.situateRefinement(src, bound, err)
 
 	// Indexer
 	case "indexer":
@@ -4792,11 +4794,68 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 			return nil, err
 		}
 	}
+	// `x in day of I` is the membership spelling of `x during day of I`, and the
+	// precision has to reach the comparison for either of them to answer.
+	if n.Precision != "" {
+		iv, point := right, left
+		if n.Operator != "in" {
+			iv, point = left, right
+		}
+		if res, handled := membershipAtPrecision(iv, point, n.Precision); handled {
+			return res, nil
+		}
+	}
+
 	// Pass through to evalInContains which handles null properly
 	if n.Operator == "in" {
 		return e.evalInContains(ast.OpIn, left, right)
 	}
 	return e.evalInContains(ast.OpContains, left, right)
+}
+
+// membershipAtPrecision answers `in` and `contains` where the phrase names a
+// precision, which is the same question the timing operators answer.
+//
+// The parser reads the precision off `x in day of I` and evalMembership dropped
+// it, so the two spellings of one question disagreed wherever the precision was
+// what made it answerable:
+//
+//	DateTime(2020,1,1,12) during day of Interval[DateTime(2020,1,1), …]   true
+//	DateTime(2020,1,1,12) in day of     Interval[DateTime(2020,1,1), …]   null
+//
+// A stated precision says how far to look, so agreeing that far settles the
+// question — the rule temporalCompareAtPrecision already applies, and the reason
+// `during` could answer. Without one both spellings decline together, which they
+// already did.
+//
+// A point operand is promoted to the interval [p, p] and asked the same way
+// `during` asks it, so the two cannot drift apart again. An interval operand —
+// `I in day of J`, the spelling the measures use for one period inside another —
+// is already the shape the question wants.
+func membershipAtPrecision(outer, inner fptypes.Value, precision string) (fptypes.Value, bool) {
+	iv, isInterval := outer.(cqltypes.Interval)
+	if !isInterval || inner == nil {
+		return nil, false
+	}
+	innerIv, innerIsInterval := inner.(cqltypes.Interval)
+	if !innerIsInterval {
+		if !isTemporalType(inner) {
+			return nil, false
+		}
+		innerIv = cqltypes.NewInterval(inner, inner, true, true)
+	}
+	result, err := iv.Includes(innerIv)
+	if err == nil {
+		return fptypes.NewBoolean(result), true
+	}
+	if !isAmbiguousComparisonErr(err) {
+		return nil, false
+	}
+	res, atErr := intervalIncludesAtPrecision(iv, innerIv, precision, false)
+	if atErr != nil {
+		return nil, false
+	}
+	return res, true
 }
 
 func (e *Evaluator) evalBetween(n *ast.BetweenExpression) (fptypes.Value, error) {
