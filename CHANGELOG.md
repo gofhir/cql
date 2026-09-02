@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.2](https://github.com/gofhir/cql/compare/v1.20.1...v1.20.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* **eval:** a stated precision is the comparison, not a fallback ([#70](https://github.com/gofhir/cql/issues/70)) ([4cd8915](https://github.com/gofhir/cql/commit/4cd8915966225e8f483fa4e1c8eb95d3495adae3))
+
 ## [1.20.1](https://github.com/gofhir/cql/compare/v1.20.0...v1.20.1) (2026-09-02)
 
 
