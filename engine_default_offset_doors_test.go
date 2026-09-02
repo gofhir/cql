@@ -223,3 +223,48 @@ func TestARefinementTakesTheRequestsFrame(t *testing.T) {
 		}
 	}
 }
+
+// TestBoundaryFillsARealLastDay covers the day a high boundary supplies for a
+// value written only to the month.
+//
+// The fill takes missing components from the constant "9999-12-31T23:59:59.999",
+// so the day it supplied was always the 31st:
+//
+//	HighBoundary(@2021-02T, 17)   was 2021-02-31T23:59:59.999
+//
+// February has no 31st, and neither do April, June, September or November. While
+// such a value stayed unplaced the comparisons it reached declined, which hid it;
+// once a boundary takes the request's offset the engine answers with it, and
+// `days between @2021-02-01 and that` said 30 where the month has 27 left.
+//
+// The year and month are known from the value, and they determine the last day —
+// so the calendar is asked rather than a table, which is what gets a leap year and
+// the century rule right.
+func TestBoundaryFillsARealLastDay(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"HighBoundary(@2021-02T, 17)", "2021-02-28T23:59:59.999"},
+		{"HighBoundary(@2020-02T, 17)", "2020-02-29T23:59:59.999"}, // leap year
+		{"HighBoundary(@2000-02T, 17)", "2000-02-29T23:59:59.999"}, // divisible by 400
+		{"HighBoundary(@1900-02T, 17)", "1900-02-28T23:59:59.999"}, // divisible by 100
+		{"HighBoundary(@2021-04T, 17)", "2021-04-30T23:59:59.999"},
+		{"HighBoundary(@2021-12T, 17)", "2021-12-31T23:59:59.999"},
+		// Only the year is written, so the month is filled too and the constant's
+		// own December is the right answer.
+		{"HighBoundary(@2021T, 17)", "2021-12-31T23:59:59.999"},
+		// A day already written is not touched, and the low boundary is always the
+		// 1st so it never had this problem.
+		{"HighBoundary(@2021-06-15T, 17)", "2021-06-15T23:59:59.999"},
+		{"LowBoundary(@2021-02T, 17)", "2021-02-01T00:00:00.000"},
+		// A Date, which takes the same fill through a different kind.
+		{"HighBoundary(@2021-02, 8)", "2021-02-28"},
+		// What the malformed day cost: an arithmetic answer nobody could see was
+		// wrong, since 2021-02-31 parses and prints.
+		{"days between @2021-02-01T00:00:00.000 and HighBoundary(@2021-02T, 17)", "27"},
+	} {
+		for _, hours := range []int{0, -5, 14} {
+			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
+				t.Errorf("%s = %s at UTC%+d, want %s", tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+}
