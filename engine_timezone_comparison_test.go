@@ -516,3 +516,97 @@ func TestOneMembershipAcrossEverySpelling(t *testing.T) {
 		}
 	}
 }
+
+// TestAStatedPrecisionIsTheComparison fixes what a precision specifier means on an
+// interval operator, which the engine treated as a fallback rather than as the
+// comparison.
+//
+// The CQL reference says the same sentence three times, under In/During, under
+// Includes and under Included In:
+//
+//	"If precision is specified and the point type is a Date, DateTime, or Time
+//	type, comparisons used in the operation are performed at the specified
+//	precision."
+//
+// "Comparisons used in the operation" is the part that decides it: the boundary
+// comparisons Includes performs — inner.Low >= outer.Low, inner.High <= outer.High
+// — are the comparisons, so they happen at the stated precision. The engine
+// compared at full precision first and only consulted the precision when that
+// failed, so a comparison that succeeded at full precision never saw it:
+//
+//	@2020-01-02T05:00:00 same day as @2020-01-02T10:00:00                     true
+//	@2020-01-02T05:00:00 in day of Interval[@2020-01-02T10:00:00, …]          was false
+//
+// 05:00 is before the 10:00 boundary, which settles the question at full
+// precision, so `day of` was doing nothing at all — `in day of` and plain `in`
+// returned the same answer for every input.
+func TestAStatedPrecisionIsTheComparison(t *testing.T) {
+	const iv = "Interval[@2020-01-02T10:00:00, @2020-01-05T00:00:00]"
+	const inner = "Interval[@2020-01-02T05:00:00, @2020-01-04T23:00:00]"
+
+	for _, tt := range []struct{ expr, want string }{
+		// The pair that motivates it: at day precision these are the same day, so
+		// the point is inside, and the answer now matches what `same day as` says
+		// about the same two values.
+		{"@2020-01-02T05:00:00 in day of " + iv, "true"},
+		{"@2020-01-02T05:00:00 during day of " + iv, "true"},
+		{"@2020-01-02T05:00:00 included in day of " + iv, "true"},
+		{iv + " contains day of @2020-01-02T05:00:00", "true"},
+		{iv + " includes day of @2020-01-02T05:00:00", "true"},
+		{"@2020-01-02T05:00:00 same day as @2020-01-02T10:00:00", "true"},
+
+		// An interval operand, at the same boundary.
+		{inner + " during day of " + iv, "true"},
+		{inner + " included in day of " + iv, "true"},
+		{iv + " includes day of " + inner, "true"},
+
+		// Without a precision nothing changes: the comparison runs to the precision
+		// the values carry, 05:00 is before the boundary, and the answer is false.
+		// This is the control that says the fix reaches the precision and not the
+		// operator.
+		{"@2020-01-02T05:00:00 in " + iv, "false"},
+		{"@2020-01-02T05:00:00 during " + iv, "false"},
+		{inner + " during " + iv, "false"},
+
+		// Outside at day precision too, at each end.
+		{"@2020-01-01T05:00:00 in day of " + iv, "false"},
+		{"@2020-01-06T05:00:00 in day of " + iv, "false"},
+
+		// A precision finer than the values are specified to is still unknown: the
+		// bounds are written to the second, so nothing can be settled at the
+		// millisecond.
+		{"@2020-01-02T05:00:00 in millisecond of " + iv, "null"},
+	} {
+		for _, hours := range []int{0, -5, 14, -11} {
+			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
+				t.Errorf("%s = %s at UTC%+d, want %s — a stated precision is the "+
+					"precision the comparison is performed at", tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+
+	// And what the published measures actually write, which this does not move. The
+	// one library that states a precision on an interval operator is
+	// ColorectalCancerScreeningsFHIR:
+	//
+	//	Global."Normalize Interval"(FecalOccultResult.effective) during day of "Measurement Period"
+	//
+	// Every measure declares that period from midnight to midnight with the high
+	// boundary excluded, and where the bounds fall on day boundaries comparing at
+	// the day and comparing at the instant agree. So these answers are the same
+	// before and after, which is what makes this a conformance fix rather than a
+	// change to what a measure reports.
+	const mp = "Interval[@2019-01-01T00:00:00.0, @2020-01-01T00:00:00.0)"
+	for _, tt := range []struct{ expr, want string }{
+		{"Interval[@2019-06-15T05:00:00Z, @2019-06-15T06:00:00Z] during day of " + mp, "true"},
+		{"Interval[@2019-01-01T05:00:00, @2019-01-01T06:00:00] during day of " + mp, "true"},
+		{"Interval[@2019-12-31T22:00:00, @2019-12-31T23:00:00] during day of " + mp, "true"},
+		{"Interval[@2020-01-01T05:00:00, @2020-01-01T06:00:00] during day of " + mp, "false"},
+		{"Interval[@2021-06-15T05:00:00, @2021-06-15T06:00:00] during day of " + mp, "false"},
+	} {
+		if got := askAtOffset(t, 0, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s — the measurement period's bounds fall on day "+
+				"boundaries, so the day precision changes nothing here", tt.expr, got, tt.want)
+		}
+	}
+}
