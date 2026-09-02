@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.1](https://github.com/gofhir/cql/compare/v1.20.0...v1.20.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* **eval:** a stated precision reaches every spelling, and a refined boundary gets a frame ([#68](https://github.com/gofhir/cql/issues/68)) ([5ec3b1e](https://github.com/gofhir/cql/commit/5ec3b1ec87404292ecbbc9d7223e6d3ca2b10e2f))
+
 ## [1.20.0](https://github.com/gofhir/cql/compare/v1.19.0...v1.20.0) (2026-09-01)
 
 
