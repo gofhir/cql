@@ -4828,22 +4828,30 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 // `during` could answer. Without one both spellings decline together, which they
 // already did.
 //
-// The point is promoted to the interval [p, p] and asked the same way `during`
-// asks it, so the two cannot drift apart again.
-func membershipAtPrecision(interval, point fptypes.Value, precision string) (fptypes.Value, bool) {
-	iv, isInterval := interval.(cqltypes.Interval)
-	if !isInterval || point == nil || !isTemporalType(point) {
+// A point operand is promoted to the interval [p, p] and asked the same way
+// `during` asks it, so the two cannot drift apart again. An interval operand —
+// `I in day of J`, the spelling the measures use for one period inside another —
+// is already the shape the question wants.
+func membershipAtPrecision(outer, inner fptypes.Value, precision string) (fptypes.Value, bool) {
+	iv, isInterval := outer.(cqltypes.Interval)
+	if !isInterval || inner == nil {
 		return nil, false
 	}
-	pointIv := cqltypes.NewInterval(point, point, true, true)
-	result, err := iv.Includes(pointIv)
+	innerIv, innerIsInterval := inner.(cqltypes.Interval)
+	if !innerIsInterval {
+		if !isTemporalType(inner) {
+			return nil, false
+		}
+		innerIv = cqltypes.NewInterval(inner, inner, true, true)
+	}
+	result, err := iv.Includes(innerIv)
 	if err == nil {
 		return fptypes.NewBoolean(result), true
 	}
 	if !isAmbiguousComparisonErr(err) {
 		return nil, false
 	}
-	res, atErr := intervalIncludesAtPrecision(iv, pointIv, precision, false)
+	res, atErr := intervalIncludesAtPrecision(iv, innerIv, precision, false)
 	if atErr != nil {
 		return nil, false
 	}

@@ -483,6 +483,28 @@ func TestOneMembershipAcrossEverySpelling(t *testing.T) {
 		}
 	}
 
+	// An interval operand, which is the spelling the published measures use for one
+	// period inside another. The first version of this fix only handled a point,
+	// so `I in day of J` still disagreed with `I during day of J` — the same defect
+	// one operand shape over.
+	const inner = "Interval[DateTime(2020,1,1,12), DateTime(2020,1,2,12)]"
+	for _, tt := range []struct{ expr, want string }{
+		{inner + " during day of " + iv, "true"},
+		{inner + " included in day of " + iv, "true"},
+		{inner + " in day of " + iv, "true"},
+		{iv + " contains day of " + inner, "true"},
+		// And an interval that is outside it, so this is not answering true to
+		// everything it now reaches.
+		{"Interval[DateTime(2019,12,1,12), DateTime(2019,12,2,12)] in day of " + iv, "false"},
+	} {
+		for _, hours := range []int{0, -5, 14, -11} {
+			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
+				t.Errorf("%s = %s at UTC%+d, want %s — an interval operand is the same "+
+					"question as a point one", tt.expr, got, hours, tt.want)
+			}
+		}
+	}
+
 	// Unchanged: membership that is not about an interval of temporals.
 	for _, tt := range []struct{ expr, want string }{
 		{"5 in {1, 5, 9}", "true"},
