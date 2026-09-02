@@ -4844,15 +4844,8 @@ func membershipAtPrecision(outer, inner fptypes.Value, precision string) (fptype
 		}
 		innerIv = cqltypes.NewInterval(inner, inner, true, true)
 	}
-	result, err := iv.Includes(innerIv)
-	if err == nil {
-		return fptypes.NewBoolean(result), true
-	}
-	if !isAmbiguousComparisonErr(err) {
-		return nil, false
-	}
-	res, atErr := intervalIncludesAtPrecision(iv, innerIv, precision, false)
-	if atErr != nil {
+	res, err := intervalIncludesAtPrecision(iv, innerIv, precision, false)
+	if err != nil {
 		return nil, false
 	}
 	return res, true
@@ -5093,44 +5086,33 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		return fptypes.NewBoolean(leftIv.Equal(rightIv)), nil
 	case ast.TimingIncludes:
+		// A stated precision is the precision the operation compares at, not a
+		// second attempt for when comparing at full precision fails. See
+		// intervalIncludesAtPrecision.
+		if n.Operator.Precision != "" {
+			return intervalIncludesAtPrecision(leftIv, rightIv, n.Operator.Precision, n.Operator.Properly)
+		}
 		if n.Operator.Properly {
-			res, err := funcs.IntervalProperlyIncludes(leftIv, rightIv)
-			if err != nil {
-				return nil, err
-			}
-			if res == nil && n.Operator.Precision != "" {
-				return intervalIncludesAtPrecision(leftIv, rightIv, n.Operator.Precision, true)
-			}
-			return res, nil
+			return funcs.IntervalProperlyIncludes(leftIv, rightIv)
 		}
 		result, err := leftIv.Includes(rightIv)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
-				if n.Operator.Precision != "" {
-					return intervalIncludesAtPrecision(leftIv, rightIv, n.Operator.Precision, false)
-				}
 				return nil, nil
 			}
 			return nil, err
 		}
 		return fptypes.NewBoolean(result), nil
 	case ast.TimingIncludedIn, ast.TimingDuring:
+		if n.Operator.Precision != "" {
+			return intervalIncludesAtPrecision(rightIv, leftIv, n.Operator.Precision, n.Operator.Properly)
+		}
 		if n.Operator.Properly {
-			res, err := funcs.IntervalProperlyIncludedIn(leftIv, rightIv)
-			if err != nil {
-				return nil, err
-			}
-			if res == nil && n.Operator.Precision != "" {
-				return intervalIncludesAtPrecision(rightIv, leftIv, n.Operator.Precision, true)
-			}
-			return res, nil
+			return funcs.IntervalProperlyIncludedIn(leftIv, rightIv)
 		}
 		result, err := rightIv.Includes(leftIv)
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
-				if n.Operator.Precision != "" {
-					return intervalIncludesAtPrecision(rightIv, leftIv, n.Operator.Precision, false)
-				}
 				return nil, nil
 			}
 			return nil, err
