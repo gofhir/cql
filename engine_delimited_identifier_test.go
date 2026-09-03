@@ -3,6 +3,7 @@ package cql
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/gofhir/cql/eval"
@@ -149,5 +150,68 @@ func TestDelimitedQualifiedTypeNames(t *testing.T) {
 	}
 	if errs := diags.Errors(); len(errs) != 0 {
 		t.Errorf("want no findings, got %v", errs)
+	}
+}
+
+// TestDelimitedFunctionNameInAQualifiedCall covers the last place a name kept
+// its delimiters, and the one that took a real measure to find.
+//
+// `define function "Normalize Interval"` registers the name without its quotes —
+// the declaration side has read names through undelimitIdentifier since the
+// quotes were first fixed. A call read its name the same way, except when the
+// call was qualified by a library alias, where the builder took the text as
+// written. So the two halves of one name disagreed:
+//
+//	H.Plain(1)      4
+//	H."Plain"(1)    error: function '"Plain"' not found in library 'H'
+//
+// Same function, same library, spelled two of the three ways CQL allows.
+//
+// It reaches published content: `Global."Normalize Interval"` appears in 14 of
+// the 19 libraries in cqframework/ecqm-content-r4, and evaluating any of their
+// numerators failed on it. Nothing here caught it because Engine.Check validates
+// each library on its own, without the include graph — an alias it cannot see
+// into is honestly Unknown to it, so all 19 check clean — and the conformance
+// corpus is loose expressions with no included libraries at all. It took
+// evaluating a measure against its own test case to surface.
+func TestDelimitedFunctionNameInAQualifiedCall(t *testing.T) {
+	const helper = `library Helper version '1.0'
+define function "Normalize Interval"(x Integer): x + 1
+define function Plain(x Integer): x + 3
+`
+	resolve := func(_ context.Context, name, _ string) (string, error) {
+		if name == "Helper" {
+			return helper, nil
+		}
+		return "", fmt.Errorf("no library %q", name)
+	}
+
+	for _, tt := range []struct{ call, want string }{
+		// The three spellings of one name have to reach one function.
+		{`H.Plain(1)`, "4"},
+		{`H."Plain"(1)`, "4"},
+		{"H.`Plain`(1)", "4"},
+		// And a name that can only be written delimited, because it has a space —
+		// which is the form published measures actually use.
+		{`H."Normalize Interval"(1)`, "2"},
+	} {
+		src := "library T version '1.0'\ninclude Helper version '1.0' called H\ndefine A: " + tt.call + "\n"
+		got, err := NewEngine(WithLibraryResolver(resolve)).
+			EvaluateExpression(context.Background(), src, "A", nil, nil)
+		if err != nil {
+			t.Errorf("%s: %v — a delimited name is the same name", tt.call, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s = %v, want %s", tt.call, got, tt.want)
+		}
+	}
+
+	// A function that genuinely is not there still says so, so this does not make
+	// every qualified call resolve to something.
+	src := "library T version '1.0'\ninclude Helper version '1.0' called H\ndefine A: H.\"Absent\"(1)\n"
+	if _, err := NewEngine(WithLibraryResolver(resolve)).
+		EvaluateExpression(context.Background(), src, "A", nil, nil); err == nil {
+		t.Error("a call to a function the library does not define should fail")
 	}
 }

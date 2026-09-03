@@ -1513,7 +1513,11 @@ func (b *builder) VisitQualifiedFunctionInvocation(ctx *grammar.QualifiedFunctio
 func (b *builder) VisitQualifiedFunction(ctx *grammar.QualifiedFunctionContext) interface{} {
 	fc := &ast.FunctionCall{}
 	if id := ctx.IdentifierOrFunctionIdentifier(); id != nil {
-		fc.Name = id.GetText()
+		// Undelimited, the way an unqualified call already reads its name through
+		// referentialIdentifierText. `define function "Normalize Interval"` registers
+		// the name without its quotes, so a call that kept them looked for a
+		// function nobody had defined — and only when the call was qualified.
+		fc.Name = undelimitIdentifier(id.GetText())
 	}
 	if pl := ctx.ParamList(); pl != nil {
 		for _, expr := range pl.AllExpression() {
