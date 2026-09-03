@@ -529,7 +529,11 @@ func (b *builder) VisitValuesetDefinition(ctx *grammar.ValuesetDefinitionContext
 	}
 	if css := ctx.Codesystems(); css != nil {
 		for _, csid := range css.AllCodesystemIdentifier() {
-			vs.CodeSystems = append(vs.CodeSystems, csid.GetText())
+			// Through the same helper a code definition reads its system with, a
+			// few lines below. The same node was being read two ways, so
+			// `codesystems { "LOINC" }` named a code system with quotes in it
+			// while `codesystem "LOINC"` had defined one without.
+			vs.CodeSystems = append(vs.CodeSystems, undelimitedIdentifier(csid.Identifier(), csid))
 		}
 	}
 	return vs

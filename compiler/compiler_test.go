@@ -212,3 +212,58 @@ define A: [Condition: "Diabetes"]
 		t.Errorf("retrieve terminology name = %q, want %q", ref.Name, "Diabetes")
 	}
 }
+
+// TestDelimitedCodeSystemInAValueSet covers a name that kept its delimiters, found
+// by looking for the other paths that read one rather than by anything failing.
+//
+// A code definition reads its system through undelimitedIdentifier. The list of
+// code systems on a valueset read the same kind of node with GetText, a few lines
+// above. So one spelling defined a code system and the other named one with quotes
+// inside it:
+//
+//	codesystem "LOINC": 'http://loinc.org'      defines LOINC
+//	valueset VS: '…' codesystems { "LOINC" }    named "LOINC", quotes included
+//
+// Nothing in the published measures or the conformance corpus writes
+// `codesystems { … }`, so this cost nothing today. It is fixed because it is one
+// rule read two ways in one file, which is the shape that has cost this engine
+// several releases every time it was left alone.
+func TestDelimitedCodeSystemInAValueSet(t *testing.T) {
+	const src = `library T version '1.0'
+codesystem "Quoted": 'http://example.org/q'
+codesystem Plain: 'http://example.org/p'
+valueset "VS": 'http://example.org/vs' codesystems { "Quoted", Plain, O."Remote" }
+define A: 1
+`
+	lib, err := Compile(src)
+	if err != nil {
+		t.Fatalf("compile: %v", err)
+	}
+	if len(lib.ValueSets) != 1 {
+		t.Fatalf("expected one valueset, got %d", len(lib.ValueSets))
+	}
+
+	got := lib.ValueSets[0].CodeSystems
+	want := []string{"Quoted", "Plain", "O.Remote"}
+	if len(got) != len(want) {
+		t.Fatalf("code systems = %q, want %q", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("code system %d = %q, want %q — a delimited name is the same name",
+				i, got[i], want[i])
+		}
+	}
+
+	// The definitions themselves already read their names undelimited, and the
+	// point is that the two agree: what the valueset names is what was defined.
+	byName := map[string]bool{}
+	for _, cs := range lib.CodeSystems {
+		byName[cs.Name] = true
+	}
+	for _, name := range []string{"Quoted", "Plain"} {
+		if !byName[name] {
+			t.Errorf("valueset names code system %q but no definition registered under that name", name)
+		}
+	}
+}
