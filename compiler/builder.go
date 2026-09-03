@@ -529,7 +529,11 @@ func (b *builder) VisitValuesetDefinition(ctx *grammar.ValuesetDefinitionContext
 	}
 	if css := ctx.Codesystems(); css != nil {
 		for _, csid := range css.AllCodesystemIdentifier() {
-			vs.CodeSystems = append(vs.CodeSystems, csid.GetText())
+			// Through the same helper a code definition reads its system with, a
+			// few lines below. The same node was being read two ways, so
+			// `codesystems { "LOINC" }` named a code system with quotes in it
+			// while `codesystem "LOINC"` had defined one without.
+			vs.CodeSystems = append(vs.CodeSystems, undelimitedIdentifier(csid.Identifier(), csid))
 		}
 	}
 	return vs
@@ -1513,7 +1517,11 @@ func (b *builder) VisitQualifiedFunctionInvocation(ctx *grammar.QualifiedFunctio
 func (b *builder) VisitQualifiedFunction(ctx *grammar.QualifiedFunctionContext) interface{} {
 	fc := &ast.FunctionCall{}
 	if id := ctx.IdentifierOrFunctionIdentifier(); id != nil {
-		fc.Name = id.GetText()
+		// Undelimited, the way an unqualified call already reads its name through
+		// referentialIdentifierText. `define function "Normalize Interval"` registers
+		// the name without its quotes, so a call that kept them looked for a
+		// function nobody had defined — and only when the call was qualified.
+		fc.Name = undelimitIdentifier(id.GetText())
 	}
 	if pl := ctx.ParamList(); pl != nil {
 		for _, expr := range pl.AllExpression() {
