@@ -4910,6 +4910,198 @@ func (e *Evaluator) evalDateTimeComponentFrom(n *ast.DateTimeComponentFrom) (fpt
 	return funcs.DateTimeComponentFrom(operand, n.Component)
 }
 
+// offsetBound is the distance a timing phrase allows between its two points,
+// read from the quantity it states.
+type offsetBound struct {
+	value     int64
+	precision string
+	// comparator is "less", "more", or "" where the phrase gives an exact offset.
+	comparator string
+}
+
+// parseTimingOffset reads `10 years` as written in a timing phrase.
+//
+// CQL writes these units bare — `3 days`, `1 hour` — rather than as a UCUM
+// quantity, and the duration operators name the singular, so `years` becomes
+// "year". A unit the duration operators do not measure in leaves the phrase
+// without a bound rather than inventing one.
+func parseTimingOffset(offset, comparator string) (offsetBound, bool) {
+	// The parse tree hands back the phrase's text with the tokens run together,
+	// so `10 years` arrives as "10years". Split where the digits stop rather than
+	// on whitespace, which also accepts the spaced form.
+	text := strings.ToLower(strings.TrimSpace(offset))
+	cut := 0
+	for cut < len(text) && text[cut] >= '0' && text[cut] <= '9' {
+		cut++
+	}
+	if cut == 0 || cut == len(text) {
+		return offsetBound{}, false
+	}
+	n, err := strconv.ParseInt(text[:cut], 10, 64)
+	if err != nil || n < 0 {
+		return offsetBound{}, false
+	}
+	unit := strings.TrimSuffix(strings.TrimSpace(text[cut:]), "s")
+	switch unit {
+	case "year", "month", "week", "day", "hour":
+	default:
+		// minute, second and millisecond are legal CQL but DurationBetween does
+		// not measure in them, so the phrase is left unbounded rather than
+		// answered from a unit that was silently changed.
+		return offsetBound{}, false
+	}
+	return offsetBound{value: n, precision: unit, comparator: comparator}, true
+}
+
+// timingOffsetPoint picks the point of an operand that a phrase with an offset
+// compares from.
+//
+// `starts` and `ends` name a boundary outright. Without one the operand is read
+// as a whole, which for an interval means the end that faces the other operand:
+// `A before B` is A's end against B's start.
+func timingOffsetPoint(v fptypes.Value, boundary string, facingEnd bool) (fptypes.Value, error) {
+	iv, isInterval := v.(cqltypes.Interval)
+	if !isInterval {
+		return v, nil
+	}
+	switch boundary {
+	case "starts":
+		return iv.Start()
+	case "ends":
+		return iv.End()
+	}
+	if facingEnd {
+		return iv.End()
+	}
+	return iv.Start()
+}
+
+// shiftTemporal moves a point by the offset a timing phrase states, which is how
+// the phrase's bound is expressed: a point, not a length of time.
+func shiftTemporal(v fptypes.Value, n int64, unit string, back bool) (fptypes.Value, bool, error) {
+	amount := int(n)
+	if back {
+		amount = -amount
+	}
+	switch t := v.(type) {
+	case fptypes.DateTime:
+		out, err := t.AddDuration(amount, unit)
+		if err != nil {
+			return nil, false, nil // out of range: the phrase cannot be bounded
+		}
+		return carryDefaultOffsetTo(t, out), true, err
+	case fptypes.Date:
+		out, err := t.AddDuration(amount, unit)
+		if err != nil {
+			return nil, false, nil
+		}
+		return out, true, err
+	}
+	return nil, false, nil
+}
+
+// carryDefaultOffsetTo keeps a shifted point in the frame its source sat in, so
+// the comparison that follows is not between a placed value and an unplaced one.
+func carryDefaultOffsetTo(from, to fptypes.DateTime) fptypes.Value {
+	if to.HasTZ() {
+		return to
+	}
+	minutes, ok := from.EffectiveOffset()
+	if !ok {
+		return to
+	}
+	return to.WithDefaultOffset(time.Duration(minutes) * time.Minute)
+}
+
+// timingCompare orders two points at the precision a phrase states, falling back
+// to the whole value where it states none.
+func (e *Evaluator) timingCompare(a, b fptypes.Value, precision string) (int, bool) {
+	if precision != "" {
+		return temporalCompareAtPrecision(a, b, precision)
+	}
+	cmp, err := cqltypes.CompareTemporal(a, b)
+	if err != nil {
+		return 0, false
+	}
+	return cmp, true
+}
+
+// evalOffsetTiming answers a timing phrase that states a quantity offset, which
+// was read as its direction alone before this.
+//
+// `X ends 10 years or less on or before end of "Measurement Period"` asks two
+// things: that X's end is at or before that point, and that it is no more than
+// ten years earlier. Only the first was being asked, so a colonoscopy from
+// twenty years ago satisfied a phrase written to find one from the last ten —
+// and that is how ColorectalCancerScreeningsFHIR decides its numerator.
+func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, bool, error) {
+	bound, ok := parseTimingOffset(op.Offset, op.Comparator)
+	if !ok || (!op.Before && !op.After) || left == nil || right == nil {
+		return nil, false, nil
+	}
+
+	// For `before`, the left point faces forward to the right operand's start;
+	// for `after` it is the other way round.
+	leftPoint, err := timingOffsetPoint(left, op.Boundary, op.Before)
+	if err != nil {
+		return nil, true, err
+	}
+	rightPoint, err := timingOffsetPoint(right, "", !op.Before)
+	if err != nil {
+		return nil, true, err
+	}
+	if leftPoint == nil || rightPoint == nil {
+		return nil, true, nil
+	}
+
+	// The bound is a point, not a duration. `10 years or less before X` means the
+	// value sits in [X - 10 years, X], and measuring the gap instead reads it as a
+	// truncated count: a colonoscopy from 2009-12-30 against a period ending
+	// 2019-12-31 is ten years and a day away, which `years between` reports as 10
+	// and would let through. The measure's own test case is built on that day.
+	shifted, ok, err := shiftTemporal(rightPoint, bound.value, bound.precision, op.Before)
+	if err != nil || !ok {
+		return nil, true, err
+	}
+
+	// Order first, at the precision the phrase states if it states one:
+	// `starts 1 day or less on or after day of X` puts two instants half an hour
+	// apart on the same day, so the direction holds there even though the instants
+	// run the other way.
+	near, far := rightPoint, shifted
+	inOrder, ok := e.timingCompare(leftPoint, near, op.Precision)
+	if !ok {
+		return nil, true, nil
+	}
+	sameAllowed := op.Kind == ast.TimingSameAs
+	beyondNear := inOrder > 0
+	if op.After {
+		beyondNear = inOrder < 0
+	}
+	if beyondNear || (inOrder == 0 && !sameAllowed) {
+		return fptypes.NewBoolean(false), true, nil
+	}
+
+	atFar, ok := e.timingCompare(leftPoint, far, op.Precision)
+	if !ok {
+		return nil, true, nil
+	}
+	// Past the far end is outside for `or less`, and is exactly what `or more`
+	// asks for.
+	beyondFar := atFar < 0
+	if op.After {
+		beyondFar = atFar > 0
+	}
+	within := !beyondFar
+	switch bound.comparator {
+	case "more":
+		within = beyondFar || atFar == 0
+	case "":
+		within = atFar == 0
+	}
+	return fptypes.NewBoolean(within), true, nil
+}
+
 func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, error) {
 	left, err := e.Eval(n.Left)
 	if err != nil {
@@ -4928,6 +5120,13 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	}
 	if right, err = e.coerceToSystem(right); err != nil {
 		return nil, err
+	}
+	// A phrase that states a quantity offset is answered on its own terms: the
+	// direction alone is not what it asked.
+	if op := n.Operator; op.Offset != "" {
+		if res, handled, oerr := e.evalOffsetTiming(left, right, op); handled {
+			return res, oerr
+		}
 	}
 	// For includes/includedIn/contains/in with lists, don't short-circuit on nil
 	// Handle list-based operations first (before null propagation)

@@ -575,6 +575,19 @@ type TimingOp struct {
 	Properly  bool   // 'properly' modifier
 	Before    bool   // directional modifier
 	After     bool   // directional modifier
+
+	// Offset is the quantity in `starts 3 days or less before X`, as written, or
+	// "" where the phrase states none. Comparator says how it bounds the distance
+	// between the two points — "less", "more", or "" for an offset that has to be
+	// met exactly. Boundary is which end of the left operand the phrase reads:
+	// "starts", "ends", "occurs", or "" for the operand itself.
+	//
+	// Without these the phrase was read as its direction alone, so `ends 10 years
+	// or less on or before end of "Measurement Period"` accepted a value from
+	// twenty years ago.
+	Offset     string
+	Comparator string
+	Boundary   string
 }
 
 // TimingKind enumerates the kinds of timing operators.

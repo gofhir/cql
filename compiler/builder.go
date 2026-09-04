@@ -1096,6 +1096,36 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 					op.Precision = strings.ToLower(dtp.GetText())
 				}
 			}
+			// The quantity offset and the boundary the phrase reads. Both were
+			// dropped, which left `ends 10 years or less on or before X` meaning
+			// nothing more than `on or before X`.
+			if qo := phrase.QuantityOffset(); qo != nil {
+				if q := qo.Quantity(); q != nil {
+					op.Offset = q.GetText()
+				}
+				if orq := qo.OffsetRelativeQualifier(); orq != nil {
+					if t := strings.ToLower(orq.GetText()); strings.Contains(t, "less") {
+						op.Comparator = "less"
+					} else if strings.Contains(t, "more") {
+						op.Comparator = "more"
+					}
+				}
+				if erq := qo.ExclusiveRelativeQualifier(); erq != nil {
+					if t := strings.ToLower(erq.GetText()); strings.Contains(t, "less") {
+						op.Comparator = "less"
+					} else if strings.Contains(t, "more") {
+						op.Comparator = "more"
+					}
+				}
+			}
+			switch head := strings.ToLower(phrase.GetText()); {
+			case strings.HasPrefix(head, "starts"):
+				op.Boundary = "starts"
+			case strings.HasPrefix(head, "ends"):
+				op.Boundary = "ends"
+			case strings.HasPrefix(head, "occurs"):
+				op.Boundary = "occurs"
+			}
 		case *grammar.IncludesIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingIncludes
 			text := strings.ToLower(phrase.GetText())
