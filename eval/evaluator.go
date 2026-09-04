@@ -4921,10 +4921,14 @@ type offsetBound struct {
 
 // parseTimingOffset reads `10 years` as written in a timing phrase.
 //
-// CQL writes these units bare — `3 days`, `1 hour` — rather than as a UCUM
-// quantity, and the duration operators name the singular, so `years` becomes
-// "year". A unit the duration operators do not measure in leaves the phrase
-// without a bound rather than inventing one.
+// CQL writes these units bare — `3 days`, `1 hour` — and also allows the UCUM
+// spelling, `10 'd'`. The point arithmetic names the singular, so `years` becomes
+// "year".
+//
+// An offset it cannot read is reported as such rather than ignored. Ignoring one
+// answers the phrase from its direction alone, which is the defect this whole path
+// exists to remove: `10 'd' or less before` would have gone back to accepting a
+// value five months away.
 func parseTimingOffset(offset, comparator string) (offsetBound, bool) {
 	// The parse tree hands back the phrase's text with the tokens run together,
 	// so `10 years` arrives as "10years". Split where the digits stop rather than
@@ -4939,18 +4943,30 @@ func parseTimingOffset(offset, comparator string) (offsetBound, bool) {
 	}
 	n, err := strconv.ParseInt(text[:cut], 10, 64)
 	if err != nil || n < 0 {
+		// A fractional offset — `1.5 days` — cannot be applied to a point by whole
+		// units, so it is not read rather than rounded to one that can.
 		return offsetBound{}, false
 	}
-	unit := strings.TrimSuffix(strings.TrimSpace(text[cut:]), "s")
+	unit := strings.Trim(strings.TrimSpace(text[cut:]), "'\"")
+	if u, ok := timingUnits[unit]; ok {
+		unit = u
+	} else {
+		unit = strings.TrimSuffix(unit, "s")
+	}
 	switch unit {
-	case "year", "month", "week", "day", "hour":
+	case "year", "month", "week", "day", "hour", "minute", "second", "millisecond":
 	default:
-		// minute, second and millisecond are legal CQL but DurationBetween does
-		// not measure in them, so the phrase is left unbounded rather than
-		// answered from a unit that was silently changed.
 		return offsetBound{}, false
 	}
 	return offsetBound{value: n, precision: unit, comparator: comparator}, true
+}
+
+// timingUnits maps the UCUM spellings CQL allows for a duration onto the names the
+// point arithmetic uses. The calendar units are the ones a timing phrase can
+// state; `10 'd'` and `10 days` are the same phrase written two ways.
+var timingUnits = map[string]string{
+	"a": "year", "mo": "month", "wk": "week", "d": "day",
+	"h": "hour", "min": "minute", "s": "second", "ms": "millisecond",
 }
 
 // timingOffsetPoint picks the point of an operand that a phrase with an offset
@@ -4996,6 +5012,12 @@ func shiftTemporal(v fptypes.Value, n int64, unit string, back bool) (fptypes.Va
 			return nil, false, nil
 		}
 		return out, true, err
+	case fptypes.Time:
+		out, err := t.AddDuration(amount, unit)
+		if err != nil {
+			return nil, false, nil
+		}
+		return out, true, err
 	}
 	return nil, false, nil
 }
@@ -5035,9 +5057,14 @@ func (e *Evaluator) timingCompare(a, b fptypes.Value, precision string) (int, bo
 // twenty years ago satisfied a phrase written to find one from the last ten —
 // and that is how ColorectalCancerScreeningsFHIR decides its numerator.
 func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, bool, error) {
-	bound, ok := parseTimingOffset(op.Offset, op.Comparator)
-	if !ok || (!op.Before && !op.After) || left == nil || right == nil {
+	if (!op.Before && !op.After) || left == nil || right == nil {
 		return nil, false, nil
+	}
+	bound, ok := parseTimingOffset(op.Offset, op.Comparator)
+	if !ok {
+		// The phrase states a bound this cannot apply. Answering it as though it
+		// stated none would claim more than the expression says, so it declines.
+		return nil, true, nil
 	}
 
 	// For `before`, the left point faces forward to the right operand's start;
@@ -5094,8 +5121,13 @@ func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp)
 	}
 	within := !beyondFar
 	switch bound.comparator {
+	case "lessThan":
+		// Strict: the bound itself is outside.
+		within = !beyondFar && atFar != 0
 	case "more":
 		within = beyondFar || atFar == 0
+	case "moreThan":
+		within = beyondFar
 	case "":
 		within = atFar == 0
 	}
@@ -5213,22 +5245,26 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 
 	// Handle Interval vs scalar DateTime for timing operations
 	if leftOk && !rightOk && isTemporalType(right) {
+		// Which end of the interval the phrase reads. `A before X` is decided by
+		// the end facing X, but `A starts before X` names the other one outright —
+		// and the boundary word was being dropped, so `Interval[Jan 5, Jan 20]
+		// starts before Jan 10` compared January 20th and answered false.
+		point := leftIv.High
+		if n.Operator.After {
+			point = leftIv.Low
+		}
+		switch n.Operator.Boundary {
+		case "starts":
+			point = leftIv.Low
+		case "ends":
+			point = leftIv.High
+		}
 		switch n.Operator.Kind {
 		case ast.TimingBeforeOrAfter:
-			if n.Operator.Before {
-				// Interval before scalar: interval.High before scalar
-				return e.evalTemporalComparison(leftIv.High, right, n.Operator)
-			}
-			// Interval after scalar: interval.Low after scalar
-			return e.evalTemporalComparison(leftIv.Low, right, n.Operator)
+			return e.evalTemporalComparison(point, right, n.Operator)
 		case ast.TimingSameAs:
-			if n.Operator.Before {
-				// Interval same or before scalar: interval.High same or before scalar
-				return e.evalTemporalComparison(leftIv.High, right, n.Operator)
-			}
-			if n.Operator.After {
-				// Interval same or after scalar: interval.Low same or after scalar
-				return e.evalTemporalComparison(leftIv.Low, right, n.Operator)
+			if n.Operator.Before || n.Operator.After {
+				return e.evalTemporalComparison(point, right, n.Operator)
 			}
 		}
 	}

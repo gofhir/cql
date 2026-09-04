@@ -1103,6 +1103,8 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 				if q := qo.Quantity(); q != nil {
 					op.Offset = q.GetText()
 				}
+				// `or less` admits the bound itself; `less than` does not, and the
+				// two are separate rules in the grammar for that reason.
 				if orq := qo.OffsetRelativeQualifier(); orq != nil {
 					if t := strings.ToLower(orq.GetText()); strings.Contains(t, "less") {
 						op.Comparator = "less"
@@ -1112,9 +1114,9 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 				}
 				if erq := qo.ExclusiveRelativeQualifier(); erq != nil {
 					if t := strings.ToLower(erq.GetText()); strings.Contains(t, "less") {
-						op.Comparator = "less"
+						op.Comparator = "lessThan"
 					} else if strings.Contains(t, "more") {
-						op.Comparator = "more"
+						op.Comparator = "moreThan"
 					}
 				}
 			}

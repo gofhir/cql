@@ -578,9 +578,11 @@ type TimingOp struct {
 
 	// Offset is the quantity in `starts 3 days or less before X`, as written, or
 	// "" where the phrase states none. Comparator says how it bounds the distance
-	// between the two points — "less", "more", or "" for an offset that has to be
-	// met exactly. Boundary is which end of the left operand the phrase reads:
-	// "starts", "ends", "occurs", or "" for the operand itself.
+	// between the two points — "less" and "more" for `or less` / `or more`, which
+	// admit the bound itself, "lessThan" and "moreThan" for the strict forms, and
+	// "" for an offset that has to be met exactly. Boundary is which end of the
+	// left operand the phrase reads: "starts", "ends", "occurs", or "" for the
+	// operand itself.
 	//
 	// Without these the phrase was read as its direction alone, so `ends 10 years
 	// or less on or before end of "Measurement Period"` accepted a value from

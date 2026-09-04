@@ -114,13 +114,91 @@ func TestATimingPhraseHonoursItsQuantityOffset(t *testing.T) {
 			"true",
 		},
 
-		// And a phrase with no offset is untouched: it still asks only its
-		// direction, which is what it says.
+		// And a phrase with no offset still asks only its direction.
 		{
 			"no offset, before",
 			iv("1999-06-01") + " ends on or before end of " + mp,
 			"true",
 		},
+
+		// `less than` and `more than` are the strict forms, and the grammar keeps
+		// them apart from `or less` / `or more` for that reason: at exactly the
+		// bound, both are false where the inclusive pair would be true.
+		{
+			"less than, at the bound",
+			"@2019-01-01T00:00:00 less than 10 days before @2019-01-11T00:00:00", "false",
+		},
+		{
+			"more than, at the bound",
+			"@2019-01-01T00:00:00 more than 10 days before @2019-01-11T00:00:00", "false",
+		},
+		{
+			"less than, inside", "@2019-01-06T00:00:00 less than 10 days before @2019-01-11T00:00:00", "true",
+		},
+		{
+			"more than, outside", "@2018-12-22T00:00:00 more than 10 days before @2019-01-11T00:00:00", "true",
+		},
+
+		// Every unit the point arithmetic takes, in both the bare and the UCUM
+		// spelling. Reading one of these as "no offset" would put the phrase back
+		// to answering from its direction alone.
+		{
+			"UCUM days", "@2019-01-01T00:00:00 10 'd' or less before @2019-06-01T00:00:00", "false",
+		},
+		{
+			"minutes", "@2019-01-01T00:00:00 30 minutes or less before @2019-01-01T10:00:00", "false",
+		},
+		{
+			"minutes, inside", "@2019-01-01T09:45:00 30 minutes or less before @2019-01-01T10:00:00", "true",
+		},
+
+		// A bound this cannot apply declines rather than answering from the
+		// direction alone: a fractional offset cannot be applied to a point by
+		// whole units, and saying "true" there would claim what the phrase does not.
+		{
+			"fractional offset", "@2019-01-01T00:00:00 1.5 days or less before @2019-06-01T00:00:00", "null",
+		},
+
+		// Time operands, which have the same arithmetic and were answering null.
+		{
+			"time, inside", "@T09:00:00 2 hours or less before @T10:00:00", "true",
+		},
+		{
+			"time, outside", "@T01:00:00 2 hours or less before @T10:00:00", "false",
+		},
+	} {
+		if got := evalTiming(t, tt.expr); got != tt.want {
+			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
+		}
+	}
+}
+
+// TestABoundaryWordNamesWhichEndIsCompared covers the other half of what the
+// phrase was dropping, which shows without any offset at all.
+//
+// `A before X` is decided by the end of A that faces X. `A starts before X` names
+// the other one outright — and the word was being dropped, so the comparison used
+// the facing end regardless:
+//
+//	Interval[@2019-01-05, @2019-01-20] starts before @2019-01-10   was false
+//
+// January 5th is before January 10th. The interval's *end* is not, and that is
+// what was being compared. 19 phrases across the published libraries write
+// `starts before`, `starts on or before` or `ends on or before`.
+func TestABoundaryWordNamesWhichEndIsCompared(t *testing.T) {
+	const iv = "Interval[@2019-01-05T00:00:00, @2019-01-20T00:00:00]"
+
+	for _, tt := range []struct{ what, expr, want string }{
+		{"starts before, and it does", iv + " starts before @2019-01-10T00:00:00", "true"},
+		{"starts before, and it does not", iv + " starts before @2019-01-01T00:00:00", "false"},
+		{"ends after, and it does", iv + " ends after @2019-01-10T00:00:00", "true"},
+		{"ends after, and it does not", iv + " ends after @2019-02-01T00:00:00", "false"},
+		{"starts on or before", iv + " starts on or before @2019-01-10T00:00:00", "true"},
+
+		// Without a boundary word the facing end still decides, which is what the
+		// bare relationship means and what this must not change.
+		{"no boundary word, before", iv + " before @2019-02-01T00:00:00", "true"},
+		{"no boundary word, not before", iv + " before @2019-01-10T00:00:00", "false"},
 	} {
 		if got := evalTiming(t, tt.expr); got != tt.want {
 			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
