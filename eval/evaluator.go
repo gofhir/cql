@@ -4929,7 +4929,7 @@ type offsetBound struct {
 // answers the phrase from its direction alone, which is the defect this whole path
 // exists to remove: `10 'd' or less before` would have gone back to accepting a
 // value five months away.
-func parseTimingOffset(offset, comparator string) (offsetBound, bool) {
+func parseTimingOffset(offset, comparator string) (bound offsetBound, temporal, ok bool) {
 	// The parse tree hands back the phrase's text with the tokens run together,
 	// so `10 years` arrives as "10years". Split where the digits stop rather than
 	// on whitespace, which also accepts the spaced form.
@@ -4939,14 +4939,16 @@ func parseTimingOffset(offset, comparator string) (offsetBound, bool) {
 		cut++
 	}
 	if cut == 0 || cut == len(text) {
-		return offsetBound{}, false
+		// No unit at all: `3 or less before` over integers is not a temporal
+		// phrase, and this path has nothing to say about it.
+		return offsetBound{}, false, false
 	}
 	// `10.0 days` is the same bound as `10 days` and is read as one. A genuinely
 	// fractional offset cannot be applied to a point by whole units, so it is left
 	// unread rather than rounded to one that can.
 	num, err := strconv.ParseFloat(text[:cut], 64)
 	if err != nil || num < 0 || num != math.Trunc(num) {
-		return offsetBound{}, false
+		return offsetBound{}, true, false
 	}
 	n := int64(num)
 	unit := strings.Trim(strings.TrimSpace(text[cut:]), "'\"")
@@ -4958,9 +4960,11 @@ func parseTimingOffset(offset, comparator string) (offsetBound, bool) {
 	switch unit {
 	case "year", "month", "week", "day", "hour", "minute", "second", "millisecond":
 	default:
-		return offsetBound{}, false
+		// No temporal unit at all: the offset is a plain number, and the phrase is
+		// not one this path answers.
+		return offsetBound{}, false, false
 	}
-	return offsetBound{value: n, precision: unit, comparator: comparator}, true
+	return offsetBound{value: n, precision: unit, comparator: comparator}, true, true
 }
 
 // timingUnits maps the UCUM spellings CQL allows for a duration onto the names the
@@ -5035,7 +5039,7 @@ func unitFitsPrecision(v fptypes.Value, unit string) bool {
 //     wraps to 23:00 and reads as later rather than earlier.
 //
 // Either way the phrase states a bound that cannot be placed, and it declines.
-func shiftTemporal(v fptypes.Value, n int64, unit string, back bool) (fptypes.Value, bool) {
+func shiftTemporal(v fptypes.Value, n int64, unit string, back bool, capComparator string) (fptypes.Value, bool) {
 	amount := int(n)
 	if back {
 		amount = -amount
@@ -5068,11 +5072,19 @@ func shiftTemporal(v fptypes.Value, n int64, unit string, back bool) (fptypes.Va
 			return nil, false
 		}
 		// A Time has no date to carry into, so a shift that runs off either end of
-		// the day wraps around and reads as the opposite direction. The day's own
-		// edge is the bound there: there is nothing before midnight to be nearer
-		// to.
+		// the day wraps around and reads as the opposite direction.
 		if cmp, cerr := cqltypes.CompareTemporal(out, t); cerr == nil {
 			if (back && cmp > 0) || (!back && cmp < 0) {
+				// The day's edge stands in for the bound only when the question is
+				// whether the value is *within* it: nothing precedes midnight, so
+				// everything in the day is nearer than a bound that ran past it.
+				// `or more` and an exact offset ask about the far side, and there
+				// the edge is not the bound — it is a different point that happens
+				// to be reachable, and answering from it said a two-hour gap was
+				// three hours or more.
+				if capComparator != "less" && capComparator != "lessThan" {
+					return nil, false
+				}
 				edge := "00:00:00.000"
 				if !back {
 					edge = "23:59:59.999"
@@ -5137,10 +5149,15 @@ func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp)
 	if (!op.Before && !op.After) || left == nil || right == nil {
 		return nil, false, nil
 	}
-	bound, ok := parseTimingOffset(op.Offset, op.Comparator)
+	bound, temporal, ok := parseTimingOffset(op.Offset, op.Comparator)
+	if !temporal {
+		// Not a temporal offset at all — `3 or less before` over integers — so this
+		// path has nothing to say and the ordinary comparison answers.
+		return nil, false, nil
+	}
 	if !ok {
-		// The phrase states a bound this cannot apply. Answering it as though it
-		// stated none would claim more than the expression says, so it declines.
+		// The phrase states a temporal bound this cannot apply. Answering it as
+		// though it stated none would claim more than the expression says.
 		return nil, true, nil
 	}
 
@@ -5163,7 +5180,7 @@ func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp)
 	// truncated count: a colonoscopy from 2009-12-30 against a period ending
 	// 2019-12-31 is ten years and a day away, which `years between` reports as 10
 	// and would let through. The measure's own test case is built on that day.
-	shifted, ok := shiftTemporal(rightPoint, bound.value, bound.precision, op.Before)
+	shifted, ok := shiftTemporal(rightPoint, bound.value, bound.precision, op.Before, bound.comparator)
 	if !ok {
 		// The bound cannot be placed on this value, so the phrase declines rather
 		// than falling back to its direction alone.
@@ -5328,15 +5345,22 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		// the end facing X, but `A starts before X` names the other one outright —
 		// and the boundary word was being dropped, so `Interval[Jan 5, Jan 20]
 		// starts before Jan 10` compared January 20th and answered false.
-		point := leftIv.High
+		// Through Start/End, the way the offset path reads them: an open boundary
+		// excludes its own value, so `end of Interval[…, @2020-01-01)` is the
+		// instant before it and not the boundary as written. Reading Low/High raw
+		// made the same phrase answer differently with and without an offset.
+		point, perr := leftIv.End()
 		if n.Operator.After {
-			point = leftIv.Low
+			point, perr = leftIv.Start()
 		}
 		switch n.Operator.Boundary {
 		case "starts":
-			point = leftIv.Low
+			point, perr = leftIv.Start()
 		case "ends":
-			point = leftIv.High
+			point, perr = leftIv.End()
+		}
+		if perr != nil {
+			return nil, perr
 		}
 		switch n.Operator.Kind {
 		case ast.TimingBeforeOrAfter:
@@ -5395,15 +5419,21 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	// that happens to face it. Comparing whole intervals ignored the word, so the
 	// interval-against-interval spelling disagreed with the scalar one.
 	if b := n.Operator.Boundary; b == "starts" || b == "ends" {
-		point := leftIv.Low
+		point, perr := leftIv.Start()
 		if b == "ends" {
-			point = leftIv.High
+			point, perr = leftIv.End()
+		}
+		if perr != nil {
+			return nil, perr
 		}
 		// The right operand answers with the end that faces the comparison, the
 		// way it does without a boundary word.
-		against := rightIv.Low
+		against, aerr := rightIv.Start()
 		if n.Operator.After {
-			against = rightIv.High
+			against, aerr = rightIv.End()
+		}
+		if aerr != nil {
+			return nil, aerr
 		}
 		switch n.Operator.Kind {
 		case ast.TimingBeforeOrAfter:
@@ -5443,6 +5473,29 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		return fptypes.NewBoolean(result), nil
 	case ast.TimingIncludedIn, ast.TimingDuring:
+		// `A starts during B` asks about one point of A, not all of it.
+		if b := n.Operator.Boundary; b == "starts" || b == "ends" {
+			point, perr := leftIv.Start()
+			if b == "ends" {
+				point, perr = leftIv.End()
+			}
+			if perr != nil {
+				return nil, perr
+			}
+			if n.Operator.Precision != "" {
+				if res, handled := membershipAtPrecision(rightIv, point, n.Operator.Precision); handled {
+					return res, nil
+				}
+			}
+			ok, cerr := rightIv.Contains(point)
+			if cerr != nil {
+				if isAmbiguousComparisonErr(cerr) {
+					return nil, nil
+				}
+				return nil, cerr
+			}
+			return fptypes.NewBoolean(ok), nil
+		}
 		if n.Operator.Precision != "" {
 			return intervalIncludesAtPrecision(rightIv, leftIv, n.Operator.Precision, n.Operator.Properly)
 		}

@@ -1150,6 +1150,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 				}
 			}
 		case *grammar.IncludedInIntervalOperatorPhraseContext:
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 			op.Kind = ast.TimingIncludedIn
 			text := strings.ToLower(phrase.GetText())
 			if strings.Contains(text, "properly") {
@@ -1181,6 +1182,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 		case *grammar.EndsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingEnds
 		case *grammar.WithinIntervalOperatorPhraseContext:
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 			op.Kind = ast.TimingWithin
 		}
 	}
