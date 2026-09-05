@@ -3,6 +3,7 @@ package cql
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,11 +12,22 @@ import (
 
 // sortKeyProvider serves two observations in the wrong order, so a test can tell
 // a sort that ran from one that merely did not fail.
-type sortKeyProvider struct{ empty bool }
+type sortKeyProvider struct {
+	empty bool
+	// withoutEffective serves a resource that omits the element being sorted by,
+	// which FHIR permits and a measure meets constantly.
+	withoutEffective bool
+}
 
 func (p sortKeyProvider) Retrieve(_ context.Context, r eval.RetrieveRequest) ([]json.RawMessage, error) {
 	if p.empty || r.ResourceType != "Observation" {
 		return nil, nil
+	}
+	if p.withoutEffective {
+		return []json.RawMessage{
+			json.RawMessage(`{"resourceType":"Observation","id":"undated","status":"final",` +
+				`"valueQuantity":{"value":60,"unit":"mg/dL"}}`),
+		}, nil
 	}
 	return []json.RawMessage{
 		json.RawMessage(`{"resourceType":"Observation","id":"june","status":"final",` +
@@ -83,8 +95,17 @@ func TestASortKeyNamesTheSameElementsAMemberAccessDoes(t *testing.T) {
 		}
 	}
 
+	// An element the type declares is a column whether or not these particular
+	// resources carry it. FHIR makes almost all of them optional, so a sort key
+	// naming one has to survive the rows that lack it — which is the case a measure
+	// meets constantly.
+	if got := evalWithObservations(t, sortKeyProvider{withoutEffective: true},
+		"Count(([Observation] O sort by effective))"); got != "1" {
+		t.Errorf("sorting by an element this resource does not carry = %s, want 1", got)
+	}
+
 	// A key that names nothing is still a mistake worth reporting.
-	if got := evalWithObservations(t, p, "Count(([Observation] O sort by noSuchElement))"); got[:5] != "ERROR" {
+	if got := evalWithObservations(t, p, "Count(([Observation] O sort by noSuchElement))"); !strings.HasPrefix(got, "ERROR") {
 		t.Errorf("a sort key naming nothing = %s, want an error", got)
 	}
 }
@@ -114,9 +135,15 @@ func TestSortingNothingIsNotAMistake(t *testing.T) {
 		}
 	}
 
-	// The name is still checked — by the semantic phase, which does not need rows
-	// to know that nothing declares it.
-	if got := evalWithObservations(t, empty, "Count(([Observation] O sort by noSuchElement))"); got[:5] != "ERROR" {
+	// The name is still checked here — by the semantic phase, which does not need
+	// rows to know that Observation declares no such element.
+	//
+	// That is not a guarantee for every query: where the semantic phase cannot type
+	// the rows, an invented key over no rows goes unreported. Nothing is misordered
+	// by it — there is nothing to order — so the cost is a missing diagnostic rather
+	// than a wrong answer, and it is not worth failing a query that has no rows to
+	// judge the key against.
+	if got := evalWithObservations(t, empty, "Count(([Observation] O sort by noSuchElement))"); !strings.HasPrefix(got, "ERROR") {
 		t.Errorf("a key naming nothing = %s, want an error even with no rows", got)
 	}
 }

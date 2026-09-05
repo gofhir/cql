@@ -4396,6 +4396,16 @@ func (e *Evaluator) sortKeyIsTypo(expr ast.Expression, sources []*ast.AliasedSou
 		if _, ok := e.elementOf(item, id.Name); ok {
 			return false
 		}
+		// Present in none of these rows is not the same as named by nothing. FHIR
+		// makes almost every element optional, so an Observation without an
+		// `effective` is ordinary — and asking the rows alone made the query fail
+		// on exactly the resources that lack the element, which is what a sort key
+		// has to tolerate. The model knows whether the type declares it.
+		if obj, isObject := item.(*fptypes.ObjectValue); isObject && e.ctx.ModelInfo != nil {
+			if _, declared := e.ctx.ModelInfo.ElementInfoByPath(obj.Type() + "." + id.Name); declared {
+				return false
+			}
+		}
 	}
 	if _, ok := e.ctx.ResolveIdentifier(id.Name); ok {
 		return false
