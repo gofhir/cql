@@ -90,6 +90,79 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.txt
 
+  # The suite above runs at UTC, which is the runner's zone. That is one zone, and
+  # one zone does not prove anything here: this engine assumes the evaluation
+  # request's timezone offset wherever CQL says to, so a great many of its answers
+  # depend on where the process runs.
+  #
+  # Twice in one week a change was green at UTC and wrong at the extremes — once a
+  # branch answered `during` incorrectly at UTC+14 for a value that was inside the
+  # interval, and it was found only because someone thought to measure in six zones
+  # by hand. The repository's own notes had said "one zone proves nothing" for
+  # weeks by then. This is that rule as a job rather than a habit.
+  zones:
+    name: Zones
+    runs-on: ubuntu-latest
+    strategy:
+      # Every zone reports, rather than the first failure hiding the others: which
+      # extremes a change breaks is the diagnosis, not noise.
+      fail-fast: false
+      matrix:
+        include:
+          # The far east and the far west of the legal offset range, which is where
+          # a day boundary lands differently from UTC...
+          - tz: Pacific/Kiritimati
+            offset: "+1400"
+          - tz: Pacific/Midway
+            offset: "-1100"
+          # ...and one that is not a whole number of hours, which has caught
+          # arithmetic that assumed it was.
+          - tz: Asia/Kathmandu
+            offset: "+0545"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # Without this the job would still pass — at UTC, silently, having measured
+      # nothing it claims to. A check that cannot check has to fail, which this
+      # repository has now learned twice: once from a conformance harness that
+      # compared a value against itself, and once from a test that compared two
+      # syntax errors and called them equal.
+      - name: Confirm the zone applied
+        env:
+          TZ: ${{ matrix.tz }}
+        run: |
+          got=$(date +%z)
+          echo "TZ=$TZ resolves to $got"
+          if [ "$got" != "${{ matrix.offset }}" ]; then
+            echo "::error::TZ=$TZ resolved to $got, expected ${{ matrix.offset }} —" \
+                 "this job would have run at the wrong offset and reported success"
+            exit 1
+          fi
+
+      - name: Run tests at ${{ matrix.tz }}
+        env:
+          TZ: ${{ matrix.tz }}
+        # No -race and no coverage: the Test job above pays for those once. What
+        # this job adds is the zone, and paying three times for the rest would buy
+        # nothing.
+        run: go test ./...
+
   build:
     name: Build
     runs-on: ubuntu-latest
