@@ -1038,6 +1038,20 @@ func (b *builder) VisitImpliesExpression(ctx *grammar.ImpliesExpressionContext) 
 	}
 }
 
+// timingBoundaryWord reads the `starts | ends | occurs` a timing phrase may open
+// with, which names the end of the left operand the phrase compares.
+func timingBoundaryWord(text string) string {
+	switch head := strings.ToLower(text); {
+	case strings.HasPrefix(head, "starts"):
+		return "starts"
+	case strings.HasPrefix(head, "ends"):
+		return "ends"
+	case strings.HasPrefix(head, "occurs"):
+		return "occurs"
+	}
+	return ""
+}
+
 func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) interface{} {
 	exprs := ctx.AllExpression()
 	if len(exprs) < 2 {
@@ -1058,6 +1072,9 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			if dtp := phrase.DateTimePrecision(); dtp != nil {
 				op.Precision = strings.ToLower(dtp.GetText())
 			}
+			// `starts same or before X` names an end just as `starts before X`
+			// does; the word was only being read on the other phrase.
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 			if rq := phrase.RelativeQualifier(); rq != nil {
 				text := strings.ToLower(rq.GetText())
 				if strings.Contains(text, "before") {
@@ -1120,14 +1137,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 					}
 				}
 			}
-			switch head := strings.ToLower(phrase.GetText()); {
-			case strings.HasPrefix(head, "starts"):
-				op.Boundary = "starts"
-			case strings.HasPrefix(head, "ends"):
-				op.Boundary = "ends"
-			case strings.HasPrefix(head, "occurs"):
-				op.Boundary = "occurs"
-			}
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 		case *grammar.IncludesIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingIncludes
 			text := strings.ToLower(phrase.GetText())

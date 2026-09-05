@@ -166,6 +166,36 @@ func TestATimingPhraseHonoursItsQuantityOffset(t *testing.T) {
 		{
 			"time, outside", "@T01:00:00 2 hours or less before @T10:00:00", "false",
 		},
+		// A Time has no date to carry into, so shifting the bound off either end of
+		// the day used to wrap around and read as the opposite direction: three
+		// hours before 02:00 became 23:00, and 00:30 read as later than the bound.
+		// The day's edge is the bound there — nothing precedes midnight — and the
+		// same question spelled in minutes has to give the same answer.
+		{
+			"time, bound runs off the start", "@T00:30:00 3 hours or less before @T02:00:00", "true",
+		},
+		{
+			"time, the same question in minutes", "@T00:30:00 90 minutes or less before @T02:00:00", "true",
+		},
+
+		// A unit finer than the value's own precision cannot be applied to it.
+		// fhirpath promotes it — a second off a Date takes a whole day — which put
+		// the bound on the value itself, and then `or less` and `or more` both held
+		// for one pair. Declining is the answer; agreeing with both is not.
+		{
+			"unit finer than a Date, or less", "@2019-01-01 1 second or less before @2019-01-02", "null",
+		},
+		{
+			"unit finer than a Date, or more", "@2019-01-01 1 second or more before @2019-01-02", "null",
+		},
+		{
+			"unit finer than the stated precision", "@2019-01-01T 30 minutes or less before @2019-01-02T", "null",
+		},
+
+		// `10.0 days` is the same bound as `10 days` and is read as one.
+		{
+			"decimal that is a whole number", "@2019-01-06T00:00:00 10.0 days or less before @2019-01-11T00:00:00", "true",
+		},
 	} {
 		if got := evalTiming(t, tt.expr); got != tt.want {
 			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
@@ -199,6 +229,23 @@ func TestABoundaryWordNamesWhichEndIsCompared(t *testing.T) {
 		// bare relationship means and what this must not change.
 		{"no boundary word, before", iv + " before @2019-02-01T00:00:00", "true"},
 		{"no boundary word, not before", iv + " before @2019-01-10T00:00:00", "false"},
+
+		// The word applies whichever shape the other operand has, and whichever
+		// relationship the phrase uses. Reading it in one place and not the others
+		// left the same phrase answering differently depending on how it was
+		// written.
+		{
+			"starts before, against an interval",
+			iv + " starts before Interval[@2019-01-10T00:00:00, @2019-01-30T00:00:00]", "true",
+		},
+		{
+			"starts same or before, against a point",
+			iv + " starts same or before @2019-01-10T00:00:00", "true",
+		},
+		{
+			"starts same or before, and it does not",
+			iv + " starts same or before @2019-01-01T00:00:00", "false",
+		},
 	} {
 		if got := evalTiming(t, tt.expr); got != tt.want {
 			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)

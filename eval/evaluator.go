@@ -4935,18 +4935,20 @@ func parseTimingOffset(offset, comparator string) (offsetBound, bool) {
 	// on whitespace, which also accepts the spaced form.
 	text := strings.ToLower(strings.TrimSpace(offset))
 	cut := 0
-	for cut < len(text) && text[cut] >= '0' && text[cut] <= '9' {
+	for cut < len(text) && (text[cut] >= '0' && text[cut] <= '9' || text[cut] == '.') {
 		cut++
 	}
 	if cut == 0 || cut == len(text) {
 		return offsetBound{}, false
 	}
-	n, err := strconv.ParseInt(text[:cut], 10, 64)
-	if err != nil || n < 0 {
-		// A fractional offset — `1.5 days` — cannot be applied to a point by whole
-		// units, so it is not read rather than rounded to one that can.
+	// `10.0 days` is the same bound as `10 days` and is read as one. A genuinely
+	// fractional offset cannot be applied to a point by whole units, so it is left
+	// unread rather than rounded to one that can.
+	num, err := strconv.ParseFloat(text[:cut], 64)
+	if err != nil || num < 0 || num != math.Trunc(num) {
 		return offsetBound{}, false
 	}
+	n := int64(num)
 	unit := strings.Trim(strings.TrimSpace(text[cut:]), "'\"")
 	if u, ok := timingUnits[unit]; ok {
 		unit = u
@@ -4992,34 +4994,109 @@ func timingOffsetPoint(v fptypes.Value, boundary string, facingEnd bool) (fptype
 	return iv.Start()
 }
 
+// unitFitsPrecision reports whether a duration unit is coarse enough to be
+// applied to a value, which is to say the value states that component at all.
+func unitFitsPrecision(v fptypes.Value, unit string) bool {
+	depth := map[string]int{
+		"year": 0, "month": 1, "week": 2, "day": 2,
+		"hour": 3, "minute": 4, "second": 5, "millisecond": 6,
+	}
+	want, known := depth[unit]
+	if !known {
+		return false
+	}
+	switch t := v.(type) {
+	case fptypes.DateTime:
+		return want <= int(t.Precision())
+	case fptypes.Date:
+		return want <= int(t.Precision())
+	case fptypes.Time:
+		// Time precision counts from the hour, and a unit coarser than a day has
+		// no meaning against a time of day.
+		if want < 3 {
+			return false
+		}
+		return want-3 <= int(t.Precision())
+	}
+	return false
+}
+
 // shiftTemporal moves a point by the offset a timing phrase states, which is how
 // the phrase's bound is expressed: a point, not a length of time.
-func shiftTemporal(v fptypes.Value, n int64, unit string, back bool) (fptypes.Value, bool, error) {
+//
+// The move has to actually land where it says. Two ways it does not, and both
+// produced confident wrong answers rather than nulls:
+//
+//   - A unit finer than the value can hold moves it nowhere. `@2019-01-01 1 second
+//     or less before @2019-01-02` put the bound on the value itself, which both
+//     `or less` and `or more` then satisfied — the same pair answering true to two
+//     opposite questions.
+//   - A Time has no date to carry into, so `@T02:00:00` shifted back three hours
+//     wraps to 23:00 and reads as later rather than earlier.
+//
+// Either way the phrase states a bound that cannot be placed, and it declines.
+func shiftTemporal(v fptypes.Value, n int64, unit string, back bool) (fptypes.Value, bool) {
 	amount := int(n)
 	if back {
 		amount = -amount
 	}
+	// A unit finer than the value's own precision cannot be applied to it: asking
+	// fhirpath to take a second off a Date takes a whole day instead, because it
+	// promotes the unit to the precision it has. That put the bound on the value
+	// itself, where `or less` and `or more` both held — one pair answering true to
+	// two opposite questions.
+	if !unitFitsPrecision(v, unit) {
+		return nil, false
+	}
+	var moved fptypes.Value
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		out, err := t.AddDuration(amount, unit)
 		if err != nil {
-			return nil, false, nil // out of range: the phrase cannot be bounded
+			return nil, false // out of range: the phrase cannot be bounded
 		}
-		return carryDefaultOffsetTo(t, out), true, err
+		moved = carryDefaultOffsetTo(t, out)
 	case fptypes.Date:
 		out, err := t.AddDuration(amount, unit)
 		if err != nil {
-			return nil, false, nil
+			return nil, false
 		}
-		return out, true, err
+		moved = out
 	case fptypes.Time:
 		out, err := t.AddDuration(amount, unit)
 		if err != nil {
-			return nil, false, nil
+			return nil, false
 		}
-		return out, true, err
+		// A Time has no date to carry into, so a shift that runs off either end of
+		// the day wraps around and reads as the opposite direction. The day's own
+		// edge is the bound there: there is nothing before midnight to be nearer
+		// to.
+		if cmp, cerr := cqltypes.CompareTemporal(out, t); cerr == nil {
+			if (back && cmp > 0) || (!back && cmp < 0) {
+				edge := "00:00:00.000"
+				if !back {
+					edge = "23:59:59.999"
+				}
+				if capped, cerr2 := fptypes.NewTime(edge); cerr2 == nil {
+					return capped, true
+				}
+			}
+		}
+		moved = out
+	default:
+		return nil, false
 	}
-	return nil, false, nil
+	if n == 0 {
+		return moved, true
+	}
+	cmp, err := cqltypes.CompareTemporal(moved, v)
+	if err != nil {
+		return nil, false
+	}
+	if (back && cmp >= 0) || (!back && cmp <= 0) {
+		return nil, false
+	}
+	return moved, true
 }
 
 // carryDefaultOffsetTo keeps a shifted point in the frame its source sat in, so
@@ -5086,9 +5163,11 @@ func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp)
 	// truncated count: a colonoscopy from 2009-12-30 against a period ending
 	// 2019-12-31 is ten years and a day away, which `years between` reports as 10
 	// and would let through. The measure's own test case is built on that day.
-	shifted, ok, err := shiftTemporal(rightPoint, bound.value, bound.precision, op.Before)
-	if err != nil || !ok {
-		return nil, true, err
+	shifted, ok := shiftTemporal(rightPoint, bound.value, bound.precision, op.Before)
+	if !ok {
+		// The bound cannot be placed on this value, so the phrase declines rather
+		// than falling back to its direction alone.
+		return nil, true, nil
 	}
 
 	// Order first, at the precision the phrase states if it states one:
@@ -5311,6 +5390,31 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	if !leftOk || !rightOk {
 		return nil, nil
 	}
+	// A boundary word names which end of the left interval the phrase reads, and
+	// it applies here too: `A starts before B` is A's start against B, not the end
+	// that happens to face it. Comparing whole intervals ignored the word, so the
+	// interval-against-interval spelling disagreed with the scalar one.
+	if b := n.Operator.Boundary; b == "starts" || b == "ends" {
+		point := leftIv.Low
+		if b == "ends" {
+			point = leftIv.High
+		}
+		// The right operand answers with the end that faces the comparison, the
+		// way it does without a boundary word.
+		against := rightIv.Low
+		if n.Operator.After {
+			against = rightIv.High
+		}
+		switch n.Operator.Kind {
+		case ast.TimingBeforeOrAfter:
+			return e.evalTemporalComparison(point, against, n.Operator)
+		case ast.TimingSameAs:
+			if n.Operator.Before || n.Operator.After {
+				return e.evalTemporalComparison(point, against, n.Operator)
+			}
+		}
+	}
+
 	switch n.Operator.Kind {
 	case ast.TimingSameAs:
 		if n.Operator.Before {
