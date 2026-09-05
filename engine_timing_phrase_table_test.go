@@ -16,7 +16,14 @@ func evalTimingPhrase(t *testing.T, expr string) string {
 		EvaluateExpression(context.Background(),
 			"library T version '1.0'\ndefine A: "+expr+"\n", "A", nil, nil)
 	if err != nil {
-		return "ERROR: " + err.Error()
+		// An expression this table cannot evaluate is a defect in the table, not a
+		// result to compare against another. Returning the error as a string let
+		// two spellings agree on being broken: `1 day less than before` is not CQL,
+		// both sides of the pair failed to parse, and the invariant passed on the
+		// strength of two identical error messages. A comparison that cannot
+		// compare has to fail.
+		t.Errorf("could not evaluate %q: %v", expr, err)
+		return "«unevaluated: " + expr + "»"
 	}
 	if got == nil {
 		return "null"
@@ -46,7 +53,7 @@ func evalTimingPhrase(t *testing.T, expr string) string {
 // v1.15.2 (interval equality through seven paths) and v1.20.x (four readers of one
 // temporal frame), both times after the case-by-case approach had missed some.
 //
-// 720 pairs. It found `within` unimplemented on its first run — see
+// 864 pairs. It found `within` unimplemented on its first run — see
 // TestWithinStillIgnoresItsQuantity.
 func TestEverySpellingOfATimingPhraseAgrees(t *testing.T) {
 	lefts := map[string]string{
@@ -101,8 +108,13 @@ func TestEverySpellingOfATimingPhraseAgrees(t *testing.T) {
 			}
 		}
 	}
-	if pairs < 700 {
-		t.Errorf("only %d pairs compared; the table has stopped covering what it claims to", pairs)
+	// The count is asserted exactly, not as a floor: a floor set below the real
+	// figure would not notice a whole row of the table being dropped, which is how
+	// the stale "720" survived a sixth offset being added.
+	const expected = 3 * 4 * 4 * 6 * 3 // lefts × rights × relationships × offsets × pairs per cell
+	if pairs != expected {
+		t.Errorf("compared %d pairs, expected %d — a dimension of the table has changed "+
+			"and the figure in the doc comment above no longer describes it", pairs, expected)
 	}
 }
 
@@ -128,11 +140,19 @@ func TestTheComparatorsDoNotContradictEachOther(t *testing.T) {
 		for _, right := range rights {
 			for _, q := range quantities {
 				for _, rel := range relationships {
-					ask := func(comparator string) string {
+					// The inclusive qualifier follows the quantity and the strict one
+					// precedes it — two rules in the grammar, not one with a movable
+					// word. Writing both the same way made every strict form a syntax
+					// error, which is what left three of the four invariants below
+					// unreachable.
+					inclusive := func(comparator string) string {
 						return evalTimingPhrase(t, fmt.Sprintf("%s %s %s %s %s", left, q, comparator, rel, right))
 					}
-					orLess, orMore := ask("or less"), ask("or more")
-					lessThan, moreThan := ask("less than"), ask("more than")
+					strict := func(comparator string) string {
+						return evalTimingPhrase(t, fmt.Sprintf("%s %s %s %s %s", left, comparator, q, rel, right))
+					}
+					orLess, orMore := inclusive("or less"), inclusive("or more")
+					lessThan, moreThan := strict("less than"), strict("more than")
 					where := fmt.Sprintf("%s %s ... %s %s", left, q, rel, right)
 
 					// The strict bounds are the inclusive ones minus the bound
