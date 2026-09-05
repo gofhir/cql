@@ -1038,6 +1038,20 @@ func (b *builder) VisitImpliesExpression(ctx *grammar.ImpliesExpressionContext) 
 	}
 }
 
+// timingBoundaryWord reads the `starts | ends | occurs` a timing phrase may open
+// with, which names the end of the left operand the phrase compares.
+func timingBoundaryWord(text string) string {
+	switch head := strings.ToLower(text); {
+	case strings.HasPrefix(head, "starts"):
+		return "starts"
+	case strings.HasPrefix(head, "ends"):
+		return "ends"
+	case strings.HasPrefix(head, "occurs"):
+		return "occurs"
+	}
+	return ""
+}
+
 func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) interface{} {
 	exprs := ctx.AllExpression()
 	if len(exprs) < 2 {
@@ -1058,6 +1072,9 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			if dtp := phrase.DateTimePrecision(); dtp != nil {
 				op.Precision = strings.ToLower(dtp.GetText())
 			}
+			// `starts same or before X` names an end just as `starts before X`
+			// does; the word was only being read on the other phrase.
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 			if rq := phrase.RelativeQualifier(); rq != nil {
 				text := strings.ToLower(rq.GetText())
 				if strings.Contains(text, "before") {
@@ -1096,6 +1113,31 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 					op.Precision = strings.ToLower(dtp.GetText())
 				}
 			}
+			// The quantity offset and the boundary the phrase reads. Both were
+			// dropped, which left `ends 10 years or less on or before X` meaning
+			// nothing more than `on or before X`.
+			if qo := phrase.QuantityOffset(); qo != nil {
+				if q := qo.Quantity(); q != nil {
+					op.Offset = q.GetText()
+				}
+				// `or less` admits the bound itself; `less than` does not, and the
+				// two are separate rules in the grammar for that reason.
+				if orq := qo.OffsetRelativeQualifier(); orq != nil {
+					if t := strings.ToLower(orq.GetText()); strings.Contains(t, "less") {
+						op.Comparator = "less"
+					} else if strings.Contains(t, "more") {
+						op.Comparator = "more"
+					}
+				}
+				if erq := qo.ExclusiveRelativeQualifier(); erq != nil {
+					if t := strings.ToLower(erq.GetText()); strings.Contains(t, "less") {
+						op.Comparator = "lessThan"
+					} else if strings.Contains(t, "more") {
+						op.Comparator = "moreThan"
+					}
+				}
+			}
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 		case *grammar.IncludesIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingIncludes
 			text := strings.ToLower(phrase.GetText())
@@ -1108,6 +1150,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 				}
 			}
 		case *grammar.IncludedInIntervalOperatorPhraseContext:
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 			op.Kind = ast.TimingIncludedIn
 			text := strings.ToLower(phrase.GetText())
 			if strings.Contains(text, "properly") {
@@ -1139,6 +1182,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 		case *grammar.EndsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingEnds
 		case *grammar.WithinIntervalOperatorPhraseContext:
+			op.Boundary = timingBoundaryWord(phrase.GetText())
 			op.Kind = ast.TimingWithin
 		}
 	}
