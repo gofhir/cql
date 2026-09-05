@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.3](https://github.com/gofhir/cql/compare/v1.20.2...v1.20.3) (2026-09-05)
+
+
+### Bug Fixes
+
+* **compiler:** a delimited name is the same name, in a qualified call and in a valueset's code systems ([#72](https://github.com/gofhir/cql/issues/72)) ([ddcc4ee](https://github.com/gofhir/cql/commit/ddcc4ee35e3ffc76ef913dc958bb8ecceef1c432))
+* **eval:** a timing phrase honours the quantity offset it states ([#74](https://github.com/gofhir/cql/issues/74)) ([6aef520](https://github.com/gofhir/cql/commit/6aef520fc6846e272f6b2d23e02c38b7d6124e20))
+
 ## [1.20.2](https://github.com/gofhir/cql/compare/v1.20.1...v1.20.2) (2026-09-02)
 
 
