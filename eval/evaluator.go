@@ -632,7 +632,7 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	// and the column wins over a query alias of the same name: in
 	// `({Tuple{A: 1}}) A sort by A` the key is the column, not the whole tuple.
 	if e.ctx.InSortKey {
-		if v, ok := propertyOf(e.ctx.This, n.Name); ok {
+		if v, ok := e.elementOf(e.ctx.This, n.Name); ok {
 			return v, nil
 		}
 	}
@@ -760,6 +760,66 @@ func wrapUnlessLimit(err error, format string, args ...interface{}) error {
 		return err
 	}
 	return fmt.Errorf(fmt.Sprintf(format, args...)+": %w", err)
+}
+
+// choiceProperty reads an element that FHIR names after its type. A choice like
+// Observation.effective is stored as effectiveDateTime or effectivePeriod, never
+// as `effective`, so the model is what says which spellings to look for.
+//
+// This is the spelling the published measures use — 36 uses of `.effective`, 10 of
+// `.onset` and 16 of `.performed` across the 19 eCQM libraries, against zero of any
+// concrete one.
+func (e *Evaluator) choiceProperty(v fptypes.Value, name string) (fptypes.Value, bool) {
+	obj, isObject := v.(*fptypes.ObjectValue)
+	if !isObject || e.ctx.ModelInfo == nil {
+		return nil, false
+	}
+	path := obj.Type() + "." + name
+	if !e.ctx.ModelInfo.IsChoiceType(path) {
+		return nil, false
+	}
+	ei, known := e.ctx.ModelInfo.ElementInfoByPath(path)
+	if !known {
+		return nil, false
+	}
+	for _, choiceType := range ei.ChoiceTypes {
+		// FHIR names the branch for its type with the first letter capitalized,
+		// and the model spells the primitive types in lower case: FHIR.dateTime
+		// is the type, effectiveDateTime is the field.
+		suffix := choiceType
+		if idx := strings.LastIndex(choiceType, "."); idx >= 0 {
+			suffix = choiceType[idx+1:]
+		}
+		found := obj.GetCollection(name + capitalizeFirst(suffix))
+		if found.Count() == 0 {
+			continue
+		}
+		// The branch that matched is the declared type of what was just read, so a
+		// FHIR dateTime written without a time is a DateTime here too.
+		for i, val := range found {
+			found[i] = e.situate(AsDeclaredType(choiceType, val))
+		}
+		if found.Count() == 1 {
+			return found[0], true
+		}
+		return cqltypes.NewList(found), true
+	}
+	return nil, false
+}
+
+// elementOf reads a named element from a query result item, including the ones
+// FHIR names after their type.
+//
+// propertyOf alone looks for the name as written, which is right for a tuple
+// column and wrong for a FHIR choice: `sort by effective` was reported as naming
+// nothing at all, while `where O.effective is not null` on the same rows answered
+// perfectly well. One name, two answers, because only one of the two paths asked
+// the model.
+func (e *Evaluator) elementOf(v fptypes.Value, name string) (fptypes.Value, bool) {
+	if val, ok := propertyOf(v, name); ok {
+		return val, true
+	}
+	return e.choiceProperty(v, name)
 }
 
 // propertyOf reads a named element from a query result item, reporting whether
@@ -3862,45 +3922,11 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 			return cqltypes.NewList(result), nil
 		}
 
-		// Choice type resolution: check ModelInfo for value[x] patterns
-		if e.ctx.ModelInfo != nil {
-			typeName := obj.Type() // e.g. "Observation"
-			path := typeName + "." + n.Member
-			if e.ctx.ModelInfo.IsChoiceType(path) {
-				if ei, ok := e.ctx.ModelInfo.ElementInfoByPath(path); ok {
-					for _, choiceType := range ei.ChoiceTypes {
-						// Extract suffix: "FHIR.Quantity" → "Quantity"
-						suffix := choiceType
-						if idx := strings.LastIndex(choiceType, "."); idx >= 0 {
-							suffix = choiceType[idx+1:]
-						}
-						// FHIR names a choice element for its type with the
-						// first letter capitalized, and the model spells the
-						// primitive types in lower case: FHIR.dateTime is the
-						// type, effectiveDateTime is the field.
-						concreteKey := n.Member + capitalizeFirst(suffix)
-						result = obj.GetCollection(concreteKey)
-						if result.Count() > 0 {
-							// The branch that matched is the declared type of
-							// what was just read, so a FHIR dateTime written
-							// without a time is a DateTime here too. Missing this
-							// left the two spellings of one value disagreeing
-							// about its type — and this is the spelling the
-							// measures use: 36 uses of `.effective`, 10 of
-							// `.onset` and 16 of `.performed` across the 19
-							// published eCQM libraries, against zero of any
-							// concrete spelling.
-							for i, v := range result {
-								result[i] = e.situate(AsDeclaredType(choiceType, v))
-							}
-							if result.Count() == 1 {
-								return result[0], nil
-							}
-							return cqltypes.NewList(result), nil
-						}
-					}
-				}
-			}
+		// Choice type resolution, through the same helper the sort key uses: two
+		// copies of this rule is how `sort by effective` came to disagree with
+		// `O.effective` about whether the name exists.
+		if val, ok := e.choiceProperty(obj, n.Member); ok {
+			return val, nil
 		}
 
 		return nil, nil
@@ -4264,7 +4290,14 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	}
 
 	// Apply sort clause
-	if n.Sort != nil {
+	//
+	// Nothing to order, and nothing to judge the key by: whether a name is a
+	// column is decided by looking at the rows, and with none of them every key
+	// looks invented. `[Observation] O sort by status` failed outright for a
+	// patient who simply has no observations, which is the ordinary case rather
+	// than an unusual one — a measure that sorts anything aborted on every patient
+	// missing that kind of data.
+	if n.Sort != nil && len(results) > 0 {
 		for _, byItem := range n.Sort.ByItems {
 			if e.sortKeyIsTypo(byItem.Expression, n.Sources, results) {
 				// The key's own position, not the query's: the mistake is the
@@ -4360,7 +4393,7 @@ func (e *Evaluator) sortKeyIsTypo(expr ast.Expression, sources []*ast.AliasedSou
 		}
 	}
 	for _, item := range results {
-		if _, ok := propertyOf(item, id.Name); ok {
+		if _, ok := e.elementOf(item, id.Name); ok {
 			return false
 		}
 	}
