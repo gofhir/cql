@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.4](https://github.com/gofhir/cql/compare/v1.20.3...v1.20.4) (2026-09-06)
+
+
+### Bug Fixes
+
+* **eval:** a choice element reaching a comparison is converted ([#80](https://github.com/gofhir/cql/issues/80)) ([7a74e71](https://github.com/gofhir/cql/commit/7a74e71dcbdf57c8b01f1b2e4a599609f0770dad))
+* **eval:** a sort key names the same elements a member access does ([#77](https://github.com/gofhir/cql/issues/77)) ([3178dac](https://github.com/gofhir/cql/commit/3178dac9faf59613ebe91a4077a4dcedc8828a14))
+
 ## [1.20.3](https://github.com/gofhir/cql/compare/v1.20.2...v1.20.3) (2026-09-05)
 
 
