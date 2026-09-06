@@ -210,28 +210,37 @@ func TestASortPutsMissingKeysLow(t *testing.T) {
 	}
 }
 
-// TestASortKeyWithNoOrderingOfItsOwnIsNotAFailure covers the other branch of a
-// choice element.
+// TestSortingByAnUnorderableKeyStillFails records what this change does not fix,
+// asserted rather than described so that fixing it trips the test.
 //
 // Observation.effective is a Period as readily as a dateTime, and a Period has no
-// ordering — so resolving the choice correctly handed the sort something it could
-// not compare, and the whole define aborted with "cannot compare type Period".
+// ordering, so `sort by effective` over such a resource fails with "cannot compare
+// type Period for sorting" and takes the whole define with it. That is a measure
+// failing on data FHIR fully permits.
 //
-// A key that cannot be ordered sorts as null, which is what this clause already
-// did for a repeating element that yields more than one value. The alternative is
-// failing a measure on data FHIR fully permits, which this clause has now had to
-// stop doing three times: an absent element, no rows at all, and this.
-func TestASortKeyWithNoOrderingOfItsOwnIsNotAFailure(t *testing.T) {
-	p := sortKeyProvider{periods: true}
-
-	if got := evalWithObservations(t, p, "Count(([Observation] O sort by effective))"); got != "2" {
-		t.Errorf("sorting by a Period-valued choice = %s, want 2 rows back", got)
+// Sorting those as null was tried here and reverted. It removes the failure and
+// puts a wrong order in its place: unorderable keys all compare equal, so they
+// land together at the low end, and `Last(… sort by effective)` — which is how the
+// published measures ask for the most recent result — answered with a March
+// dateTime over a December Period. A loud failure is worse than a right answer and
+// better than a quiet wrong one.
+//
+// Giving a Period an order means deciding it sorts by its start. That is a
+// decision about what the language means, not a repair, and it belongs to its own
+// change with its own argument.
+func TestSortingByAnUnorderableKeyStillFails(t *testing.T) {
+	if got := evalWithObservations(t, sortKeyProvider{periods: true},
+		"Count(([Observation] O sort by effective))"); !strings.HasPrefix(got, "ERROR") {
+		t.Fatalf("sorting by a Period answers %s now — decide what order it has, then "+
+			"remove this test and cover the case in TestASortKeyNames…", got)
 	}
-	// Unorderable keys are all equal, so the sort is stable and leaves them as
-	// they came. That is the honest answer for values with no order, and it is
-	// asserted so that giving them one later is a deliberate change rather than a
-	// surprise.
-	if got := evalWithObservations(t, p, "First([Observation] O sort by effective).id"); got != "earlier" {
-		t.Errorf("unorderable keys should leave the order untouched, got %s", got)
+
+	// A tuple-valued key has no order either, and fails the same way. The two
+	// agreeing is the point: an earlier attempt made objects sort as null while
+	// tuples kept failing, so one unorderable key was quietly tolerated and
+	// another was not.
+	const tuples = "Count(({Tuple{k: Tuple{a: 1}}, Tuple{k: Tuple{a: 2}}}) X sort by k)"
+	if got := evalWithObservations(t, sortKeyProvider{}, tuples); !strings.HasPrefix(got, "ERROR") {
+		t.Errorf("sorting by a tuple = %s, want the same refusal a Period gets", got)
 	}
 }

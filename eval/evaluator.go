@@ -4330,7 +4330,17 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 				}
 				return false
 			}
-			// Sort without 'by' — compare items directly
+			// Sort without 'by' — compare items directly, with nulls low, the same
+			// rule the keyed branch above follows. Both are the one sort clause,
+			// and they were ordering nulls opposite ways.
+			switch {
+			case results[i] == nil && results[j] == nil:
+				return false
+			case results[i] == nil:
+				return n.Sort.Direction != ast.SortDesc
+			case results[j] == nil:
+				return n.Sort.Direction == ast.SortDesc
+			}
 			cmpResult, err := compareValues(results[i], results[j])
 			if err != nil {
 				sortErr = err
@@ -4436,15 +4446,18 @@ func sortKeyValue(v fptypes.Value) fptypes.Value {
 		}
 		v = list.Values[0]
 	}
-	// An element with no ordering of its own sorts as null rather than failing the
-	// query. A choice element resolves to whichever branch the resource carries,
-	// and Observation.effective is a Period as readily as a dateTime — so `sort by
-	// effective` met an object it could not order and aborted the whole define,
-	// which is the same "a measure fails on ordinary FHIR data" this clause has
-	// already had to stop doing twice.
-	if _, isObject := v.(*fptypes.ObjectValue); isObject {
-		return nil
-	}
+	// A key with no ordering of its own is left alone, and the comparison reports
+	// it: `sort by effective` over a resource carrying an effectivePeriod fails
+	// with "cannot compare type Period for sorting".
+	//
+	// Sorting those as null was tried and reverted. It stops the failure and
+	// replaces it with a wrong order: every unorderable key compares equal to
+	// every other and lands at the low end, so `Last(… sort by effective)` — the
+	// idiom the measures use for "the most recent" — answered with a March
+	// dateTime over a December Period. A loud failure is worse than a right
+	// answer and better than a quiet wrong one, and giving a Period an order
+	// means deciding that it sorts by its start, which is a change to what the
+	// language means rather than a repair.
 	return v
 }
 
