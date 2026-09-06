@@ -1007,6 +1007,40 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		return nil, err
 	}
 
+	// Comparing or equating values means comparing what they stand for, so a FHIR
+	// value reaching one of these is converted the way the model says — the same
+	// step the timing operators, the membership operators and the interval
+	// accessors already take.
+	//
+	// The semantic phase converts these where it can, and for a FHIR choice
+	// element it cannot: `Observation.value` is typed Choice<FHIR.Quantity,
+	// FHIR.CodeableConcept, FHIR.string, …> and there is no way to say at compile
+	// time which branch the data will carry, so which conversion applies is not
+	// decidable there. It is decidable here, where the value is in hand.
+	//
+	//	LDL.value >= 190 'mg/dL'   errored: cannot compare Quantity
+	//	LDL.value  = 190 'mg/dL'   answered false
+	//
+	// while `LDL.valueQuantity >= 190 'mg/dL'` — the same element, named by its
+	// branch, which the phase types as a plain FHIR.Quantity — answered correctly.
+	// The second of those is the worse one: an error gets looked at, and a measure
+	// quietly reporting false does not. FHIR347 decides an exclusion on that line.
+	//
+	// Which branch it is decides whether the comparison can be made at all, so
+	// the fact that a side came from FHIR is remembered here: the conversion is
+	// what removes the evidence. See fromChoiceBranch below.
+	fromFHIR := isUnconvertedFHIR(left) || isUnconvertedFHIR(right)
+	switch n.Operator {
+	case ast.OpEqual, ast.OpNotEqual, ast.OpEquivalent, ast.OpNotEquivalent,
+		ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
+		if left, err = e.coerceToSystem(left); err != nil {
+			return nil, err
+		}
+		if right, err = e.coerceToSystem(right); err != nil {
+			return nil, err
+		}
+	}
+
 	// Null propagation for most operators
 	if left == nil || right == nil {
 		switch n.Operator {
@@ -1176,6 +1210,28 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
 				return nil, nil // CQL: ambiguous temporal comparison → null
+			}
+			// A FHIR value that has been converted as far as the model knows how
+			// and still cannot be compared with the other side is the wrong branch
+			// of a choice element for the question being asked, and the wrong
+			// branch is null.
+			//
+			// That is what the reference translator produces: it types
+			// `Observation.value` as a choice, sees the comparison wants a
+			// Quantity, and inserts `as Quantity` — which yields null for a row
+			// whose value is a CodeableConcept. So `LDL.value >= 190 'mg/dL'` over
+			// a mix of Quantity and CodeableConcept results answers about the
+			// quantities and passes over the rest, rather than failing the whole
+			// measure on the first row of the wrong kind. FHIR347 has both.
+			//
+			// The judgement is left to the comparison itself rather than made
+			// again here: whether two values can be compared is exactly what it
+			// just answered, and a second opinion about it would be a second
+			// implementation of the same rule. A mismatch between two values
+			// neither of which came from FHIR is an authoring error and still
+			// fails — `1 'mg' >= 'abc'` is not a narrowing that went wrong.
+			if fromFHIR {
+				return nil, nil
 			}
 			return nil, err
 		}
