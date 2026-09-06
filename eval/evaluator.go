@@ -21,6 +21,24 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
+// isIncompatibleUnitsErr reports the other reason a comparison has no answer:
+// two quantities whose dimensions differ, so there is no unit both can be stated
+// in. fhirpath raises a sentinel for it and says what to do with it — "callers
+// translate this sentinel into an empty collection instead of failing the whole
+// expression" — and this engine was the caller that did not.
+//
+// It is deliberately not folded into isAmbiguousComparisonErr, although the two
+// answer the same question. They do not have the same consequence everywhere:
+// an ambiguous temporal comparison can be retried at a shared precision, and
+// units cannot; and list membership treats an undecided temporal pair as two
+// values, which is right for it and would be wrong here only in that it is the
+// same answer for a different reason. Of the twelve places that ask whether a
+// comparison could not be made, three want something other than null, so the two
+// reasons stay two predicates and each site says which it means.
+func isIncompatibleUnitsErr(err error) bool {
+	return err != nil && errors.Is(err, fptypes.ErrIncompatibleUnits)
+}
+
 // isAmbiguousComparisonErr returns true if the error is an ambiguous temporal comparison.
 // In CQL, ambiguous comparisons should return null, not error.
 //
@@ -118,6 +136,13 @@ func elementEquality(a, b fptypes.Value) elementVerdict {
 	case cqltypes.TemporallyUnknown:
 		return elementsUnknown
 	}
+	// Two quantities of different dimensions are the other pair that cannot be
+	// settled, and a container may not be more certain than what it holds: with
+	// `1 'cm2' = 1 'cm'` null, a list of one of each answering false is the same
+	// contradiction one level up that this function exists to remove.
+	if incomparableQuantities(a, b) {
+		return elementsUnknown
+	}
 	if v, nested := containerVerdict(a, b); nested {
 		return v
 	}
@@ -211,6 +236,38 @@ func calendarUCUMQuantities(left, right fptypes.Value) bool {
 	lq, lok := left.(fptypes.Quantity)
 	rq, rok := right.(fptypes.Quantity)
 	return lok && rok && funcs.IsCalendarUCUMDurationPair(lq.Unit(), rq.Unit())
+}
+
+// incomparableQuantities reports two quantities whose dimensions differ, which is
+// a comparison with no answer rather than a negative one.
+//
+// CQL says it twice, once for equality and once for ordering, and names an
+// example of each:
+//
+//	define "QuantityNotEqualIsNull": 3.5 'cm2' != 3.5 'cm'
+//	define "QuantityLessIsNull":     3.6 'cm2' < 3.5 'cm'
+//
+//	"the dimensions of each quantity must be the same, but not necessarily the
+//	 unit… Attempting to operate on quantities with invalid units will result in
+//	 a null."
+//
+// The engine gave that pair three different answers: `=` was false, `!=` true,
+// and `<` an error that took the whole define with it. One rule, three readings —
+// and the conformance corpus has no case for either example, which is why 1823/0
+// coexisted with it.
+//
+// Whether two units are commensurable is fhirpath's question and it answers it:
+// Quantity.Comparable is the same predicate its own `=` uses to return empty for
+// `1 'kg' = 1 'm'`. Asking it beats a second implementation of unit algebra here,
+// and it is the reason this is a small change.
+//
+// Equivalence is deliberately not included. `~` never returns null in CQL — it
+// answers whether two values are the same to the precision at hand — so
+// `1 'kg' ~ 1 'm'` is false, and fhirpath agrees.
+func incomparableQuantities(left, right fptypes.Value) bool {
+	lq, lok := left.(fptypes.Quantity)
+	rq, rok := right.(fptypes.Quantity)
+	return lok && rok && !lq.Comparable(rq)
 }
 
 // queryCombo holds one combination of alias bindings from a multi-source query.
@@ -1102,7 +1159,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return tupleEqual(lt, rt)
 			}
 		}
-		if calendarUCUMQuantities(left, right) {
+		if calendarUCUMQuantities(left, right) || incomparableQuantities(left, right) {
 			return nil, nil
 		}
 		if res, handled := temporalEquality(left, right); handled {
@@ -1128,7 +1185,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 				return fptypes.NewBoolean(!isTrue(eq)), nil
 			}
 		}
-		if calendarUCUMQuantities(left, right) {
+		if calendarUCUMQuantities(left, right) || incomparableQuantities(left, right) {
 			return nil, nil
 		}
 		if res, handled := temporalEquality(left, right); handled {
@@ -1210,6 +1267,10 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		if err != nil {
 			if isAmbiguousComparisonErr(err) {
 				return nil, nil // CQL: ambiguous temporal comparison → null
+			}
+			// `3.6 'cm2' < 3.5 'cm'` is the specification's own QuantityLessIsNull.
+			if isIncompatibleUnitsErr(err) {
+				return nil, nil
 			}
 			// A FHIR value that has been converted as far as the model knows how
 			// and still cannot be compared with the other side is the wrong branch
@@ -1694,7 +1755,7 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 			}
 			result, err := interval.Contains(left)
 			if err != nil {
-				if isAmbiguousComparisonErr(err) {
+				if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
 					return nil, nil
 				}
 				return nil, err
@@ -1728,7 +1789,7 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 		}
 		result, err := interval.Contains(right)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -5027,7 +5088,7 @@ func (e *Evaluator) evalBetween(n *ast.BetweenExpression) (fptypes.Value, error)
 	interval := cqltypes.NewInterval(low, high, !n.Properly, !n.Properly)
 	result, err := interval.Contains(operand)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -5623,7 +5684,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		result, err := leftIv.Includes(rightIv)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -5646,7 +5707,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 			}
 			ok, cerr := rightIv.Contains(point)
 			if cerr != nil {
-				if isAmbiguousComparisonErr(cerr) {
+				if isAmbiguousComparisonErr(cerr) || isIncompatibleUnitsErr(cerr) {
 					return nil, nil
 				}
 				return nil, cerr
@@ -5661,7 +5722,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		result, err := rightIv.Includes(leftIv)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
 				return nil, nil
 			}
 			return nil, err
