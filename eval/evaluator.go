@@ -4385,6 +4385,38 @@ func distinctCombos(combos []queryCombo, sources []*ast.AliasedSource) []queryCo
 	return result
 }
 
+// modelDeclaresElement reports whether a type declares an element, following the
+// chain of base types the way the semantic phase does.
+//
+// The model records each element once, where it is introduced: Observation.id
+// lives on Resource, several types up. Asking for it on the concrete type alone
+// found nothing, so `sort by id` over resources that happen to carry no id was
+// refused as an invented name — while `where O.id is null` on the same rows
+// answered perfectly well, which is the very disagreement this change exists to
+// remove, surviving one level of inheritance up.
+func (e *Evaluator) modelDeclaresElement(typeName, element string) bool {
+	if e.ctx.ModelInfo == nil {
+		return false
+	}
+	// A bounded walk: the FHIR hierarchy is a handful of levels deep, and a
+	// malformed model must not spin here.
+	for depth := 0; depth < 16 && typeName != ""; depth++ {
+		local := typeName
+		if idx := strings.LastIndex(local, "."); idx >= 0 {
+			local = local[idx+1:]
+		}
+		if _, declared := e.ctx.ModelInfo.ElementInfoByPath(local + "." + element); declared {
+			return true
+		}
+		ti, known := e.ctx.ModelInfo.TypeInfo(local)
+		if !known || ti.BaseName == "" || ti.BaseName == typeName {
+			return false
+		}
+		typeName = ti.BaseName
+	}
+	return false
+}
+
 // sortKeyIsTypo reports whether a bare identifier sort key names nothing at all:
 // not a column of any element of the result, not a query alias, and nothing in
 // scope. It is deliberately asked once per query rather than once per element,
@@ -4411,8 +4443,8 @@ func (e *Evaluator) sortKeyIsTypo(expr ast.Expression, sources []*ast.AliasedSou
 		// `effective` is ordinary — and asking the rows alone made the query fail
 		// on exactly the resources that lack the element, which is what a sort key
 		// has to tolerate. The model knows whether the type declares it.
-		if obj, isObject := item.(*fptypes.ObjectValue); isObject && e.ctx.ModelInfo != nil {
-			if _, declared := e.ctx.ModelInfo.ElementInfoByPath(obj.Type() + "." + id.Name); declared {
+		if obj, isObject := item.(*fptypes.ObjectValue); isObject {
+			if e.modelDeclaresElement(obj.Type(), id.Name) {
 				return false
 			}
 		}

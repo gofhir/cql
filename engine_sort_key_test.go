@@ -130,6 +130,19 @@ func TestASortKeyNamesTheSameElementsAMemberAccessDoes(t *testing.T) {
 		t.Errorf("sorting by an element this resource does not carry = %s, want 1", got)
 	}
 
+	// An element the type inherits is a column too. The model records each one
+	// where it is introduced — Observation.id lives on Resource — so asking the
+	// concrete type alone refused `sort by id` on resources that carry no id,
+	// while `where O.id is null` on the same rows answered fine.
+	for _, expr := range []string{
+		"Count(([Observation] O sort by id))",
+		"Count(([Observation] O sort by language))",
+	} {
+		if got := evalWithObservations(t, sortKeyProvider{withoutEffective: true}, expr); got != "1" {
+			t.Errorf("%s = %s, want 1 — an inherited element is a column", expr, got)
+		}
+	}
+
 	// A key that names nothing is still a mistake worth reporting.
 	if got := evalWithObservations(t, p, "Count(([Observation] O sort by noSuchElement))"); !strings.HasPrefix(got, "ERROR") {
 		t.Errorf("a sort key naming nothing = %s, want an error", got)

@@ -269,6 +269,12 @@ func TestSortByOptionalColumn(t *testing.T) {
 	if !strings.Contains(s, `"id":"c"`) || strings.Index(s, `"id":"c"`) > strings.Index(s, `"id":"a"`) {
 		t.Errorf("expected c before a, got %s", s)
 	}
+	// Checked for presence first: Index returns -1 for a row that is not there at
+	// all, which would satisfy a bare "b comes before c" and let a regression that
+	// drops null-key rows pass unnoticed.
+	if !strings.Contains(s, `"id":"b"`) {
+		t.Fatalf("the resource without birthDate is missing from the result: %s", s)
+	}
 	if strings.Index(s, `"id":"b"`) > strings.Index(s, `"id":"c"`) {
 		t.Errorf("expected the resource without birthDate first, got %s", s)
 	}
