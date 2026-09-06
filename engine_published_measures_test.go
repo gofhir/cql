@@ -15,7 +15,7 @@ import (
 // it rather than on every build. To run it:
 //
 //	git clone --depth 1 https://github.com/cqframework/ecqm-content-r4 /tmp/ecqm
-//	ECQM_CONTENT_DIR=/tmp/ecqm/input/cql go test -run PublishedMeasures ./...
+//	ECQM_CONTENT_DIR=/tmp/ecqm go test -run PublishedMeasures ./...
 //
 // The 19 libraries there are CC0, so vendoring them is possible if this should
 // ever become a build-time check.
@@ -32,8 +32,11 @@ import (
 func TestSemanticPhaseAcceptsPublishedMeasures(t *testing.T) {
 	dir := os.Getenv("ECQM_CONTENT_DIR")
 	if dir == "" {
-		t.Skip("set ECQM_CONTENT_DIR to a checkout of cqframework/ecqm-content-r4's input/cql")
+		t.Skip("set ECQM_CONTENT_DIR to a checkout of cqframework/ecqm-content-r4")
 	}
+	// Either the checkout root or its input/cql: TestECQMCases needs the root, and
+	// one variable both tests accept beats two that mean almost the same thing.
+	dir = filepath.Join(ecqmCheckoutRoot(dir), "input", "cql")
 	files, err := filepath.Glob(filepath.Join(dir, "*.cql"))
 	if err != nil {
 		t.Fatalf("globbing %s: %v", dir, err)
