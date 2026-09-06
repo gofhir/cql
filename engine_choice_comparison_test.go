@@ -140,44 +140,34 @@ func TestAMismatchThatIsNotANarrowingStillFails(t *testing.T) {
 	}
 }
 
-// TestEqualityStillFoldsUndecidableIntoUnequal records a defect this change did
-// not fix, asserted so that fixing it trips here. It is older than the choice
-// element and independent of it.
+// TestTheWrongBranchUnderEqualityIsStillNotNull records what this change did not
+// close, asserted so that closing it trips here.
 //
-// `=` has the signature `=<T>(left T, right T)`: both operands are the same type,
-// and making them so is the translator's job. What is left to the operator is
-// deciding, and CQL says it "returns true if the arguments are equal; false if
-// the arguments are known unequal, and null otherwise" — so a comparison it
-// cannot make is null, not false. The specification's own example says so for two
-// quantities whose units do not correspond:
+// The relational operators now answer null for a row on the branch they cannot
+// compare — see TestTheWrongBranchOfAChoiceIsNull — and `=` does not. Over the
+// same three rows, one of which carries a CodeableConcept:
 //
-//	define "QuantityNotEqualIsNull": 3.5 'cm2' != 3.5 'cm'
+//	not (O.value >= 190 'mg/dL')   1   the coded row is unanswerable, so excluded
+//	not (O.value  = 190 'mg/dL')   2   the coded row counts as "not equal"
 //
-// This engine answers true. The same fold shows on the wrong branch of a choice
-// element: an Observation whose value is a CodeableConcept, asked whether it
-// differs from 190 mg/dL, is counted as differing rather than as unanswerable.
+// One element, one row, two operators, two answers about whether the question can
+// be asked at all. It is the same shape as everything else in this file, and it is
+// left alone because closing it is a different decision: `=` has no ordering to
+// consult, so "cannot be compared" would have to be judged from the types
+// themselves, and that rule has to cover `O.value = 190` — a Quantity against a
+// bare Decimal — as well as a Concept against a Quantity. Getting that wrong turns
+// ordinary false answers into nulls across every measure.
 //
-// This is the shape v1.20.0 removed one level up, where a list, interval, tuple
-// or ratio contradicted its own elements about equality — TemporalEquality now
-// reports "undecidable" and each caller applies its own policy. The scalar case
-// for units was not part of that, and it is not part of this: the relational
-// operators are what a FHIR choice element reaches in practice, and widening the
-// change to `=` means deciding the general rule for every incomparable pair,
-// which is its own argument.
-//
-// Impact on the published corpus is nil, and that is measured rather than
-// assumed: the 19 eCQM libraries contain two uses of `!=` in total —
-// HybridHWRFHIR:62 and CMS111:63 — and both compare a DateTime with a DateTime.
-func TestEqualityStillFoldsUndecidableIntoUnequal(t *testing.T) {
-	if got := evalChoiceCompare(t, "3.5 'cm2' != 3.5 'cm'"); got != "true" {
-		t.Fatalf("3.5 'cm2' != 3.5 'cm' = %s — the specification calls this "+
-			"QuantityNotEqualIsNull, so if it is null now, remove this test", got)
+// What *is* closed is the unit case, which the specification names and which does
+// not need a general rule: two quantities of different dimensions are null for all
+// eight comparison operators. See TestQuantitiesOfDifferentDimensionsAreNull.
+func TestTheWrongBranchUnderEqualityIsStillNotNull(t *testing.T) {
+	if got := evalChoiceCompare(t, "Count([Observation] O where not (O.value >= 190 'mg/dL'))"); got != "1" {
+		t.Fatalf("the relational operators no longer decline the wrong branch (%s) — this "+
+			"test's premise is gone", got)
 	}
-	// The same fold, reached through a choice element: two rows are quantities and
-	// one is a CodeableConcept, and all three are counted as unequal to 190 mg/dL
-	// where the third cannot be compared at all.
-	if got := evalChoiceCompare(t, "Count([Observation] O where O.value != 190 'mg/dL')"); got != "2" {
-		t.Errorf("the wrong branch of a choice under `!=` = %s, want 2 while the fold stands "+
-			"(1 once it is null); see TestTheWrongBranchOfAChoiceIsNull for the relational case", got)
+	if got := evalChoiceCompare(t, "Count([Observation] O where not (O.value = 190 'mg/dL'))"); got != "2" {
+		t.Errorf("`=` declines the wrong branch now (%s, want 2 while it does not) — the two "+
+			"operators agree, so remove this test", got)
 	}
 }
