@@ -132,8 +132,12 @@ func asDateTime(date fptypes.Date) fptypes.Value {
 // FHIRHelpers.ToInterval, which is CQL from another library and carries its own
 // plan, so TypeOf finds nothing for those nodes. The element's declared type does
 // not depend on who is asking.
+// The node is optional: a caller that reads an element without an expression to
+// point at — a sort key checking whether a name is a column of a row it holds —
+// asks the model alone, which is the half that answers across library
+// boundaries anyway.
 func (e *Evaluator) declaredDateTime(node ast.Expression, owner, member string) bool {
-	if e.ctx.Plan != nil && holdsDateTime(e.ctx.Plan.TypeOf(node)) {
+	if node != nil && e.ctx.Plan != nil && holdsDateTime(e.ctx.Plan.TypeOf(node)) {
 		return true
 	}
 	if e.ctx.ModelInfo == nil || owner == "" || member == "" {

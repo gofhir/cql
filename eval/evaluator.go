@@ -632,7 +632,7 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	// and the column wins over a query alias of the same name: in
 	// `({Tuple{A: 1}}) A sort by A` the key is the column, not the whole tuple.
 	if e.ctx.InSortKey {
-		if v, ok := e.elementOf(e.ctx.This, n.Name); ok {
+		if v, ok := e.elementOf(e.ctx.This, n.Name, n); ok {
 			return v, nil
 		}
 	}
@@ -807,37 +807,120 @@ func (e *Evaluator) choiceProperty(v fptypes.Value, name string) (fptypes.Value,
 	return nil, false
 }
 
-// elementOf reads a named element from a query result item, including the ones
-// FHIR names after their type.
+// elementOf reads a named element off a value, reporting whether the value has
+// one at all.
 //
-// propertyOf alone looks for the name as written, which is right for a tuple
-// column and wrong for a FHIR choice: `sort by effective` was reported as naming
-// nothing at all, while `where O.effective is not null` on the same rows answered
-// perfectly well. One name, two answers, because only one of the two paths asked
-// the model.
-func (e *Evaluator) elementOf(v fptypes.Value, name string) (fptypes.Value, bool) {
-	if val, ok := propertyOf(v, name); ok {
-		return val, true
+// It is the whole of what "a name applied to a value" means in this engine, and
+// it is one function because the language has three spellings for it and they
+// have to answer alike:
+//
+//	sort by effective         the only one CQL allows — "alias references are
+//	                          neither required nor allowed in the sort"
+//	sort by $this.effective    the accessor the sort clause does provide
+//	O.effective                a member access, and `sort by O.effective`, which
+//	                           this engine accepts although the spec does not
+//
+// The conformant spelling was the one going through the poorer reader, and it
+// disagreed with the other two about three things, each measured:
+//
+//	({1 'mg'}) X sort by value    error: unknown sort key "value"
+//	({1 'mg'}) X sort by X.value  1 'mg'
+//
+//	recordedDate is Date          true   — read raw, as the JSON typed it
+//	C.recordedDate is Date        false  — a DateTime, as the model declares it
+//
+// and, unmeasured but structural, a DateTime read without an offset that nothing
+// placed at the request's — the population v1.20.0 exists to keep empty.
+//
+// The value returned is therefore the one a member access would give, promoted
+// and placed. What the caller does with "absent" is its own: a member access
+// answers null, and a sort key tells a typo from an optional element by it.
+//
+// `at` is the expression the name was written as, and may be nil. It is used
+// only to ask the semantic phase what type it inferred; the model answers the
+// same question without it, and is the half that works across library
+// boundaries.
+func (e *Evaluator) elementOf(v fptypes.Value, name string, at ast.Expression) (fptypes.Value, bool) {
+	// `.value` on a system primitive is the primitive itself. The official
+	// ModelInfo models FHIR.string as an object with a value element, so the
+	// official FHIRHelpers is written as coding.code.value — while the evaluator
+	// navigates raw JSON, where coding.code already is the scalar. This bridges
+	// the two without wrapping every primitive.
+	//
+	// The rule is deliberately narrow. If `.value` on any value returned that
+	// value, a mistyped someString.value would stop failing and quietly answer
+	// the string, turning a typo into a silence.
+	if name == "value" && isSystemPrimitive(v) {
+		return v, true
 	}
-	return e.choiceProperty(v, name)
-}
-
-// propertyOf reads a named element from a query result item, reporting whether
-// the item has one. The distinction between absent and null is what lets a sort
-// key tell a typo from a column that happens to be null.
-func propertyOf(v fptypes.Value, name string) (fptypes.Value, bool) {
+	// The clinical types carry named elements too. Materializing Code and
+	// Concept as real values rather than labeled Tuples took their member
+	// access away with them, and `ToConcept(x).codes` is exactly what the
+	// official FHIRHelpers is written against.
+	switch src := v.(type) {
+	case cqltypes.Code:
+		switch name {
+		case "code":
+			return optionalString(src.Code), true
+		case "system":
+			return optionalString(src.System), true
+		case "display":
+			return optionalString(src.Display), true
+		case "version":
+			return optionalString(src.Version), true
+		}
+	case cqltypes.Concept:
+		switch name {
+		case "codes":
+			codes := make(fptypes.Collection, 0, len(src.Codes))
+			for _, c := range src.Codes {
+				codes = append(codes, c)
+			}
+			return cqltypes.NewList(codes), true
+		case "display":
+			return optionalString(src.Display), true
+		}
+	}
+	// A System.Quantity has value and unit elements. FHIRHelpers.ToQuantity
+	// returns one, and `FHIRHelpers.ToQuantity(o.valueQuantity).value` is a
+	// common enough shape that it is worth naming: without this the accessor
+	// answered null on a perfectly good Quantity.
+	if q, ok := v.(fptypes.Quantity); ok {
+		switch name {
+		case "value":
+			return newDecimalFromD(q.Value()), true
+		case "unit":
+			return optionalString(q.Unit()), true
+		}
+	}
 	switch src := v.(type) {
 	case cqltypes.Tuple:
 		return src.Get(name)
 	case *fptypes.ObjectValue:
-		c := src.GetCollection(name)
-		switch c.Count() {
+		// The value comes out of JSON, where a FHIR dateTime and a FHIR date are
+		// both a string; the model is what says which. See asPlannedType.
+		result := src.GetCollection(name)
+		// The owner's type is only needed when there is a Date to reconsider,
+		// and src.Type() infers it by walking the object's fields — paying that
+		// on every member access cost more than the whole promotion saves.
+		for i, val := range result {
+			if _, isDate := val.(fptypes.Date); isDate {
+				result[i] = e.asPlannedType(at, src.Type(), name, val)
+			}
+			// Every DateTime out of JSON is placed at the request's offset, not
+			// only the ones promoted from a Date above. A value that already
+			// states an offset is untouched. See situate.
+			result[i] = e.situate(result[i])
+		}
+		switch result.Count() {
 		case 0:
-			return nil, false
+			// FHIR names a choice element after its type: Observation.effective is
+			// written effectiveDateTime or effectivePeriod, never `effective`.
+			return e.choiceProperty(src, name)
 		case 1:
-			return c[0], true
+			return result[0], true
 		default:
-			return cqltypes.NewList(c), true
+			return cqltypes.NewList(result), true
 		}
 	}
 	return nil, false
@@ -3841,97 +3924,16 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	if source == nil {
 		return nil, nil
 	}
-	// `.value` on a system primitive is the primitive itself. The official
-	// ModelInfo models FHIR.string as an object with a value element, so the
-	// official FHIRHelpers is written as coding.code.value — while the evaluator
-	// navigates raw JSON, where coding.code already is the scalar. This bridges
-	// the two without wrapping every primitive.
+	// From here the question is only "what is element `Member` of this value",
+	// which is not a question about the member-access syntax: a sort key asks the
+	// same one about the same values. It is answered in one place. See elementOf.
 	//
-	// The rule is deliberately narrow. If `.value` on any value returned that
-	// value, a mistyped someString.value would stop failing and quietly answer
-	// the string, turning a typo into a silence.
-	if n.Member == "value" && isSystemPrimitive(source) {
-		return source, nil
-	}
-	// The clinical types carry named elements too. Materializing Code and
-	// Concept as real values rather than labeled Tuples took their member
-	// access away with them, and `ToConcept(x).codes` is exactly what the
-	// official FHIRHelpers is written against.
-	switch src := source.(type) {
-	case cqltypes.Code:
-		switch n.Member {
-		case "code":
-			return optionalString(src.Code), nil
-		case "system":
-			return optionalString(src.System), nil
-		case "display":
-			return optionalString(src.Display), nil
-		case "version":
-			return optionalString(src.Version), nil
-		}
-	case cqltypes.Concept:
-		switch n.Member {
-		case "codes":
-			codes := make(fptypes.Collection, 0, len(src.Codes))
-			for _, c := range src.Codes {
-				codes = append(codes, c)
-			}
-			return cqltypes.NewList(codes), nil
-		case "display":
-			return optionalString(src.Display), nil
-		}
-	}
-	// A System.Quantity has value and unit elements. FHIRHelpers.ToQuantity
-	// returns one, and `FHIRHelpers.ToQuantity(o.valueQuantity).value` is a
-	// common enough shape that it is worth naming: without this the accessor
-	// answered null on a perfectly good Quantity.
-	if q, ok := source.(fptypes.Quantity); ok {
-		switch n.Member {
-		case "value":
-			return newDecimalFromD(q.Value()), nil
-		case "unit":
-			return optionalString(q.Unit()), nil
-		}
-	}
-	// Tuple member access
-	if t, ok := source.(cqltypes.Tuple); ok {
-		v, _ := t.Get(n.Member)
-		return v, nil
-	}
-	// JSON object member access
-	if obj, ok := source.(*fptypes.ObjectValue); ok {
-		// The value comes out of JSON, where a FHIR dateTime and a FHIR date are
-		// both a string; the model is what says which. See asPlannedType.
-		result := obj.GetCollection(n.Member)
-		// The owner's type is only needed when there is a Date to reconsider,
-		// and obj.Type() infers it by walking the object's fields — paying that
-		// on every member access cost more than the whole promotion saves.
-		for i, v := range result {
-			if _, isDate := v.(fptypes.Date); isDate {
-				result[i] = e.asPlannedType(n, obj.Type(), n.Member, v)
-			}
-			// Every DateTime out of JSON is placed at the request's offset, not
-			// only the ones promoted from a Date above. A value that already
-			// states an offset is untouched. See situate.
-			result[i] = e.situate(result[i])
-		}
-		if result.Count() > 0 {
-			if result.Count() == 1 {
-				return result[0], nil
-			}
-			return cqltypes.NewList(result), nil
-		}
-
-		// Choice type resolution, through the same helper the sort key uses: two
-		// copies of this rule is how `sort by effective` came to disagree with
-		// `O.effective` about whether the name exists.
-		if val, ok := e.choiceProperty(obj, n.Member); ok {
-			return val, nil
-		}
-
-		return nil, nil
-	}
-	return nil, nil
+	// A name the value does not have is null here. The distinction elementOf
+	// reports — absent, as against present and null — is what a sort key needs to
+	// tell a typo from an optional element, and what a member access has no use
+	// for.
+	v, _ := e.elementOf(source, n.Member, n)
+	return v, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -4385,36 +4387,20 @@ func distinctCombos(combos []queryCombo, sources []*ast.AliasedSource) []queryCo
 	return result
 }
 
-// modelDeclaresElement reports whether a type declares an element, following the
-// chain of base types the way the semantic phase does.
+// modelDeclaresElement reports whether a type declares an element.
 //
-// The model records each element once, where it is introduced: Observation.id
-// lives on Resource, several types up. Asking for it on the concrete type alone
-// found nothing, so `sort by id` over resources that happen to carry no id was
-// refused as an invented name — while `where O.id is null` on the same rows
-// answered perfectly well, which is the very disagreement this change exists to
-// remove, surviving one level of inheritance up.
+// The model records each one where it is introduced — Observation.id lives on
+// Resource, several types up — and following that chain is now ElementInfoByPath's
+// job rather than each caller's. This walked it here in its own copy, which is
+// what the copy was: `sort by id` over resources that happen to carry no id was
+// refused as an invented name while `where O.id is null` on the same rows
+// answered perfectly well.
 func (e *Evaluator) modelDeclaresElement(typeName, element string) bool {
 	if e.ctx.ModelInfo == nil {
 		return false
 	}
-	// A bounded walk: the FHIR hierarchy is a handful of levels deep, and a
-	// malformed model must not spin here.
-	for depth := 0; depth < 16 && typeName != ""; depth++ {
-		local := typeName
-		if idx := strings.LastIndex(local, "."); idx >= 0 {
-			local = local[idx+1:]
-		}
-		if _, declared := e.ctx.ModelInfo.ElementInfoByPath(local + "." + element); declared {
-			return true
-		}
-		ti, known := e.ctx.ModelInfo.TypeInfo(local)
-		if !known || ti.BaseName == "" || ti.BaseName == typeName {
-			return false
-		}
-		typeName = ti.BaseName
-	}
-	return false
+	_, declared := e.ctx.ModelInfo.ElementInfoByPath(typeName + "." + element)
+	return declared
 }
 
 // sortKeyIsTypo reports whether a bare identifier sort key names nothing at all:
@@ -4435,7 +4421,7 @@ func (e *Evaluator) sortKeyIsTypo(expr ast.Expression, sources []*ast.AliasedSou
 		}
 	}
 	for _, item := range results {
-		if _, ok := e.elementOf(item, id.Name); ok {
+		if _, ok := e.elementOf(item, id.Name, id); ok {
 			return false
 		}
 		// Present in none of these rows is not the same as named by nothing. FHIR

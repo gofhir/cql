@@ -30,15 +30,15 @@ type modelInfoAdapter struct{ mi *model.StaticModelInfo }
 // before the lookup. Getting this backwards is what broke every choice element
 // when the model grew from 6 types to 931: the document spells its primitives
 // in lower case, and a name compared without care matches nothing.
+//
+// The walk up the base chain that used to live here — a subtype inherits its
+// base's elements, and the document declares each one only where it is
+// introduced — is now what ElementInfoByPath does for every caller. It was one
+// of two copies; the other was in the evaluator, and two more callers needed it
+// and had neither.
 func (a *modelInfoAdapter) ElementType(typeName, element string) (Type, bool) {
-	local := unqualify(typeName)
-	info, ok := a.mi.ElementInfoByPath(local + "." + element)
+	info, ok := a.mi.ElementInfoByPath(unqualify(typeName) + "." + element)
 	if !ok {
-		// A subtype inherits its base's elements, and the document declares
-		// each one only where it is introduced: Encounter.id lives on Resource.
-		if base, found := a.baseOf(local); found {
-			return a.ElementType(base, element)
-		}
 		return nil, false
 	}
 	return elementType(info), true
