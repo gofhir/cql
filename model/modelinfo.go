@@ -103,12 +103,21 @@ func (m *StaticModelInfo) TypeInfo(typeName string) (*TypeInfo, bool) {
 }
 
 func (m *StaticModelInfo) ElementType(path string) (string, bool) {
-	t, ok := m.elementTypes[path]
-	return t, ok
+	if t, ok := m.elementTypes[path]; ok {
+		return t, true
+	}
+	if info, ok := m.declaredElement(path); ok {
+		return info.Type, true
+	}
+	return "", false
 }
 
 func (m *StaticModelInfo) IsChoiceType(path string) bool {
-	return m.choiceTypes[path]
+	if m.choiceTypes[path] {
+		return true
+	}
+	info, ok := m.declaredElement(path)
+	return ok && info.IsChoice
 }
 
 func (m *StaticModelInfo) ContextType(contextName string) string {
@@ -131,6 +140,27 @@ func (m *StaticModelInfo) PrimaryCodePath(resourceType string) string {
 }
 
 func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
+	return m.declaredElement(path)
+}
+
+// declaredElement answers what every caller of this file actually asks: does
+// this type have this element? — not the narrower question the maps above index,
+// which is whether it is declared *at* that exact path.
+//
+// The two differ by inheritance, and the model records each element once, where
+// it is introduced: Observation.id lives on Resource, Coding.extension on
+// Element. Asking the concrete type alone leaves 126 elements of the ordinary
+// resource types invisible — id, meta, text, language, extension,
+// modifierExtension, implicitRules, contained — and every caller that needed
+// them had to walk the chain itself. Two did, in two copies; two did not and
+// were wrong wherever the walk would have mattered.
+//
+// It matters nowhere in FHIR 4.0.1 today: of those 126, none is a choice element
+// and none holds a dateTime, so the two callers that skipped the walk were right
+// by luck rather than by construction. An injected model — R5, a profile — has
+// no such guarantee, and the failure it would produce is a name one path resolves
+// and another does not, which this engine has now spent five review rounds on.
+func (m *StaticModelInfo) declaredElement(path string) (*ElementInfo, bool) {
 	// The element is the last segment and the type is everything before it, not
 	// the other way round. FHIR names a backbone element after the type that
 	// owns it, so Encounter.Hospitalization.dischargeDisposition is
@@ -143,17 +173,34 @@ func (m *StaticModelInfo) ElementInfoByPath(path string) (*ElementInfo, bool) {
 		return nil, false
 	}
 	typeName, element := path[:i], path[i+1:]
-	ti, ok := m.types[typeName]
-	if !ok {
-		return nil, false
-	}
-	for i := range ti.Elements {
-		if ti.Elements[i].Name == element {
-			return &ti.Elements[i], true
+	// The nearest declaration wins: a subtype that redeclares an element means
+	// its own, so the walk starts at the concrete type and stops at the first hit.
+	for name, depth := m.localName(typeName), 0; name != "" && depth <= maxBaseChainDepth; depth++ {
+		ti, ok := m.types[name]
+		if !ok {
+			return nil, false
 		}
+		for i := range ti.Elements {
+			if ti.Elements[i].Name == element {
+				return &ti.Elements[i], true
+			}
+		}
+		// A malformed document could name itself as its own base, or loop; the
+		// depth bound catches a cycle and this catches the one-step case that
+		// would otherwise spin the same type until the bound.
+		next := m.localName(ti.BaseName)
+		if next == name {
+			return nil, false
+		}
+		name = next
 	}
 	return nil, false
 }
+
+// maxBaseChainDepth bounds a walk up the chain of base types. FHIR's deepest is
+// five or so; the bound is there so that a document declaring a cycle reports
+// nothing rather than hanging the caller.
+const maxBaseChainDepth = 64
 
 func (m *StaticModelInfo) Version() string {
 	return m.version

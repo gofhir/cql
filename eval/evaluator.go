@@ -4385,36 +4385,20 @@ func distinctCombos(combos []queryCombo, sources []*ast.AliasedSource) []queryCo
 	return result
 }
 
-// modelDeclaresElement reports whether a type declares an element, following the
-// chain of base types the way the semantic phase does.
+// modelDeclaresElement reports whether a type declares an element.
 //
-// The model records each element once, where it is introduced: Observation.id
-// lives on Resource, several types up. Asking for it on the concrete type alone
-// found nothing, so `sort by id` over resources that happen to carry no id was
-// refused as an invented name — while `where O.id is null` on the same rows
-// answered perfectly well, which is the very disagreement this change exists to
-// remove, surviving one level of inheritance up.
+// The model records each one where it is introduced — Observation.id lives on
+// Resource, several types up — and following that chain is now ElementInfoByPath's
+// job rather than each caller's. This walked it here in its own copy, which is
+// what the copy was: `sort by id` over resources that happen to carry no id was
+// refused as an invented name while `where O.id is null` on the same rows
+// answered perfectly well.
 func (e *Evaluator) modelDeclaresElement(typeName, element string) bool {
 	if e.ctx.ModelInfo == nil {
 		return false
 	}
-	// A bounded walk: the FHIR hierarchy is a handful of levels deep, and a
-	// malformed model must not spin here.
-	for depth := 0; depth < 16 && typeName != ""; depth++ {
-		local := typeName
-		if idx := strings.LastIndex(local, "."); idx >= 0 {
-			local = local[idx+1:]
-		}
-		if _, declared := e.ctx.ModelInfo.ElementInfoByPath(local + "." + element); declared {
-			return true
-		}
-		ti, known := e.ctx.ModelInfo.TypeInfo(local)
-		if !known || ti.BaseName == "" || ti.BaseName == typeName {
-			return false
-		}
-		typeName = ti.BaseName
-	}
-	return false
+	_, declared := e.ctx.ModelInfo.ElementInfoByPath(typeName + "." + element)
+	return declared
 }
 
 // sortKeyIsTypo reports whether a bare identifier sort key names nothing at all:
