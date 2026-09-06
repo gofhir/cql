@@ -20,7 +20,7 @@ func overlapsCompare(
 ) (fptypes.Value, error) {
 	overlap, err := a.Overlaps(b)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -47,7 +47,7 @@ func overlapsCompare(
 	}
 	cmp, err := compareVals(boundA, boundB)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -80,7 +80,7 @@ func SameOrBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.High, b.Low)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -95,7 +95,7 @@ func SameOrAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.Low, b.High)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -110,7 +110,7 @@ func Starts(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmpLow, err := compareVals(a.Low, b.Low)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -121,7 +121,7 @@ func Starts(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if a.High != nil && b.High != nil {
 		cmpHigh, err := compareVals(a.High, b.High)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -138,7 +138,7 @@ func Ends(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmpHigh, err := compareVals(a.High, b.High)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -149,7 +149,7 @@ func Ends(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if a.Low != nil && b.Low != nil {
 		cmpLow, err := compareVals(a.Low, b.Low)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err

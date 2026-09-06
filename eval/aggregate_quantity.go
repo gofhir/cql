@@ -186,8 +186,12 @@ func geometricMeanOfQuantities(quantities []fptypes.Quantity) (fptypes.Value, er
 		if q.Unit() != unit {
 			c, ok := q.ConvertTo(unit)
 			if !ok {
-				return nil, fmt.Errorf("incompatible units: cannot take a geometric mean over %q and %q",
-					unit, q.Unit())
+				// Wrapped, so a message that reads like the sentinel is the
+				// sentinel: types.IncompatibleUnits reports it, and the day the
+				// aggregates join the rule they do so by themselves rather than
+				// by someone noticing this line.
+				return nil, fmt.Errorf("%w: cannot take a geometric mean over %q and %q",
+					fptypes.ErrIncompatibleUnits, unit, q.Unit())
 			}
 			converted = c
 		}

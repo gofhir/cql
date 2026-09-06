@@ -421,6 +421,9 @@ func TemporalEquality(a, b fptypes.Value) TemporalVerdict {
 		return NotTemporal
 	}
 	cmp, err := CompareTemporal(a, b)
+	// Deliberately narrower than AmbiguousTemporalComparison, which reports the
+	// offset case as undecidable too. Do not "unify" these: the difference is
+	// measured, and the next paragraph is why.
 	if errors.Is(err, fptypes.ErrPrecisionMismatch) {
 		return TemporallyUnknown
 	}

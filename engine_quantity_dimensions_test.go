@@ -2,6 +2,7 @@ package cql
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -143,8 +144,9 @@ func TestComparableQuantitiesStillCompare(t *testing.T) {
 	}
 }
 
-// TestBetweenAgreesWithTheComparisonsItIsMadeOf covers the operator CQL defines
-// in terms of the two this change fixed.
+// TestAPointAgainstAnIntervalAgreesWithTheComparisonsItRestsOn covers `between`
+// and the other ways a point is asked about an interval, which CQL defines in
+// terms of the two operators this change fixed.
 //
 //	"If the first argument is greater than or equal to the low argument, and less
 //	 than or equal to the high argument, the result is true, otherwise false."
@@ -153,7 +155,15 @@ func TestComparableQuantitiesStillCompare(t *testing.T) {
 // error where both of them now return null. It reaches the same place `in` and
 // `contains` do — Interval.Contains — so the three are one question and now give
 // one answer.
-func TestBetweenAgreesWithTheComparisonsItIsMadeOf(t *testing.T) {
+//
+// `properly includes` over a point is here rather than with the interval
+// operators because it is the same question, and because it has its own code
+// path: it went through a guard that asked the narrow "was this temporal" rather
+// than "could this be decided", on the reasoning that the guard protected a retry
+// at a shared precision. It only does when a precision is named, and with none
+// named the narrow branch returned null anyway — so the narrow question was
+// guarding nothing and turning a units error into a failure.
+func TestAPointAgainstAnIntervalAgreesWithTheComparisonsItRestsOn(t *testing.T) {
 	for _, expr := range []string{
 		"1 'cm2' between 1 'cm' and 2 'cm'",
 		"1 'cm2' properly between 1 'cm' and 2 'cm'",
@@ -171,12 +181,31 @@ func TestBetweenAgreesWithTheComparisonsItIsMadeOf(t *testing.T) {
 		}
 	}
 
+	// A point rather than an interval on the right, which reaches its own code
+	// path — and did so past a guard that asked the narrow question where there
+	// was no retry to guard.
+	for _, expr := range []string{
+		"Interval[1 'cm', 2 'cm'] properly includes 1 's'",
+		"1 's' properly included in Interval[1 'cm', 2 'cm']",
+		"1 's' properly during Interval[1 'cm', 2 'cm']",
+	} {
+		if got := evalQuantityCompare(t, expr); got != "null" {
+			t.Errorf("%s = %s, want null", expr, got)
+		}
+	}
+
 	// And an interval of one dimension still answers about points in it.
 	for _, tt := range []struct{ expr, want string }{
 		{"1 'cm' between 1 'cm' and 2 'cm'", "true"},
 		{"1 'cm' in Interval[1 'cm', 2 'cm']", "true"},
 		{"3 'cm' in Interval[1 'cm', 2 'cm']", "false"},
 		{"Interval[1 'cm', 2 'cm'] overlaps Interval[2 'cm', 3 'cm']", "true"},
+		{"Interval[1 'cm', 3 'cm'] properly includes 2 'cm'", "true"},
+		{"Interval[1 'cm', 3 'cm'] properly includes 1 'cm'", "false"},
+		{"Interval[@2020-01, @2020-05] properly includes @2020-03", "true"},
+		// The retry the narrow question does guard: a precision names one, and it
+		// still happens.
+		{"Interval[@2020-01-01T10:00:00, @2020-05] properly includes day of @2020-03", "true"},
 	} {
 		if got := evalQuantityCompare(t, tt.expr); got != tt.want {
 			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
@@ -187,37 +216,24 @@ func TestBetweenAgreesWithTheComparisonsItIsMadeOf(t *testing.T) {
 // TestOperationsThatStillFailOnMixedDimensions records where the same rule is not
 // applied yet, asserted so that applying it trips here.
 //
-// All of these raise "incompatible units" and take the whole define with them,
-// where the comparison operators now answer null. They are left for one change
-// rather than taken piecemeal, because what stands between them and the rule is
-// structural rather than four separate oversights:
+// These raise "incompatible units" and take the whole define with them, where the
+// comparison and interval operators now answer null. What is left is two families
+// with reasons of their own:
 //
-//	`isAmbiguousComparisonErr` — the predicate that says "this comparison could
-//	not be made, so the answer is null" — exists TWICE, once in eval and once in
-//	funcs, and about thirty call sites read one or the other. The two copies do
-//	not even agree today: eval's matches the precision sentinel and the text of an
-//	offset mismatch, funcs' matches the precision sentinel and the text "ambiguous
-//	comparison".
+// Sorting and Min/Max ask for an *order*, and two quantities of different
+// dimensions have none — the same position `sort by` takes on a Period, which has
+// no ordering either. See TestSortingByAnUnorderableKeyStillFails.
 //
-// Adding a third reason to a rule that has two divergent implementations is the
-// defect this engine has spent several changes removing, so the reason is added
-// where each site can be pointed at it deliberately — which is what the sites in
-// the change above are — and the rest wait for the predicate to become one.
-//
-// `types` is where it belongs: eval and funcs both import it, and it imports
-// neither.
-//
-// Two of these are not comparisons at all and carry their own citation. CQL says
-// of addition: "units of 'cm2' and 'cm' cannot be added… Attempting to operate on
-// quantities with invalid or special units will result in a null." So `+` and `-`
-// are the same rule in a different operator family, and Sum and Avg are built on
-// them.
+// Arithmetic carries its own citation, and it is the clearest of the remaining
+// gaps. CQL says of addition: "units of 'cm2' and 'cm' cannot be added…
+// Attempting to operate on quantities with invalid or special units will result
+// in a null." So `+` and `-` are the same rule in a different operator family,
+// with Sum and Avg built on them, and closing it is a small change that belongs
+// to whoever decides whether arithmetic on nonsense should be loud.
 func TestOperationsThatStillFailOnMixedDimensions(t *testing.T) {
 	for _, tt := range []struct{ expr, why string }{
-		{"Interval[1 'cm', 2 'cm'] overlaps Interval[1 's', 2 's']",
-			"reaches Interval.Overlaps through funcs, which has the other copy of the predicate"},
 		{"Count(({1 'cm2', 1 'cm'}) X sort by X)",
-			"sorting asks for an order that does not exist; see TestSortingByAnUnorderableKeyStillFails"},
+			"sorting asks for an order that does not exist"},
 		{"Min({1 'cm2', 1 'cm'})", "there is no minimum of two things that cannot be compared"},
 		{"1 'cm2' - 1 'cm'", "arithmetic, which the specification also says is null"},
 		{"Sum({1 'cm2', 1 'cm'})", "built on the addition above"},
@@ -226,5 +242,111 @@ func TestOperationsThatStillFailOnMixedDimensions(t *testing.T) {
 			t.Errorf("%s = %s, an answer rather than a failure now (%s) — remove it from "+
 				"this test and cover it above", tt.expr, got, tt.why)
 		}
+	}
+}
+
+// TestIntervalOperatorsAgreeWithTheComparisonsTheyRestOn covers the operations
+// that live in funcs, which read their own copy of "this comparison could not be
+// made" and had drifted from the one in eval.
+//
+//	Interval[1 'cm', 2 'cm'] overlaps Interval[1 's', 2 's']   error, define lost
+//	1 'cm' < 1 's'                                             null
+//
+// One question, two packages, two answers. The copies differed in two rows — funcs
+// knew neither incompatible units nor an offset mismatch — and there is now one
+// predicate, in `types`, which both import and which imports neither.
+func TestIntervalOperatorsAgreeWithTheComparisonsTheyRestOn(t *testing.T) {
+	const mixed = "Interval[1 'cm', 2 'cm'] %s Interval[1 's', 2 's']"
+	for _, op := range []string{
+		"overlaps", "meets", "union", "intersect", "except",
+		"starts", "ends", "same or before", "same or after",
+		"includes", "included in", "properly includes",
+		// These two had no guard at all where every operator around them has one.
+		// They were found by enumerating what calls compareVals — the choke point
+		// this package documents as "the one place it orders two values" — rather
+		// than by the pattern that caught the rest, which searched for the four
+		// methods the others call and so could not see them.
+		"before", "after",
+		"during", "properly during", "properly included in",
+		"overlaps before", "overlaps after",
+		// `starts before` and `ends after` are deliberately NOT here. They answer
+		// null for every non-temporal interval — integers as readily as
+		// quantities, and with matching dimensions as readily as mixed — so a null
+		// from them is not evidence about this rule, and asserting one would be an
+		// assertion that holds whatever the predicate does. Every entry above was
+		// checked by breaking the predicate and confirming the line fails; those
+		// two did not, which is how they were found.
+	} {
+		expr := fmt.Sprintf(mixed, op)
+		if got := evalQuantityCompare(t, expr); got != "null" {
+			t.Errorf("%s = %s, want null", expr, got)
+		}
+	}
+
+	// And two intervals of one dimension are untouched, operator by operator.
+	for _, tt := range []struct{ expr, want string }{
+		{"Interval[1 'cm', 2 'cm'] overlaps Interval[2 'cm', 3 'cm']", "true"},
+		{"Interval[1 'cm', 3 'cm'] properly includes 2 'cm'", "true"},
+		{"Interval[1 'cm', 3 'cm'] properly includes 1 'cm'", "false"},
+		{"Interval[@2020-01, @2020-05] properly includes @2020-03", "true"},
+		// The retry the narrow question does guard: a precision names one, and it
+		// still happens.
+		{"Interval[@2020-01-01T10:00:00, @2020-05] properly includes day of @2020-03", "true"},
+		{"Interval[1 'cm', 2 'cm'] includes Interval[1 'cm', 2 'cm']", "true"},
+		{"Interval[1 'cm', 3 'cm'] union Interval[2 'cm', 4 'cm']", "Interval[1 'cm', 4 'cm']"},
+		{"Interval[1 'cm', 3 'cm'] intersect Interval[2 'cm', 4 'cm']", "Interval[2 'cm', 3 'cm']"},
+		// Nothing temporal moves: the reason funcs did not know is a reason it
+		// still has to act on, and these are the shapes that exercise it.
+		{"Interval[@2020-01-01, @2020-01-05] overlaps Interval[@2020-01-03, @2020-01-08]", "true"},
+		{"Interval[@2020-01-01, @2020-01-05] union Interval[@2020-01-03, @2020-01-08]", "Interval[2020-01-01, 2020-01-08]"},
+		{"Interval[1, 5] union Interval[3, 8]", "Interval[1, 8]"},
+	} {
+		if got := evalQuantityCompare(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
+
+// TestSameAsStillContradictsEqualsOnIntervals records the defect this change did
+// not close, which the review that produced this file turned up and which is the
+// more serious of the two: it is live on temporal data, which is what a measure
+// actually holds.
+//
+//	Interval[@2020-01, @2020-05] same as Interval[@2020-01-01T10:00:00, @2020-05]   false
+//	Interval[@2020-01, @2020-05] =       Interval[@2020-01-01T10:00:00, @2020-05]   null
+//
+// One pair, and CQL makes `same as` the equality question for intervals. The
+// scalar spelling agrees with `=` and not with the interval one:
+//
+//	1 'cm' same as 1 's'                                     null
+//	Interval[1 'cm', 2 'cm'] same as Interval[1 's', 2 's']  false
+//
+// The cause is the shape v1.15.2 and v1.20.0 each removed one level up: the
+// operator reads `leftIv.Equal(rightIv)`, a bool with nowhere to say it could not
+// decide, and so never reaches containerEquality — which is sitting right there
+// and already answers this correctly for `=`.
+//
+// It is not fixed here because this change is about ordering, `same as` is about
+// equality, and routing it through containerEquality changes answers on temporal
+// data that the published measures use — which is a measurement of its own, not a
+// line to add at the end of a refactor.
+func TestSameAsStillContradictsEqualsOnIntervals(t *testing.T) {
+	const mixedPrecision = "Interval[@2020-01, @2020-05] %s Interval[@2020-01-01T10:00:00, @2020-05]"
+	if got := evalQuantityCompare(t, fmt.Sprintf(mixedPrecision, "=")); got != "null" {
+		t.Fatalf("`=` on intervals whose bounds cannot be compared = %s, want null — "+
+			"this test's premise", got)
+	}
+	if got := evalQuantityCompare(t, fmt.Sprintf(mixedPrecision, "same as")); got != "false" {
+		t.Errorf("`same as` = %s; if it is null now it agrees with `=`, so remove this test "+
+			"and cover the pair above", got)
+	}
+
+	// The same disagreement with its own scalar spelling.
+	if got := evalQuantityCompare(t, "1 'cm' same as 1 's'"); got != "null" {
+		t.Errorf("the scalar `same as` = %s, want null", got)
+	}
+	if got := evalQuantityCompare(t, "Interval[1 'cm', 2 'cm'] same as Interval[1 's', 2 's']"); got != "false" {
+		t.Errorf("the interval `same as` = %s; if it is null now it agrees with the scalar, "+
+			"so remove this test", got)
 	}
 }
