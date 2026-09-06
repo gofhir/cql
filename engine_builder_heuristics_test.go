@@ -256,13 +256,21 @@ func TestSortByOptionalColumn(t *testing.T) {
 	if err != nil {
 		t.Fatalf("a column absent from one resource should sort as null, not fail: %v", err)
 	}
-	// Sorted ascending with the missing one last.
+	// Ascending, so the missing one comes first: "nulls ... are considered lower
+	// than any non-null value, meaning they will appear at the beginning of the
+	// list when the data is sorted ascending" (CQL, Sorting Query Results).
+	//
+	// This test used to require it last, which was the engine's behavior rather
+	// than the specification's — asserted in passing, since what it exists to check
+	// is that the query answers at all rather than failing on the resources that
+	// lack the element. Ranking a missing key high is what made `Last(… sort by
+	// effective)` hand back an undated observation as the most recent one.
 	s := valueString(got)
 	if !strings.Contains(s, `"id":"c"`) || strings.Index(s, `"id":"c"`) > strings.Index(s, `"id":"a"`) {
 		t.Errorf("expected c before a, got %s", s)
 	}
-	if strings.Index(s, `"id":"b"`) < strings.Index(s, `"id":"a"`) {
-		t.Errorf("expected the resource without birthDate last, got %s", s)
+	if strings.Index(s, `"id":"b"`) > strings.Index(s, `"id":"c"`) {
+		t.Errorf("expected the resource without birthDate first, got %s", s)
 	}
 }
 
@@ -294,8 +302,11 @@ func TestSortWithNullElement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("a null element should sort, not fail: %v", err)
 	}
-	if s := valueString(got); s != "{Tuple{n: 1}, Tuple{n: 3}, null}" {
-		t.Errorf("X = %s, want {Tuple{n: 1}, Tuple{n: 3}, null}", s)
+	// Ascending puts the null first, by the same rule: it is lower than any
+	// non-null value, not higher. The order asserted here before was the engine's
+	// and not the specification's.
+	if s := valueString(got); s != "{null, Tuple{n: 1}, Tuple{n: 3}}" {
+		t.Errorf("X = %s, want {null, Tuple{n: 1}, Tuple{n: 3}}", s)
 	}
 }
 

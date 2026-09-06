@@ -4430,14 +4430,22 @@ func (e *Evaluator) sortKeyIsTypo(expr ast.Expression, sources []*ast.AliasedSou
 // anything longer sorts as null rather than failing the whole query on whichever
 // pairs the sort happened to compare.
 func sortKeyValue(v fptypes.Value) fptypes.Value {
-	list, ok := v.(cqltypes.List)
-	if !ok {
-		return v
+	if list, isList := v.(cqltypes.List); isList {
+		if list.Values.Count() != 1 {
+			return nil
+		}
+		v = list.Values[0]
 	}
-	if list.Values.Count() == 1 {
-		return list.Values[0]
+	// An element with no ordering of its own sorts as null rather than failing the
+	// query. A choice element resolves to whichever branch the resource carries,
+	// and Observation.effective is a Period as readily as a dateTime — so `sort by
+	// effective` met an object it could not order and aborted the whole define,
+	// which is the same "a measure fails on ordinary FHIR data" this clause has
+	// already had to stop doing twice.
+	if _, isObject := v.(*fptypes.ObjectValue); isObject {
+		return nil
 	}
-	return nil
+	return v
 }
 
 // compareSortKeys evaluates a sort expression against two items and returns their comparison.
@@ -4460,7 +4468,26 @@ func (e *Evaluator) compareSortKeys(alias string, a, b fptypes.Value, expr ast.E
 		return 0, err
 	}
 
-	return compareValues(sortKeyValue(keyA), sortKeyValue(keyB))
+	// A sort orders nulls low, which is the opposite of what compareValues does
+	// for everything else: "they are considered lower than any non-null value,
+	// meaning they will appear at the beginning of the list when the data is
+	// sorted ascending, and at the end of the list when the data is sorted
+	// descending" (CQL, Sorting Query Results).
+	//
+	// Ranked high instead, a row missing the sort element became whatever the
+	// caller reads for "the latest" — `Last(… sort by effective)` answered with an
+	// observation that has no date at all, which is the idiom the published
+	// measures use to take the most recent result.
+	keyA, keyB = sortKeyValue(keyA), sortKeyValue(keyB)
+	switch {
+	case keyA == nil && keyB == nil:
+		return 0, nil
+	case keyA == nil:
+		return -1, nil
+	case keyB == nil:
+		return 1, nil
+	}
+	return compareValues(keyA, keyB)
 }
 
 // compareValues returns -1, 0, or 1 for two values. Nulls sort last (after all non-null values).

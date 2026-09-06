@@ -17,11 +17,34 @@ type sortKeyProvider struct {
 	// withoutEffective serves a resource that omits the element being sorted by,
 	// which FHIR permits and a measure meets constantly.
 	withoutEffective bool
+	// withUndated adds one of those alongside dated ones, which is what decides
+	// where a missing key lands in the order.
+	withUndated bool
+	// periods serves the other branch of the choice: an effective[x] that is a
+	// Period, which has no ordering of its own.
+	periods bool
 }
 
 func (p sortKeyProvider) Retrieve(_ context.Context, r eval.RetrieveRequest) ([]json.RawMessage, error) {
 	if p.empty || r.ResourceType != "Observation" {
 		return nil, nil
+	}
+	if p.periods {
+		return []json.RawMessage{
+			json.RawMessage(`{"resourceType":"Observation","id":"earlier","status":"final",` +
+				`"effectivePeriod":{"start":"2019-03-01T10:00:00Z","end":"2019-03-01T11:00:00Z"}}`),
+			json.RawMessage(`{"resourceType":"Observation","id":"later","status":"final",` +
+				`"effectivePeriod":{"start":"2019-06-01T10:00:00Z","end":"2019-06-01T11:00:00Z"}}`),
+		}, nil
+	}
+	if p.withUndated {
+		return []json.RawMessage{
+			json.RawMessage(`{"resourceType":"Observation","id":"undated","status":"final"}`),
+			json.RawMessage(`{"resourceType":"Observation","id":"june","status":"final",` +
+				`"effectiveDateTime":"2019-06-01T10:00:00Z"}`),
+			json.RawMessage(`{"resourceType":"Observation","id":"march","status":"final",` +
+				`"effectiveDateTime":"2019-03-01T10:00:00Z"}`),
+		}, nil
 	}
 	if p.withoutEffective {
 		return []json.RawMessage{
@@ -87,8 +110,11 @@ func TestASortKeyNamesTheSameElementsAMemberAccessDoes(t *testing.T) {
 		{"First([Observation] O sort by effective desc).id", "june"},
 		// The concrete spelling was already working and must stay that way.
 		{"Last([Observation] O sort by effectiveDateTime).id", "june"},
-		// As must a plain element that is not a choice at all.
-		{"Count(([Observation] O sort by status))", "2"},
+		// As must a plain element that is not a choice at all — asserted by
+		// position, since Count would pass just as well if the sort quietly
+		// stopped happening.
+		{"First([Observation] O sort by id).id", "june"},
+		{"Last([Observation] O sort by id).id", "march"},
 	} {
 		if got := evalWithObservations(t, p, tt.expr); got != tt.want {
 			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
@@ -145,5 +171,67 @@ func TestSortingNothingIsNotAMistake(t *testing.T) {
 	// judge the key against.
 	if got := evalWithObservations(t, empty, "Count(([Observation] O sort by noSuchElement))"); !strings.HasPrefix(got, "ERROR") {
 		t.Errorf("a key naming nothing = %s, want an error even with no rows", got)
+	}
+}
+
+// TestASortPutsMissingKeysLow covers where a row without the sort element lands,
+// which decides what "the most recent one" means.
+//
+// CQL: "When the data being sorted includes nulls, they are considered lower than
+// any non-null value, meaning they will appear at the beginning of the list when
+// the data is sorted ascending, and at the end of the list when the data is sorted
+// descending."
+//
+// The engine ranked them high instead, so a row missing the element became
+// whatever the caller reads for the latest:
+//
+//	Last([Observation] O sort by effective)        an observation with no date
+//	First([Observation] O sort by effective desc)  the same one
+//
+// That is exactly the idiom the published measures use — FHIR347 takes the most
+// recent LDL result this way — and it is the kind of defect that reads as an
+// answer. Until this branch the same query failed outright with "unknown sort
+// key", so the risk arrived with the fix: a loud error became a quiet wrong
+// number, which is worse.
+func TestASortPutsMissingKeysLow(t *testing.T) {
+	p := sortKeyProvider{withUndated: true}
+
+	for _, tt := range []struct{ what, expr, want string }{
+		{"the latest, read from the end of ascending", "Last([Observation] O sort by effective).id", "june"},
+		{"the latest, read from the front of descending", "First([Observation] O sort by effective desc).id", "june"},
+		// And the missing one is at the low end of each, which is where the
+		// specification puts it rather than an accident of this fix.
+		{"ascending starts with the missing one", "First([Observation] O sort by effective).id", "undated"},
+		{"descending ends with the missing one", "Last([Observation] O sort by effective desc).id", "undated"},
+	} {
+		if got := evalWithObservations(t, p, tt.expr); got != tt.want {
+			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
+		}
+	}
+}
+
+// TestASortKeyWithNoOrderingOfItsOwnIsNotAFailure covers the other branch of a
+// choice element.
+//
+// Observation.effective is a Period as readily as a dateTime, and a Period has no
+// ordering — so resolving the choice correctly handed the sort something it could
+// not compare, and the whole define aborted with "cannot compare type Period".
+//
+// A key that cannot be ordered sorts as null, which is what this clause already
+// did for a repeating element that yields more than one value. The alternative is
+// failing a measure on data FHIR fully permits, which this clause has now had to
+// stop doing three times: an absent element, no rows at all, and this.
+func TestASortKeyWithNoOrderingOfItsOwnIsNotAFailure(t *testing.T) {
+	p := sortKeyProvider{periods: true}
+
+	if got := evalWithObservations(t, p, "Count(([Observation] O sort by effective))"); got != "2" {
+		t.Errorf("sorting by a Period-valued choice = %s, want 2 rows back", got)
+	}
+	// Unorderable keys are all equal, so the sort is stable and leaves them as
+	// they came. That is the honest answer for values with no order, and it is
+	// asserted so that giving them one later is a deliberate change rather than a
+	// surprise.
+	if got := evalWithObservations(t, p, "First([Observation] O sort by effective).id"); got != "earlier" {
+		t.Errorf("unorderable keys should leave the order untouched, got %s", got)
 	}
 }
