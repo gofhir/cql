@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.6](https://github.com/gofhir/cql/compare/v1.20.5...v1.20.6) (2026-09-07)
+
+
+### Bug Fixes
+
+* **eval:** `same as` over two intervals is the equality CQL says it is ([#85](https://github.com/gofhir/cql/issues/85)) ([c129490](https://github.com/gofhir/cql/commit/c129490a355ef0aebe8073901de991b37aeb5bb9))
+* **eval:** arithmetic over quantities of different dimensions is null ([#87](https://github.com/gofhir/cql/issues/87)) ([44da73d](https://github.com/gofhir/cql/commit/44da73d835cd7b126f9752ad34edbb26e92e7c84))
+
 ## [1.20.5](https://github.com/gofhir/cql/compare/v1.20.4...v1.20.5) (2026-09-07)
 
 
