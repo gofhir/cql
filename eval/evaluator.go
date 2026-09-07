@@ -5640,7 +5640,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		if n.Operator.After {
 			return funcs.SameOrAfter(leftIv, rightIv)
 		}
-		return fptypes.NewBoolean(leftIv.Equal(rightIv)), nil
+		return e.intervalSameAs(leftIv, rightIv, n.Operator.Precision)
 	case ast.TimingIncludes:
 		// A stated precision is the precision the operation compares at, not a
 		// second attempt for when comparing at full precision fails. See
@@ -6100,6 +6100,113 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 }
 
 // evalTemporalComparison handles precision-aware comparison of scalar temporal values.
+// intervalSameAs answers `A same [precision] as B` for two intervals.
+//
+// CQL defines it as the two intervals starting and ending at the same value,
+// "using the semantics described in the Start and End operators to determine
+// interval boundaries, and for Date, DateTime, or Time value, performing the
+// comparisons at the specified precision", and it says what that costs:
+//
+//	"For comparisons involving date or time values with imprecision, note that
+//	 the result of the comparison may be null, depending on whether the values
+//	 involved are specified to the level of precision used for the comparison."
+//
+// The operator read `leftIv.Equal(rightIv)` instead — a bool with nowhere to say
+// it could not decide — and so did two things wrong at once:
+//
+//	Interval[@2020-01, @2020-05] same as Interval[@2020-01-01T10:00:00, @2020-05]
+//	   false, where `=` on the same pair is null
+//	Interval[@2020-01, @2020-05] same year as Interval[@2020-01-01T10:00:00, @2020-05]
+//	   false, where both intervals begin in 2020 and end at the same value
+//
+// The second is a wrong answer rather than a fold: the stated precision was not
+// consulted at all, which is the shape v1.20.2 removed from `in day of` — a
+// precision is the precision of the operation, not a second attempt.
+//
+// The two operators agreeing is not a coincidence to arrange. CQL gives interval
+// equality the same definition, "as determined by the Start and End operators",
+// so with no precision named `same as` *is* `=`, and asking the same function is
+// how they stay that way.
+func (e *Evaluator) intervalSameAs(a, b cqltypes.Interval, precision string) (fptypes.Value, error) {
+	if precision == "" {
+		if v, handled := containerEquality(a, b); handled {
+			return v, nil
+		}
+		// Boundaries whose closures differ: Interval(1, 5) and Interval[2, 4] are
+		// one interval over integers, and Interval.Equal is where that is decided.
+		return fptypes.NewBoolean(a.Equal(b)), nil
+	}
+
+	aStart, err := a.Start()
+	if err != nil {
+		return nil, err
+	}
+	bStart, err := b.Start()
+	if err != nil {
+		return nil, err
+	}
+	aEnd, err := a.End()
+	if err != nil {
+		return nil, err
+	}
+	bEnd, err := b.End()
+	if err != nil {
+		return nil, err
+	}
+
+	// A boundary that differs settles the answer even when the other cannot be
+	// decided, which is the rule tuple and container equality already follow:
+	// `false and null` is false.
+	unknown := false
+	for _, pair := range [2][2]fptypes.Value{{aStart, bStart}, {aEnd, bEnd}} {
+		same, serr := e.boundarySameAs(pair[0], pair[1], precision)
+		if serr != nil {
+			return nil, serr
+		}
+		if same == nil {
+			unknown = true
+			continue
+		}
+		if !isTrue(same) {
+			return fptypes.NewBoolean(false), nil
+		}
+	}
+	if unknown {
+		return nil, nil
+	}
+	return fptypes.NewBoolean(true), nil
+}
+
+// boundarySameAs compares one pair of interval boundaries at a precision.
+//
+// An unbounded end is not a value to compare: two of them are the same boundary,
+// and one against a value cannot be decided, which is what elementEquality
+// already says about a nil held in a container.
+//
+// A precision is only meaningful for a temporal, so a non-temporal boundary is
+// answered the way `=` answers it. That keeps `Interval[1 'cm', 2 'cm'] same
+// year as …` from inventing a reading of "year" for a quantity, and keeps it
+// agreeing with the same pair under `=`.
+func (e *Evaluator) boundarySameAs(a, b fptypes.Value, precision string) (fptypes.Value, error) {
+	if a == nil && b == nil {
+		return fptypes.NewBoolean(true), nil
+	}
+	if a == nil || b == nil {
+		return nil, nil
+	}
+	if !fptypes.IsTemporal(a) || !fptypes.IsTemporal(b) {
+		switch elementEquality(a, b) {
+		case elementsEqual:
+			return fptypes.NewBoolean(true), nil
+		case elementsUnequal:
+			return fptypes.NewBoolean(false), nil
+		default:
+			return nil, nil
+		}
+	}
+	return temporalSameAs(a, b, precision)
+}
+
 func (e *Evaluator) evalTemporalComparison(left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
 	precision := op.Precision
 
