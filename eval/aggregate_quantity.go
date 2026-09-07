@@ -28,24 +28,40 @@ import (
 
 // quantityOperands reports the Quantities in a collection.
 //
-// Mixing Quantities with bare numbers is refused rather than averaged: `1 'mg'
-// + 2` is already an error, and a collection is no more able to say what unit
-// the 2 carries. Silently skipping it is how Sum({ 1 'mg', 2 }) came to be
-// 1 'mg'.
+// A bare number among them is one of them: "when a quantity has no units
+// specified, it is treated as a quantity with the default unit ('1')", which is
+// the same sentence that makes `1 'mg' + 2` a pair of quantities whose dimensions
+// differ. So the collection carries it as a quantity and the aggregate reaches
+// the same answer the operator does — null — rather than needing a rule of its
+// own about what the 2 means.
+//
+// Silently *skipping* it is what this must not do: that is how Sum({ 1 'mg', 2 })
+// came to be 1 'mg'. Anything that is not a number and not a quantity still
+// stops the aggregate, because there is nothing to read it as.
 func quantityOperands(c fptypes.Collection) (quantities []fptypes.Quantity, found bool, err error) {
 	var others int
+	var bare int
 	for _, item := range c {
 		if item == nil {
 			continue
 		}
 		q, ok := item.(fptypes.Quantity)
 		if !ok {
+			if isNumeric(item) {
+				bare++
+				quantities = append(quantities, fptypes.NewQuantityFromDecimal(toDecimal(item), "1"))
+				continue
+			}
 			others++
 			continue
 		}
 		quantities = append(quantities, q)
 	}
-	if len(quantities) == 0 {
+	// A collection of nothing but bare numbers is not a quantity aggregate at all,
+	// and handing it to one would give `Sum({1, 2})` the unit '1' it never had.
+	// This covers the empty and all-null collections too, where both counts are
+	// zero — a separate check for that was unreachable behind it.
+	if bare == len(quantities) {
 		return nil, false, nil
 	}
 	if others > 0 {

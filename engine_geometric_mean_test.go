@@ -50,16 +50,25 @@ func TestGeometricMeanUnderstandsQuantities(t *testing.T) {
 // and where the numeric path already declines — a quantity must not answer where
 // a plain number would not.
 func TestGeometricMeanRefusesWhatItCannot(t *testing.T) {
-	// Incompatible units, which is an error for every other aggregate too.
-	if _, err := evalAggregate(t, `GeometricMean({ 1 'mg', 1 's' })`); err == nil {
-		t.Error("GeometricMean over mg and s was answered, want an error")
-	} else if !strings.Contains(err.Error(), "incompatible units") {
-		t.Errorf("error = %v, want it to mention incompatible units", err)
-	}
-
-	// Mixing with a bare number: the collection cannot say what unit it carries.
-	if _, err := evalAggregate(t, `GeometricMean({ 1 'mg', 2 })`); err == nil {
-		t.Error("GeometricMean over a quantity and a number was answered, want an error")
+	// Dimensions that differ, which is null for every aggregate that folds
+	// quantities together, because it is null for the addition they fold with.
+	// This asked for an error until that operator was corrected; see
+	// TestAggregatesAnswerNullWhereAdditionDoes.
+	//
+	// A bare number among them is the same case, not a separate one: it is a
+	// quantity with the default unit '1', so its dimension differs too.
+	for _, expr := range []string{
+		`GeometricMean({ 1 'mg', 1 's' })`,
+		`GeometricMean({ 1 'mg', 2 })`,
+	} {
+		got, err := evalAggregate(t, expr)
+		if err != nil {
+			t.Errorf("%s: %v, want null", expr, err)
+			continue
+		}
+		if got != "null" {
+			t.Errorf("%s = %s, want null", expr, got)
+		}
 	}
 
 	// Non-positive values, where the geometric mean is not defined. The numeric
@@ -152,14 +161,21 @@ func TestGeometricMeanDoesNotOverflowOrRoundToZero(t *testing.T) {
 // TestGeometricMeanChecksUnitsBeforeSigns covers the order-dependence review
 // found: the non-positive guard ran per element, so it short-circuited before the
 // units of a later element were ever looked at.
+//
+// The property is that reordering the list cannot change the answer, and that is
+// what this holds. The answer it holds them to moved from an error to null when
+// the addition these fold with did; the order-independence did not.
 func TestGeometricMeanChecksUnitsBeforeSigns(t *testing.T) {
-	_, errA := evalAggregate(t, `GeometricMean({ 0 'mg', 1 's' })`)
-	_, errB := evalAggregate(t, `GeometricMean({ 1 's', 0 'mg' })`)
-	if (errA == nil) != (errB == nil) {
-		t.Errorf("reordering the list changed whether it is an error: %v vs %v", errA, errB)
+	gotA, errA := evalAggregate(t, `GeometricMean({ 0 'mg', 1 's' })`)
+	gotB, errB := evalAggregate(t, `GeometricMean({ 1 's', 0 'mg' })`)
+	if errA != nil || errB != nil {
+		t.Fatalf("%v / %v, want null from both", errA, errB)
 	}
-	if errA == nil {
-		t.Error("mg and s was answered, want an error whichever comes first")
+	if gotA != gotB {
+		t.Errorf("reordering the list changed the answer: %s vs %s", gotA, gotB)
+	}
+	if gotA != "null" {
+		t.Errorf("mg and s = %s, want null whichever comes first", gotA)
 	}
 }
 

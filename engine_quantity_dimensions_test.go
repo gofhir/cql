@@ -213,35 +213,30 @@ func TestAPointAgainstAnIntervalAgreesWithTheComparisonsItRestsOn(t *testing.T) 
 	}
 }
 
-// TestOperationsThatStillFailOnMixedDimensions records where the same rule is not
-// applied yet, asserted so that applying it trips here.
+// TestSortingStillFailsOnMixedDimensions records the one place the rule stops,
+// and the reason is not that it was overlooked.
 //
-// These raise "incompatible units" and take the whole define with them, where the
-// comparison and interval operators now answer null. What is left is two families
-// with reasons of their own:
+// Every operation that returns a *value* over quantities of different dimensions
+// now answers null: the comparisons, the interval and timing operators, the
+// arithmetic, and every aggregate that folds them — Min and Max included, since
+// a list with no minimum has none to return.
 //
-// Sorting and Min/Max ask for an *order*, and two quantities of different
-// dimensions have none — the same position `sort by` takes on a Period, which has
-// no ordering either. See TestSortingByAnUnorderableKeyStillFails.
+// A sort is the exception because it does not return a value. It has to produce
+// an ordering, and there is no null ordering to produce. That is the position
+// `sort by` already takes on a Period, which has no ordering either, and the
+// reasoning is the same: a loud failure is worse than a right answer and better
+// than a quiet wrong one, and a query whose rows cannot be ordered has no right
+// answer to give.
 //
-// Arithmetic carries its own citation, and it is the clearest of the remaining
-// gaps. CQL says of addition: "units of 'cm2' and 'cm' cannot be added…
-// Attempting to operate on quantities with invalid or special units will result
-// in a null." So `+` and `-` are the same rule in a different operator family,
-// with Sum and Avg built on them, and closing it is a small change that belongs
-// to whoever decides whether arithmetic on nonsense should be loud.
-func TestOperationsThatStillFailOnMixedDimensions(t *testing.T) {
-	for _, tt := range []struct{ expr, why string }{
-		{"Count(({1 'cm2', 1 'cm'}) X sort by X)",
-			"sorting asks for an order that does not exist"},
-		{"Min({1 'cm2', 1 'cm'})", "there is no minimum of two things that cannot be compared"},
-		{"1 'cm2' - 1 'cm'", "arithmetic, which the specification also says is null"},
-		{"Sum({1 'cm2', 1 'cm'})", "built on the addition above"},
-	} {
-		if got := evalQuantityCompare(t, tt.expr); !strings.HasPrefix(got, "ERROR") {
-			t.Errorf("%s = %s, an answer rather than a failure now (%s) — remove it from "+
-				"this test and cover it above", tt.expr, got, tt.why)
-		}
+// See TestSortingByAnUnorderableKeyStillFails for the Period case.
+func TestSortingStillFailsOnMixedDimensions(t *testing.T) {
+	if got := evalQuantityCompare(t, "Count(({1 'cm2', 1 'cm'}) X sort by X)"); !strings.HasPrefix(got, "ERROR") {
+		t.Errorf("sorting quantities of different dimensions = %s — if a sort has an answer "+
+			"for rows it cannot order now, decide what order they are in and remove this test", got)
+	}
+	// And the same list is orderable once the dimensions agree.
+	if got := evalQuantityCompare(t, "First(({2 'cm', 1 'cm'}) X sort by X)"); got != "1 'cm'" {
+		t.Errorf("sorting quantities of one dimension = %s, want 1 'cm'", got)
 	}
 }
 
