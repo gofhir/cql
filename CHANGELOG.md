@@ -6,6 +6,7 @@
 ### Bug Fixes
 
 * **eval:** two quantities of different dimensions cannot be compared ([#82](https://github.com/gofhir/cql/issues/82)) ([2bcd397](https://github.com/gofhir/cql/commit/2bcd3970301a5090325866fa86b769b360a4241d))
+* **eval:** an interval or timing operation over values that cannot be compared answers null rather than failing ([#84](https://github.com/gofhir/cql/issues/84)) ([51bb77e](https://github.com/gofhir/cql/commit/51bb77e7af563a5a4d209a33359483013e43a2fa))
 
 ## [1.20.4](https://github.com/gofhir/cql/compare/v1.20.3...v1.20.4) (2026-09-06)
 
