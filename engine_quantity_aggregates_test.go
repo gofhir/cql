@@ -2,7 +2,6 @@ package cql
 
 import (
 	"context"
-	"strings"
 	"testing"
 )
 
@@ -148,27 +147,77 @@ func TestSpreadAggregatesUnderstandQuantities(t *testing.T) {
 	}
 }
 
-// TestAggregatesRefuseWhatTheyCannotAdd covers the cases where no number is the
-// right answer. `1 'mg' + 1 's'` and `1 'mg' + 2` are already errors, and a
-// collection is no better placed to guess.
-func TestAggregatesRefuseWhatTheyCannotAdd(t *testing.T) {
-	for _, tt := range []struct{ expr, wantErr string }{
-		{`Sum({ 1 'mg', 1 's' })`, "incompatible units"},
-		{`Avg({ 1 'mg', 1 's' })`, "incompatible units"},
-		{`Median({ 1 'mg', 1 's' })`, "incompatible units"},
-		{`Variance({ 1 'mg', 1 's' })`, "incompatible units"},
+// TestAggregatesAnswerNullWhereAdditionDoes covers the cases where no number is
+// the right answer, and it used to require an error.
+//
+// Its premise was written down and was correct: "`1 'mg' + 1 's'` and `1 'mg' + 2`
+// are already errors, and a collection is no better placed to guess." The rule is
+// still that — an aggregate must answer whatever the operator it folds with
+// answers — but the operator has moved. CQL says of addition that "units of 'cm2'
+// and 'cm' cannot be added… Attempting to operate on quantities with invalid or
+// special units will result in a null", so `1 'mg' + 1 's'` is null, and these
+// follow it there.
+//
+// A bare number among quantities is one of them, by the same sentence that makes
+// it a dimension mismatch: "when a quantity has no units specified, it is treated
+// as a quantity with the default unit ('1')". What it must not do is silently
+// skip it, which is how Sum({ 1 'mg', 2 }) once came to be 1 'mg'.
+func TestAggregatesAnswerNullWhereAdditionDoes(t *testing.T) {
+	for _, expr := range []string{
+		`Sum({ 1 'mg', 1 's' })`,
+		`Avg({ 1 'mg', 1 's' })`,
+		`Median({ 1 'mg', 1 's' })`,
+		`Variance({ 1 'mg', 1 's' })`,
+		`StdDev({ 1 'mg', 1 's' })`,
+		`PopulationVariance({ 1 'mg', 1 's' })`,
+		`GeometricMean({ 1 'mg', 1 's' })`,
+		`Min({ 1 'mg', 1 's' })`,
+		`Max({ 1 'mg', 1 's' })`,
 
-		// Skipping the bare number is how Sum({ 1 'mg', 2 }) came to be 1 'mg'.
-		{`Sum({ 1 'mg', 2 })`, "non-quantity"},
-		{`Avg({ 1 'mg', 2 })`, "non-quantity"},
+		// The bare number, which is a quantity of unit '1' and so a dimension
+		// mismatch rather than a value with no unit to guess at.
+		`Sum({ 1 'mg', 2 })`,
+		`Avg({ 1 'mg', 2 })`,
+		`Sum({ 2, 1 'mg' })`,
 	} {
-		got, err := evalAggregate(t, tt.expr)
-		if err == nil {
-			t.Errorf("%s = %s, want an error mentioning %q", tt.expr, got, tt.wantErr)
+		got, err := evalAggregate(t, expr)
+		if err != nil {
+			t.Errorf("%s: %v — the operator it folds with answers null", expr, err)
 			continue
 		}
-		if !strings.Contains(err.Error(), tt.wantErr) {
-			t.Errorf("%s: error = %v, want it to mention %q", tt.expr, err, tt.wantErr)
+		if got != "null" {
+			t.Errorf("%s = %s, want null", expr, got)
+		}
+	}
+
+	// And the operator itself, so the two are held together rather than
+	// separately: this is the premise the test above rests on.
+	for _, expr := range []string{`1 'mg' + 1 's'`, `1 'mg' + 2`, `2 + 1 'mg'`, `1 'mg' - 1 's'`} {
+		got, err := evalAggregate(t, expr)
+		if err != nil || got != "null" {
+			t.Errorf("%s = %s, %v; want null — the aggregates above follow this", expr, got, err)
+		}
+	}
+
+	// Something that is neither a number nor a quantity still stops the
+	// aggregate, because there is nothing to read it as.
+	if _, err := evalAggregate(t, `Sum({ 1 'mg', 'abc' })`); err == nil {
+		t.Error("Sum over a quantity and a string was answered, want an error")
+	}
+
+	// A collection of nothing but bare numbers is not a quantity aggregate, and
+	// must not acquire the unit '1' it never had.
+	for _, tt := range []struct{ expr, want string }{
+		{`Sum({ 1, 2 })`, "3"},
+		{`Sum({ 1 '1', 2 })`, "3 '1'"},
+	} {
+		got, err := evalAggregate(t, tt.expr)
+		if err != nil {
+			t.Errorf("%s: %v", tt.expr, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
 		}
 	}
 }

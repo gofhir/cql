@@ -1398,12 +1398,32 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 	// Quantity ± Quantity
 	lq, lqOk := left.(fptypes.Quantity)
 	rq, rqOk := right.(fptypes.Quantity)
+	// A bare number added to a quantity is a quantity: "when invoked with mixed
+	// Decimal and Quantity arguments, the Decimal argument will be implicitly
+	// converted to Quantity", and "when a quantity has no units specified, it is
+	// treated as a quantity with the default unit ('1')".
+	//
+	// Only for `+` and `-`. Multiplication and division are the other paragraph,
+	// where a bare number scales rather than converts: `2 * 1 'cm'` is 2 'cm', and
+	// promoting the 2 would make it 2 '1.cm'.
+	//
+	// Without this the pair fell through to decimal arithmetic, where a Quantity
+	// reads as zero — so `1 + 1 'cm'` answered **1**, the quantity dropped in
+	// silence, while `1 'cm' + 1` raised an error. The guard that caught the
+	// zero-reading existed on the left operand and not on the right.
+	if op == ast.OpAdd || op == ast.OpSubtract {
+		if lqOk && !rqOk && isNumeric(right) {
+			rq, rqOk = fptypes.NewQuantityFromDecimal(toDecimal(right), "1"), true
+		} else if rqOk && !lqOk && isNumeric(left) {
+			lq, lqOk = fptypes.NewQuantityFromDecimal(toDecimal(left), "1"), true
+		}
+	}
 	if lqOk && rqOk {
 		switch op {
 		case ast.OpAdd:
-			return lq.Add(rq)
+			return quantitySum(lq.Add(rq))
 		case ast.OpSubtract:
-			return lq.Subtract(rq)
+			return quantitySum(lq.Subtract(rq))
 		case ast.OpMultiply:
 			resultVal := lq.Value().Mul(rq.Value())
 			resultUnit := multiplyUnits(lq.Unit(), rq.Unit())
@@ -1415,17 +1435,43 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 			resultVal := lq.Value().Div(rq.Value())
 			resultUnit := divideUnits(lq.Unit(), rq.Unit())
 			return fptypes.NewQuantityFromDecimal(resultVal, resultUnit), nil
-		case ast.OpDiv:
-			if rq.Value().IsZero() {
+		case ast.OpDiv, ast.OpMod:
+			// `div` and `mod` keep the left operand's unit, so the right one has to
+			// be stated in it first. Neither did, and both read the two magnitudes
+			// as written:
+			//
+			//	4 'cm' div 2 'm'   was 2 'cm'   — 4 cm div 200 cm is 0
+			//	5 'cm' mod 2 'm'   was 1 'cm'   — 5 cm mod 200 cm is 5
+			//	1 'cm' div 1 's'   was 1 'cm'   — no unit either can be stated in
+			//
+			// The first two are wrong for units that convert, which is not about
+			// dimensions at all; the third is this change's rule, answered with a
+			// number. Converting first settles all three, and it is the same step
+			// Add and Subtract take through Quantity.Add.
+			rhs, ok := rq.ConvertTo(lq.Unit())
+			if !ok {
 				return nil, nil
 			}
-			result := lq.Value().Div(rq.Value()).IntPart()
+			if rhs.Value().IsZero() {
+				return nil, nil
+			}
+			// A remainder is in the dimension it was taken from, so `mod` keeps the
+			// unit: 1 m mod 30 cm is 0.1 m.
+			if op == ast.OpMod {
+				return fptypes.NewQuantityFromDecimal(lq.Value().Mod(rhs.Value()), lq.Unit()), nil
+			}
+			// The quotient keeps the left operand's unit, which reads oddly — a
+			// whole-number quotient is a count, and `100 'cm' div 30 'cm'` says 3
+			// centimeters where it means three times — but it is not this
+			// engine's to decide. The conformance corpus settles it:
+			//
+			//	TruncatedDivide10By5DQuantity: 10.0 'g' div 5.0 'g' = 2.0 'g'
+			//
+			// A first attempt here asked divideUnits for a dimensionless '1', on
+			// the reasoning above, and the corpus said no. What was wrong was the
+			// magnitude, not the label.
+			result := lq.Value().Div(rhs.Value()).IntPart()
 			return fptypes.NewQuantityFromDecimal(decimal.NewFromInt(result), lq.Unit()), nil
-		case ast.OpMod:
-			if rq.Value().IsZero() {
-				return nil, nil
-			}
-			return fptypes.NewQuantityFromDecimal(lq.Value().Mod(rq.Value()), lq.Unit()), nil
 		default:
 			return nil, fmt.Errorf("unsupported operator for quantity arithmetic")
 		}
@@ -1451,8 +1497,22 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 	// Fall back to decimal arithmetic
 	ld := toDecimal(left)
 	rd := toDecimal(right)
-	if ld.IsZero() && !liOk && !isDecimal(left) {
+	// toDecimal reads anything it does not recognize as zero, so an operand that
+	// is not a number has to be caught before that zero becomes an answer. The
+	// check existed for the left operand only, and the asymmetry showed:
+	//
+	//	1 'cm' ^ 2   error
+	//	2 ^ 1 'cm'   1        — 2 ^ 0, the quantity read as zero
+	//
+	// It is the same asymmetry that made `1 + 1 'cm'` answer 1 while `1 'cm' + 1`
+	// failed. Addition and subtraction no longer reach here for that pair, because
+	// a bare number beside a quantity is now a quantity; every other operator
+	// does, and there is nothing to promote it to.
+	if !isNumeric(left) && ld.IsZero() {
 		return nil, fmt.Errorf("cannot perform arithmetic on %s", left.Type())
+	}
+	if !isNumeric(right) && rd.IsZero() {
+		return nil, fmt.Errorf("cannot perform arithmetic on %s", right.Type())
 	}
 
 	switch op {
@@ -2868,7 +2928,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return stdDevOfQuantities(quantities, false)
+			return quantityAggregate(stdDevOfQuantities(quantities, false))
 		}
 		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("PopulationStdDev")
@@ -2884,7 +2944,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return varianceOfQuantities(quantities, false)
+			return quantityAggregate(varianceOfQuantities(quantities, false))
 		}
 		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("PopulationVariance")
@@ -2900,7 +2960,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return stdDevOfQuantities(quantities, true)
+			return quantityAggregate(stdDevOfQuantities(quantities, true))
 		}
 		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("StdDev")
@@ -2916,7 +2976,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return varianceOfQuantities(quantities, true)
+			return quantityAggregate(varianceOfQuantities(quantities, true))
 		}
 		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("Variance")
@@ -3009,7 +3069,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return medianQuantities(quantities)
+			return quantityAggregate(medianQuantities(quantities))
 		}
 		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("Median")
@@ -3027,7 +3087,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return geometricMeanOfQuantities(quantities)
+			return quantityAggregate(geometricMeanOfQuantities(quantities))
 		}
 		if _, found := uncertainOperands(c); found {
 			return nil, undefinedOverUncertainty("GeometricMean")
@@ -6100,6 +6160,58 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 }
 
 // evalTemporalComparison handles precision-aware comparison of scalar temporal values.
+// quantityAggregate is quantitySum for an aggregate over a list.
+//
+// Every aggregate that folds quantities together is built on the same addition,
+// so leaving them raising an error while `+` answers null would be one rule read
+// two ways one call deep: `1 'cm2' + 1 'cm'` null and `Sum({1 'cm2', 1 'cm'})` a
+// failure.
+//
+// It is generic over what the aggregate returns because sumQuantities gives a
+// Quantity and the rest give a Value, and both have to become nil on the way out.
+func quantityAggregate[T fptypes.Value](v T, err error) (fptypes.Value, error) {
+	if err != nil {
+		if cqltypes.UndecidableComparison(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return v, nil
+}
+
+// quantitySum reports the result of adding or subtracting two quantities, with
+// the one failure that is an answer rather than a failure.
+//
+// CQL says it in the same paragraph that defines the operation: "units of 'cm2'
+// and 'cm' cannot be added… Attempting to operate on quantities with invalid or
+// special units will result in a null." The comparison operators were taught this
+// first; arithmetic raised an error and took the whole define with it, which is
+// the same rule read two ways one operator apart.
+func quantitySum(q fptypes.Quantity, err error) (fptypes.Value, error) {
+	if err != nil {
+		if cqltypes.UndecidableComparison(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return q, nil
+}
+
+// isNumeric reports a value arithmetic can read as a number, which is what may
+// stand in for a quantity with the default unit.
+//
+// It asks for the interface rather than listing the types, because the thing it
+// guards — toDecimal — reads that interface, and a predicate that names Integer
+// and Decimal while the conversion accepts any Numeric would disagree with it the
+// day a third one appears. Today they are the only two.
+//
+// A Quantity is not Numeric here, and the callers exclude one first anyway: the
+// point is to recognize what may *become* a quantity, not what already is.
+func isNumeric(v fptypes.Value) bool {
+	_, ok := v.(fptypes.Numeric)
+	return ok
+}
+
 // intervalSameAs answers `A same [precision] as B` for two intervals.
 //
 // CQL defines it as the two intervals starting and ending at the same value,
@@ -6575,7 +6687,7 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 		if err != nil {
 			return nil, err
 		}
-		return sumQuantities(quantities)
+		return quantityAggregate(sumQuantities(quantities))
 	}
 	// Same defect, same fix: toDecimal answers zero for an uncertainty, so a
 	// total of durations between imprecise dates came out as 0 months.
@@ -6613,7 +6725,7 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 		if err != nil {
 			return nil, err
 		}
-		return avgQuantities(quantities)
+		return quantityAggregate(avgQuantities(quantities))
 	}
 	if values, found := uncertainOperands(c); found {
 		return e.avgUncertainties(values)
@@ -6677,6 +6789,20 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 		// interval nor an uncertainty is among them.
 		cmp, err := compareValues(result, item)
 		if err != nil {
+			// Two quantities of different dimensions are the one case with no
+			// fallback to fall back to: the paragraph above is about ordering at
+			// the precision both temporals state, and there is no unit both of
+			// these can be stated in. A list with no minimum has none to return,
+			// and `<` over the same pair has answered null since the comparison
+			// operators were taught this — so does Median over the same list,
+			// which folds through the same addition.
+			//
+			// Sorting keeps the failure, and the difference is not arbitrary: Min
+			// and Max return a value and so have a null to return, while a sort has
+			// to produce an ordering and there is no null ordering.
+			if cqltypes.IncompatibleUnits(err) {
+				return nil, nil
+			}
 			return nil, fmt.Errorf("%s: %w", minMaxName(isMin), err)
 		}
 		if (isMin && cmp > 0) || (!isMin && cmp < 0) {
@@ -6860,11 +6986,6 @@ func isTemporalType(v fptypes.Value) bool {
 		return true
 	}
 	return false
-}
-
-func isDecimal(v fptypes.Value) bool {
-	_, ok := v.(fptypes.Decimal)
-	return ok
 }
 
 // intervalArithmetic applies a binary arithmetic op to an uncertainty interval and a value.

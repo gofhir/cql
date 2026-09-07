@@ -97,14 +97,24 @@ func TestSemanticValidationIsOnByDefault(t *testing.T) {
 		t.Error("the library evaluated by default, want it refused")
 	}
 
-	// And off, it answers what it always answered.
-	got, err := NewEngine(WithSemanticValidation(false)).
+	// And off, the library is not refused: it is compiled and evaluated, and what
+	// comes back is whatever evaluating it produces.
+	//
+	// What that is has changed. It used to be the number 1 — `1 + 'text'` read the
+	// string as zero — and this test recorded it. The zero-reading was one-sided:
+	// `'text' + 1` raised an error all along, and only the operand on the right
+	// was read as a number it is not. Made symmetric, both report it.
+	//
+	// The distinction the flag controls is untouched: with validation on the
+	// library is refused before evaluation, with it off the library runs and the
+	// expression fails on its own terms. What is gone is a wrong number as the
+	// third possibility.
+	_, err := NewEngine(WithSemanticValidation(false)).
 		EvaluateExpression(context.Background(), src, "A", nil, nil)
-	if err != nil {
-		t.Fatalf("with validation off the library should evaluate: %v", err)
-	}
-	if s := valueString(got); s != "1" {
-		t.Errorf("= %s, want the 1 it answers without validation", s)
+	if err == nil {
+		t.Error("with validation off, `1 + 'text'` was answered; want the arithmetic to report it")
+	} else if strings.Contains(err.Error(), "semantic") {
+		t.Errorf("with validation off the library must not be refused, got %v", err)
 	}
 
 	// Either way the findings are there for the asking, without evaluating.
