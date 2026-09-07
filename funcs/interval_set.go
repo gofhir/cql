@@ -98,7 +98,7 @@ func IntervalPointFrom(interval cqltypes.Interval) (fptypes.Value, error) {
 func IntervalProperlyIncludes(a, b cqltypes.Interval) (fptypes.Value, error) {
 	includes, err := a.Includes(b)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err

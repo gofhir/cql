@@ -1,9 +1,6 @@
 package funcs
 
 import (
-	"errors"
-	"strings"
-
 	"github.com/shopspring/decimal"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -11,23 +8,11 @@ import (
 	cqltypes "github.com/gofhir/cql/types"
 )
 
-// isAmbiguousComparisonErr returns true if the error is an ambiguous temporal comparison.
-//
-// fptypes reports this as ErrPrecisionMismatch; the string check is kept for the
-// wording used before that sentinel existed.
-func isAmbiguousComparisonErr(err error) bool {
-	if err == nil {
-		return false
-	}
-	return errors.Is(err, fptypes.ErrPrecisionMismatch) ||
-		strings.Contains(err.Error(), "ambiguous comparison")
-}
-
 // IntervalContains checks if an interval contains a point.
 func IntervalContains(interval cqltypes.Interval, point fptypes.Value) (fptypes.Value, error) {
 	result, err := interval.Contains(point)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -39,7 +24,7 @@ func IntervalContains(interval cqltypes.Interval, point fptypes.Value) (fptypes.
 func IntervalIncludes(a, b cqltypes.Interval) (fptypes.Value, error) {
 	result, err := a.Includes(b)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -56,7 +41,7 @@ func IntervalIncludedIn(a, b cqltypes.Interval) (fptypes.Value, error) {
 func IntervalOverlaps(a, b cqltypes.Interval) (fptypes.Value, error) {
 	result, err := a.Overlaps(b)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -85,7 +70,7 @@ func IntervalUnion(a, b cqltypes.Interval) (fptypes.Value, error) {
 	// Check if intervals overlap or are adjacent (meet)
 	overlaps, err := a.Overlaps(b)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -142,7 +127,7 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 	case a.Low != nil && b.Low != nil:
 		cmp, err := compareVals(a.Low, b.Low)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -167,7 +152,7 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 	case a.High != nil && b.High != nil:
 		cmp, err := compareVals(a.High, b.High)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -189,7 +174,7 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 	if low != nil && high != nil {
 		cmp, err := compareVals(low, high)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -284,7 +269,7 @@ func AdjustTime(t fptypes.Time, delta int) fptypes.Value {
 func IntervalExcept(a, b cqltypes.Interval) (fptypes.Value, error) {
 	overlap, err := a.Overlaps(b)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -341,6 +326,13 @@ func IntervalBefore(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.High, b.Low)
 	if err != nil {
+		// These two had no guard at all, where every operator around them has
+		// one: `Interval[1 'cm', 2 'cm'] before Interval[1 's', 2 's']` raised an
+		// error while `starts before` and `overlaps before` on the same pair
+		// answered null, and so did the scalar `1 'cm' before 1 's'`.
+		if cqltypes.UndecidableComparison(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(cmp < 0), nil
@@ -353,6 +345,9 @@ func IntervalAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 	}
 	cmp, err := compareVals(a.Low, b.High)
 	if err != nil {
+		if cqltypes.UndecidableComparison(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return fptypes.NewBoolean(cmp > 0), nil
@@ -408,7 +403,7 @@ func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
 	// Check if they overlap first - if they overlap, they don't meet
 	overlaps, err := a.Overlaps(b)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err

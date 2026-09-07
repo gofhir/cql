@@ -21,57 +21,26 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
-// isIncompatibleUnitsErr reports the other reason a comparison has no answer:
-// two quantities whose dimensions differ, so there is no unit both can be stated
-// in. fhirpath raises a sentinel for it and says what to do with it — "callers
-// translate this sentinel into an empty collection instead of failing the whole
-// expression" — and this engine was the caller that did not.
+// A comparison that could not be made is null in CQL, and the predicates for it
+// live in `types`, where funcs can read the same ones: UndecidableComparison for
+// either reason, and AmbiguousTemporalComparison for the temporal one alone. Two
+// copies of that rule, one here and one in funcs, had drifted apart until an
+// interval operation raised an error where the same question asked of two scalars
+// answered null.
 //
-// It is deliberately not folded into isAmbiguousComparisonErr, although the two
-// answer the same question. They do not have the same consequence everywhere:
-// an ambiguous temporal comparison can be retried at a shared precision, and
-// units cannot; and list membership treats an undecided temporal pair as two
-// values, which is right for it and would be wrong here only in that it is the
-// same answer for a different reason. Of the twelve places that ask whether a
-// comparison could not be made, three want something other than null, so the two
-// reasons stay two predicates and each site says which it means.
-func isIncompatibleUnitsErr(err error) bool {
-	return err != nil && errors.Is(err, fptypes.ErrIncompatibleUnits)
-}
-
-// isAmbiguousComparisonErr returns true if the error is an ambiguous temporal comparison.
-// In CQL, ambiguous comparisons should return null, not error.
+// The narrow one is asked at exactly four places, each of which does something
+// other than return null:
 //
-// fptypes reports this as ErrPrecisionMismatch; the string check is kept for the
-// wording used before that sentinel existed.
-func isAmbiguousComparisonErr(err error) bool {
-	if err == nil {
-		return false
-	}
-	if errors.Is(err, fptypes.ErrPrecisionMismatch) {
-		return true
-	}
-	// An absent timezone offset is the other reason a temporal comparison has no
-	// answer, and upstream used to report it with the precision sentinel — a false
-	// diagnosis, since the precisions usually agree. That is fixed in fhirpath:
-	// there is a distinct ErrOffsetMismatch, and IsUnknownTemporalComparison asks
-	// about both.
-	//
-	// Matched by text rather than by that helper, because the helper does not
-	// exist in v1.8.0 and this has to work on the version go.mod names as well as
-	// the one after it. Replace both lines below with
-	// fptypes.IsUnknownTemporalComparison once the minimum carries it.
-	//
-	// Worth having measured before the release rather than after: against the
-	// merge commit, matching only the precision sentinel made `Z < bare` raise the
-	// error instead of answering null, made Min and Max raise it, and made
-	// `Z = bare` answer true where it had answered null. The conformance corpus
-	// stays green through all of that, because no case in it pairs a written
-	// offset with a missing one.
-	msg := err.Error()
-	return strings.Contains(msg, "timezone offset") ||
-		strings.Contains(msg, "ambiguous comparison")
-}
+//   - temporalEquality, already gated on both values being temporal, so the two
+//     questions coincide there and the narrower name says which it means;
+//   - compareValues, which retries at the precision both sides state;
+//   - membershipAtPrecision, which retries at the precision the phrase named;
+//   - listContainsValueTriState, where an undecided pair is two values rather
+//     than a null, because a list has no null to hold.
+//
+// A retry at a shared precision means nothing for two quantities of different
+// dimensions, so handing those callers the wider question would be wrong rather
+// than merely broad.
 
 // temporalEquality decides equality for two temporal values the same way the
 // ordering operators decide their comparison, and reports handled=false for
@@ -101,7 +70,7 @@ func temporalEquality(left, right fptypes.Value) (fptypes.Value, bool) {
 		return nil, false
 	}
 	cmp, err := cqltypes.CompareTemporal(left, right)
-	if isAmbiguousComparisonErr(err) {
+	if cqltypes.AmbiguousTemporalComparison(err) {
 		return nil, true // unknown: they agree as far as both are specified
 	}
 	if err != nil {
@@ -1265,11 +1234,11 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		}
 		cmp, err := cqltypes.CompareTemporal(left, right)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) {
-				return nil, nil // CQL: ambiguous temporal comparison → null
-			}
-			// `3.6 'cm2' < 3.5 'cm'` is the specification's own QuantityLessIsNull.
-			if isIncompatibleUnitsErr(err) {
+			// Either reason a comparison could not be made: a precision or offset
+			// one side states and the other does not, or two quantities with no
+			// unit both can be stated in — `3.6 'cm2' < 3.5 'cm'` is the
+			// specification's own QuantityLessIsNull.
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			// A FHIR value that has been converted as far as the model knows how
@@ -1755,7 +1724,7 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 			}
 			result, err := interval.Contains(left)
 			if err != nil {
-				if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
+				if cqltypes.UndecidableComparison(err) {
 					return nil, nil
 				}
 				return nil, err
@@ -1789,7 +1758,7 @@ func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (
 		}
 		result, err := interval.Contains(right)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -4656,7 +4625,7 @@ func compareValues(a, b fptypes.Value) (int, error) {
 		return 0, fmt.Errorf("cannot compare type %s for sorting", a.Type())
 	}
 	result, err := ac.Compare(b)
-	if err != nil && isAmbiguousComparisonErr(err) {
+	if err != nil && cqltypes.AmbiguousTemporalComparison(err) {
 		// Fall back to component-wise comparison at shared precision.
 		//
 		// Each side is read against the other, the way the timing operators read
@@ -5088,7 +5057,7 @@ func (e *Evaluator) evalBetween(n *ast.BetweenExpression) (fptypes.Value, error)
 	interval := cqltypes.NewInterval(low, high, !n.Properly, !n.Properly)
 	result, err := interval.Contains(operand)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -5684,7 +5653,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		result, err := leftIv.Includes(rightIv)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -5707,7 +5676,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 			}
 			ok, cerr := rightIv.Contains(point)
 			if cerr != nil {
-				if isAmbiguousComparisonErr(cerr) || isIncompatibleUnitsErr(cerr) {
+				if cqltypes.UndecidableComparison(cerr) {
 					return nil, nil
 				}
 				return nil, cerr
@@ -5722,7 +5691,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		}
 		result, err := rightIv.Includes(leftIv)
 		if err != nil {
-			if isAmbiguousComparisonErr(err) || isIncompatibleUnitsErr(err) {
+			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
 			return nil, err
@@ -5857,11 +5826,19 @@ func evalIntervalProperlyContainsPoint(iv cqltypes.Interval, point fptypes.Value
 	// First check if the interval contains the point
 	contained, err := iv.Contains(point)
 	if err != nil {
-		if isAmbiguousComparisonErr(err) {
-			// With precision specified, try comparing at that precision
-			if precision != "" {
-				return evalIntervalProperlyContainsPointAtPrecision(iv, point, precision)
-			}
+		// A named precision is a second chance, and only for the reason a second
+		// chance helps: comparing again at a precision both sides state. Two
+		// quantities of different dimensions have no such retry.
+		if precision != "" && cqltypes.AmbiguousTemporalComparison(err) {
+			return evalIntervalProperlyContainsPointAtPrecision(iv, point, precision)
+		}
+		// Otherwise it is the ordinary answer for a comparison that could not be
+		// made. Asking the narrow question here was wrong: it guards a retry, and
+		// with no precision named there is no retry to guard, so
+		// `Interval[1 'cm', 2 'cm'] properly includes 1 's'` raised an error while
+		// the same phrase over two intervals, and `contains` over the same point,
+		// both answered null.
+		if cqltypes.UndecidableComparison(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -5980,7 +5957,7 @@ func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found, 
 			return true, false
 		}
 		// Check for ambiguous comparison (different precisions in temporal types)
-		if _, err := cqltypes.CompareTemporal(item, val); isAmbiguousComparisonErr(err) {
+		if _, err := cqltypes.CompareTemporal(item, val); cqltypes.AmbiguousTemporalComparison(err) {
 			ambiguous = true
 		}
 	}
