@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.5](https://github.com/gofhir/cql/compare/v1.20.4...v1.20.5) (2026-09-07)
+
+
+### Bug Fixes
+
+* **eval:** two quantities of different dimensions cannot be compared ([#82](https://github.com/gofhir/cql/issues/82)) ([2bcd397](https://github.com/gofhir/cql/commit/2bcd3970301a5090325866fa86b769b360a4241d))
+
 ## [1.20.4](https://github.com/gofhir/cql/compare/v1.20.3...v1.20.4) (2026-09-06)
 
 
