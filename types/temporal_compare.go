@@ -168,24 +168,35 @@ const (
 // compareAcrossAbsentOffset orders a pair where one value writes a timezone
 // offset and the other does not.
 //
-// fptypes declines this pair, reporting the precision mismatch it reports for a
-// value specified to a coarser precision — and reporting it even where both are
-// specified to the same precision, which is what gives the diagnosis away. It is
-// not a precision that is missing, it is an offset. (Present in fhirpath v1.6.0
-// and v1.8.0 alike, and reported upstream. This delegates first, so when Compare
-// stops declining, none of this is reached.)
+// fptypes declines this pair. It reports the precision-mismatch sentinel for it,
+// even where both values are specified to the same precision, and that part was a
+// defect: the message says something false about its own cause. Reported upstream
+// and fixed there — gofhir/fhirpath now carries a distinct ErrOffsetMismatch, so
+// the two reasons can be told apart.
 //
-// Declining is wrong because an absent offset resolves rather than invalidates:
+// What upstream is not changing is the answer, and it is right not to. FHIRPath
+// makes the default offset a policy decision — "whether or not to provide a
+// default timezone offset is a policy decision... In the simplest case, no
+// default timezone offset is provided" — and that engine provides none. A
+// comparison it cannot place has no answer rather than a wrong one.
+//
+// So this is not a patch waiting for an upstream fix. It is the difference
+// between the two specifications, and it stays:
 //
 //	CQL, DateTime Literals: "If no timezone offset is specified, the timezone
 //	offset of the evaluation request timestamp is used" — and extracting it gives
 //	"the timezone offset of the evaluation request, not null".
 //
-//	FHIRPath, Comparison: "either both values have no timezone offset specified,
-//	or both values are converted to a common timezone offset".
+// CQL names a default where FHIRPath leaves it open, which is why an engine for
+// one declines and an engine for the other must not. An earlier version of this
+// comment also cited FHIRPath's "either both values have no timezone offset
+// specified, or both values are converted to a common timezone offset" as though
+// it agreed. It does not: it states the condition under which a comparison can be
+// made, not that one always can, and reading it as support was wrong.
 //
 // This does not reach for the evaluation request's offset, which types has no way
-// to ask for. It answers only where the answer does not depend on it: the
+// to ask for — so it is narrower than CQL permits, not wider. It answers only
+// where the answer does not depend on it: the
 // unwritten offset leaves an instant uncertain across a 26-hour window, so the
 // order is knowable exactly when that whole window — widened by whatever the
 // coarser precision leaves open — falls on one side. Ten months apart is

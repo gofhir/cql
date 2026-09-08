@@ -1184,6 +1184,33 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 		case *grammar.WithinIntervalOperatorPhraseContext:
 			op.Boundary = timingBoundaryWord(phrase.GetText())
 			op.Kind = ast.TimingWithin
+			// `within 3 days of X` states its range in a Quantity of its own rather
+			// than in a quantityOffset, so it needs reading here — and it was not
+			// read at all, which left the phrase meaning `during` and the range
+			// meaning nothing. Same defect as the quantityOffset one phrase over.
+			if q := phrase.Quantity(); q != nil {
+				op.Offset = q.GetText()
+			}
+			// The rest of what the rule declares, which a first pass also left
+			// unread:
+			//
+			//	('starts'|'ends'|'occurs')? 'properly'? 'within' quantity 'of' ('start'|'end')?
+			//
+			// `properly` is strict here as everywhere, and the trailing word names
+			// which end of the right operand the range is measured from — which is
+			// the specification's own example, `X starts within 3 days of start Y`.
+			//
+			// The parse tree runs the tokens together, so the text arrives as
+			// "startsproperlywithin3daysofstart" and is read the way
+			// timingBoundaryWord already reads the leading word.
+			text := strings.ToLower(phrase.GetText())
+			op.Properly = strings.Contains(text, "properly")
+			switch {
+			case strings.HasSuffix(text, "ofstart"):
+				op.RightBoundary = "start"
+			case strings.HasSuffix(text, "ofend"):
+				op.RightBoundary = "end"
+			}
 		}
 	}
 
