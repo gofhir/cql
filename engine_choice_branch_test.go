@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -220,26 +219,63 @@ func TestEquivalenceStillDecidesTheWrongBranch(t *testing.T) {
 	}
 }
 
-// TestBetweenOverAChoiceIsStillRefused records what this change does not reach,
-// asserted so that reaching it trips here.
+// TestBetweenNamesABranchLikeTheComparisonsItIsMadeOf covers the operator that
+// refused a choice element outright, and the one this list of asserted gaps had
+// left as the only thing still failing to compile.
 //
-// `between` over a choice element is refused by the semantic phase for *every*
-// branch, the one being asked about included, so there is no narrowing for the
-// evaluator to apply — the expression never gets that far. That is a defect in
-// how `between` is typed rather than in which branch it means, and it is older
-// than this change: `O.value between 100 'mg/dL' and 200 'mg/dL'` does not
-// compile whether the value is a Quantity or a CodeableConcept.
-func TestBetweenOverAChoiceIsStillRefused(t *testing.T) {
-	const expr = "First([Observation] O).value between 100 'mg/dL' and 200 'mg/dL'"
-	for _, b := range []struct{ field, value string }{
-		{"valueQuantity", `{"value":190,"unit":"mg/dL"}`},
-		{"valueCodeableConcept", `{"coding":[{"code":"x"}]}`},
-	} {
-		got := evalOnBranch(t, b.field, b.value, expr)
-		if !strings.HasPrefix(got, "ERROR") {
-			t.Errorf("`between` over the %s branch = %s — if it compiles now, it should name a "+
-				"branch like `in` does, and this test should go", b.field, got)
+// `between` types its bounds against the operand, which is right when the operand
+// is one type — `Obs.value as FHIR.Quantity between 1 'mg' and 20 'mg'` needs the
+// operand converted and the literals left alone. Against a choice it reported the
+// operand's own type back at the author:
+//
+//	expected Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, …>, got Quantity
+//
+// and refused every branch, the one being asked about included. Meanwhile
+// `O.value in Interval[100 'mg/dL', 200 'mg/dL']` compiled, and so did the
+// conjunction `between` is defined as — three spellings of one question, one of
+// which would not compile.
+//
+// The bounds are what name the branch, because `between` *is* `>= low and
+// <= high`. So a choice operand narrows to them, the way a comparison narrows to
+// what it is compared against.
+func TestBetweenNamesABranchLikeTheComparisonsItIsMadeOf(t *testing.T) {
+	const rng = "100 'mg/dL' and 200 'mg/dL'"
+	for _, b := range branchCases {
+		between := evalOnBranch(t, b.field, b.value,
+			"First([Observation] O).value between "+rng)
+		// The two spellings it has to agree with, on the same data.
+		inInterval := evalOnBranch(t, b.field, b.value,
+			"First([Observation] O).value in Interval[100 'mg/dL', 200 'mg/dL']")
+		if between != inInterval {
+			t.Errorf("the %s branch: `between` = %s but `in Interval` = %s — one question",
+				b.name, between, inInterval)
 		}
+		want := "null"
+		if b.name == "Quantity" {
+			want = "true"
+		}
+		if between != want {
+			t.Errorf("the %s branch under `between` = %s, want %s", b.name, between, want)
+		}
+	}
+
+	// `properly` still excludes the bounds, over a choice as over anything else.
+	for _, tt := range []struct{ value, expr, want string }{
+		{`{"value":190,"unit":"mg/dL"}`, "properly between " + rng, "true"},
+		{`{"value":100,"unit":"mg/dL"}`, "between " + rng, "true"},
+		{`{"value":100,"unit":"mg/dL"}`, "properly between " + rng, "false"},
+	} {
+		expr := "First([Observation] O).value " + tt.expr
+		if got := evalOnBranch(t, "valueQuantity", tt.value, expr); got != tt.want {
+			t.Errorf("%s over %s = %s, want %s", tt.expr, tt.value, got, tt.want)
+		}
+	}
+
+	// And the case the existing behavior was written for is untouched: an
+	// operand cast to one type still converts, and the literals are left alone.
+	if got := evalOnBranch(t, "valueQuantity", `{"value":190,"unit":"mg/dL"}`,
+		"(First([Observation] O).value as FHIR.Quantity) between "+rng); got != "true" {
+		t.Errorf("a cast operand = %s, want true", got)
 	}
 }
 
@@ -449,6 +485,62 @@ define A: M.Mid(First([Observation]))
 		}
 		if out != want {
 			t.Errorf("the %s branch, two includes deep = %s, want %s", b.name, out, want)
+		}
+	}
+}
+
+// TestBetweenStillReportsBoundsThatDoNotAgree covers the diagnostics, which a
+// first pass at the change above dropped.
+//
+// Typing the bounds against a choice operand reported the operand's own type back
+// at the author, so that check had to move rather than stay. Removing it outright
+// let `O.value between 100 'mg/dL' and 'abc'` compile in silence, while the same
+// mismatch without a choice was reported — a silence is worse than the wrong
+// message it replaced.
+//
+// The bounds are now checked against each other, which is where the mismatch
+// actually is, and a choice no branch of which reaches them says so.
+func TestBetweenStillReportsBoundsThatDoNotAgree(t *testing.T) {
+	check := func(t *testing.T, body string) (errs, warns int) {
+		t.Helper()
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\n" +
+			"include FHIRHelpers version '4.0.1' called FHIRHelpers\ncontext Patient\n" +
+			"define A: " + body + "\n"
+		diags, err := NewEngine().Check(src)
+		if err != nil {
+			t.Fatalf("checking %q: %v", body, err)
+		}
+		return len(diags.Errors()), len(diags) - len(diags.Errors())
+	}
+
+	// Bounds of two different types, with and without a choice operand: both are
+	// an error, and about the bounds.
+	for _, body := range []string{
+		"First([Observation] O).value between 100 'mg/dL' and 'abc'",
+		"First([Observation] O).value between 'abc' and 200 'mg/dL'",
+		"190 'mg/dL' between 100 'mg/dL' and 'abc'",
+	} {
+		if errs, _ := check(t, body); errs == 0 {
+			t.Errorf("%s compiled, want the bounds reported", body)
+		}
+	}
+
+	// A choice no branch of which can be between those bounds is worth saying so:
+	// Observation.value has Range and Period, which are intervals of quantities
+	// and of DateTimes, and neither is an interval of integers.
+	if errs, warns := check(t,
+		"First([Observation] O).value between Interval[1,2] and Interval[3,4]"); errs != 0 || warns == 0 {
+		t.Errorf("no branch reaches those bounds: %d errors and %d warnings, want a warning", errs, warns)
+	}
+
+	// And what a branch does reach compiles clean, in each of three branches.
+	for _, body := range []string{
+		"First([Observation] O).value between 100 'mg/dL' and 200 'mg/dL'",
+		"First([Observation] O).value between 'a' and 'z'",
+		"First([Observation] O).value between 1 and 10",
+	} {
+		if errs, warns := check(t, body); errs != 0 || warns != 0 {
+			t.Errorf("%s: %d errors and %d warnings, want none", body, errs, warns)
 		}
 	}
 }
