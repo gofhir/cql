@@ -290,6 +290,27 @@ type Context struct {
 	// set already loaded.
 	LoadedLibraries map[string]*ast.Library
 
+	// Plans is what the semantic phase decided about each library, keyed by the
+	// library, so that code running inside an included library is judged by its
+	// own plan rather than by the caller's.
+	//
+	// A plan is keyed by AST node, and an included library's nodes are not in the
+	// caller's plan — so every decision the phase makes was reaching only the
+	// library being evaluated. Conversions survived that because coerceToSystem
+	// asks the model at evaluation and needs no plan; a narrowing has no such
+	// fallback, and a comparison over a choice element inside an included library
+	// failed where the same expression in the evaluated library answered.
+	//
+	// resolveIncludesInto already compiled each library and had its plan in hand.
+	//
+	// It covers the libraries the engine compiles: those a LibraryResolver hands
+	// over as source, and the built-in FHIRHelpers. A LibraryLoader hands over an
+	// *ast.Library instead — the path for input that has already been through a
+	// front end, ELM among them — so there is no source to check and no plan to
+	// register, and code inside such a library keeps the behavior described
+	// above. That is a property of the interface rather than an omission here.
+	Plans map[*ast.Library]*sema.Result
+
 	// LibraryLoader resolves included libraries lazily on demand (optional).
 	LibraryLoader LibraryLoader
 	// loadingLibs tracks libraries currently being loaded to detect circular deps.
@@ -321,6 +342,7 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		LetBindings:         make(map[string]fptypes.Value),
 		IncludedLibraries:   make(map[string]*ast.Library),
 		LoadedLibraries:     make(map[string]*ast.Library),
+		Plans:               make(map[*ast.Library]*sema.Result),
 		conversionOverloads: make(map[conversionKey]*ast.FunctionDef),
 	}
 	c.loadDeclarations(lib)
@@ -475,6 +497,17 @@ func (c *Context) RegisterLoadedLibrary(name, version string, lib *ast.Library) 
 	}
 }
 
+// RegisterPlan records what the semantic phase decided about one library, so
+// that code running inside it is judged by its own plan.
+func (c *Context) RegisterPlan(lib *ast.Library, plan *sema.Result) {
+	if lib == nil || plan == nil || c.Plans == nil {
+		return
+	}
+	if _, already := c.Plans[lib]; !already {
+		c.Plans[lib] = plan
+	}
+}
+
 // LibraryScope builds the scope an included library's own code runs in: its
 // functions, its definitions and its terminology rather than the including
 // library's. The definition cache and terminology tables are fresh, because two
@@ -483,6 +516,13 @@ func (c *Context) RegisterLoadedLibrary(name, version string, lib *ast.Library) 
 func (c *Context) LibraryScope(lib *ast.Library) *Context {
 	scope := c.ChildScope()
 	scope.Library = lib
+	// The callee is judged by its own plan. Where none was registered — a Context
+	// built by hand, or a library reached some other way — the caller's is left
+	// in place: it will simply not recognize the callee's nodes, which is the
+	// behavior this replaces rather than a new failure.
+	if plan, ok := c.Plans[lib]; ok {
+		scope.Plan = plan
+	}
 	scope.Definitions = make(map[string]fptypes.Value)
 	scope.CodeSystems = make(map[string]*cqltypes.Code)
 	scope.ValueSets = make(map[string]string)
@@ -528,6 +568,7 @@ func (c *Context) ChildScope() *Context {
 		TraceListener:       c.TraceListener,
 		ModelInfo:           c.ModelInfo,
 		Plan:                c.Plan,
+		Plans:               c.Plans,
 		conversionOverloads: c.conversionOverloads,
 		contextType:         c.contextType,
 		contextResourceType: c.contextResourceType,

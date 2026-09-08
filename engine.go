@@ -358,10 +358,14 @@ func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, eval
 			return fmt.Errorf("library '%s' version '%s' could not be resolved (no LibraryResolver provided)", inc.Name, inc.Version)
 		}
 
-		incLib, _, err := e.compileOrCache(src)
+		incLib, incPlan, err := e.compileOrCache(src)
 		if err != nil {
 			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
 		}
+		// The plan was computed here and thrown away, so every decision the
+		// semantic phase makes about an included library was invisible at
+		// evaluation. See eval.Context.Plans.
+		evalCtx.RegisterPlan(incLib, incPlan)
 		if top {
 			evalCtx.IncludedLibraries[alias] = incLib
 		}
@@ -490,6 +494,9 @@ func (e *Engine) newEvalContext(
 	evalCtx.TraceListener = e.traceListener
 	evalCtx.ModelInfo = e.modelInfo
 	evalCtx.Plan = plan
+	// The evaluated library too, so that a scope built for it — reaching it through
+	// its own name, which a library may do — finds the same plan.
+	evalCtx.RegisterPlan(lib, plan)
 	evalCtx.LibraryLoader = e.libraryLoader
 	evalCtx.QuantityConverter = e.quantityConverter
 	evalCtx.MaxDepth = e.maxDepth
