@@ -1051,14 +1051,25 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 	// branch, which the phase types as a plain FHIR.Quantity — answered correctly.
 	// The second of those is the worse one: an error gets looked at, and a measure
 	// quietly reporting false does not. FHIR347 decides an exclusion on that line.
-	//
-	// Which branch it is decides whether the comparison can be made at all, so
-	// the fact that a side came from FHIR is remembered here: the conversion is
-	// what removes the evidence. See fromChoiceBranch below.
-	fromFHIR := isUnconvertedFHIR(left) || isUnconvertedFHIR(right)
 	switch n.Operator {
-	case ast.OpEqual, ast.OpNotEqual, ast.OpEquivalent, ast.OpNotEquivalent,
-		ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
+	case ast.OpEqual, ast.OpNotEqual, ast.OpLess, ast.OpLessOrEqual,
+		ast.OpGreater, ast.OpGreaterOrEqual:
+		// A choice element is asked about one branch, and a row on another branch
+		// is not being asked about at all. Tested before the conversion below,
+		// which is what erases the branch: an ObjectValue still says
+		// "CodeableConcept" here and says "Concept" afterwards.
+		//
+		// Equivalence is deliberately not in this list, and its absence is the
+		// same rule it takes everywhere else: `~` never returns null in CQL, so a
+		// value on another branch is simply not equivalent. A first pass had it
+		// here and made `O.value ~ 190 'mg/dL'` null, which the two existing
+		// assertions about `~` did not catch because they compare quantities
+		// rather than branches.
+		if e.onAnotherBranch(n.Left, left) || e.onAnotherBranch(n.Right, right) {
+			return nil, nil
+		}
+		fallthrough
+	case ast.OpEquivalent, ast.OpNotEquivalent:
 		if left, err = e.coerceToSystem(left); err != nil {
 			return nil, err
 		}
@@ -1241,28 +1252,10 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 			if cqltypes.UndecidableComparison(err) {
 				return nil, nil
 			}
-			// A FHIR value that has been converted as far as the model knows how
-			// and still cannot be compared with the other side is the wrong branch
-			// of a choice element for the question being asked, and the wrong
-			// branch is null.
-			//
-			// That is what the reference translator produces: it types
-			// `Observation.value` as a choice, sees the comparison wants a
-			// Quantity, and inserts `as Quantity` — which yields null for a row
-			// whose value is a CodeableConcept. So `LDL.value >= 190 'mg/dL'` over
-			// a mix of Quantity and CodeableConcept results answers about the
-			// quantities and passes over the rest, rather than failing the whole
-			// measure on the first row of the wrong kind. FHIR347 has both.
-			//
-			// The judgement is left to the comparison itself rather than made
-			// again here: whether two values can be compared is exactly what it
-			// just answered, and a second opinion about it would be a second
-			// implementation of the same rule. A mismatch between two values
-			// neither of which came from FHIR is an authoring error and still
-			// fails — `1 'mg' >= 'abc'` is not a narrowing that went wrong.
-			if fromFHIR {
-				return nil, nil
-			}
+			// A pair that cannot be ordered and did not come from a narrowed
+			// choice is an authoring mistake — `1 'mg' >= 'abc'` — and still
+			// fails. The branch case is decided above, from the plan, before the
+			// conversion erases the evidence.
 			return nil, err
 		}
 		switch n.Operator {
@@ -4998,6 +4991,12 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 	if err != nil {
 		return nil, err
 	}
+	// Asked before the conversion below, for the reason the comparison operators
+	// ask before theirs: a value on another branch of a choice element is not
+	// being asked about, and coerceToSystem is what loses the branch's name.
+	if e.onAnotherBranch(n.Left, left) {
+		return nil, nil
+	}
 	// `code in "Diabetes"` names a value set, not a list to search. The
 	// terminology path existed but nothing routed to it from here, so the
 	// membership was evaluated against the name as a plain string and answered
@@ -5033,6 +5032,9 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 	right, err := e.Eval(n.Right)
 	if err != nil {
 		return nil, err
+	}
+	if e.onAnotherBranch(n.Right, right) {
+		return nil, nil
 	}
 	// A list is a membership question, not a conversion one — only convert the
 	// operand that is not the collection being searched.
@@ -5594,6 +5596,13 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	right, err := e.Eval(n.Right)
 	if err != nil {
 		return nil, err
+	}
+	// `during` is a synonym of `included in`, and `includes` is the same question
+	// from the other side, so a choice element on one side of one of these is
+	// asked about a branch exactly as it is under `in`. Before the conversion, for
+	// the same reason.
+	if e.onAnotherBranch(n.Left, left) || e.onAnotherBranch(n.Right, right) {
+		return nil, nil
 	}
 	// A timing operator works on points and intervals, so a FHIR type reaching
 	// one has to be converted first: `encounter.period during "MP"` hands it a
@@ -6272,6 +6281,51 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 }
 
 // evalTemporalComparison handles precision-aware comparison of scalar temporal values.
+// onAnotherBranch reports that a value is not on the branch of a choice element
+// the surrounding comparison asks about.
+//
+// FHIR stores Observation.value as one of eleven types, and a comparison names
+// which one it means by what it compares against. The reference translator writes
+// that down as `as Quantity`, and `as` is null for a value on another branch — so
+// a row whose value is a CodeableConcept drops out of a query about quantities
+// rather than failing it or being counted as unequal:
+//
+//	not (O.value >= 190 'mg/dL')   1   the coded row was unanswerable already
+//	not (O.value  = 190 'mg/dL')   2   and here it counted as "not equal"
+//
+// This cannot be decided at evaluation, which is why a first attempt only reached
+// two of the eleven branches. It asked whether the value was still raw FHIR JSON,
+// and only Quantity and CodeableConcept are — `valueString`, `valueInteger`,
+// `valueBoolean` and `valueDateTime` come out of the JSON as ordinary system
+// values, indistinguishable from a literal, and their comparisons raised errors
+// instead of declining. The phase that typed the operand is the only one that
+// knows, and it now says so. See sema.Result.Narrowings.
+//
+// The test is the type name, which is what `as` compares: a branch is
+// FHIR.Quantity or FHIR.integer, and the value says "Quantity" or "Integer". It
+// runs before coerceToSystem, because that is what turns a CodeableConcept into a
+// Concept and loses the branch's own name.
+func (e *Evaluator) onAnotherBranch(node ast.Expression, v fptypes.Value) bool {
+	if v == nil || e.ctx.Plan == nil {
+		return false
+	}
+	branch, narrowed := e.ctx.Plan.NarrowingFor(node)
+	if !narrowed {
+		return false
+	}
+	named, isNamed := branch.(*sema.Named)
+	if !isNamed {
+		// A branch that is a list or an interval is not a type name to match, and
+		// guessing would drop rows the expression never excluded.
+		return false
+	}
+	if strings.EqualFold(v.Type(), named.Name) {
+		return false
+	}
+	// A subtype of the branch is on the branch: FHIR.id is a FHIR.string.
+	return !e.modelSaysSubtype(v.Type(), named.Name)
+}
+
 // quantityAggregate is quantitySum for an aggregate over a list.
 //
 // Every aggregate that folds quantities together is built on the same addition,

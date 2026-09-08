@@ -139,35 +139,3 @@ func TestAMismatchThatIsNotANarrowingStillFails(t *testing.T) {
 		}
 	}
 }
-
-// TestTheWrongBranchUnderEqualityIsStillNotNull records what this change did not
-// close, asserted so that closing it trips here.
-//
-// The relational operators now answer null for a row on the branch they cannot
-// compare — see TestTheWrongBranchOfAChoiceIsNull — and `=` does not. Over the
-// same three rows, one of which carries a CodeableConcept:
-//
-//	not (O.value >= 190 'mg/dL')   1   the coded row is unanswerable, so excluded
-//	not (O.value  = 190 'mg/dL')   2   the coded row counts as "not equal"
-//
-// One element, one row, two operators, two answers about whether the question can
-// be asked at all. It is the same shape as everything else in this file, and it is
-// left alone because closing it is a different decision: `=` has no ordering to
-// consult, so "cannot be compared" would have to be judged from the types
-// themselves, and that rule has to cover `O.value = 190` — a Quantity against a
-// bare Decimal — as well as a Concept against a Quantity. Getting that wrong turns
-// ordinary false answers into nulls across every measure.
-//
-// What *is* closed is the unit case, which the specification names and which does
-// not need a general rule: two quantities of different dimensions are null for all
-// eight comparison operators. See TestQuantitiesOfDifferentDimensionsAreNull.
-func TestTheWrongBranchUnderEqualityIsStillNotNull(t *testing.T) {
-	if got := evalChoiceCompare(t, "Count([Observation] O where not (O.value >= 190 'mg/dL'))"); got != "1" {
-		t.Fatalf("the relational operators no longer decline the wrong branch (%s) — this "+
-			"test's premise is gone", got)
-	}
-	if got := evalChoiceCompare(t, "Count([Observation] O where not (O.value = 190 'mg/dL'))"); got != "2" {
-		t.Errorf("`=` declines the wrong branch now (%s, want 2 while it does not) — the two "+
-			"operators agree, so remove this test", got)
-	}
-}

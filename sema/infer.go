@@ -616,8 +616,17 @@ func (c *checker) inferBetween(e *ast.BetweenExpression) Type {
 // a FHIR.Period is an interval only after the model's conversion is applied —
 // which is exactly the conversion this records.
 func (c *checker) inferTiming(e *ast.TimingExpression) Type {
-	c.inferTimingOperand(e.Left)
-	c.inferTimingOperand(e.Right)
+	left := c.inferTimingOperand(e.Left)
+	right := c.inferTimingOperand(e.Right)
+	// `during` is a synonym of `included in`, and `includes` is the same question
+	// from the other side, so a point on one side and an interval on the other is
+	// the membership above wearing different words. It names a branch the same way.
+	if iv, ok := right.(*Interval); ok {
+		c.narrowChoiceOperand(e.Left, left, iv.Point)
+	}
+	if iv, ok := left.(*Interval); ok {
+		c.narrowChoiceOperand(e.Right, right, iv.Point)
+	}
 	return Boolean
 }
 
@@ -706,7 +715,31 @@ func (c *checker) inferMembership(e *ast.MembershipExpression) Type {
 	if e.Operator == "contains" {
 		left, right = right, left
 	}
-	_ = left
+	// A choice element asked whether it is in a range is asked about the branch
+	// the range is made of, the same way a comparison names a branch by what it
+	// compares against — `in` and `contains` are `>= low and <= high`, and CQL
+	// makes `during` a synonym of `included in`, so all four spellings have to
+	// agree about which branch they mean.
+	element := e.Left
+	if e.Operator == "contains" {
+		element = e.Right
+	}
+	// Only for an interval. The specification splits the two containers on exactly
+	// this point:
+	//
+	//	in an interval: "If the first argument is null, the result is null."
+	//	in a list:      "If the first argument is null, the result is true if the
+	//	                 list contains any null elements, and false otherwise."
+	//
+	// So a branch the range is not about is unanswerable, and a branch a list does
+	// not hold is simply not in it. Narrowing the list case made
+	// `O.value in {190 'mg/dL'}` null while `distinct` and `IndexOf` over the same
+	// pair still answered "two values" — the split v1.20.0 drew between a
+	// container that has a null to return and one that does not, broken on one
+	// side of it.
+	if iv, isInterval := right.(*Interval); isInterval {
+		c.narrowChoiceOperand(element, left, iv.Point)
+	}
 	switch right.(type) {
 	case *List, *Interval, unknownType, nil:
 		return Boolean

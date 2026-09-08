@@ -124,6 +124,12 @@ func (c *checker) arithmeticResult(e *ast.BinaryExpression, result Type) Type {
 func (c *checker) inferComparableOperands(e *ast.BinaryExpression) {
 	left := c.arithmeticOperand(e.Left)
 	right := c.arithmeticOperand(e.Right)
+	// A choice operand is asked about one of its branches, and the other operand
+	// says which. Recording that is what lets the evaluator tell the branch being
+	// compared from another branch of the same element — by then a FHIR string and
+	// a written literal are the same value, so it cannot work it out itself.
+	c.narrowChoiceOperand(e.Left, left, right)
+	c.narrowChoiceOperand(e.Right, right, left)
 	if IsUnknown(left) || IsUnknown(right) || Equal(left, Any) || Equal(right, Any) {
 		return
 	}
@@ -134,6 +140,42 @@ func (c *checker) inferComparableOperands(e *ast.BinaryExpression) {
 		return
 	}
 	c.reportf(e, SeverityWarning, "%s and %s can never be equal", left, right)
+}
+
+// narrowChoiceOperand records which branch of a choice the comparison is about.
+//
+// The branch is the one that reaches the other operand's type, chosen the way
+// overload resolution chooses: the cheapest conversion, so an exact match beats
+// one that has to convert. `O.value >= 190 'mg/dL'` is about FHIR.Quantity, and
+// `O.value = 'final'` about FHIR.string.
+//
+// Where no branch reaches it, nothing is recorded and the diagnostic below says
+// the two can never be equal — the author is told rather than the query quietly
+// emptied.
+func (c *checker) narrowChoiceOperand(expr ast.Expression, t, other Type) {
+	choice, isChoice := t.(*Choice)
+	if !isChoice || other == nil || IsUnknown(other) || Equal(other, Any) {
+		return
+	}
+	// A choice on both sides names no single branch, and neither side settles the
+	// other.
+	if _, bothChoices := other.(*Choice); bothChoices {
+		return
+	}
+	var best Type
+	var bestCost int
+	for _, branch := range choice.Types {
+		conv, ok := Convertible(branch, other, c.model)
+		if !ok {
+			continue
+		}
+		if best == nil || conv.Cost < bestCost {
+			best, bestCost = branch, conv.Cost
+		}
+	}
+	if best != nil {
+		c.narrow(expr, best)
+	}
 }
 
 // expectStringish accepts anything a concatenation can render, which is a

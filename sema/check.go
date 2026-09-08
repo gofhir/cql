@@ -33,8 +33,36 @@ type Result struct {
 	// not which node needs it.
 	ConversionsByDefine map[string][]Conversion
 
+	// Narrowings is the branch a choice-typed operand was read as, keyed by the
+	// node, for the places where the surrounding expression decides which branch
+	// it is asking about.
+	//
+	// FHIR stores Observation.value as one of eleven types, and a comparison names
+	// which one it means by what it compares against: `O.value >= 190 'mg/dL'` is
+	// about the Quantity branch. The reference translator writes that down as
+	// `as Quantity`, and `as` is null for a value on another branch — so a row
+	// whose value is a CodeableConcept drops out of the query rather than failing
+	// it, or being counted as unequal.
+	//
+	// It cannot be worked out at evaluation. A FHIR string and a written literal
+	// are the same value by then, so "did this come from a choice element" has no
+	// answer there; only the phase that typed the operand knows.
+	Narrowings map[ast.Expression]Type
+
 	// Diagnostics is everything found, in source order.
 	Diagnostics Diagnostics
+}
+
+// NarrowingFor returns the branch this phase read a choice-typed operand as.
+//
+// The evaluator asks it to tell "the branch being compared" from "another branch
+// of the same element", which are the same value to it otherwise.
+func (r *Result) NarrowingFor(expr ast.Expression) (Type, bool) {
+	if r == nil || expr == nil {
+		return nil, false
+	}
+	t, ok := r.Narrowings[expr]
+	return t, ok
 }
 
 // ConversionFor returns the conversion this phase decided an expression needs
@@ -79,6 +107,7 @@ func Check(lib *ast.Library, m Model) *Result {
 		types:        map[ast.Expression]Type{},
 		conversions:  map[ast.Expression]Conversion{},
 		convByDefine: map[string][]Conversion{},
+		narrowings:   map[ast.Expression]Type{},
 		defines:      map[string]Type{},
 		defNodes:     map[string]*ast.ExpressionDef{},
 		funcNodes:    map[string][]*ast.FunctionDef{},
@@ -90,6 +119,7 @@ func Check(lib *ast.Library, m Model) *Result {
 	return &Result{
 		Types:               c.types,
 		Conversions:         c.conversions,
+		Narrowings:          c.narrowings,
 		ConversionsByDefine: c.convByDefine,
 		Defines:             c.defines,
 		Diagnostics:         c.diags.sorted(),
@@ -103,6 +133,7 @@ type checker struct {
 
 	types        map[ast.Expression]Type
 	conversions  map[ast.Expression]Conversion
+	narrowings   map[ast.Expression]Type
 	convByDefine map[string][]Conversion
 	diags        Diagnostics
 
@@ -398,6 +429,23 @@ func (c *checker) convert(expr ast.Expression, conv Conversion) {
 	}
 	c.conversions[expr] = conv
 	c.convByDefine[c.currentDefine] = append(c.convByDefine[c.currentDefine], conv)
+}
+
+// narrow records which branch of a choice an expression was read as.
+//
+// It is recorded against the node and only where the surrounding expression
+// settles the question — a comparison names the branch by what it compares
+// against. Recording it nowhere else is deliberate: a choice used where any
+// branch will do has not been narrowed, and saying it had would make the
+// evaluator drop values the expression never excluded.
+func (c *checker) narrow(expr ast.Expression, branch Type) {
+	if expr == nil || branch == nil || c.speculative > 0 {
+		return
+	}
+	if _, already := c.narrowings[expr]; already {
+		return
+	}
+	c.narrowings[expr] = branch
 }
 
 // record remembers an expression's type and hands it back, so that inference
