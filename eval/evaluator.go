@@ -5392,6 +5392,115 @@ func (e *Evaluator) timingCompare(a, b fptypes.Value, precision string) (int, bo
 // ten years earlier. Only the first was being asked, so a colonoscopy from
 // twenty years ago satisfied a phrase written to find one from the last ten —
 // and that is how ColorectalCancerScreeningsFHIR decides its numerator.
+// evalWithinTiming answers `A within 3 days of B`, which states a symmetric range
+// rather than a direction.
+//
+//	"This expression returns true if the start of X is in the interval beginning
+//	 three days before the start of Y and ending 3 days after the start of Y."
+//
+// So the phrase is membership in [B - Q, B + Q], both ends included, and the
+// quantity is the whole of what it says. It was never read: the builder marked
+// the phrase and dropped the Quantity, and evaluation answered plain `during`.
+// The result was a phrase that meant nothing it stated —
+//
+//	@2019-06-01 within 2 months of @2019-07-01                    null, is true
+//	@2019-01-01 within 2 months of @2019-07-01                    null, is false
+//	Interval[@2019-06-01, …] starts within 2 months of @2019-07-01 false, is true
+//
+// — the last of which is a wrong answer rather than a decline. This is the same
+// defect as the quantityOffset one phrase over, and it reuses that phrase's
+// machinery rather than a second reading of a duration.
+//
+// A right operand that is itself an interval widens on both sides: the range is
+// measured from the near end in each direction, so `A within 3 days of B` asks
+// whether A falls between three days before B starts and three days after it
+// ends.
+func (e *Evaluator) evalWithinTiming(left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, bool, error) {
+	if op.Kind != ast.TimingWithin || op.Offset == "" || left == nil || right == nil {
+		return nil, false, nil
+	}
+	bound, temporal, ok := parseTimingOffset(op.Offset, "")
+	if !temporal {
+		// `within 3 of X` over integers is not a temporal phrase, and this path
+		// has nothing to say about it.
+		return nil, false, nil
+	}
+	if !ok {
+		// A range this cannot place. Answering as though none were stated would
+		// claim more than the expression says — which is what it used to do.
+		return nil, true, nil
+	}
+
+	// The range is measured from the end the phrase names, or from both ends of an
+	// interval that names none — `A within 3 days of B` asks whether A falls
+	// between three days before B starts and three days after it ends, while
+	// `of start B` measures three days either side of one point.
+	fromEnd, toEnd := "", ""
+	switch op.RightBoundary {
+	case "start":
+		fromEnd, toEnd = "starts", "starts"
+	case "end":
+		fromEnd, toEnd = "ends", "ends"
+	}
+	low, err := timingOffsetPoint(right, fromEnd, false)
+	if err != nil {
+		return nil, true, err
+	}
+	high, err := timingOffsetPoint(right, toEnd, true)
+	if err != nil {
+		return nil, true, err
+	}
+	if low == nil || high == nil {
+		return nil, true, nil
+	}
+	from, okLow := shiftTemporal(low, bound.value, bound.precision, true, "")
+	to, okHigh := shiftTemporal(high, bound.value, bound.precision, false, "")
+	if !okLow || !okHigh {
+		return nil, true, nil
+	}
+	// `properly` is strict everywhere else in CQL, and it is strict here: the
+	// range excludes its own ends, so a value sitting exactly on one is not
+	// properly within it.
+	closed := !op.Properly
+	window := cqltypes.NewInterval(from, to, closed, closed)
+
+	// An interval on the left is asked as a whole; a point, or the boundary the
+	// phrase names, is asked as a point.
+	//
+	// `occurs` is the default said aloud and names no end, so it belongs with the
+	// bare spelling rather than with `starts` and `ends`. Reading it as a boundary
+	// word took the interval's start instead of the interval, and the two
+	// spellings of one phrase disagreed:
+	//
+	//	Interval[@2019-06-01, @2019-12-01] within 2 months of @2019-07-01         false
+	//	Interval[@2019-06-01, @2019-12-01] occurs within 2 months of @2019-07-01  true
+	if iv, isInterval := left.(cqltypes.Interval); isInterval && (op.Boundary == "" || op.Boundary == "occurs") {
+		res, ierr := window.Includes(iv)
+		if ierr != nil {
+			if cqltypes.UndecidableComparison(ierr) {
+				return nil, true, nil
+			}
+			return nil, true, ierr
+		}
+		return fptypes.NewBoolean(res), true, nil
+	}
+	point, err := timingOffsetPoint(left, op.Boundary, false)
+	if err != nil {
+		return nil, true, err
+	}
+	if point == nil {
+		return nil, true, nil
+	}
+	res, cerr := window.Contains(point)
+	if cerr != nil {
+		if cqltypes.UndecidableComparison(cerr) {
+			return nil, true, nil
+		}
+		return nil, true, cerr
+	}
+	return fptypes.NewBoolean(res), true, nil
+}
+
 func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, bool, error) {
 	if (!op.Before && !op.After) || left == nil || right == nil {
 		return nil, false, nil
@@ -5499,6 +5608,9 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	// A phrase that states a quantity offset is answered on its own terms: the
 	// direction alone is not what it asked.
 	if op := n.Operator; op.Offset != "" {
+		if res, handled, oerr := e.evalWithinTiming(left, right, op); handled {
+			return res, oerr
+		}
 		if res, handled, oerr := e.evalOffsetTiming(left, right, op); handled {
 			return res, oerr
 		}

@@ -53,13 +53,21 @@ func evalTimingPhrase(t *testing.T, expr string) string {
 // v1.15.2 (interval equality through seven paths) and v1.20.x (four readers of one
 // temporal frame), both times after the case-by-case approach had missed some.
 //
-// 864 pairs. It found `within` unimplemented on its first run — see
-// TestWithinStillIgnoresItsQuantity.
+// It found `within` unimplemented on its first run: the phrase was parsed, its
+// quantity dropped, and evaluated as plain `during`. That is fixed, and the
+// phrase is a row of the table now rather than a note beside it.
 func TestEverySpellingOfATimingPhraseAgrees(t *testing.T) {
 	lefts := map[string]string{
 		"closed bounds": "Interval[@2019-03-01T00:00:00, @2019-09-01T00:00:00]",
 		"open bounds":   "Interval(@2019-03-01T00:00:00, @2019-09-01T00:00:00)",
 		"dates":         "Interval[@2019-03-01, @2019-09-01]",
+		// An interval whose start and whose whole give different answers about
+		// the rights below. Without one, the equivalence between naming an end
+		// and taking that end first holds for the wrong reason — every left here
+		// answered the same either way, and `occurs within` read as a boundary
+		// word passed 936 pairs while taking the start of an interval the bare
+		// spelling asked about whole.
+		"a start inside and an end outside": "Interval[@2019-06-01T00:00:00, @2019-12-01T00:00:00]",
 	}
 	rights := map[string]string{
 		"a point inside": "@2019-06-01T00:00:00",
@@ -68,6 +76,9 @@ func TestEverySpellingOfATimingPhraseAgrees(t *testing.T) {
 		"a date":         "@2019-06-01",
 	}
 	relationships := []string{"before", "after", "on or before", "on or after"}
+	// `within Q of` carries its own quantity inside the relation, so it crosses the
+	// table on its own rather than against the offset prefixes.
+	withins := []string{"within 1 month of", "within 6 months of"}
 	// The strict qualifier comes before the quantity and the inclusive one after
 	// it, so each is written the way its own rule spells it.
 	offsets := []string{
@@ -76,34 +87,46 @@ func TestEverySpellingOfATimingPhraseAgrees(t *testing.T) {
 	}
 
 	pairs := 0
+	// The two equivalences, in one place so a relation with a different shape is
+	// held to exactly the same ones.
+	agree := func(leftName, rightName, left, right, off, rel string) {
+		t.Helper()
+		// The boundary word names an end, and naming it is the same as taking that
+		// end first.
+		for _, w := range []struct{ word, extractor string }{
+			{"starts", "start of"},
+			{"ends", "end of"},
+		} {
+			phrase := fmt.Sprintf("%s %s %s%s %s", left, w.word, off, rel, right)
+			extracted := fmt.Sprintf("%s %s %s%s %s", w.extractor, left, off, rel, right)
+			pairs++
+			if a, b := evalTimingPhrase(t, phrase), evalTimingPhrase(t, extracted); a != b {
+				t.Errorf("[%s, %s] `%s` = %s but `%s` = %s — one name for one end",
+					leftName, rightName, phrase, a, extracted, b)
+			}
+		}
+		// `occurs` is the default written out, so writing it changes nothing.
+		phrase := fmt.Sprintf("%s occurs %s%s %s", left, off, rel, right)
+		bare := fmt.Sprintf("%s %s%s %s", left, off, rel, right)
+		pairs++
+		if a, b := evalTimingPhrase(t, phrase), evalTimingPhrase(t, bare); a != b {
+			t.Errorf("[%s, %s] `%s` = %s but `%s` = %s — occurs is the default said aloud",
+				leftName, rightName, phrase, a, bare, b)
+		}
+	}
+
 	for leftName, left := range lefts {
 		for rightName, right := range rights {
+			// `within` is here rather than in a test of its own because it is the
+			// same claim: two spellings of one phrase cannot disagree. It used to,
+			// and in the worst way — `starts within 2 months of` said false for a
+			// point one month away while the extracted spelling said null.
+			for _, rel := range withins {
+				agree(leftName, rightName, left, right, "", rel)
+			}
 			for _, rel := range relationships {
 				for _, off := range offsets {
-					// The boundary word names an end, and naming it is the same as
-					// taking that end first.
-					for _, w := range []struct{ word, extractor string }{
-						{"starts", "start of"},
-						{"ends", "end of"},
-					} {
-						phrase := fmt.Sprintf("%s %s %s%s %s", left, w.word, off, rel, right)
-						extracted := fmt.Sprintf("%s %s %s%s %s", w.extractor, left, off, rel, right)
-						pairs++
-						if a, b := evalTimingPhrase(t, phrase), evalTimingPhrase(t, extracted); a != b {
-							t.Errorf("[%s, %s] `%s` = %s but `%s` = %s — one name for one end",
-								leftName, rightName, phrase, a, extracted, b)
-						}
-					}
-
-					// `occurs` is the default written out, so writing it changes
-					// nothing.
-					phrase := fmt.Sprintf("%s occurs %s%s %s", left, off, rel, right)
-					bare := fmt.Sprintf("%s %s%s %s", left, off, rel, right)
-					pairs++
-					if a, b := evalTimingPhrase(t, phrase), evalTimingPhrase(t, bare); a != b {
-						t.Errorf("[%s, %s] `%s` = %s but `%s` = %s — occurs is the default said aloud",
-							leftName, rightName, phrase, a, bare, b)
-					}
+					agree(leftName, rightName, left, right, off, rel)
 				}
 			}
 		}
@@ -111,7 +134,8 @@ func TestEverySpellingOfATimingPhraseAgrees(t *testing.T) {
 	// The count is asserted exactly, not as a floor: a floor set below the real
 	// figure would not notice a whole row of the table being dropped, which is how
 	// the stale "720" survived a sixth offset being added.
-	const expected = 3 * 4 * 4 * 6 * 3 // lefts × rights × relationships × offsets × pairs per cell
+	// lefts × rights × (relationships × offsets + withins) × pairs per cell
+	const expected = 4 * 4 * (4*6 + 2) * 3
 	if pairs != expected {
 		t.Errorf("compared %d pairs, expected %d — a dimension of the table has changed "+
 			"and the figure in the doc comment above no longer describes it", pairs, expected)
@@ -180,38 +204,5 @@ func TestTheComparatorsDoNotContradictEachOther(t *testing.T) {
 				}
 			}
 		}
-	}
-}
-
-// TestWithinStillIgnoresItsQuantity records a phrase this table found and this
-// change does not fix, asserted rather than described so that fixing it trips the
-// test instead of leaving a stale note behind.
-//
-// `A within 2 months of B` is the same shape of defect the quantity offset had:
-// the builder marks the phrase kind and never reads the quantity. Its spellings
-// disagree, which is how the table surfaced it —
-//
-//	Interval[…] starts within 2 months of @2019-07-01     false
-//	start of Interval[…] within 2 months of @2019-07-01    null
-//
-// — and a point one month away answers null rather than true.
-//
-// It is left alone deliberately: no library in cqframework/ecqm-content-r4 writes
-// `within ... of`, and neither does the conformance corpus, so nothing is measured
-// to be wrong today. The previous change in this area grew from one defect to the
-// whole family and took three review rounds to settle; this one stays a table.
-//
-// When it is fixed, delete this and let the table above cover the phrase.
-func TestWithinStillIgnoresItsQuantity(t *testing.T) {
-	const near = "@2019-06-01T00:00:00 within 2 months of @2019-07-01T00:00:00"
-	if got := evalTimingPhrase(t, near); got != "null" {
-		t.Fatalf("`within` answers %s now — it reads its quantity, so remove this test and "+
-			"let TestEverySpellingOfATimingPhraseAgrees cover the phrase", got)
-	}
-
-	const asPhrase = "Interval[@2019-06-01T00:00:00, @2019-08-01T00:00:00] starts within 2 months of @2019-07-01T00:00:00"
-	const asExtraction = "start of Interval[@2019-06-01T00:00:00, @2019-08-01T00:00:00] within 2 months of @2019-07-01T00:00:00"
-	if a, b := evalTimingPhrase(t, asPhrase), evalTimingPhrase(t, asExtraction); a == b {
-		t.Fatalf("the two spellings of `within` agree now (%s) — remove this test", a)
 	}
 }

@@ -16,21 +16,25 @@ import (
 // precision, which is what gives the diagnosis away. It is not a precision that
 // is missing, it is an offset.
 //
-// This is a defect in fhirpath's Compare, present in v1.6.0 and v1.8.0 alike and
-// reported upstream. Both specifications say an absent offset resolves rather
-// than invalidates:
+// Two things were wrong there and only one of them was fhirpath's. Reporting the
+// precision sentinel for an offset problem is a false diagnosis, and upstream
+// fixed it: there is a distinct ErrOffsetMismatch now.
+//
+// The answer is not changing upstream, and should not. FHIRPath makes the default
+// offset a policy decision — "In the simplest case, no default timezone offset is
+// provided" — and that engine provides none, so a comparison it cannot place has
+// no answer.
+//
+// CQL is where the two part company:
 //
 //	CQL, DateTime Literals: "If no timezone offset is specified, the timezone
 //	offset of the evaluation request timestamp is used" — and on extracting it,
 //	"the result ... will be the timezone offset of the evaluation request, not
 //	null".
 //
-//	FHIRPath, Comparison: "either both values have no timezone offset specified,
-//	or both values are converted to a common timezone offset".
-//
-// CompareTemporal already exists to absorb where fptypes and CQL part company, so
-// it absorbs this too. It delegates first, so when fhirpath stops reporting the
-// mismatch this compensation simply stops being reached.
+// CQL names a default where FHIRPath leaves it open. CompareTemporal exists to
+// absorb exactly that kind of divergence, so this is permanent rather than a
+// patch waiting on a release.
 //
 // What it does NOT do is invent the evaluation request's offset. It answers only
 // where the answer holds for every offset a value could have been written in:

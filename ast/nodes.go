@@ -590,6 +590,13 @@ type TimingOp struct {
 	Offset     string
 	Comparator string
 	Boundary   string
+
+	// RightBoundary is the end of the *right* operand a `within` phrase names:
+	// "start", "end", or "" for the operand itself. Only `within` has it —
+	// `A within 3 days of start B` is the specification's own example of the
+	// phrase — and it was read as though the word were not there, so the range
+	// was measured from whichever end each direction reached.
+	RightBoundary string
 }
 
 // TimingKind enumerates the kinds of timing operators.
