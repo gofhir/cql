@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.7](https://github.com/gofhir/cql/compare/v1.20.6...v1.20.7) (2026-09-08)
+
+
+### Bug Fixes
+
+* **eval:** `within ... of` reads the range it states ([#88](https://github.com/gofhir/cql/issues/88)) ([7aa6316](https://github.com/gofhir/cql/commit/7aa6316d32e10f911f576dc4ea0b4b40b164cd39))
+* **eval:** a comparison asks about one branch of a choice element ([#91](https://github.com/gofhir/cql/issues/91)) ([e3cf3d2](https://github.com/gofhir/cql/commit/e3cf3d2c2f99a53466cb6ed1477b465de2ef5c8b))
+
 ## [1.20.6](https://github.com/gofhir/cql/compare/v1.20.5...v1.20.6) (2026-09-07)
 
 
