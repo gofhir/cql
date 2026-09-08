@@ -277,38 +277,23 @@ func TestAListDoesNotDeclineTheWrongBranch(t *testing.T) {
 	}
 }
 
-// TestTheBranchRuleStopsAtTheLibraryBoundary records where this change does not
-// reach, asserted so that reaching it trips here.
+// TestTheBranchRuleCrossesTheLibraryBoundary covers what the plan reaches, which
+// until this was only the library being evaluated.
 //
-// The narrowing is a decision of the semantic phase, and the evaluator holds one
-// plan: the one for the library being evaluated. A comparison written inside an
-// *included* library has nodes that plan has never seen, so it gets no narrowing
-// and fails the way it did before:
+// A plan is keyed by AST node, and an included library's nodes are not in the
+// caller's. So every decision the semantic phase makes was invisible to code
+// inside an included library, and the same comparison answered two ways:
 //
 //	the same expression, in the evaluated library   null
 //	                     in an included library     error: cannot compare Concept
 //
-// The limitation is older than this change and documented next to declaredDateTime,
-// which works around it by asking the model as well. Conversions survive it for
-// that reason — coerceToSystem asks the model at evaluation and needs no plan, and
-// the concrete spelling `O.valueQuantity >= 190 'mg/dL'` answers correctly in both
-// libraries. A narrowing has no such fallback: nothing at evaluation knows which
-// branch a comparison is about.
+// Conversions survived it because coerceToSystem asks the model at evaluation and
+// needs no plan. A narrowing has no such fallback — nothing at evaluation knows
+// which branch a comparison is about — so it was the half that showed.
 //
-// Closing it means carrying a plan per library rather than one for the caller, and
-// resolveIncludesInto already computes each included library's plan and discards
-// it. That is a change worth making on its own, because it would also let planned
-// conversions apply inside included libraries where only the runtime fallback does
-// now — which moves answers in libraries the published measures all include, and
-// so needs measuring rather than appending.
-func TestTheBranchRuleStopsAtTheLibraryBoundary(t *testing.T) {
-	const coded = `{"resourceType":"Observation","id":"o","status":"final",` +
-		`"valueCodeableConcept":{"coding":[{"code":"x"}]}}`
-	const helper = `library Helper version '1.0'
-using FHIR version '4.0.1'
-include FHIRHelpers version '4.0.1' called FHIRHelpers
-define function IsHigh(O FHIR.Observation): O.value >= 190 'mg/dL'
-`
+// resolveIncludesInto had each library's plan in hand and discarded it. It is kept
+// now, and a scope built for a library is judged by its own.
+func TestTheBranchRuleCrossesTheLibraryBoundary(t *testing.T) {
 	const main = `library T version '1.0'
 using FHIR version '4.0.1'
 include FHIRHelpers version '4.0.1' called FHIRHelpers
@@ -316,45 +301,51 @@ include Helper version '1.0' called H
 context Patient
 define A: H.IsHigh(First([Observation]))
 `
-	resolve := func(_ context.Context, name, _ string) (string, error) {
-		if name == "Helper" {
-			return helper, nil
-		}
-		return "", fmt.Errorf("no library %q", name)
+	helper := func(body string) string {
+		return "library Helper version '1.0'\nusing FHIR version '4.0.1'\n" +
+			"include FHIRHelpers version '4.0.1' called FHIRHelpers\n" +
+			"define function IsHigh(O FHIR.Observation): " + body + "\n"
 	}
-	_, err := NewEngine(WithDataProvider(oneBranchProvider{"valueCodeableConcept",
-		`{"coding":[{"code":"x"}]}`}), WithLibraryResolver(resolve)).
-		EvaluateExpression(context.Background(), main, "A", []byte(coded), nil)
-	if err == nil {
-		t.Error("a comparison inside an included library declined the wrong branch — the plan " +
-			"reaches included libraries now, so remove this test and cover the case above")
+	run := func(t *testing.T, body, field, value string) string {
+		t.Helper()
+		resolve := func(_ context.Context, name, _ string) (string, error) {
+			if name == "Helper" {
+				return helper(body), nil
+			}
+			return "", fmt.Errorf("no library %q", name)
+		}
+		got, err := NewEngine(WithDataProvider(oneBranchProvider{field, value}),
+			WithLibraryResolver(resolve)).
+			EvaluateExpression(context.Background(), main, "A",
+				[]byte(`{"resourceType":"Patient","id":"p1"}`), nil)
+		if err != nil {
+			return "ERROR: " + err.Error()
+		}
+		if got == nil {
+			return "null"
+		}
+		return got.String()
 	}
 
-	// The premise: the same comparison in the evaluated library does decline.
-	if got := evalOnBranch(t, "valueCodeableConcept", `{"coding":[{"code":"x"}]}`,
-		"First([Observation] O).value >= 190 'mg/dL'"); got != "null" {
-		t.Fatalf("in the evaluated library = %s, want null — this test's premise", got)
+	// Every branch answers the same inside an included library as in the evaluated
+	// one, which is the claim. The four plain-value branches are the ones that
+	// raised errors, and they are also the ones a runtime test cannot recognize.
+	for _, b := range branchCases {
+		const expr = "O.value >= 190 'mg/dL'"
+		inside := run(t, expr, b.field, b.value)
+		outside := evalOnBranch(t, b.field, b.value, "First([Observation] O).value >= 190 'mg/dL'")
+		if inside != outside {
+			t.Errorf("the %s branch: inside an included library = %s, in the evaluated one = %s",
+				b.name, inside, outside)
+		}
 	}
 
-	// And a conversion does cross the boundary, because it has a fallback that
-	// needs no plan. This is what tells the two apart.
-	const helperConcrete = `library Helper version '1.0'
-using FHIR version '4.0.1'
-include FHIRHelpers version '4.0.1' called FHIRHelpers
-define function IsHigh(O FHIR.Observation): O.valueQuantity >= 190 'mg/dL'
-`
-	resolveConcrete := func(_ context.Context, name, _ string) (string, error) {
-		if name == "Helper" {
-			return helperConcrete, nil
-		}
-		return "", fmt.Errorf("no library %q", name)
-	}
-	got, err := NewEngine(WithDataProvider(oneBranchProvider{"valueQuantity",
-		`{"value":190,"unit":"mg/dL"}`}), WithLibraryResolver(resolveConcrete)).
-		EvaluateExpression(context.Background(), main, "A", []byte(coded), nil)
-	if err != nil || got == nil || got.String() != "true" {
-		t.Errorf("a conversion inside an included library = %v, %v; want true — it has a "+
-			"model-based fallback where the narrowing has none", got, err)
+	// And the conversions the plan decides now apply there too, which is the other
+	// half of what was invisible: this raised an error, because the cast's planned
+	// ToQuantity never ran and arithmetic was handed raw FHIR JSON.
+	if got := run(t, "(O.value as FHIR.Quantity) + 1 'mg' > 9 'mg'",
+		"valueQuantity", `{"value":9.1,"unit":"mg"}`); got != "true" {
+		t.Errorf("arithmetic over a cast choice element inside an included library = %s, want true", got)
 	}
 }
 
@@ -399,6 +390,65 @@ func TestTheChoiceMayBeOnEitherSide(t *testing.T) {
 			if got := evalOnBranch(t, b.field, b.value, expr); got != b.want {
 				t.Errorf("%s on the %s branch = %s, want %s", expr, b.field, got, b.want)
 			}
+		}
+	}
+}
+
+// TestThePlanReachesEveryDepthOfTheIncludeGraph covers the depth, which is a
+// separate property from crossing one boundary: a library included by an included
+// library is two plans away from the one being evaluated.
+//
+// It works because each level is registered as the graph is walked, before the
+// check that decides which libraries the top level gets an alias for. Measured
+// against the previous code, where two levels deep raised an error for every
+// branch a comparison is not about.
+func TestThePlanReachesEveryDepthOfTheIncludeGraph(t *testing.T) {
+	const deep = `library H2 version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FHIRHelpers
+define function Deep(O FHIR.Observation): O.value >= 190 'mg/dL'
+`
+	const mid = `library H1 version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FHIRHelpers
+include H2 version '1.0' called D
+define function Mid(O FHIR.Observation): D.Deep(O)
+`
+	const main = `library T version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FHIRHelpers
+include H1 version '1.0' called M
+context Patient
+define A: M.Mid(First([Observation]))
+`
+	resolve := func(_ context.Context, name, _ string) (string, error) {
+		switch name {
+		case "H1":
+			return mid, nil
+		case "H2":
+			return deep, nil
+		}
+		return "", fmt.Errorf("no library %q", name)
+	}
+	for _, b := range branchCases {
+		got, err := NewEngine(WithDataProvider(oneBranchProvider{b.field, b.value}),
+			WithLibraryResolver(resolve)).
+			EvaluateExpression(context.Background(), main, "A",
+				[]byte(`{"resourceType":"Patient","id":"p1"}`), nil)
+		if err != nil {
+			t.Errorf("the %s branch, two includes deep: %v", b.name, err)
+			continue
+		}
+		want := "null"
+		if b.name == "Quantity" {
+			want = "true"
+		}
+		out := "null"
+		if got != nil {
+			out = got.String()
+		}
+		if out != want {
+			t.Errorf("the %s branch, two includes deep = %s, want %s", b.name, out, want)
 		}
 	}
 }
