@@ -22,9 +22,12 @@ func evalOrDiagnostic(t *testing.T, expr string) string {
 	return got.String()
 }
 
-// betweenOperands are values of the numeric types that promote to one another,
-// written so every pair of them appears below in both orders.
-var betweenOperands = []string{"100", "100L", "100.0"}
+// numericSpellings writes one number in each of the three numeric types that
+// promote to one another, so a table can vary the type of a value independently
+// of the value itself.
+func numericSpellings(n string) []string {
+	return []string{n, n + "L", n + ".0"}
+}
 
 // TestBetweenPromotesLikeTheTwoSpellingsItIsDefinedAs is the whole of the rule.
 //
@@ -41,45 +44,53 @@ var betweenOperands = []string{"100", "100L", "100.0"}
 // bounds, so the interval `in` builds is over decimals and the integer is
 // compared against that. `between` now puts the operand in the same pot.
 //
-// The table is every combination of the three promoting numeric types across
-// operand and both bounds, in both orders, checked against both expansions
-// rather than against a hand-written expectation — the two spellings are the
-// authority, and a hand-written table would be a fourth opinion to keep in sync.
+// The table is every combination of the three promoting numeric types across the
+// operand and both bounds, over a range whose two ends are genuinely different
+// values and with the operand once inside it and once outside — so a rule that
+// only held at a boundary, or that answered a constant, would not survive.
+//
+// Each row is checked against both expansions rather than against a hand-written
+// expectation: the two spellings are the authority here, and a written-out table
+// would be a fourth opinion to keep in sync with them.
 func TestBetweenPromotesLikeTheTwoSpellingsItIsDefinedAs(t *testing.T) {
-	var checked int
-	for _, operand := range betweenOperands {
-		for _, low := range betweenOperands {
-			for _, high := range betweenOperands {
-				// A pair that brackets the operand and one that does not, so a
-				// rule that answered a constant would not survive the table.
-				for _, shift := range []string{"", " + 50"} {
-					lowExpr, highExpr := low+shift, high+shift
-					between := evalOrDiagnostic(t,
-						operand+" between "+lowExpr+" and "+highExpr)
-					conjunction := evalOrDiagnostic(t,
-						operand+" >= "+lowExpr+" and "+operand+" <= "+highExpr)
-					inInterval := evalOrDiagnostic(t,
-						operand+" in Interval["+lowExpr+", "+highExpr+"]")
-					checked++
-					if between != conjunction {
-						t.Errorf("%s between %s and %s = %s, but the conjunction it is defined as = %s",
-							operand, lowExpr, highExpr, between, conjunction)
-					}
-					if between != inInterval {
-						t.Errorf("%s between %s and %s = %s, but `in Interval` = %s",
-							operand, lowExpr, highExpr, between, inInterval)
-					}
-					if strings.HasPrefix(between, "ERROR") {
-						t.Errorf("%s between %s and %s did not answer: %s",
-							operand, lowExpr, highExpr, between)
-					}
+	var checked, answeredTrue, answeredFalse int
+	for _, operand := range append(numericSpellings("150"), numericSpellings("250")...) {
+		for _, low := range numericSpellings("100") {
+			for _, high := range numericSpellings("200") {
+				between := evalOrDiagnostic(t, operand+" between "+low+" and "+high)
+				conjunction := evalOrDiagnostic(t,
+					operand+" >= "+low+" and "+operand+" <= "+high)
+				inInterval := evalOrDiagnostic(t, operand+" in Interval["+low+", "+high+"]")
+				checked++
+				switch between {
+				case "true":
+					answeredTrue++
+				case "false":
+					answeredFalse++
+				default:
+					t.Errorf("%s between %s and %s did not answer: %s",
+						operand, low, high, between)
+				}
+				if between != conjunction {
+					t.Errorf("%s between %s and %s = %s, but the conjunction it is defined as = %s",
+						operand, low, high, between, conjunction)
+				}
+				if between != inInterval {
+					t.Errorf("%s between %s and %s = %s, but `in Interval` = %s",
+						operand, low, high, between, inInterval)
 				}
 			}
 		}
 	}
-	// The table is worth nothing if it did not enumerate what it claims to.
-	if want := len(betweenOperands) * len(betweenOperands) * len(betweenOperands) * 2; checked != want {
-		t.Fatalf("the table checked %d combinations, want %d", checked, want)
+	// The table is worth nothing if it did not enumerate what it claims to, and
+	// worth little if every row landed on the same answer.
+	if checked != 54 {
+		t.Fatalf("the table checked %d combinations, want 54", checked)
+	}
+	if answeredTrue != 27 || answeredFalse != 27 {
+		t.Fatalf("the table answered true %d times and false %d, want 27 of each — "+
+			"one half has the operand inside the range and the other outside",
+			answeredTrue, answeredFalse)
 	}
 }
 
@@ -110,6 +121,23 @@ func TestBetweenStillReportsWhatCannotBeCompared(t *testing.T) {
 		if !strings.Contains(got, "semantic error") {
 			t.Errorf("%s failed at evaluation, not at check: %s", tt.expr, got)
 		}
+	}
+
+	// Bounds that do not agree with each other are reported even when the operand
+	// is not something this phase could type at all. That is a second diagnostic
+	// where main gives one, and it is deliberate: `100` and `'abc'` cannot be the
+	// two ends of anything, whoever is being tested against them. It is the same
+	// call `between` over a choice already makes, where the operand names no
+	// single type either and the bounds are still checked against each other.
+	src := "library T version '1.0'\ndefine X: Undefined between 100 and 'abc'\n"
+	_, err := NewEngine().EvaluateExpression(context.Background(), src, "X", nil, nil)
+	if err == nil {
+		t.Fatal("an undefined operand between mismatched bounds reported nothing")
+	}
+	if n := strings.Count(err.Error(), "error: in X:"); n != 2 {
+		t.Errorf("`Undefined between 100 and 'abc'` gave %d diagnostics, want 2 — "+
+			"the undefined name and the two bounds that cannot bracket anything:\n%s",
+			n, err.Error())
 	}
 }
 
