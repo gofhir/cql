@@ -83,14 +83,17 @@ func TestBetweenPromotesLikeTheTwoSpellingsItIsDefinedAs(t *testing.T) {
 		}
 	}
 	// The table is worth nothing if it did not enumerate what it claims to, and
-	// worth little if every row landed on the same answer.
-	if checked != 54 {
-		t.Fatalf("the table checked %d combinations, want 54", checked)
+	// worth little if every row landed on the same answer. Both counts are derived
+	// from the spellings rather than written down, so adding a numeric type to
+	// numericSpellings widens the table instead of breaking these two lines.
+	perHalf := len(numericSpellings("")) * len(numericSpellings("")) * len(numericSpellings(""))
+	if checked != 2*perHalf {
+		t.Fatalf("the table checked %d combinations, want %d", checked, 2*perHalf)
 	}
-	if answeredTrue != 27 || answeredFalse != 27 {
-		t.Fatalf("the table answered true %d times and false %d, want 27 of each — "+
+	if answeredTrue != perHalf || answeredFalse != perHalf {
+		t.Fatalf("the table answered true %d times and false %d, want %d of each — "+
 			"one half has the operand inside the range and the other outside",
-			answeredTrue, answeredFalse)
+			answeredTrue, answeredFalse, perHalf)
 	}
 }
 
@@ -138,6 +141,40 @@ func TestBetweenStillReportsWhatCannotBeCompared(t *testing.T) {
 		t.Errorf("`Undefined between 100 and 'abc'` gave %d diagnostics, want 2 — "+
 			"the undefined name and the two bounds that cannot bracket anything:\n%s",
 			n, err.Error())
+	}
+}
+
+// TestAReversedRangeFollowsTheConjunctionNotTheIntervalConstructor draws the
+// limit on which of the two expansions is the authority when they disagree.
+//
+// They disagree in exactly one place, and a sweep of the nine numeric spellings
+// across operand and both bounds found no other: where the bounds are the wrong
+// way round, `between` and the conjunction both answer false, while
+// `Interval[2, 1]` is refused by the constructor. All 729 rows agreed with the
+// conjunction; the 243 that differed from `in Interval` were all this.
+//
+// The conjunction is what the specification defines `between` as, so it wins,
+// and a promotion table that compared against `in Interval` over reversed bounds
+// would be measuring the interval constructor instead. That constructor refusing
+// a reversed pair, where CQL calls such an interval empty, is a separate matter
+// and older than this.
+func TestAReversedRangeFollowsTheConjunctionNotTheIntervalConstructor(t *testing.T) {
+	for _, tt := range []struct{ low, high string }{
+		{"200", "100"},
+		{"200.0", "100"},
+		{"200", "100.0"},
+		{"200L", "100"},
+	} {
+		between := evalOrDiagnostic(t, "150 between "+tt.low+" and "+tt.high)
+		conjunction := evalOrDiagnostic(t, "150 >= "+tt.low+" and 150 <= "+tt.high)
+		if between != conjunction {
+			t.Errorf("150 between %s and %s = %s, but the conjunction = %s",
+				tt.low, tt.high, between, conjunction)
+		}
+		if between != "false" {
+			t.Errorf("150 between %s and %s = %s, want false — a reversed range holds nothing",
+				tt.low, tt.high, between)
+		}
 	}
 }
 
@@ -201,6 +238,7 @@ func TestBetweenPromotionLeavesTheRestOfTheOperatorAlone(t *testing.T) {
 		{"100 properly between 99.9 and 200.0", "true"},
 		// A reversed pair is empty, not an error.
 		{"150 between 200.0 and 100", "false"},
+		{"150 between 200 and 100.0", "false"},
 		// Quantities promote by their own rule and keep it.
 		{"150 'mg' between 100.0 'mg' and 200 'mg'", "true"},
 		{"150 'mg' between 100 'mg' and 200 'mg'", "true"},
