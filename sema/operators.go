@@ -152,15 +152,17 @@ func (c *checker) inferComparableOperands(e *ast.BinaryExpression) {
 // Where no branch reaches it, nothing is recorded and the diagnostic below says
 // the two can never be equal — the author is told rather than the query quietly
 // emptied.
-func (c *checker) narrowChoiceOperand(expr ast.Expression, t, other Type) {
+// It reports whether a branch was found, so a caller that has nothing else to say
+// about the pair can say that nothing matched.
+func (c *checker) narrowChoiceOperand(expr ast.Expression, t, other Type) bool {
 	choice, isChoice := t.(*Choice)
 	if !isChoice || other == nil || IsUnknown(other) || Equal(other, Any) {
-		return
+		return false
 	}
 	// A choice on both sides names no single branch, and neither side settles the
 	// other.
 	if _, bothChoices := other.(*Choice); bothChoices {
-		return
+		return false
 	}
 	var best Type
 	var bestCost int
@@ -173,9 +175,11 @@ func (c *checker) narrowChoiceOperand(expr ast.Expression, t, other Type) {
 			best, bestCost = branch, conv.Cost
 		}
 	}
-	if best != nil {
-		c.narrow(expr, best)
+	if best == nil {
+		return false
 	}
+	c.narrow(expr, best)
+	return true
 }
 
 // expectStringish accepts anything a concatenation can render, which is a

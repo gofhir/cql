@@ -5116,6 +5116,15 @@ func (e *Evaluator) evalBetween(n *ast.BetweenExpression) (fptypes.Value, error)
 	if operand == nil || low == nil || high == nil {
 		return nil, nil
 	}
+	// The same two steps `in` takes, in the same order and for the same reasons:
+	// a value on a branch these bounds are not about is not being asked about,
+	// and the branch's name is what the conversion erases.
+	if e.onAnotherBranch(n.Operand, operand) {
+		return nil, nil
+	}
+	if operand, err = e.coerceToSystem(operand); err != nil {
+		return nil, err
+	}
 	interval := cqltypes.NewInterval(low, high, !n.Properly, !n.Properly)
 	result, err := interval.Contains(operand)
 	if err != nil {

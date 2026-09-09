@@ -606,6 +606,29 @@ func (c *checker) inferBetween(e *ast.BetweenExpression) Type {
 	// inferring the operand plainly did — converts nothing and compares a
 	// FHIR value against a system one.
 	operand := c.arithmeticOperand(e.Operand)
+	// A choice operand is the other way round again: the bounds are what name the
+	// branch, because `between` *is* `>= low and <= high`. Checking the bounds
+	// against the choice reported the operand's own type back at the author —
+	// "expected Choice<FHIR.Quantity, FHIR.CodeableConcept, …>, got Quantity" —
+	// and refused every branch, the one being asked about included. So
+	// `O.value between 100 'mg/dL' and 200 'mg/dL'` did not compile at all, while
+	// `O.value in Interval[100 'mg/dL', 200 'mg/dL']` and the conjunction it is
+	// defined as both did.
+	if choice, isChoice := operand.(*Choice); isChoice {
+		// The bounds still have to agree with each other — that check moved
+		// rather than went away. Skipping it let
+		// `O.value between 100 'mg/dL' and 'abc'` compile in silence, while the
+		// same mismatch without a choice was reported.
+		bounds := c.infer(e.Low)
+		c.expect(e.High, bounds)
+		if !c.narrowChoiceOperand(e.Operand, operand, bounds) && !IsUnknown(bounds) {
+			// No branch reaches what the bounds are, so no value of this element
+			// can be between them. The comparison operators say the same thing in
+			// the same words when nothing converts either way.
+			c.reportf(e, SeverityWarning, "no branch of %s can be between two %ss", choice, bounds)
+		}
+		return Boolean
+	}
 	c.expect(e.Low, operand)
 	c.expect(e.High, operand)
 	return Boolean
