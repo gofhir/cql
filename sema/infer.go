@@ -629,9 +629,50 @@ func (c *checker) inferBetween(e *ast.BetweenExpression) Type {
 		}
 		return Boolean
 	}
-	c.expect(e.Low, operand)
-	c.expect(e.High, operand)
+	// Otherwise the three have to meet at a type they share, not at the operand's
+	// own. Taking the operand as the pattern made `between` refuse a promotion
+	// the two spellings it is defined as both perform:
+	//
+	//	150 between 100.0 and 200.0      expected System.Integer, got System.Decimal
+	//	150 >= 100.0 and 150 <= 200.0    true
+	//	150 in Interval[100.0, 200.0]    true
+	//
+	// Interval[] is the one that shows why: it takes the Common of its own two
+	// bounds, so the interval `in` builds is over decimals and the integer is
+	// compared against it. This is that, with the operand in the pot as well.
+	// Only the ones that agree are gathered. Common answers a Choice for a pair
+	// that meets nowhere, and folding that back in loses the operand: for
+	// `'abc' between 100 and 200` the nested Common lands on Integer, which the
+	// two bounds satisfy, so nothing was reported and the String went to the
+	// evaluator to fail there — a diagnostic turned into a runtime error.
+	// The operand starts the fold rather than joining it, which is what keeps it
+	// reachable: Common answers a type one of its two arguments already reaches,
+	// so beginning at the operand and only ever widening from there leaves the
+	// operand able to reach the result. A guard that re-checked that afterwards
+	// was written and then removed — it fired for nothing in the conformance
+	// corpus, the published measures or the eCQM cases, because there is no pair
+	// for it to fire on.
+	low, high := c.infer(e.Low), c.infer(e.High)
+	want := operand
+	for _, bound := range []Type{low, high} {
+		if joined := Common(want, bound, c.model); !isSpread(joined) {
+			want = joined
+		}
+	}
+	c.expectTyped(e.Low, low, want)
+	c.expectTyped(e.High, high, want)
 	return Boolean
+}
+
+// isSpread reports a type that stands for "these do not meet" rather than for a
+// type both sides reach — which is what Common answers for a pair with nothing
+// in common, and what an operand this phase could not type has.
+func isSpread(t Type) bool {
+	if IsUnknown(t) {
+		return true
+	}
+	_, choice := t.(*Choice)
+	return choice
 }
 
 // inferTiming types the interval timing operators. Every one of them answers a
@@ -877,8 +918,18 @@ func (c *checker) expect(expr ast.Expression, want Type) {
 	if expr == nil {
 		return
 	}
-	got := c.infer(expr)
-	if IsUnknown(got) || IsUnknown(want) {
+	c.expectTyped(expr, c.infer(expr), want)
+}
+
+// expectTyped is expect() for an expression this phase has already typed.
+//
+// It exists for the callers that work out the type they want *from* their
+// operands, and so cannot use expect: inferring is not memoized, so walking an
+// operand a second time reports every diagnostic inside it twice. It is the same
+// check and the same wording, minus the walk — the pairing coerceRecorded has
+// with convert, for the places that also need to be told when nothing reaches.
+func (c *checker) expectTyped(expr ast.Expression, got, want Type) {
+	if expr == nil || IsUnknown(got) || IsUnknown(want) {
 		return
 	}
 	conv, ok := Convertible(got, want, c.model)
