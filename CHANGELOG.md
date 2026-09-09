@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.8](https://github.com/gofhir/cql/compare/v1.20.7...v1.20.8) (2026-09-09)
+
+
+### Bug Fixes
+
+* **eval:** an included library is judged by its own plan ([#92](https://github.com/gofhir/cql/issues/92)) ([3362fa5](https://github.com/gofhir/cql/commit/3362fa59de95605307c19cf7173bbc2bcd221853))
+* **sema:** `between` names a branch of a choice element like the comparisons it is made of ([#94](https://github.com/gofhir/cql/issues/94)) ([06c42ba](https://github.com/gofhir/cql/commit/06c42ba3fa4dcdf2879056419a40fa7aff81dbf7))
+
 ## [1.20.7](https://github.com/gofhir/cql/compare/v1.20.6...v1.20.7) (2026-09-08)
 
 
