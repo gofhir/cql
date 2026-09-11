@@ -178,50 +178,35 @@ func TestAReversedRangeFollowsTheConjunctionNotTheIntervalConstructor(t *testing
 	}
 }
 
-// TestABareNumberAgainstQuantityBoundsFailsTheSameWayEverywhere covers where
-// widening what `between` accepts moves a diagnostic from this phase to the
-// evaluator, and why that is the point rather than a cost.
+// TestABareNumberAgainstQuantityBoundsIsAQuantityOfUnitOne is where this file's
+// promotion meets the other one: the default unit a bare number carries.
 //
-// Sema holds that an Integer converts to a Quantity, so Common of the two is
-// Quantity and the bounds satisfy it — nothing is reported, and the bare number
-// reaches the evaluator, which refuses to compare it. On main `between` reported
-// it here instead. But the two spellings `between` is defined as never did:
+// This test was written the other way round. It asserted that all three
+// spellings *refused* the pair, and said in its own comment that the refusal was
+// wrong — arithmetic in this engine already applied the specification's default
+// unit while comparison did not, so `150 >= 100 '1'` raised an error where it
+// should answer true. It was asserted rather than described so that closing that
+// defect would break it. It did, and this is the other side.
 //
-//	150 >= 100 'mg' and 150 <= 200 'mg'    evaluation error, on main and here
-//	150 in Interval[100 'mg', 200 'mg']    evaluation error, on main and here
-//	150 between 100 'mg' and 200 'mg'      semantic error on main, evaluation error here
-//
-// So `between` was the odd one out and now is not.
-//
-// None of the three is right, though, and this test says so rather than blessing
-// the agreement. Arithmetic in this same engine already applies the rule the
-// specification states — "when a quantity has no units specified, it is treated
-// as a quantity with the default unit ('1')" — so `1 '1' + 2` is `3 '1'` and
-// `1 + 1 'cm'` is null, both pinned in engine_quantity_arithmetic_test.go.
-// Comparison never got it, so one operator apart the same pair raises an error:
-//
-//	150 >= 100 '1'    should be true, is an error
-//	150 >= 100 'mg'   should be null (different dimensions), is an error
-//
-// That is a defect of its own, older than any of this and squarely between the
-// phases: sema declares the Integer-to-Quantity conversion, and the evaluator
-// does not perform it. It is asserted here rather than described, so closing it
-// breaks this test — and the three spellings are compared to each other so that
-// whoever closes it finds out here if they move only one.
-func TestABareNumberAgainstQuantityBoundsFailsTheSameWayEverywhere(t *testing.T) {
-	for _, unit := range []string{"'mg'", "'1'"} {
-		between := evalOrDiagnostic(t, "150 between 100 "+unit+" and 200 "+unit)
-		conjunction := evalOrDiagnostic(t, "150 >= 100 "+unit+" and 150 <= 200 "+unit)
-		inInterval := evalOrDiagnostic(t, "150 in Interval[100 "+unit+", 200 "+unit+"]")
+// The two units below are the two outcomes, and they are not the same fix:
+// '1' is the dimension a bare number already has, so the comparison answers; 'mg'
+// is a different dimension, so there is no unit both can be stated in and the
+// answer is null, the way every undecidable comparison in this engine answers.
+func TestABareNumberAgainstQuantityBoundsIsAQuantityOfUnitOne(t *testing.T) {
+	for _, tt := range []struct{ unit, want string }{
+		{"'1'", "true"},
+		{"'mg'", "null"},
+	} {
+		between := evalOrDiagnostic(t, "150 between 100 "+tt.unit+" and 200 "+tt.unit)
+		conjunction := evalOrDiagnostic(t, "150 >= 100 "+tt.unit+" and 150 <= 200 "+tt.unit)
+		inInterval := evalOrDiagnostic(t, "150 in Interval[100 "+tt.unit+", 200 "+tt.unit+"]")
 		if between != conjunction || between != inInterval {
 			t.Errorf("with bounds in %s the three spellings disagree:\n  between     %s\n  conjunction %s\n  in Interval %s",
-				unit, between, conjunction, inInterval)
+				tt.unit, between, conjunction, inInterval)
 		}
-		if !strings.Contains(between, "ERROR") {
-			t.Errorf("150 between 100 %s and 200 %s now answers %s. If comparison learned "+
-				"the default unit, this assertion has done its job: the answers to want are "+
-				"true for '1' and null for 'mg', and all three spellings have to give them.",
-				unit, unit, between)
+		if between != tt.want {
+			t.Errorf("150 between 100 %s and 200 %s = %s, want %s",
+				tt.unit, tt.unit, between, tt.want)
 		}
 	}
 }

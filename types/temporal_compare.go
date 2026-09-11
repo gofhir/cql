@@ -120,6 +120,11 @@ func (v temporalValue) inUTC() temporalValue {
 //	@T15:59:59 vs @T15:59:59.999   // unknown in CQL, -1 to FHIRPath
 //	@T15:59:59 vs @T20:59:59.999   // -1, decided at the hour
 func CompareTemporal(a, b fptypes.Value) (int, error) {
+	// A bare number next to a quantity is a quantity of the default unit. This is
+	// the one place every ordering in the engine passes through — the interval
+	// operators, the timing phrases in funcs, and the comparison operators
+	// themselves — so the rule is applied here rather than at each of them.
+	a, b = PairWithQuantity(a, b)
 	ordered, ok := a.(fptypes.Comparable)
 	if !ok {
 		return 0, fmt.Errorf("cannot compare %s", a.Type())
