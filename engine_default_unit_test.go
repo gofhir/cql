@@ -168,3 +168,65 @@ func TestTheDefaultUnitDoesNotReachOperatorsThatOnlyRenderTheirOperands(t *testi
 		}
 	}
 }
+
+// TestTheRuleReachesFHIRData is the measurement that matters, because a literal
+// is not what a measure compares.
+//
+// `value as FHIR.Quantity` is the spelling the reference translator emits for a
+// choice element in a comparison, so it is what published CQL actually contains.
+// Against a bare number that spelling was giving a silently wrong answer:
+//
+//	(O.value as FHIR.Quantity) = 150     was false, with the reading at 150 '1'
+//	(O.value as FHIR.Quantity) >= 100    was an error
+//
+// The null rows are a different rule and are not affected by this one: an
+// unqualified `O.value` against a bare number names the FHIR.integer branch, and
+// a Quantity is on another branch. That is the choice-narrowing this engine
+// already does, and the last two rows are the same question where the branch does
+// match.
+func TestTheRuleReachesFHIRData(t *testing.T) {
+	const dimensionless = `{"value":150,"unit":"1"}`
+	const milligrams = `{"value":150,"unit":"mg"}`
+	for _, tt := range []struct{ field, value, expr, want string }{
+		{"valueQuantity", dimensionless, "(First([Observation] O).value as FHIR.Quantity) = 150", "true"},
+		{"valueQuantity", dimensionless, "(First([Observation] O).value as FHIR.Quantity) >= 100", "true"},
+		{"valueQuantity", dimensionless, "(First([Observation] O).value as FHIR.Quantity) in Interval[100, 200]", "true"},
+		// A different dimension is undecidable here as everywhere.
+		{"valueQuantity", milligrams, "(First([Observation] O).value as FHIR.Quantity) = 150", "null"},
+		{"valueQuantity", milligrams, "(First([Observation] O).value as FHIR.Quantity) >= 100", "null"},
+		// And the ordinary case a measure depends on keeps answering.
+		{"valueQuantity", milligrams, "First([Observation] O).value >= 100 'mg'", "true"},
+		{"valueInteger", `150`, "First([Observation] O).value = 150", "true"},
+	} {
+		if got := evalOnBranch(t, tt.field, tt.value, tt.expr); got != tt.want {
+			t.Errorf("%s over %s = %s, want %s", tt.expr, tt.value, got, tt.want)
+		}
+	}
+}
+
+// TestContainersAgreeHoweverDeeplyTheyNest covers that the two functions which
+// decide whether two held values are the same — elementEquality in eval and
+// valuesEqual in types — reach the same answer, at every depth.
+//
+// They are two on purpose: one reports a three-way verdict so `=` can answer
+// null, the other a boolean for the containers that have no null to return. Two
+// functions carrying one rule is exactly the shape that has drifted in this
+// repository before, so the agreement is asserted rather than assumed.
+func TestContainersAgreeHoweverDeeplyTheyNest(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"{{150}} = {{150 '1'}}", "true"},
+		{"{150} in {{150 '1'}}", "true"},
+		{"Count(distinct {{150}, {150 '1'}})", "1"},
+		{"Tuple{a: {150}} = Tuple{a: {150 '1'}}", "true"},
+		// And the split the two functions exist for survives the nesting: `=`
+		// declines, membership answers "not the same value".
+		{"{{1 'cm'}} = {{1 's'}}", "null"},
+		{"{1 'cm'} in {{1 's'}}", "false"},
+		{"Count(distinct {{1 'cm'}, {1 's'}})", "2"},
+		{"IndexOf({{1 's'}}, {1 'cm'})", "-1"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
