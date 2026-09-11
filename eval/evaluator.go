@@ -1137,17 +1137,20 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		}
 	}
 
-	// A bare number next to a quantity is a quantity of the default unit, which
-	// is a fact about the number and so is settled before any operator reads it.
-	// Only the operators that put the two side by side get it: concatenation
-	// renders its operands, and `150 + ' mg'` must not start rendering "150 '1'".
+	// A bare number next to a quantity is a quantity of the default unit, which is
+	// a fact about the number rather than about any one operator.
 	//
-	// Comparison had half of this rule and asked whether the bare side was a
-	// Decimal, so `150.0 >= 100 '1'` was true while `150 >= 100 '1'` — the
-	// spelling an author writes — raised an error. Equality never had it at all.
+	// Only equality is named here, and the ordering operators are deliberately
+	// absent: every ordering in this engine reaches CompareTemporal, which applies
+	// the rule once for all of them. Naming them here as well was measured and
+	// changed nothing — including the interval-against-scalar paths, which take
+	// their own route. Equality does not pass through there, so it is applied here.
+	//
+	// And it is per operator rather than to every pair on the way in, because
+	// concatenation renders what it is given: `150 + ' mg'` must not start
+	// producing "150 '1' mg".
 	switch n.Operator {
-	case ast.OpEqual, ast.OpNotEqual, ast.OpEquivalent, ast.OpNotEquivalent,
-		ast.OpLess, ast.OpLessOrEqual, ast.OpGreater, ast.OpGreaterOrEqual:
+	case ast.OpEqual, ast.OpNotEqual, ast.OpEquivalent, ast.OpNotEquivalent:
 		left, right = cqltypes.PairWithQuantity(left, right)
 	}
 
