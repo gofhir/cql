@@ -133,10 +133,13 @@ func TestComparableQuantitiesStillCompare(t *testing.T) {
 		{"500 'mg' < 1 'g'", "true"},
 		{"{ 1 'cm' } = { 1 'cm' }", "true"},
 		{"1 'cm' in { 1 'cm' }", "true"},
-		// A quantity against a bare number is not the case this rule is about, and
-		// it keeps the answer it had: nothing here decided it, and deciding it is a
-		// separate argument about what unit a bare number carries.
-		{"1 'mg' = 1", "false"},
+		// A quantity against a bare number was left at false here, on the grounds
+		// that what unit a bare number carries was a separate argument. That
+		// argument has since been settled the way the specification states it —
+		// the default unit is '1' — so this pair is two dimensions after all, and
+		// it answers null like every other pair of dimensions that do not meet.
+		{"1 'mg' = 1", "null"},
+		{"1 '1' = 1", "true"},
 	} {
 		if got := evalQuantityCompare(t, tt.expr); got != tt.want {
 			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)

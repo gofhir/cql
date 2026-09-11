@@ -343,6 +343,7 @@ func valuesEqual(a, b fptypes.Value) bool {
 	if a == nil || b == nil {
 		return false
 	}
+	a, b = PairWithQuantity(a, b)
 	if equal, decided := temporalValuesEqual(a, b); decided {
 		return equal
 	}
@@ -362,6 +363,7 @@ func valuesEquivalent(a, b fptypes.Value) bool {
 	// rather than called unequal. Routing it through the same rule as valuesEqual
 	// made `@2012-03-10T10:20:00` stop being equivalent to itself once one side
 	// carried a default, and cost 15 conformance cases.
+	a, b = PairWithQuantity(a, b)
 	if equal, decided := temporalValuesEqual(a, b); decided && equal {
 		return true
 	}
