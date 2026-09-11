@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/gofhir/cql/compare/v1.20.9...v1.21.0) (2026-09-11)
+
+
+### Features
+
+* **eval:** a bare number is a quantity of the default unit everywhere, not just in arithmetic ([#98](https://github.com/gofhir/cql/issues/98)) ([7c3bc78](https://github.com/gofhir/cql/commit/7c3bc78bbc4397f168d115babd7dfcbffb058b20))
+
 ## [1.20.9](https://github.com/gofhir/cql/compare/v1.20.8...v1.20.9) (2026-09-11)
 
 
