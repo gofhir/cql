@@ -296,3 +296,55 @@ func TestTheRuleReachesTheOperatorsThatOnlyBorrowTheComparison(t *testing.T) {
 		}
 	}
 }
+
+// TestMixedBoundIntervalsWorkExceptForWidth covers the space this change opens
+// up, and the one hole left in it.
+//
+// An interval with a bare number at one end and a quantity at the other was
+// unusable: every question about it raised an error. Now it answers, and answers
+// consistently with the interval whose bounds are both written out.
+//
+// `width` and `Size` are the exception and they are asserted as failing, not
+// described, so that closing them breaks this test. They are a defect of their
+// own and older than this branch — null on main too — but the engine contradicts
+// itself over them, which is the evidence this repository treats as decisive:
+//
+//	width of Interval[100, 200 '1']    null
+//	200 '1' - 100                     100 '1'
+//
+// The second is the subtraction the first is defined as. IntervalWidth carries
+// its own arithmetic rather than going through the operator, and that copy never
+// learned the default unit.
+func TestMixedBoundIntervalsWorkExceptForWidth(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"Interval[100, 200 '1'] contains 150", "true"},
+		{"Interval(100, 200 '1') contains 100", "false"},
+		{"start of Interval[100, 200 '1']", "100"},
+		{"end of Interval[100, 200 '1']", "200 '1'"},
+		// The mixed interval and the written-out one are the same interval.
+		{"Interval[100, 200 '1'] = Interval[100 '1', 200 '1']", "true"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// The hole, asserted. If either of these starts answering, this test has done
+	// its job: delete the assertion and check that width, Size and the
+	// subtraction they rest on all agree.
+	for _, expr := range []string{
+		"width of Interval[100, 200 '1']",
+		"Size(Interval[100, 200 '1'])",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "null" {
+			t.Errorf("%s = %s — IntervalWidth has learned the default unit; "+
+				"it should now agree with `200 '1' - 100`, which is %s",
+				expr, got, evalDefaultUnit(t, "200 '1' - 100"))
+		}
+	}
+	// And the subtraction it is defined as does answer, which is what makes the
+	// two above a contradiction rather than a policy.
+	if got := evalDefaultUnit(t, "200 '1' - 100"); got != "100 '1'" {
+		t.Errorf("200 '1' - 100 = %s, want 100 '1'", got)
+	}
+}
