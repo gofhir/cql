@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.9](https://github.com/gofhir/cql/compare/v1.20.8...v1.20.9) (2026-09-11)
+
+
+### Bug Fixes
+
+* **sema:** `between` promotes its operand and bounds to the type they share ([#95](https://github.com/gofhir/cql/issues/95)) ([ebc0591](https://github.com/gofhir/cql/commit/ebc05918bf89af4aa1ba897ab93123607ae4e4a7))
+
 ## [1.20.8](https://github.com/gofhir/cql/compare/v1.20.7...v1.20.8) (2026-09-09)
 
 
