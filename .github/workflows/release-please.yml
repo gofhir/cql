@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+  # A transient GraphQL error on GitHub's side fails this workflow with the
+  # repository untouched, and the only way to run it again was another push to
+  # main — an empty commit, for a run that reads the history rather than the
+  # tree. This lets it be retried as itself.
+  workflow_dispatch:
 
 permissions:
   contents: write
