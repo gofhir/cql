@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.21.0](https://github.com/gofhir/cql/compare/v1.20.9...v1.21.0) (2026-09-11)
+
+
+### Features
+
+* **eval:** a bare number is a quantity of the default unit everywhere, not just in arithmetic ([#98](https://github.com/gofhir/cql/issues/98)) ([7c3bc78](https://github.com/gofhir/cql/commit/7c3bc78bbc4397f168d115babd7dfcbffb058b20))
+
+  Comparison, equality, membership, `distinct`, `IndexOf`, `Min`, `Max`, sorting
+  and the interval operators now read a bare number against a quantity as a
+  quantity of the default unit `'1'`, which arithmetic already did. Answers that
+  change: `150 = 150 '1'` was false, `distinct {150, 150 '1'}` kept both, and
+  `(Obs.value as FHIR.Quantity) = 150` — the spelling the reference translator
+  emits — was false. A different dimension is null rather than an error.
+
+### Bug Fixes
+
+* **types:** `overlaps` adjusts an open integer boundary only when both sides are integers ([#98](https://github.com/gofhir/cql/issues/98)) ([7c3bc78](https://github.com/gofhir/cql/commit/7c3bc78bbc4397f168d115babd7dfcbffb058b20))
+
+  `overlaps` was not symmetric where one interval had integer bounds and the
+  other did not: `Interval[100, 200] overlaps Interval[150 '1', 250 '1']` said
+  false while the same pair the other way round said true. Unreachable before the
+  change above, which is why it ships with it.
+
 ## [1.20.9](https://github.com/gofhir/cql/compare/v1.20.8...v1.20.9) (2026-09-11)
 
 
