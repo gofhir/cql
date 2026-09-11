@@ -375,4 +375,36 @@ func TestWidthIsTheSubtractionItIsDefinedAs(t *testing.T) {
 			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
 		}
 	}
+
+	// A continuous interval has no such adjustment: between two quantities or two
+	// decimals there is no next value to move to, so open and closed are the same
+	// width. Asserted because the integer case above is an exception, and an
+	// exception is only safe while what it is an exception *to* is pinned.
+	for _, pair := range [][2]string{{"100 'cm'", "200 'cm'"}, {"1.0", "2.0"}} {
+		closed := evalDefaultUnit(t, "width of Interval["+pair[0]+", "+pair[1]+"]")
+		open := evalDefaultUnit(t, "width of Interval("+pair[0]+", "+pair[1]+")")
+		if closed != open {
+			t.Errorf("width of [%s, %s] = %s but of (%s, %s) = %s — a continuous interval has no step to move by",
+				pair[0], pair[1], closed, pair[0], pair[1], open)
+		}
+	}
+
+	// What this did not touch. Temporal intervals still refuse, rather than
+	// falling into the numeric path now that the pair is promoted first.
+	for _, expr := range []string{
+		"width of Interval[@2020-01-01, @2020-06-01]",
+		"width of Interval[@2020-01-01T00:00:00, @2020-06-01T00:00:00]",
+		"width of Interval[@T10:00:00, @T12:00:00]",
+	} {
+		if got := evalDefaultUnit(t, expr); !strings.Contains(got, "width is not defined") {
+			t.Errorf("%s = %s, want the refusal it has always given", expr, got)
+		}
+	}
+
+	// And a calendar duration against its UCUM code is the pair CQL declines to
+	// decide, which Subtract reports and this reads as null rather than inventing
+	// a width for it.
+	if got := evalDefaultUnit(t, "width of Interval[1 'a', 2 'year']"); got != "null" {
+		t.Errorf("width over a calendar/UCUM pair = %s, want null", got)
+	}
 }
