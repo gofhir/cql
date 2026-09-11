@@ -226,13 +226,20 @@ func (i Interval) Overlaps(other Interval) (bool, error) {
 		}
 		// For integer types, check effective boundaries:
 		// i.Low (open) means effective = i.Low + 1, other.High (open) means effective = other.High - 1
+		// Adjusting an open integer boundary needs integers on both sides. This
+		// asked only about i.Low, and read a non-integer other.High as the
+		// boundary 0 — so `Interval[100, 200] overlaps Interval[150 '1', 250 '1']`
+		// compared 100 against 0, concluded the first starts after the second
+		// ends, and answered false. The same pair the other way round answered
+		// true, because there the type checked was the quantity and the block was
+		// skipped. It was unreachable while a bare number against a quantity
+		// raised an error one line above; teaching the comparison that pair made
+		// it an answer, and a wrong answer is worse than the error it replaced.
 		if cmp == -1 {
-			if _, isInt := i.Low.(fptypes.Integer); isInt {
-				iLowEff := effectiveIntLow(i.Low, i.LowClosed)
-				oHighEff := effectiveIntHigh(other.High, other.HighClosed)
-				if iLowEff > oHighEff {
-					return false, nil
-				}
+			iLowEff, lowOK := effectiveIntLow(i.Low, i.LowClosed)
+			oHighEff, highOK := effectiveIntHigh(other.High, other.HighClosed)
+			if lowOK && highOK && iLowEff > oHighEff {
+				return false, nil
 			}
 		}
 	}
@@ -246,38 +253,45 @@ func (i Interval) Overlaps(other Interval) (bool, error) {
 		}
 		// For integer types, check effective boundaries
 		if cmp == 1 {
-			if _, isInt := i.High.(fptypes.Integer); isInt {
-				iHighEff := effectiveIntHigh(i.High, i.HighClosed)
-				oLowEff := effectiveIntLow(other.Low, other.LowClosed)
-				if iHighEff < oLowEff {
-					return false, nil
-				}
+			iHighEff, highOK := effectiveIntHigh(i.High, i.HighClosed)
+			oLowEff, lowOK := effectiveIntLow(other.Low, other.LowClosed)
+			if highOK && lowOK && iHighEff < oLowEff {
+				return false, nil
 			}
 		}
 	}
 	return true, nil
 }
 
-func effectiveIntLow(v fptypes.Value, closed bool) int64 {
+// effectiveIntLow is a low boundary with its open end moved in by one, and
+// whether the value was an integer at all.
+//
+// It answered 0 for anything else, which reads as a boundary rather than as "no
+// answer". Overlaps then compared a real boundary against that 0 — see the
+// comment there — so the second return is not decoration: both callers must have
+// two integers before the adjustment means anything.
+func effectiveIntLow(v fptypes.Value, closed bool) (int64, bool) {
 	iv, ok := v.(fptypes.Integer)
 	if !ok {
-		return 0
+		return 0, false
 	}
 	if closed {
-		return iv.Value()
+		return iv.Value(), true
 	}
-	return iv.Value() + 1
+	return iv.Value() + 1, true
 }
 
-func effectiveIntHigh(v fptypes.Value, closed bool) int64 {
+// effectiveIntHigh is effectiveIntLow for a high boundary, moving an open end in
+// the other direction.
+func effectiveIntHigh(v fptypes.Value, closed bool) (int64, bool) {
 	iv, ok := v.(fptypes.Integer)
 	if !ok {
-		return 0
+		return 0, false
 	}
 	if closed {
-		return iv.Value()
+		return iv.Value(), true
 	}
-	return iv.Value() - 1
+	return iv.Value() - 1, true
 }
 
 // containsBound checks if a boundary point is within this interval.

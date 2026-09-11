@@ -230,3 +230,69 @@ func TestContainersAgreeHoweverDeeplyTheyNest(t *testing.T) {
 		}
 	}
 }
+
+// TestOverlapsAnswersTheSameInEitherOrder covers a defect this change uncovered
+// rather than caused, and would have shipped as a silently wrong answer.
+//
+// `overlaps` is symmetric, and it was not:
+//
+//	Interval[100, 200] overlaps Interval[150 '1', 250 '1']   false
+//	Interval[100 '1', 200 '1'] overlaps Interval[150, 250]   true
+//
+// The cause is the adjustment for open integer boundaries, which needs integers
+// on both sides and checked only one. The other side, read through a helper that
+// answered 0 for anything that is not an integer, came back as the boundary 0 —
+// so 100 looked to be past the end of the second interval. Which of the two
+// orders is wrong depends only on which side happened to be the integer.
+//
+// It was unreachable while a bare number against a quantity raised an error one
+// line earlier. Teaching comparison that pair turned the error into an answer,
+// and the answer was wrong, so the helper now reports whether it could read the
+// boundary at all.
+func TestOverlapsAnswersTheSameInEitherOrder(t *testing.T) {
+	for _, tt := range []struct{ a, b, want string }{
+		{"Interval[100, 200]", "Interval[150 '1', 250 '1']", "true"},
+		{"Interval[100, 200]", "Interval[250 '1', 350 '1']", "false"},
+		// Open boundaries are what the adjustment is for, so they are the rows
+		// that must keep working once it is guarded.
+		{"Interval[100, 150)", "Interval[150, 250]", "false"},
+		{"Interval[100, 150]", "Interval[150, 250]", "true"},
+		{"Interval(100, 150]", "Interval[100, 100]", "false"},
+		{"Interval[100, 150]", "Interval[100, 100]", "true"},
+	} {
+		forward := evalDefaultUnit(t, tt.a+" overlaps "+tt.b)
+		backward := evalDefaultUnit(t, tt.b+" overlaps "+tt.a)
+		if forward != backward {
+			t.Errorf("%s overlaps %s = %s, but the other way round = %s — overlaps is symmetric",
+				tt.a, tt.b, forward, backward)
+		}
+		if forward != tt.want {
+			t.Errorf("%s overlaps %s = %s, want %s", tt.a, tt.b, forward, tt.want)
+		}
+	}
+}
+
+// TestTheRuleReachesTheOperatorsThatOnlyBorrowTheComparison lists what came along
+// without being touched, because every one of them reaches CompareTemporal.
+//
+// They are asserted so that the single point stays single: if an ordering ever
+// stops passing through there, these fail rather than quietly going back to
+// raising errors.
+func TestTheRuleReachesTheOperatorsThatOnlyBorrowTheComparison(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		// A sort key, which reaches it through compareSortKeys.
+		{"First(({ Tuple{k: 150}, Tuple{k: 100 '1'} }) T sort by k).k", "100 '1'"},
+		{"Last(({ Tuple{k: 150}, Tuple{k: 100 '1'} }) T sort by k).k", "150"},
+		// The interval operators in funcs.
+		{"Interval[100 '1', 200 '1'] includes Interval[120, 180]", "true"},
+		{"Interval[100 '1', 200 '1'] starts Interval[100, 300]", "true"},
+		{"Interval[100, 200] includes 150 '1'", "true"},
+		// `start of` against a bare number, which was false rather than an error —
+		// a wrong answer already, before any of this.
+		{"start of Interval[100 '1', 200 '1'] = 100", "true"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
