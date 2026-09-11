@@ -35,7 +35,8 @@ func IntervalWidth(interval cqltypes.Interval) (fptypes.Value, error) {
 	low := interval.Low
 	high := interval.High
 
-	// Integer intervals
+	// Integers are the discrete case, where an open boundary moves in by one
+	// before the subtraction rather than after it.
 	if li, ok := low.(fptypes.Integer); ok {
 		if hi, ok := high.(fptypes.Integer); ok {
 			lo := li.Value()
@@ -50,19 +51,47 @@ func IntervalWidth(interval cqltypes.Interval) (fptypes.Value, error) {
 		}
 	}
 
-	// Decimal intervals
-	if ld, ok := low.(fptypes.Decimal); ok {
-		if hd, ok := high.(fptypes.Decimal); ok {
-			diff := hd.Value().Sub(ld.Value())
-			return decimalToValue(diff), nil
+	// Everything else is `high - low`, which is what width is defined as, so it
+	// is asked of the same subtraction rather than done again here.
+	//
+	// Doing it again here was wrong three ways, and each wrong way was a
+	// confident answer rather than a refusal:
+	//
+	//	width of Interval[100 'cm', 2 'm']   -98 'cm'   2 'm' - 100 'cm' is 1 'm'
+	//	width of Interval[500 'mg', 1 'g']   -499 'mg'  and 0.5 'g'
+	//	width of Interval[1 'cm', 1 's']     0 'cm'     and null
+	//
+	// It subtracted the two magnitudes and kept the low bound's unit, so any pair
+	// written in two scales of one dimension came out by the ratio between them —
+	// negative whenever the high bound's unit was the larger. Two dimensions that
+	// cannot be subtracted at all came out as 0. fptypes.Quantity.Subtract
+	// converts first and reports the incompatible pair, which is the whole of
+	// what was missing.
+	//
+	// A bare number at one end gets the default unit, like anywhere else, so a
+	// mixed-bound interval has a width instead of answering null.
+	low, high = cqltypes.PairWithQuantity(low, high)
+	if lq, ok := low.(fptypes.Quantity); ok {
+		if hq, ok := high.(fptypes.Quantity); ok {
+			diff, err := hq.Subtract(lq)
+			if err != nil {
+				// No unit both can be stated in is a width that does not exist,
+				// which CQL answers with null rather than a failure — the same
+				// reading every other operator over such a pair takes.
+				if cqltypes.IncompatibleUnits(err) {
+					return nil, nil
+				}
+				return nil, err
+			}
+			return diff, nil
 		}
 	}
 
-	// Quantity intervals
-	if lq, ok := low.(fptypes.Quantity); ok {
-		if hq, ok := high.(fptypes.Quantity); ok {
-			diff := hq.Value().Sub(lq.Value())
-			return fptypes.NewQuantityFromDecimal(diff, lq.Unit()), nil
+	// The numeric pair, which needs no unit and may mix Integer with Decimal:
+	// `width of Interval[1, 2.5]` answered null while `2.5 - 1` answered 1.5.
+	if ln, ok := low.(fptypes.Numeric); ok {
+		if hn, ok := high.(fptypes.Numeric); ok {
+			return decimalToValue(hn.ToDecimal().Value().Sub(ln.ToDecimal().Value())), nil
 		}
 	}
 
