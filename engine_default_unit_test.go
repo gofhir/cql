@@ -597,3 +597,55 @@ func TestWidthAndExpandReportDifferentUnitsOnPurpose(t *testing.T) {
 		t.Errorf("the two units disagree about the value: %s", got)
 	}
 }
+
+// TestQuantityExpansionIsTheDecimalOneWithAUnit compares against the decimal
+// spelling rather than the integer one, which is the oracle that actually
+// applies: a quantity interval is continuous, and it is the decimal expansion
+// this is built on.
+//
+// The integer comparison elsewhere in this file holds only because a step of one
+// makes all three agree. These rows are where discrete and continuous part ways,
+// and quantities have to follow the continuous side:
+//
+//	collapse (expand {Interval[1, 5]})           {Interval[1, 5]}
+//	collapse (expand {Interval[1.0, 5.0]})       five point intervals
+//	collapse (expand {Interval[1 'cm', 5 'cm']}) five point intervals
+//
+// Expanding and collapsing gets the interval back only where the points are
+// adjacent, which they are in the integers and are not between 1 'cm' and 2 'cm'.
+// A quantity behaving like the integer there would mean claiming 1.5 'cm' is not
+// in the interval.
+func TestQuantityExpansionIsTheDecimalOneWithAUnit(t *testing.T) {
+	for _, per := range []string{"0.5", "1.0", "0.25"} {
+		quantities := evalDefaultUnit(t,
+			"expand {Interval[1 'cm', 3 'cm']} per "+per+" 'cm'")
+		decimals := evalDefaultUnit(t, "expand {Interval[1.0, 3.0]} per "+per)
+		if stripped := strings.ReplaceAll(quantities, " 'cm'", ""); stripped != decimals {
+			t.Errorf("per %s gives\n  %s\nover quantities and\n  %s\nover decimals", per, quantities, decimals)
+		}
+	}
+
+	// Round-tripping follows the continuous reading, not the discrete one.
+	q := evalDefaultUnit(t, "collapse (expand {Interval[1 'cm', 5 'cm']})")
+	d := evalDefaultUnit(t, "collapse (expand {Interval[1.0, 5.0]})")
+	if stripped := strings.ReplaceAll(q, " 'cm'", ""); stripped != d {
+		t.Errorf("expanding and collapsing gives\n  %s\nover quantities and\n  %s\nover decimals", q, d)
+	}
+	// And the integer spelling does get its interval back, which is what makes the
+	// above a property of continuity rather than a failure of collapse.
+	if got := evalDefaultUnit(t, "collapse (expand {Interval[1, 5]})"); got != "{Interval[1, 5]}" {
+		t.Errorf("the integer round trip = %s, want {Interval[1, 5]}", got)
+	}
+
+	// Each interval in a list expands in its own unit, and one the step cannot
+	// reach drops out rather than taking the others with it.
+	mixed := evalDefaultUnit(t, "expand {Interval[1 'cm', 2 'cm'], Interval[1 'm', 2 'm']} per 1 'cm'")
+	for _, want := range []string{"1 'cm'", "1 'm'"} {
+		if !strings.Contains(mixed, want) {
+			t.Errorf("expanding a list of two units = %s, missing %s", mixed, want)
+		}
+	}
+	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 2 'cm'], Interval[1 's', 2 's']} per 1 'cm'"); strings.Contains(got, "'s'") {
+		t.Errorf("an interval the step cannot reach was expanded anyway: %s", got)
+	}
+}
