@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.2](https://github.com/gofhir/cql/compare/v1.21.1...v1.21.2) (2026-09-12)
+
+
+### Bug Fixes
+
+* **funcs:** expand an interval of quantities instead of expanding nothing ([#102](https://github.com/gofhir/cql/issues/102)) ([71d7ea3](https://github.com/gofhir/cql/commit/71d7ea3a0b81028994e89014cb5f48a238be80c0))
+
 ## [1.21.1](https://github.com/gofhir/cql/compare/v1.21.0...v1.21.1) (2026-09-12)
 
 
