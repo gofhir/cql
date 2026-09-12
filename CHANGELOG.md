@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.1](https://github.com/gofhir/cql/compare/v1.21.0...v1.21.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **funcs:** width is the subtraction it is defined as, units and all ([#100](https://github.com/gofhir/cql/issues/100)) ([d282137](https://github.com/gofhir/cql/commit/d282137cbddc4cd28813762a591e5cf83cfacfd2))
+
 ## [1.21.0](https://github.com/gofhir/cql/compare/v1.20.9...v1.21.0) (2026-09-11)
 
 
