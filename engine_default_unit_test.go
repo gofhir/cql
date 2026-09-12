@@ -546,3 +546,54 @@ func TestANegativeStepExpandsNothingOverQuantities(t *testing.T) {
 		t.Errorf("a zero step gives %s over quantities and %s over integers", quantities, integers)
 	}
 }
+
+// TestQuantityExpansionBehavesLikeTheDecimalOneItIsBuiltOn checks the properties
+// that come from reducing to the decimal case rather than writing a new one, and
+// so would be the first things a separate implementation got wrong.
+func TestQuantityExpansionBehavesLikeTheDecimalOneItIsBuiltOn(t *testing.T) {
+	// The cap on how many points an expansion produces is the same cap.
+	quantities := evalDefaultUnit(t, "Count(expand Interval[0 'cm', 100000 'cm'] per 1 'cm')")
+	decimals := evalDefaultUnit(t, "Count(expand Interval[0.0, 100000.0] per 1.0)")
+	if quantities != decimals {
+		t.Errorf("a long expansion gives %s points over quantities and %s over decimals", quantities, decimals)
+	}
+
+	// A fractional step accumulates the same way, so the sequence does not drift
+	// apart from the decimal one it is made of.
+	q := evalDefaultUnit(t, "expand Interval[1 'cm', 2 'cm'] per 0.1 'cm'")
+	d := evalDefaultUnit(t, "expand Interval[1.0, 2.0] per 0.1")
+	if stripped := strings.ReplaceAll(q, " 'cm'", ""); stripped != d {
+		t.Errorf("a fractional step gives\n  %s\nover quantities and\n  %s\nover decimals", q, d)
+	}
+
+	// A step in another scale converts, in both overloads.
+	if got := evalDefaultUnit(t, "expand Interval[0 'm', 2 'm'] per 50 'cm'"); got != "{0 'm', 0.5 'm', 1 'm', 1.5 'm', 2 'm'}" {
+		t.Errorf("a step in centimeters over an interval in meters = %s", got)
+	}
+}
+
+// TestWidthAndExpandReportDifferentUnitsOnPurpose records an asymmetry that is
+// measured rather than accidental, so that changing it is a decision.
+//
+// Over the same interval the two answer in different units:
+//
+//	width of Interval[100 'cm', 2 'm']             1 'm'
+//	expand Interval[100 'cm', 2 'm'] per 50 'cm'   {100 'cm', 150 'cm', 200 'cm'}
+//
+// Each inherits the unit from the operation it is defined as. A width is
+// `high - low`, and a subtraction answers in the unit of what it subtracts from.
+// An expansion walks from the low bound, so it answers in that bound's unit.
+// Neither is wrong about the quantity — 1 'm' is 100 'cm' — and forcing them to
+// agree would mean overriding one of the two definitions.
+func TestWidthAndExpandReportDifferentUnitsOnPurpose(t *testing.T) {
+	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm']"); got != "1 'm'" {
+		t.Errorf("width = %s, want 1 'm' — the unit of the subtraction's left side", got)
+	}
+	if got := evalDefaultUnit(t, "expand Interval[100 'cm', 2 'm'] per 50 'cm'"); got != "{100 'cm', 150 'cm', 200 'cm'}" {
+		t.Errorf("expand = %s, want centimeters — the unit it starts walking from", got)
+	}
+	// And they agree about the quantity, which is the part that matters.
+	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm'] = 100 'cm'"); got != "true" {
+		t.Errorf("the two units disagree about the value: %s", got)
+	}
+}
