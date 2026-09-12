@@ -792,14 +792,15 @@ func TestAOneElementListIsNotAStep(t *testing.T) {
 // the wrong line, which is the kind of half-diagnostic this repository has had to
 // fix before.
 func TestTheDiagnosticNamesTheOperationTheAuthorWrote(t *testing.T) {
-	for _, tt := range []struct{ expr, kind string }{
-		{"expand {Interval[1, 3]} per 'abc'", "expand"},
-		{"collapse {Interval[1, 3]} per 'abc'", "collapse"},
-		{"collapse {Interval[1, 3]} per {2}", "collapse"},
+	// The article is checked along with the noun. Accepting either one let "the
+	// step of a expand" through, which is what the first version of this test did.
+	for _, tt := range []struct{ expr, phrase string }{
+		{"expand {Interval[1, 3]} per 'abc'", "the step of an expand"},
+		{"collapse {Interval[1, 3]} per 'abc'", "the step of a collapse"},
+		{"collapse {Interval[1, 3]} per {2}", "the step of a collapse"},
 	} {
-		got := evalDefaultUnit(t, tt.expr)
-		if !strings.Contains(got, "the step of a "+tt.kind) && !strings.Contains(got, "the step of an "+tt.kind) {
-			t.Errorf("%s reported: %s — it should name %s", tt.expr, got, tt.kind)
+		if got := evalDefaultUnit(t, tt.expr); !strings.Contains(got, tt.phrase) {
+			t.Errorf("%s reported: %s — it should say %q", tt.expr, got, tt.phrase)
 		}
 	}
 }
@@ -831,5 +832,48 @@ func TestCollapsePerIsIgnored(t *testing.T) {
 	// missing feature rather than a broken one.
 	if got := evalDefaultUnit(t, "collapse {Interval[1, 4], Interval[3, 7]}"); got != "{Interval[1, 7]}" {
 		t.Errorf("collapsing two overlapping intervals = %s, want {Interval[1, 7]}", got)
+	}
+}
+
+// TestTheStepCheckDoesNotCryWolf is the limit on the diagnostic above, and the
+// half that decides whether a check is worth having.
+//
+// A checker that reports a step it merely could not work out is worse than one
+// that stays quiet, so everything a step can legitimately be written as has to go
+// through. Each of these types the step differently — a parameter, a define, a
+// call into an included library whose type this phase cannot see, a FHIR choice
+// element, a conditional — and none of them is refused.
+func TestTheStepCheckDoesNotCryWolf(t *testing.T) {
+	const fhir = "using FHIR version '4.0.1'\n" +
+		"include FHIRHelpers version '4.0.1' called FHIRHelpers\ncontext Patient\n"
+	for _, tt := range []struct{ what, header, expr string }{
+		{"a quantity parameter", "parameter P Quantity\n", "expand {Interval[1 'cm', 9 'cm']} per P"},
+		{"an integer parameter", "parameter P Integer\n", "expand {Interval[1, 9]} per P"},
+		{"a define", "define S: 2\n", "expand {Interval[1, 9]} per S"},
+		{"a quantity define", "define S: 2 'cm'\n", "expand {Interval[1 'cm', 9 'cm']} per S"},
+		{"a call this phase cannot type", "include FHIRHelpers version '4.0.1' called FH\n",
+			"expand {Interval[1, 9]} per FH.ToString(2)"},
+		{"a choice element", fhir, "expand {Interval[1 'cm', 9 'cm']} per First([Observation] O).value"},
+		{"a choice element cast", fhir,
+			"expand {Interval[1 'cm', 9 'cm']} per (First([Observation] O).value as FHIR.Quantity)"},
+		{"a conditional", "", "expand {Interval[1 'cm', 9 'cm']} per (if true then 1 'cm' else 2 'cm')"},
+	} {
+		src := "library T version '1.0'\n" + tt.header + "define X: " + tt.expr + "\n"
+		diags, err := NewEngine().Check(src)
+		if err != nil {
+			t.Errorf("%s did not check: %v", tt.what, err)
+			continue
+		}
+		for _, d := range diags {
+			if strings.Contains(d.Message, "the step of") {
+				t.Errorf("%s was refused: %s", tt.what, d.Message)
+			}
+		}
+	}
+
+	// And a type that is genuinely not a step is still refused, so the above is
+	// not passing because the check stopped running.
+	if got := evalDefaultUnit(t, "expand {Interval[1, 9]} per 1:2"); !strings.Contains(got, "the step of") {
+		t.Errorf("a ratio step = %s, want the diagnostic — the check is not running", got)
 	}
 }

@@ -874,8 +874,12 @@ func (c *checker) expectStep(expr ast.Expression, kind string) {
 			return
 		}
 	}
+	article := "a"
+	if kind == "expand" {
+		article = "an"
+	}
 	c.reportf(expr, SeverityError,
-		"the step of a %s is a quantity or a number, not %s", kind, t)
+		"the step of %s %s is a quantity or a number, not %s", article, kind, t)
 }
 
 // inferSetAggregate types `expand` and `collapse`, both of which take a list of
