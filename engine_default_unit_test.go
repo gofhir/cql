@@ -2,6 +2,7 @@ package cql
 
 import (
 	"context"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -429,32 +430,58 @@ func TestSizeFollowsWidth(t *testing.T) {
 	}
 }
 
-// TestExpandOverQuantitiesIsEmpty asserts a defect this one did not cause and
-// does not fix, so that it is recorded rather than noticed again later.
+// TestExpandOverQuantitiesMatchesTheIntegerSpelling covers expansion over
+// quantities, which had no case at all.
 //
-// The same interval and the same step, written two ways:
+// The ladder in both expand functions ran Integer, Decimal, DateTime, Date, Time
+// and then fell off the end, so every quantity interval expanded to nothing, in
+// silence — while the same shape written in integers gave three intervals. This
+// test was here asserting that emptiness, with a message naming the integer
+// spelling to check against; it broke when the case was added, which is what it
+// was for.
 //
-//	expand {Interval[1, 3]} per 1               {Interval[1, 1], Interval[2, 2], Interval[3, 3]}
-//	expand {Interval[1 'cm', 3 'cm']} per 1 'cm'   {}
-//
-// A quantity step expands nothing, in silence. It is the same shape as the width
-// defect this change fixes — arithmetic over quantities done halfway — but in a
-// different function, unchanged by this branch and identical on main, so it gets
-// its own change rather than being folded in here.
-//
-// `collapse` over the same quantities is fine, which is what makes this a defect
-// of expand rather than a policy about quantity intervals.
-func TestExpandOverQuantitiesIsEmpty(t *testing.T) {
-	if got := evalDefaultUnit(t, "expand {Interval[1, 3]} per 1"); got == "{}" {
-		t.Fatalf("expand over integers is empty too, so this test is measuring nothing")
+// Each row is checked against that integer spelling rather than against a written
+// out list, because matching it is the property: a quantity interval is the same
+// expansion wearing a unit.
+func TestExpandOverQuantitiesMatchesTheIntegerSpelling(t *testing.T) {
+	// The step written in the interval's unit, written without a unit, and left
+	// out entirely — all three are one step of what the interval is measured in.
+	number := regexp.MustCompile(`\d+`)
+	for _, per := range []string{" per 1 'cm'", " per 1", ""} {
+		quantities := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']}"+per)
+		integers := evalDefaultUnit(t, "expand {Interval[1, 3]}"+strings.ReplaceAll(per, " 'cm'", ""))
+		// The integer expansion with a unit written on every bound *is* the
+		// expected answer, derived rather than typed out.
+		want := number.ReplaceAllString(integers, "$0 'cm'")
+		if quantities != want {
+			t.Errorf("expand over quantities%s = %s, but the integer spelling gives %s, which in centimeters is %s",
+				per, quantities, integers, want)
+		}
+		if integers == "{}" {
+			t.Fatalf("the integer spelling is empty too, so this test is measuring against nothing")
+		}
 	}
-	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 1 'cm'"); got != "{}" {
-		t.Errorf("expand over quantities = %s — it has learned the quantity step. "+
-			"Check it against the integer spelling, which gives %s",
-			got, evalDefaultUnit(t, "expand {Interval[1, 3]} per 1"))
+
+	// The single-interval overload expands to points rather than unit intervals,
+	// and takes the same route, so the two cannot come to disagree about what a
+	// quantity step means.
+	if got := evalDefaultUnit(t, "expand Interval[1 'cm', 3 'cm'] per 1 'cm'"); got != "{1 'cm', 2 'cm', 3 'cm'}" {
+		t.Errorf("the single-interval overload = %s, want {1 'cm', 2 'cm', 3 'cm'}", got)
 	}
-	// And the neighbor that does handle them, which is why the above is a defect
-	// of expand and not a rule about quantity intervals.
+
+	// A step in another scale of the same dimension converts, which is the half a
+	// separate quantity path would most likely have got wrong.
+	if got := evalDefaultUnit(t, "expand {Interval[0 'm', 2 'm']} per 50 'cm'"); !strings.HasPrefix(got, "{Interval[0 'm', 0.4 'm']") {
+		t.Errorf("a step in centimeters over an interval in meters = %s", got)
+	}
+
+	// A step in another dimension converts to nothing, and the empty list is then
+	// an answer rather than the accident it used to be.
+	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 1 's'"); got != "{}" {
+		t.Errorf("a step in seconds over an interval in centimeters = %s, want {}", got)
+	}
+
+	// The neighbor that always handled quantities is unchanged.
 	if got := evalDefaultUnit(t, "collapse {Interval[1 'cm', 2 'cm'], Interval[2 'cm', 3 'cm']}"); got != "{Interval[1 'cm', 3 'cm']}" {
 		t.Errorf("collapse over quantities = %s, want {Interval[1 'cm', 3 'cm']}", got)
 	}
