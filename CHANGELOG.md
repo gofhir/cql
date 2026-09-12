@@ -7,6 +7,13 @@
 
 * **funcs:** width is the subtraction it is defined as, units and all ([#100](https://github.com/gofhir/cql/issues/100)) ([d282137](https://github.com/gofhir/cql/commit/d282137cbddc4cd28813762a591e5cf83cfacfd2))
 
+  `width of` and `Size` subtracted the two magnitudes and kept the low bound's
+  unit, so an interval written in two scales of one dimension came out scaled by
+  the ratio between them — and negative whenever the high bound's unit was the
+  larger. Answers that change: `width of Interval[100 'cm', 2 'm']` was `-98 'cm'`
+  and is `1 'm'`; `Interval[1 'cm', 1 's']` was `0 'cm'` and is null; and
+  `Interval[1, 2.5]` was null and is `1.5`. Integer intervals are unchanged.
+
 ## [1.21.0](https://github.com/gofhir/cql/compare/v1.20.9...v1.21.0) (2026-09-11)
 
 
