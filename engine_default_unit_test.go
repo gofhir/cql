@@ -576,16 +576,38 @@ func TestANegativeStepExpandsNothing(t *testing.T) {
 		}
 	}
 
+	// However the step is spelled. The temporal paths take a unit keyword or a
+	// UCUM code, and a fractional or tiny step is negative just the same.
+	for _, expr := range []string{
+		"expand {Interval[@2018-01-01, @2018-01-04]} per -1 'd'",
+		"expand {Interval[@T10:00, @T12:30]} per -1 hour",
+		"expand {Interval[1, 3]} per -0.5",
+		"expand {Interval[1, 3]} per -0.0000001",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "{}" {
+			t.Errorf("%s = %s, want {}", expr, got)
+		}
+	}
+
 	// A zero step is a different question and keeps its answer: all four already
 	// read it as "no step given", which is the unit interval of the point type.
+	// Negative zero is zero, not negative, and belongs on this side of the line.
 	for _, expr := range []string{
 		"expand {Interval[1, 3]} per 0",
 		"expand {Interval[1.0, 3.0]} per 0.0",
 		"expand {Interval[1 'cm', 3 'cm']} per 0 'cm'",
+		"expand {Interval[1, 3]} per -0.0",
 	} {
 		if got := evalDefaultUnit(t, expr); got == "{}" {
 			t.Errorf("%s = {} — a zero step means the unit step, not no step", expr)
 		}
+	}
+
+	// And the runaway guard is still what stops a positive step that is merely
+	// very small, which is the case it was there for and which this does not
+	// replace.
+	if got := evalDefaultUnit(t, "Count(expand Interval[0.0, 1.0] per 0.00001)"); got != "10001" {
+		t.Errorf("a tiny positive step gives %s points, want the guard's 10001", got)
 	}
 }
 
