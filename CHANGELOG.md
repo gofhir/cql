@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.3](https://github.com/gofhir/cql/compare/v1.21.2...v1.21.3) (2026-09-12)
+
+
+### Bug Fixes
+
+* **funcs:** a negative step expands nothing, in all four paths ([#105](https://github.com/gofhir/cql/issues/105)) ([d4efaf5](https://github.com/gofhir/cql/commit/d4efaf533b441a88042c6c89192eff474853da59))
+
 ## [1.21.2](https://github.com/gofhir/cql/compare/v1.21.1...v1.21.2) (2026-09-12)
 
 
