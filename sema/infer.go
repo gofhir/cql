@@ -841,12 +841,45 @@ func (c *checker) inferComponentFrom(e *ast.DateTimeComponentFrom) Type {
 	return Integer
 }
 
+// expectStep checks the `per` of an expand, which names how wide one step of the
+// expansion is and so has to be a quantity or a number.
+//
+// This phase inferred it and threw the type away. The evaluator reads a step it
+// does not recognize as *no step given*, so `expand {Interval[1, 10]} per 'abc'`
+// expanded by one and said nothing — the author got an answer to a question they
+// had not asked. Every other way of getting it wrong is reported, and this was the
+// hole.
+//
+// A bare number is allowed because the expansion reads one: over an interval of
+// integers `per 2` is two of them, and over quantities it is two of whatever the
+// interval is measured in. The temporal spellings — `per day`, `per 2 days`,
+// `per hour` — are quantities by the time they reach here.
+func (c *checker) expectStep(expr ast.Expression) {
+	t := c.infer(expr)
+	if IsUnknown(t) || Equal(t, Any) || Equal(t, Quantity) || isNumeric(t) {
+		return
+	}
+	// A model type that converts to a quantity is fine — the evaluator performs
+	// that conversion. A list is not, even though CQL declares a one-element list
+	// convertible to its element: this engine does not perform *that* one
+	// anywhere, so `{2} + 3` is an error and `per {2}` expanded by one rather than
+	// by two. Accepting it here and ignoring it there is the very silence this
+	// check exists to close.
+	if _, isList := t.(*List); !isList {
+		if _, ok := Convertible(t, Quantity, c.model); ok {
+			return
+		}
+	}
+	c.reportf(expr, SeverityError,
+		"the step of an expand is a quantity or a number, not %s", t)
+}
+
 // inferSetAggregate types `expand` and `collapse`, both of which take a list of
 // intervals and answer one.
 func (c *checker) inferSetAggregate(e *ast.SetAggregateExpression) Type {
 	operand := c.infer(e.Operand)
 	if e.Per != nil {
-		c.infer(e.Per)
+		c.expectStep(e.Per)
 	}
 	if l, ok := operand.(*List); ok {
 		if _, isInterval := l.Element.(*Interval); isInterval {
