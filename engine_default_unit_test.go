@@ -453,7 +453,7 @@ func TestExpandOverQuantitiesIsEmpty(t *testing.T) {
 			"Check it against the integer spelling, which gives %s",
 			got, evalDefaultUnit(t, "expand {Interval[1, 3]} per 1"))
 	}
-	// And the neighbour that does handle them, which is why the above is a defect
+	// And the neighbor that does handle them, which is why the above is a defect
 	// of expand and not a rule about quantity intervals.
 	if got := evalDefaultUnit(t, "collapse {Interval[1 'cm', 2 'cm'], Interval[2 'cm', 3 'cm']}"); got != "{Interval[1 'cm', 3 'cm']}" {
 		t.Errorf("collapse over quantities = %s, want {Interval[1 'cm', 3 'cm']}", got)
