@@ -408,3 +408,54 @@ func TestWidthIsTheSubtractionItIsDefinedAs(t *testing.T) {
 		t.Errorf("width over a calendar/UCUM pair = %s, want null", got)
 	}
 }
+
+// TestSizeFollowsWidth checks the function that inherits this one, because Size
+// is width plus the point size and only the width half was rewritten.
+func TestSizeFollowsWidth(t *testing.T) {
+	for _, tt := range []struct{ interval, width, size string }{
+		// Continuous: a size is the width, there being no points to count.
+		{"Interval[100 'cm', 2 'm']", "1 'm'", "1 'm'"},
+		{"Interval[1.0, 2.0]", "1", "1"},
+		{"Interval[1 'cm', 1 's']", "null", "null"},
+		// Discrete: a size counts the points, so it is the width plus one.
+		{"Interval[1, 5]", "4", "5"},
+	} {
+		if got := evalDefaultUnit(t, "width of "+tt.interval); got != tt.width {
+			t.Errorf("width of %s = %s, want %s", tt.interval, got, tt.width)
+		}
+		if got := evalDefaultUnit(t, "Size("+tt.interval+")"); got != tt.size {
+			t.Errorf("Size(%s) = %s, want %s", tt.interval, got, tt.size)
+		}
+	}
+}
+
+// TestExpandOverQuantitiesIsEmpty asserts a defect this one did not cause and
+// does not fix, so that it is recorded rather than noticed again later.
+//
+// The same interval and the same step, written two ways:
+//
+//	expand {Interval[1, 3]} per 1               {Interval[1, 1], Interval[2, 2], Interval[3, 3]}
+//	expand {Interval[1 'cm', 3 'cm']} per 1 'cm'   {}
+//
+// A quantity step expands nothing, in silence. It is the same shape as the width
+// defect this change fixes — arithmetic over quantities done halfway — but in a
+// different function, unchanged by this branch and identical on main, so it gets
+// its own change rather than being folded in here.
+//
+// `collapse` over the same quantities is fine, which is what makes this a defect
+// of expand rather than a policy about quantity intervals.
+func TestExpandOverQuantitiesIsEmpty(t *testing.T) {
+	if got := evalDefaultUnit(t, "expand {Interval[1, 3]} per 1"); got == "{}" {
+		t.Fatalf("expand over integers is empty too, so this test is measuring nothing")
+	}
+	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 1 'cm'"); got != "{}" {
+		t.Errorf("expand over quantities = %s — it has learned the quantity step. "+
+			"Check it against the integer spelling, which gives %s",
+			got, evalDefaultUnit(t, "expand {Interval[1, 3]} per 1"))
+	}
+	// And the neighbour that does handle them, which is why the above is a defect
+	// of expand and not a rule about quantity intervals.
+	if got := evalDefaultUnit(t, "collapse {Interval[1 'cm', 2 'cm'], Interval[2 'cm', 3 'cm']}"); got != "{Interval[1 'cm', 3 'cm']}" {
+		t.Errorf("collapse over quantities = %s, want {Interval[1 'cm', 3 'cm']}", got)
+	}
+}
