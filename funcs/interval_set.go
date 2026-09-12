@@ -288,6 +288,15 @@ func IntervalExpandPoints(interval cqltypes.Interval, perVal fptypes.Value) (fpt
 		}
 	}
 
+	// Quantity intervals, which are the decimal case wearing a unit.
+	if lo, hi, step, unit, ok := quantityExpansion(interval, perAmount, perUnit); ok {
+		points, err := expandDecimalPoints(lo, hi, interval.LowClosed, interval.HighClosed, step)
+		if err != nil {
+			return nil, err
+		}
+		return inUnit(points, unit), nil
+	}
+
 	// DateTime/Date intervals
 	if _, ok := interval.Low.(fptypes.DateTime); ok {
 		return expandTemporalPoints(interval, perAmount, perUnit)
@@ -334,6 +343,87 @@ func expandDecimalPoints(lo, hi decimal.Decimal, lowClosed, highClosed bool, ste
 		}
 	}
 	return result, nil
+}
+
+// quantityExpansion reduces an interval of quantities to the decimal problem
+// underneath it: both bounds and the step as magnitudes in one unit, plus the
+// unit to put back afterwards.
+//
+// Expansion had no quantity case at all. The ladder in both expand functions ran
+// Integer, Decimal, DateTime, Date, Time and then fell off the end, so
+// `expand {Interval[1 'cm', 3 'cm']} per 1 'cm'` answered the empty list while
+// the same shape in integers gave three intervals — nothing expanded, in silence.
+//
+// A step written without a unit is read in the interval's own unit, which is what
+// the temporal case already does with `per 1 day` and what an author writing
+// `per 1` over an interval in centimeters means. A step in another dimension
+// converts to nothing, and there the empty list is the right answer rather than
+// an accident.
+func quantityExpansion(interval cqltypes.Interval, perAmount decimal.Decimal, perUnit string) (lo, hi, step decimal.Decimal, unit string, ok bool) {
+	lq, lok := interval.Low.(fptypes.Quantity)
+	hq, hok := interval.High.(fptypes.Quantity)
+	if !lok || !hok {
+		return lo, hi, step, "", false
+	}
+	unit = lq.Unit()
+	// A calendar duration against its UCUM code is the pair CQL declines to
+	// decide, and every other operator over it answers null: `1 'year' = 1 'a'`,
+	// `3 'a' - 1 'year'` and the width of an interval between them. ConvertTo is
+	// happy to turn one into the other, so without this expand alone would have
+	// treated the pair as settled and expanded it.
+	if IsCalendarUCUMDurationPair(unit, hq.Unit()) {
+		return lo, hi, step, "", false
+	}
+	high, converted := hq.ConvertTo(unit)
+	if !converted {
+		return lo, hi, step, "", false
+	}
+	step = decimal.NewFromInt(1)
+	switch {
+	case perAmount.IsZero():
+		// No step given: the unit interval of the point type, which for a
+		// quantity is one of whatever it is measured in.
+	case perUnit == "":
+		step = perAmount
+	case IsCalendarUCUMDurationPair(unit, perUnit):
+		return lo, hi, step, "", false
+	default:
+		perQ, stepConverted := fptypes.NewQuantityFromDecimal(perAmount, perUnit).ConvertTo(unit)
+		if !stepConverted {
+			return lo, hi, step, "", false
+		}
+		step = perQ.Value()
+	}
+	if step.IsZero() || step.IsNegative() {
+		return lo, hi, step, "", false
+	}
+	return lq.Value(), high.Value(), step, unit, true
+}
+
+// inUnit puts the unit back on what the decimal expansion produced, for values
+// and for the unit intervals made of them.
+func inUnit(c fptypes.Collection, unit string) fptypes.Collection {
+	result := make(fptypes.Collection, 0, len(c))
+	for _, item := range c {
+		switch v := item.(type) {
+		case fptypes.Decimal:
+			result = append(result, fptypes.NewQuantityFromDecimal(v.Value(), unit))
+		case cqltypes.Interval:
+			result = append(result, cqltypes.NewInterval(
+				quantityBound(v.Low, unit), quantityBound(v.High, unit),
+				v.LowClosed, v.HighClosed))
+		default:
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+func quantityBound(v fptypes.Value, unit string) fptypes.Value {
+	if d, ok := v.(fptypes.Decimal); ok {
+		return fptypes.NewQuantityFromDecimal(d.Value(), unit)
+	}
+	return v
 }
 
 // IntervalExpandIntervals expands an interval into a list of unit intervals (list-of-intervals overload).
@@ -397,6 +487,16 @@ func IntervalExpandIntervals(interval cqltypes.Interval, perVal fptypes.Value) (
 			}
 			return expandDecimalIntervals(ld.Value(), hd.Value(), interval.LowClosed, interval.HighClosed, step)
 		}
+	}
+
+	// Quantity intervals, reduced the same way and by the same helper, so the two
+	// overloads cannot come to disagree about what a quantity step means.
+	if lo, hi, step, unit, ok := quantityExpansion(interval, perAmount, perUnit); ok {
+		ivals, err := expandDecimalIntervals(lo, hi, interval.LowClosed, interval.HighClosed, step)
+		if err != nil {
+			return nil, err
+		}
+		return inUnit(ivals, unit), nil
 	}
 
 	// DateTime/Date intervals

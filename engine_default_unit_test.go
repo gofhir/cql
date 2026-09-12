@@ -2,6 +2,7 @@ package cql
 
 import (
 	"context"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -429,33 +430,222 @@ func TestSizeFollowsWidth(t *testing.T) {
 	}
 }
 
-// TestExpandOverQuantitiesIsEmpty asserts a defect this one did not cause and
-// does not fix, so that it is recorded rather than noticed again later.
+// TestExpandOverQuantitiesMatchesTheIntegerSpelling covers expansion over
+// quantities, which had no case at all.
 //
-// The same interval and the same step, written two ways:
+// The ladder in both expand functions ran Integer, Decimal, DateTime, Date, Time
+// and then fell off the end, so every quantity interval expanded to nothing, in
+// silence — while the same shape written in integers gave three intervals. This
+// test was here asserting that emptiness, with a message naming the integer
+// spelling to check against; it broke when the case was added, which is what it
+// was for.
 //
-//	expand {Interval[1, 3]} per 1               {Interval[1, 1], Interval[2, 2], Interval[3, 3]}
-//	expand {Interval[1 'cm', 3 'cm']} per 1 'cm'   {}
-//
-// A quantity step expands nothing, in silence. It is the same shape as the width
-// defect this change fixes — arithmetic over quantities done halfway — but in a
-// different function, unchanged by this branch and identical on main, so it gets
-// its own change rather than being folded in here.
-//
-// `collapse` over the same quantities is fine, which is what makes this a defect
-// of expand rather than a policy about quantity intervals.
-func TestExpandOverQuantitiesIsEmpty(t *testing.T) {
-	if got := evalDefaultUnit(t, "expand {Interval[1, 3]} per 1"); got == "{}" {
-		t.Fatalf("expand over integers is empty too, so this test is measuring nothing")
+// Each row is checked against that integer spelling rather than against a written
+// out list, because matching it is the property: a quantity interval is the same
+// expansion wearing a unit.
+func TestExpandOverQuantitiesMatchesTheIntegerSpelling(t *testing.T) {
+	// The step written in the interval's unit, written without a unit, and left
+	// out entirely — all three are one step of what the interval is measured in.
+	number := regexp.MustCompile(`\d+`)
+	for _, per := range []string{" per 1 'cm'", " per 1", ""} {
+		quantities := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']}"+per)
+		integers := evalDefaultUnit(t, "expand {Interval[1, 3]}"+strings.ReplaceAll(per, " 'cm'", ""))
+		// The integer expansion with a unit written on every bound *is* the
+		// expected answer, derived rather than typed out.
+		want := number.ReplaceAllString(integers, "$0 'cm'")
+		if quantities != want {
+			t.Errorf("expand over quantities%s = %s, but the integer spelling gives %s, which in centimeters is %s",
+				per, quantities, integers, want)
+		}
+		if integers == "{}" {
+			t.Fatalf("the integer spelling is empty too, so this test is measuring against nothing")
+		}
 	}
-	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 1 'cm'"); got != "{}" {
-		t.Errorf("expand over quantities = %s — it has learned the quantity step. "+
-			"Check it against the integer spelling, which gives %s",
-			got, evalDefaultUnit(t, "expand {Interval[1, 3]} per 1"))
+
+	// The single-interval overload expands to points rather than unit intervals,
+	// and takes the same route, so the two cannot come to disagree about what a
+	// quantity step means.
+	if got := evalDefaultUnit(t, "expand Interval[1 'cm', 3 'cm'] per 1 'cm'"); got != "{1 'cm', 2 'cm', 3 'cm'}" {
+		t.Errorf("the single-interval overload = %s, want {1 'cm', 2 'cm', 3 'cm'}", got)
 	}
-	// And the neighbor that does handle them, which is why the above is a defect
-	// of expand and not a rule about quantity intervals.
+
+	// A step in another scale of the same dimension converts, which is the half a
+	// separate quantity path would most likely have got wrong.
+	if got := evalDefaultUnit(t, "expand {Interval[0 'm', 2 'm']} per 50 'cm'"); !strings.HasPrefix(got, "{Interval[0 'm', 0.4 'm']") {
+		t.Errorf("a step in centimeters over an interval in meters = %s", got)
+	}
+
+	// A step in another dimension converts to nothing, and the empty list is then
+	// an answer rather than the accident it used to be.
+	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 1 's'"); got != "{}" {
+		t.Errorf("a step in seconds over an interval in centimeters = %s, want {}", got)
+	}
+
+	// The neighbor that always handled quantities is unchanged.
 	if got := evalDefaultUnit(t, "collapse {Interval[1 'cm', 2 'cm'], Interval[2 'cm', 3 'cm']}"); got != "{Interval[1 'cm', 3 'cm']}" {
 		t.Errorf("collapse over quantities = %s, want {Interval[1 'cm', 3 'cm']}", got)
+	}
+}
+
+// TestExpandDeclinesThePairCQLWillNotDecide is the limit review found on the
+// expansion above.
+//
+// A calendar duration against its UCUM code is the one pair CQL declines to
+// settle, and every other operator over it answers null:
+//
+//	1 'year' = 1 'a'                     null
+//	3 'a' - 1 'year'                     null
+//	width of Interval[1 'year', 3 'a']   null
+//
+// fptypes.ConvertTo is happy to turn one into the other, so reducing a quantity
+// interval through it made expand the only operator that treated the pair as
+// settled — it expanded where the rest decline. The reduction now asks the same
+// question the equality path asks, and the units that are genuinely one dimension
+// still expand.
+func TestExpandDeclinesThePairCQLWillNotDecide(t *testing.T) {
+	for _, expr := range []string{
+		"expand {Interval[1 'year', 3 'a']} per 1 'year'",
+		"expand {Interval[1 'year', 3 'year']} per 1 'a'",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "{}" {
+			t.Errorf("%s = %s, want {} — CQL does not decide a calendar duration against its UCUM code",
+				expr, got)
+		}
+	}
+	// Either unit on its own is a dimension like any other and still expands.
+	for _, expr := range []string{
+		"expand {Interval[1 'year', 3 'year']} per 1 'year'",
+		"expand {Interval[1 'a', 3 'a']} per 1 'a'",
+	} {
+		if got := evalDefaultUnit(t, expr); got == "{}" {
+			t.Errorf("%s = {} — declining the mixed pair must not stop a single unit from expanding", expr)
+		}
+	}
+}
+
+// TestANegativeStepExpandsNothingOverQuantities records a disagreement rather
+// than resolving it, because the three paths that already existed do not agree
+// with each other and none of them is a rule to follow:
+//
+//	expand {Interval[1, 3]} per -1                 normalizes the step to 1
+//	expand {Interval[1.0, 3.0]} per -1.0           counts away from the bound until a cap stops it
+//	expand {…@2020-01-03]} per -1 day              the same, with backwards intervals
+//	expand {Interval[1 'cm', 3 'cm']} per -1 'cm'  {}
+//
+// The middle two produce values no interval contains, which is a defect of their
+// own, older than this and untouched here. Quantities decline instead, and that is
+// asserted so that whoever settles the question for all four finds this.
+func TestANegativeStepExpandsNothingOverQuantities(t *testing.T) {
+	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per -1 'cm'"); got != "{}" {
+		t.Errorf("a negative step over quantities = %s, want {}", got)
+	}
+	// A zero step is the one the four do agree on: it means the unit step.
+	quantities := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 0 'cm'")
+	integers := evalDefaultUnit(t, "expand {Interval[1, 3]} per 0")
+	if strings.Count(quantities, "Interval[") != strings.Count(integers, "Interval[") {
+		t.Errorf("a zero step gives %s over quantities and %s over integers", quantities, integers)
+	}
+}
+
+// TestQuantityExpansionBehavesLikeTheDecimalOneItIsBuiltOn checks the properties
+// that come from reducing to the decimal case rather than writing a new one, and
+// so would be the first things a separate implementation got wrong.
+func TestQuantityExpansionBehavesLikeTheDecimalOneItIsBuiltOn(t *testing.T) {
+	// The cap on how many points an expansion produces is the same cap.
+	quantities := evalDefaultUnit(t, "Count(expand Interval[0 'cm', 100000 'cm'] per 1 'cm')")
+	decimals := evalDefaultUnit(t, "Count(expand Interval[0.0, 100000.0] per 1.0)")
+	if quantities != decimals {
+		t.Errorf("a long expansion gives %s points over quantities and %s over decimals", quantities, decimals)
+	}
+
+	// A fractional step accumulates the same way, so the sequence does not drift
+	// apart from the decimal one it is made of.
+	q := evalDefaultUnit(t, "expand Interval[1 'cm', 2 'cm'] per 0.1 'cm'")
+	d := evalDefaultUnit(t, "expand Interval[1.0, 2.0] per 0.1")
+	if stripped := strings.ReplaceAll(q, " 'cm'", ""); stripped != d {
+		t.Errorf("a fractional step gives\n  %s\nover quantities and\n  %s\nover decimals", q, d)
+	}
+
+	// A step in another scale converts, in both overloads.
+	if got := evalDefaultUnit(t, "expand Interval[0 'm', 2 'm'] per 50 'cm'"); got != "{0 'm', 0.5 'm', 1 'm', 1.5 'm', 2 'm'}" {
+		t.Errorf("a step in centimeters over an interval in meters = %s", got)
+	}
+}
+
+// TestWidthAndExpandReportDifferentUnitsOnPurpose records an asymmetry that is
+// measured rather than accidental, so that changing it is a decision.
+//
+// Over the same interval the two answer in different units:
+//
+//	width of Interval[100 'cm', 2 'm']             1 'm'
+//	expand Interval[100 'cm', 2 'm'] per 50 'cm'   {100 'cm', 150 'cm', 200 'cm'}
+//
+// Each inherits the unit from the operation it is defined as. A width is
+// `high - low`, and a subtraction answers in the unit of what it subtracts from.
+// An expansion walks from the low bound, so it answers in that bound's unit.
+// Neither is wrong about the quantity — 1 'm' is 100 'cm' — and forcing them to
+// agree would mean overriding one of the two definitions.
+func TestWidthAndExpandReportDifferentUnitsOnPurpose(t *testing.T) {
+	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm']"); got != "1 'm'" {
+		t.Errorf("width = %s, want 1 'm' — the unit of the subtraction's left side", got)
+	}
+	if got := evalDefaultUnit(t, "expand Interval[100 'cm', 2 'm'] per 50 'cm'"); got != "{100 'cm', 150 'cm', 200 'cm'}" {
+		t.Errorf("expand = %s, want centimeters — the unit it starts walking from", got)
+	}
+	// And they agree about the quantity, which is the part that matters.
+	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm'] = 100 'cm'"); got != "true" {
+		t.Errorf("the two units disagree about the value: %s", got)
+	}
+}
+
+// TestQuantityExpansionIsTheDecimalOneWithAUnit compares against the decimal
+// spelling rather than the integer one, which is the oracle that actually
+// applies: a quantity interval is continuous, and it is the decimal expansion
+// this is built on.
+//
+// The integer comparison elsewhere in this file holds only because a step of one
+// makes all three agree. These rows are where discrete and continuous part ways,
+// and quantities have to follow the continuous side:
+//
+//	collapse (expand {Interval[1, 5]})           {Interval[1, 5]}
+//	collapse (expand {Interval[1.0, 5.0]})       five point intervals
+//	collapse (expand {Interval[1 'cm', 5 'cm']}) five point intervals
+//
+// Expanding and collapsing gets the interval back only where the points are
+// adjacent, which they are in the integers and are not between 1 'cm' and 2 'cm'.
+// A quantity behaving like the integer there would mean claiming 1.5 'cm' is not
+// in the interval.
+func TestQuantityExpansionIsTheDecimalOneWithAUnit(t *testing.T) {
+	for _, per := range []string{"0.5", "1.0", "0.25"} {
+		quantities := evalDefaultUnit(t,
+			"expand {Interval[1 'cm', 3 'cm']} per "+per+" 'cm'")
+		decimals := evalDefaultUnit(t, "expand {Interval[1.0, 3.0]} per "+per)
+		if stripped := strings.ReplaceAll(quantities, " 'cm'", ""); stripped != decimals {
+			t.Errorf("per %s gives\n  %s\nover quantities and\n  %s\nover decimals", per, quantities, decimals)
+		}
+	}
+
+	// Round-tripping follows the continuous reading, not the discrete one.
+	q := evalDefaultUnit(t, "collapse (expand {Interval[1 'cm', 5 'cm']})")
+	d := evalDefaultUnit(t, "collapse (expand {Interval[1.0, 5.0]})")
+	if stripped := strings.ReplaceAll(q, " 'cm'", ""); stripped != d {
+		t.Errorf("expanding and collapsing gives\n  %s\nover quantities and\n  %s\nover decimals", q, d)
+	}
+	// And the integer spelling does get its interval back, which is what makes the
+	// above a property of continuity rather than a failure of collapse.
+	if got := evalDefaultUnit(t, "collapse (expand {Interval[1, 5]})"); got != "{Interval[1, 5]}" {
+		t.Errorf("the integer round trip = %s, want {Interval[1, 5]}", got)
+	}
+
+	// Each interval in a list expands in its own unit, and one the step cannot
+	// reach drops out rather than taking the others with it.
+	mixed := evalDefaultUnit(t, "expand {Interval[1 'cm', 2 'cm'], Interval[1 'm', 2 'm']} per 1 'cm'")
+	for _, want := range []string{"1 'cm'", "1 'm'"} {
+		if !strings.Contains(mixed, want) {
+			t.Errorf("expanding a list of two units = %s, missing %s", mixed, want)
+		}
+	}
+	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 2 'cm'], Interval[1 's', 2 's']} per 1 'cm'"); strings.Contains(got, "'s'") {
+		t.Errorf("an interval the step cannot reach was expanded anyway: %s", got)
 	}
 }
