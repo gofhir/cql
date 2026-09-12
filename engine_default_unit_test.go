@@ -784,3 +784,52 @@ func TestAOneElementListIsNotAStep(t *testing.T) {
 			"if it now performs it everywhere, a list step may be allowed again", got)
 	}
 }
+
+// TestTheDiagnosticNamesTheOperationTheAuthorWrote covers that `collapse` reaches
+// the same check, since both spellings carry a `per` and share one function.
+//
+// A diagnostic about a `collapse` that says "expand" sends the reader looking at
+// the wrong line, which is the kind of half-diagnostic this repository has had to
+// fix before.
+func TestTheDiagnosticNamesTheOperationTheAuthorWrote(t *testing.T) {
+	for _, tt := range []struct{ expr, kind string }{
+		{"expand {Interval[1, 3]} per 'abc'", "expand"},
+		{"collapse {Interval[1, 3]} per 'abc'", "collapse"},
+		{"collapse {Interval[1, 3]} per {2}", "collapse"},
+	} {
+		got := evalDefaultUnit(t, tt.expr)
+		if !strings.Contains(got, "the step of a "+tt.kind) && !strings.Contains(got, "the step of an "+tt.kind) {
+			t.Errorf("%s reported: %s — it should name %s", tt.expr, got, tt.kind)
+		}
+	}
+}
+
+// TestCollapsePerIsIgnored asserts a defect this change did not cause and does not
+// fix, found while checking that `collapse` reaches the check above.
+//
+// `collapse … per` is accepted and then ignored: intervals separated by less than
+// the step should merge, and none of these do.
+//
+//	collapse {Interval[1, 3], Interval[5, 7]} per 3   should be {Interval[1, 7]}
+//	                                                  is two intervals
+//
+// The gap between 3 and 5 is 2, which is inside a step of 3. Identical on main —
+// the evaluator's collapse never looks at Per at all — so it is untouched here and
+// gets its own change. Asserted rather than described, with the no-per spelling
+// beside it: if a `per` ever starts making a difference, this fails.
+func TestCollapsePerIsIgnored(t *testing.T) {
+	withoutPer := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[5, 7]}")
+	for _, per := range []string{" per 3", " per 1", " per 10"} {
+		got := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[5, 7]}"+per)
+		if got != withoutPer {
+			t.Errorf("collapse%s = %s but without per = %s — the step now makes a "+
+				"difference. With a step of 3 the right answer is {Interval[1, 7]}, "+
+				"since the gap between 3 and 5 is 2.", per, got, withoutPer)
+		}
+	}
+	// The collapsing it does do is unaffected, which is what makes the above a
+	// missing feature rather than a broken one.
+	if got := evalDefaultUnit(t, "collapse {Interval[1, 4], Interval[3, 7]}"); got != "{Interval[1, 7]}" {
+		t.Errorf("collapsing two overlapping intervals = %s, want {Interval[1, 7]}", got)
+	}
+}

@@ -841,8 +841,12 @@ func (c *checker) inferComponentFrom(e *ast.DateTimeComponentFrom) Type {
 	return Integer
 }
 
-// expectStep checks the `per` of an expand, which names how wide one step of the
-// expansion is and so has to be a quantity or a number.
+// expectStep checks the `per` of an expand or a collapse, which names how wide
+// one step is and so has to be a quantity or a number.
+//
+// Both spellings reach here, so the message names the one the author wrote: a
+// diagnostic about a `collapse` that says "expand" sends the reader to the wrong
+// line.
 //
 // This phase inferred it and threw the type away. The evaluator reads a step it
 // does not recognize as *no step given*, so `expand {Interval[1, 10]} per 'abc'`
@@ -854,7 +858,7 @@ func (c *checker) inferComponentFrom(e *ast.DateTimeComponentFrom) Type {
 // integers `per 2` is two of them, and over quantities it is two of whatever the
 // interval is measured in. The temporal spellings — `per day`, `per 2 days`,
 // `per hour` — are quantities by the time they reach here.
-func (c *checker) expectStep(expr ast.Expression) {
+func (c *checker) expectStep(expr ast.Expression, kind string) {
 	t := c.infer(expr)
 	if IsUnknown(t) || Equal(t, Any) || Equal(t, Quantity) || isNumeric(t) {
 		return
@@ -871,7 +875,7 @@ func (c *checker) expectStep(expr ast.Expression) {
 		}
 	}
 	c.reportf(expr, SeverityError,
-		"the step of an expand is a quantity or a number, not %s", t)
+		"the step of a %s is a quantity or a number, not %s", kind, t)
 }
 
 // inferSetAggregate types `expand` and `collapse`, both of which take a list of
@@ -879,7 +883,7 @@ func (c *checker) expectStep(expr ast.Expression) {
 func (c *checker) inferSetAggregate(e *ast.SetAggregateExpression) Type {
 	operand := c.infer(e.Operand)
 	if e.Per != nil {
-		c.expectStep(e.Per)
+		c.expectStep(e.Per, e.Kind)
 	}
 	if l, ok := operand.(*List); ok {
 		if _, isInterval := l.Element.(*Interval); isInterval {
