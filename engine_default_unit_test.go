@@ -876,4 +876,36 @@ func TestTheStepCheckDoesNotCryWolf(t *testing.T) {
 	if got := evalDefaultUnit(t, "expand {Interval[1, 9]} per 1:2"); !strings.Contains(got, "the step of") {
 		t.Errorf("a ratio step = %s, want the diagnostic — the check is not running", got)
 	}
+
+	// Both spellings of expand carry a step, and the check has to reach wherever
+	// one is written rather than only at the top of a define.
+	for _, expr := range []string{
+		"expand Interval[1, 3] per 'abc'",
+		"expand {Interval[1, 3]} per 'abc'",
+		"Count(expand Interval[1, 3] per 'abc')",
+		"if true then expand Interval[1, 3] per 'abc' else {}",
+	} {
+		if got := evalDefaultUnit(t, expr); !strings.Contains(got, "the step of") {
+			t.Errorf("%s = %s, want the diagnostic", expr, got)
+		}
+	}
+
+	// Two bad steps are two diagnostics. The semantic phase is meant to reach the
+	// end of the library rather than stop at the first thing it finds, and a check
+	// that aborted the walk would report one of these and hide the other.
+	src := "library T version '1.0'\n" +
+		"define X: expand (expand {Interval[1, 3]} per 'abc') per 'xyz'\n"
+	diags, err := NewEngine().Check(src)
+	if err != nil {
+		t.Fatalf("checking two bad steps: %v", err)
+	}
+	var steps int
+	for _, d := range diags {
+		if strings.Contains(d.Message, "the step of") {
+			steps++
+		}
+	}
+	if steps != 2 {
+		t.Errorf("two bad steps gave %d diagnostics, want 2", steps)
+	}
 }
