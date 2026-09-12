@@ -523,27 +523,69 @@ func TestExpandDeclinesThePairCQLWillNotDecide(t *testing.T) {
 	}
 }
 
-// TestANegativeStepExpandsNothingOverQuantities records a disagreement rather
-// than resolving it, because the three paths that already existed do not agree
-// with each other and none of them is a rule to follow:
+// TestANegativeStepExpandsNothing settles what the four expansion paths used to
+// answer four different ways.
 //
-//	expand {Interval[1, 3]} per -1                 normalizes the step to 1
-//	expand {Interval[1.0, 3.0]} per -1.0           counts away from the bound until a cap stops it
-//	expand {…@2020-01-03]} per -1 day              the same, with backwards intervals
-//	expand {Interval[1 'cm', 3 'cm']} per -1 'cm'  {}
+// An expansion starts at the low bound and walks toward the high one, so a step
+// pointing the other way names no sequence. Each path had invented its own
+// answer:
 //
-// The middle two produce values no interval contains, which is a defect of their
-// own, older than this and untouched here. Quantities decline instead, and that is
-// asserted so that whoever settles the question for all four finds this.
-func TestANegativeStepExpandsNothingOverQuantities(t *testing.T) {
-	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per -1 'cm'"); got != "{}" {
-		t.Errorf("a negative step over quantities = %s, want {}", got)
+//	expand {Interval[1, 3]} per -1          normalized the step to 1
+//	expand {Interval[1.0, 3.0]} per -1.0    10001 intervals, down to -10000
+//	expand {…@2018-01-04]} per -1 day       10001 of them, each one backwards
+//	expand {Interval[1 'cm', 3 'cm']}…      the empty list
+//
+// The middle two are why this is not left alone: every value they produced lay
+// outside the interval asked about, and the temporal one reported intervals whose
+// high bound preceded their low. Ten thousand of each, stopped only by the
+// runaway guard.
+//
+// The empty list is now shared by all four. It is the one answer that invents
+// nothing — normalizing to 1 reads `per -1` as `per 1`, which is a guess at what
+// the author meant — and the conformance corpus has no case for a negative step
+// to prefer one reading over the other. Its twenty-odd expand cases all still
+// pass.
+func TestANegativeStepExpandsNothing(t *testing.T) {
+	for _, interval := range []string{
+		"Interval[1, 3]",
+		"Interval[1.0, 3.0]",
+		"Interval[1 'cm', 3 'cm']",
+		"Interval[@2018-01-01, @2018-01-04]",
+		"Interval[@T10:00, @T12:30]",
+	} {
+		var per string
+		switch {
+		case strings.Contains(interval, "@T"):
+			per = " per -1 hour"
+		case strings.Contains(interval, "@"):
+			per = " per -1 day"
+		case strings.Contains(interval, "'cm'"):
+			per = " per -1 'cm'"
+		case strings.Contains(interval, "."):
+			per = " per -1.0"
+		default:
+			per = " per -1"
+		}
+		// Both overloads: the list one answers with unit intervals, the single one
+		// with points, and neither has a sequence to report.
+		if got := evalDefaultUnit(t, "expand {"+interval+"}"+per); got != "{}" {
+			t.Errorf("expand {%s}%s = %s, want {}", interval, per, got)
+		}
+		if got := evalDefaultUnit(t, "expand "+interval+per); got != "{}" {
+			t.Errorf("expand %s%s = %s, want {}", interval, per, got)
+		}
 	}
-	// A zero step is the one the four do agree on: it means the unit step.
-	quantities := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 0 'cm'")
-	integers := evalDefaultUnit(t, "expand {Interval[1, 3]} per 0")
-	if strings.Count(quantities, "Interval[") != strings.Count(integers, "Interval[") {
-		t.Errorf("a zero step gives %s over quantities and %s over integers", quantities, integers)
+
+	// A zero step is a different question and keeps its answer: all four already
+	// read it as "no step given", which is the unit interval of the point type.
+	for _, expr := range []string{
+		"expand {Interval[1, 3]} per 0",
+		"expand {Interval[1.0, 3.0]} per 0.0",
+		"expand {Interval[1 'cm', 3 'cm']} per 0 'cm'",
+	} {
+		if got := evalDefaultUnit(t, expr); got == "{}" {
+			t.Errorf("%s = {} — a zero step means the unit step, not no step", expr)
+		}
 	}
 }
 

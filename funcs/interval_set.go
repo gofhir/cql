@@ -206,21 +206,42 @@ func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error
 	return result, nil
 }
 
-// expandGetStep extracts the step amount and unit from a per value (Quantity or Integer/Decimal).
-func expandGetStep(perVal fptypes.Value) (amount decimal.Decimal, unit string) {
-	if perVal == nil {
-		return decimal.Zero, ""
+// expandGetStep extracts the step amount and unit from a per value (Quantity or
+// Integer/Decimal), and reports whether the step is one an expansion can walk.
+//
+// A negative step is not. An expansion starts at the low bound and walks toward
+// the high one, so a step that points the other way names no sequence — and each
+// of the four paths had invented a different answer for it:
+//
+//	expand {Interval[1, 3]} per -1          normalized the step to 1
+//	expand {Interval[1.0, 3.0]} per -1.0    10001 intervals, down to -10000
+//	expand {…@2018-01-04]} per -1 day       10001 of them, each one backwards
+//	expand {Interval[1 'cm', 3 'cm']}…      the empty list
+//
+// The middle two are the reason this is not left alone: every value they produce
+// lies outside the interval that was asked about, and the temporal one reports
+// intervals whose high bound precedes their low. Ten thousand of each, because
+// only the runaway guard stops them.
+//
+// The empty list is the answer the four now share. It is the only one that does
+// not invent something: normalizing to 1 reads `per -1` as `per 1`, which is a
+// guess about what the author meant, and the conformance corpus has no case for a
+// negative step to prefer one reading over the other.
+//
+// A zero step is left as it was — all four already read it as "no step given",
+// which is the unit interval of the point type.
+func expandGetStep(perVal fptypes.Value) (amount decimal.Decimal, unit string, usable bool) {
+	switch v := perVal.(type) {
+	case nil:
+		return decimal.Zero, "", true
+	case fptypes.Quantity:
+		amount, unit = v.Value(), v.Unit()
+	case fptypes.Integer:
+		amount = decimal.NewFromInt(v.Value())
+	case fptypes.Decimal:
+		amount = v.Value()
 	}
-	if q, ok := perVal.(fptypes.Quantity); ok {
-		return q.Value(), q.Unit()
-	}
-	if i, ok := perVal.(fptypes.Integer); ok {
-		return decimal.NewFromInt(i.Value()), ""
-	}
-	if d, ok := perVal.(fptypes.Decimal); ok {
-		return d.Value(), ""
-	}
-	return decimal.Zero, ""
+	return amount, unit, !amount.IsNegative()
 }
 
 // IntervalExpandPoints expands an interval into a list of point values (single-interval overload).
@@ -230,7 +251,10 @@ func IntervalExpandPoints(interval cqltypes.Interval, perVal fptypes.Value) (fpt
 	if interval.Low == nil || interval.High == nil {
 		return nil, nil
 	}
-	perAmount, perUnit := expandGetStep(perVal)
+	perAmount, perUnit, usable := expandGetStep(perVal)
+	if !usable {
+		return nil, nil
+	}
 
 	// Integer intervals
 	if li, ok := interval.Low.(fptypes.Integer); ok {
@@ -394,7 +418,7 @@ func quantityExpansion(interval cqltypes.Interval, perAmount decimal.Decimal, pe
 		}
 		step = perQ.Value()
 	}
-	if step.IsZero() || step.IsNegative() {
+	if step.IsZero() {
 		return lo, hi, step, "", false
 	}
 	return lq.Value(), high.Value(), step, unit, true
@@ -433,7 +457,10 @@ func IntervalExpandIntervals(interval cqltypes.Interval, perVal fptypes.Value) (
 	if interval.Low == nil || interval.High == nil {
 		return nil, nil
 	}
-	perAmount, perUnit := expandGetStep(perVal)
+	perAmount, perUnit, usable := expandGetStep(perVal)
+	if !usable {
+		return nil, nil
+	}
 
 	// Integer intervals
 	if li, ok := interval.Low.(fptypes.Integer); ok {
