@@ -486,3 +486,63 @@ func TestExpandOverQuantitiesMatchesTheIntegerSpelling(t *testing.T) {
 		t.Errorf("collapse over quantities = %s, want {Interval[1 'cm', 3 'cm']}", got)
 	}
 }
+
+// TestExpandDeclinesThePairCQLWillNotDecide is the limit review found on the
+// expansion above.
+//
+// A calendar duration against its UCUM code is the one pair CQL declines to
+// settle, and every other operator over it answers null:
+//
+//	1 'year' = 1 'a'                     null
+//	3 'a' - 1 'year'                     null
+//	width of Interval[1 'year', 3 'a']   null
+//
+// fptypes.ConvertTo is happy to turn one into the other, so reducing a quantity
+// interval through it made expand the only operator that treated the pair as
+// settled — it expanded where the rest decline. The reduction now asks the same
+// question the equality path asks, and the units that are genuinely one dimension
+// still expand.
+func TestExpandDeclinesThePairCQLWillNotDecide(t *testing.T) {
+	for _, expr := range []string{
+		"expand {Interval[1 'year', 3 'a']} per 1 'year'",
+		"expand {Interval[1 'year', 3 'year']} per 1 'a'",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "{}" {
+			t.Errorf("%s = %s, want {} — CQL does not decide a calendar duration against its UCUM code",
+				expr, got)
+		}
+	}
+	// Either unit on its own is a dimension like any other and still expands.
+	for _, expr := range []string{
+		"expand {Interval[1 'year', 3 'year']} per 1 'year'",
+		"expand {Interval[1 'a', 3 'a']} per 1 'a'",
+	} {
+		if got := evalDefaultUnit(t, expr); got == "{}" {
+			t.Errorf("%s = {} — declining the mixed pair must not stop a single unit from expanding", expr)
+		}
+	}
+}
+
+// TestANegativeStepExpandsNothingOverQuantities records a disagreement rather
+// than resolving it, because the three paths that already existed do not agree
+// with each other and none of them is a rule to follow:
+//
+//	expand {Interval[1, 3]} per -1                 normalizes the step to 1
+//	expand {Interval[1.0, 3.0]} per -1.0           counts away from the bound until a cap stops it
+//	expand {…@2020-01-03]} per -1 day              the same, with backwards intervals
+//	expand {Interval[1 'cm', 3 'cm']} per -1 'cm'  {}
+//
+// The middle two produce values no interval contains, which is a defect of their
+// own, older than this and untouched here. Quantities decline instead, and that is
+// asserted so that whoever settles the question for all four finds this.
+func TestANegativeStepExpandsNothingOverQuantities(t *testing.T) {
+	if got := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per -1 'cm'"); got != "{}" {
+		t.Errorf("a negative step over quantities = %s, want {}", got)
+	}
+	// A zero step is the one the four do agree on: it means the unit step.
+	quantities := evalDefaultUnit(t, "expand {Interval[1 'cm', 3 'cm']} per 0 'cm'")
+	integers := evalDefaultUnit(t, "expand {Interval[1, 3]} per 0")
+	if strings.Count(quantities, "Interval[") != strings.Count(integers, "Interval[") {
+		t.Errorf("a zero step gives %s over quantities and %s over integers", quantities, integers)
+	}
+}

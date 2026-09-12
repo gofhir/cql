@@ -366,6 +366,14 @@ func quantityExpansion(interval cqltypes.Interval, perAmount decimal.Decimal, pe
 		return lo, hi, step, "", false
 	}
 	unit = lq.Unit()
+	// A calendar duration against its UCUM code is the pair CQL declines to
+	// decide, and every other operator over it answers null: `1 'year' = 1 'a'`,
+	// `3 'a' - 1 'year'` and the width of an interval between them. ConvertTo is
+	// happy to turn one into the other, so without this expand alone would have
+	// treated the pair as settled and expanded it.
+	if IsCalendarUCUMDurationPair(unit, hq.Unit()) {
+		return lo, hi, step, "", false
+	}
 	high, converted := hq.ConvertTo(unit)
 	if !converted {
 		return lo, hi, step, "", false
@@ -377,6 +385,8 @@ func quantityExpansion(interval cqltypes.Interval, perAmount decimal.Decimal, pe
 		// quantity is one of whatever it is measured in.
 	case perUnit == "":
 		step = perAmount
+	case IsCalendarUCUMDurationPair(unit, perUnit):
+		return lo, hi, step, "", false
 	default:
 		perQ, stepConverted := fptypes.NewQuantityFromDecimal(perAmount, perUnit).ConvertTo(unit)
 		if !stepConverted {
