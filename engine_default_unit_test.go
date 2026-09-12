@@ -713,3 +713,58 @@ func TestQuantityExpansionIsTheDecimalOneWithAUnit(t *testing.T) {
 		t.Errorf("an interval the step cannot reach was expanded anyway: %s", got)
 	}
 }
+
+// TestAStepOfTheWrongTypeIsReadAsNoStep asserts a defect this change did not
+// cause and does not fix, found while checking what else reaches the step reader.
+//
+// A `per` of any type the reader does not recognize is silently read as "no step
+// given", so the expansion runs with the unit step and the author is told
+// nothing:
+//
+//	expand {Interval[1, 10]} per 'abc'           expands as if no step were given
+//	expand {Interval[1, 10]} per true            the same
+//	expand {Interval[1, 10]} per Interval[1,2]   the same
+//	expand {Interval[1, 10]}                     what all of them answer
+//
+// It belongs in the semantic phase — `per` takes a quantity, and nothing checks
+// that — rather than in the reader, which is why it is not folded in here: making
+// the reader decline would answer the empty list, and the empty list is not right
+// either. The author should be told.
+//
+// Asserted rather than described so that closing it breaks this test. When it is
+// closed, these should report a diagnostic naming the type; check that the
+// spellings CQL does allow — an integer, a decimal, a quantity, a temporal
+// keyword, and none at all — still work.
+func TestAStepOfTheWrongTypeIsReadAsNoStep(t *testing.T) {
+	noStep := evalDefaultUnit(t, "expand {Interval[1, 10]}")
+	if noStep == "{}" {
+		t.Fatalf("expanding with no step is empty, so this test is measuring nothing")
+	}
+	for _, expr := range []string{
+		"expand {Interval[1, 10]} per 'abc'",
+		"expand {Interval[1, 10]} per true",
+		"expand {Interval[1, 10]} per @2020-01-01",
+		"expand {Interval[1, 10]} per Interval[1,2]",
+		"expand {Interval[1, 10]} per {1}",
+	} {
+		if got := evalDefaultUnit(t, expr); got != noStep {
+			t.Errorf("%s = %s — the step's type is being looked at now. It should be "+
+				"reported to the author rather than answered; check that an integer, a "+
+				"decimal, a quantity, a temporal keyword and no step at all still work.",
+				expr, got)
+		}
+	}
+
+	// The spellings that are meant to work, so closing the above cannot quietly
+	// take them with it.
+	for _, tt := range []struct{ expr, want string }{
+		{"Count(expand {Interval[1, 10]} per 2)", "5"},
+		{"Count(expand {Interval[1.0, 3.0]} per 0.5)", "5"},
+		{"Count(expand {Interval[1 'cm', 3 'cm']} per 1 'cm')", "3"},
+		{"Count(expand {Interval[@2018-01-01, @2018-01-04]} per day)", "4"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
