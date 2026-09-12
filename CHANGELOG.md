@@ -7,6 +7,14 @@
 
 * **funcs:** expand an interval of quantities instead of expanding nothing ([#102](https://github.com/gofhir/cql/issues/102)) ([71d7ea3](https://github.com/gofhir/cql/commit/71d7ea3a0b81028994e89014cb5f48a238be80c0))
 
+  `expand` over an interval of quantities returned the empty list for every
+  spelling — with the step in the interval's unit, with a bare step, with no step,
+  and in both overloads — while the same shape in integers expanded. It now
+  expands, reading a bare step in the interval's own unit and converting a step
+  written in another scale of the same dimension. A step in another dimension, and
+  a calendar duration against its UCUM code, still give the empty list, which is
+  the answer every other operator gives over those pairs.
+
 ## [1.21.1](https://github.com/gofhir/cql/compare/v1.21.0...v1.21.1) (2026-09-12)
 
 
