@@ -1387,3 +1387,50 @@ func TestThePublishedCollapseDoesNotMove(t *testing.T) {
 		t.Errorf("the Date spelling = %s, want one merged interval", got)
 	}
 }
+
+// TestTheStepIsTakenAtThePrecisionTheValueStates is what a sweep of every
+// interval operator over Date against DateTime turned up, and it is a property
+// rather than a defect — though it looked like four defects first.
+//
+// Comparing `Interval[@2020-01-01, @2020-01-03]` against
+// `Interval[@2020-01-01T00:00:00, @2020-01-03T00:00:00]` as though they were the
+// same shape makes meets, meets before, union and collapse all disagree between
+// the two. They are not the same shape: the successor of a value is one of
+// whatever precision it states, so the date after the 3rd is the 4th while the
+// second after 00:00:00 on the 3rd is 00:00:01 on the 3rd. Written at matching
+// precision, the two agree everywhere.
+//
+// Worth pinning because the disagreement reads exactly like a defect, and because
+// it is the rule the whole successor rests on.
+func TestTheStepIsTakenAtThePrecisionTheValueStates(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"successor of @2020-01-03", "2020-01-04"},
+		{"successor of @2020-01-03T00:00:00", "2020-01-03T00:00:01"},
+		{"successor of @2020-01-03T", "2020-01-04"},
+		{"successor of @2020-01", "2020-02"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// At matching precision, a DateTime interval meets exactly where a Date one
+	// does — which is what makes the four operators agree once the shapes really
+	// are the same.
+	for _, expr := range []string{
+		"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, @2020-01-07]",
+		"Interval[@2020-01-01T, @2020-01-03T] meets Interval[@2020-01-04T, @2020-01-07T]",
+		"Interval[@2020-01-01T00:00:00, @2020-01-03T00:00:00] meets Interval[@2020-01-03T00:00:01, @2020-01-07T00:00:00]",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "true" {
+			t.Errorf("%s = %s, want true", expr, got)
+		}
+	}
+
+	// And a day apart at second precision is not touching, which is the row that
+	// looked like a defect.
+	if got := evalDefaultUnit(t,
+		"Interval[@2020-01-01T00:00:00, @2020-01-03T00:00:00] meets Interval[@2020-01-04T00:00:00, @2020-01-07T00:00:00]"); got != "false" {
+		t.Errorf("a day apart at second precision = %s, want false", got)
+	}
+}
