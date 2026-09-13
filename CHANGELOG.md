@@ -7,6 +7,14 @@
 
 * **funcs:** collapse merges what is within a step, instead of ignoring the step ([#109](https://github.com/gofhir/cql/issues/109)) ([1c3f231](https://github.com/gofhir/cql/commit/1c3f23143af1ba4212b51082da47b54472e8ab30))
 
+  `collapse … per` was accepted and then ignored: every step answered what writing
+  no step answers. Two intervals now merge when the high bound of one, moved up by
+  the step, reaches the low bound of the next — `collapse {Interval[1, 3],
+  Interval[5, 7]} per 1` is one interval where it was two. Collapse without a step
+  is unchanged, and every collapse case in the conformance corpus still passes.
+  One reading for all seven point types, with open bounds, wrapping Time
+  arithmetic and the ends of the calendar accounted for.
+
 ## [1.21.4](https://github.com/gofhir/cql/compare/v1.21.3...v1.21.4) (2026-09-13)
 
 
