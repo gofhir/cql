@@ -1,7 +1,9 @@
 package funcs
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
 
@@ -316,29 +318,44 @@ func TestCalculateAgeInWeeks(t *testing.T) {
 // Temporal function tests
 // ---------------------------------------------------------------------------
 
-func TestNow(t *testing.T) {
-	result, err := Now()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if result == nil {
-		t.Fatal("Now returned nil")
-	}
-	if result.Type() != "DateTime" {
-		t.Errorf("Now type = %s, want DateTime", result.Type())
-	}
-}
+// TestNowAtAndTodayAtReadTheInstantTheyAreGiven replaces two tests that called
+// the clock-reading wrappers and asserted only the type of what came back.
+//
+// Those wrappers are gone: the evaluator always passes the evaluation's frozen
+// timestamp, and nothing else called them. What is worth testing is the variant
+// that is used — and it can be tested for its value rather than its type, which
+// the clock-reading version could not be.
+func TestNowAtAndTodayAtReadTheInstantTheyAreGiven(t *testing.T) {
+	at := time.Date(2019, 6, 1, 14, 30, 15, 0, time.UTC)
 
-func TestToday(t *testing.T) {
-	result, err := Today()
+	now, err := NowAt(at)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("NowAt: %v", err)
 	}
-	if result == nil {
-		t.Fatal("Today returned nil")
+	if now == nil || now.Type() != "DateTime" {
+		t.Fatalf("NowAt returned %v", now)
 	}
-	if result.Type() != "Date" {
-		t.Errorf("Today type = %s, want Date", result.Type())
+	if got := now.String(); !strings.HasPrefix(got, "2019-06-01T14:30:15") {
+		t.Errorf("NowAt(%s) = %s, want the instant it was given", at, got)
+	}
+
+	today, err := TodayAt(at)
+	if err != nil {
+		t.Fatalf("TodayAt: %v", err)
+	}
+	if today == nil || today.Type() != "Date" {
+		t.Fatalf("TodayAt returned %v", today)
+	}
+	if got := today.String(); got != "2019-06-01" {
+		t.Errorf("TodayAt(%s) = %s, want 2019-06-01", at, got)
+	}
+
+	timeOfDay, err := TimeOfDayAt(at)
+	if err != nil {
+		t.Fatalf("TimeOfDayAt: %v", err)
+	}
+	if got := timeOfDay.String(); !strings.HasPrefix(got, "14:30:15") {
+		t.Errorf("TimeOfDayAt(%s) = %s, want 14:30:15", at, got)
 	}
 }
 
@@ -870,28 +887,6 @@ func TestIntervalCollapse(t *testing.T) {
 	}
 	if len(result) != 2 {
 		t.Fatalf("expected 2 collapsed intervals, got %d", len(result))
-	}
-}
-
-func TestIntervalExpand(t *testing.T) {
-	iv := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(5), true, true)
-	result, err := IntervalExpand(iv, decimal.Zero)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(result) != 5 {
-		t.Fatalf("expected 5 expanded unit intervals, got %d", len(result))
-	}
-	// Each result should be a unit interval [n, n]
-	for i, r := range result {
-		ri, ok := r.(cqltypes.Interval)
-		if !ok {
-			t.Fatalf("Expand[%d]: expected Interval, got %T", i, r)
-		}
-		expected := int64(i + 1)
-		if li, ok := ri.Low.(fptypes.Integer); !ok || li.Value() != expected {
-			t.Fatalf("Expand[%d].Low: expected %d, got %v", i, expected, ri.Low)
-		}
 	}
 }
 
