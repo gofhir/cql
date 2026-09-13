@@ -714,57 +714,198 @@ func TestQuantityExpansionIsTheDecimalOneWithAUnit(t *testing.T) {
 	}
 }
 
-// TestAStepOfTheWrongTypeIsReadAsNoStep asserts a defect this change did not
-// cause and does not fix, found while checking what else reaches the step reader.
+// TestAStepOfTheWrongTypeIsReported closes what the previous release left
+// asserted as broken.
 //
-// A `per` of any type the reader does not recognize is silently read as "no step
-// given", so the expansion runs with the unit step and the author is told
-// nothing:
+// A `per` of a type the evaluator does not recognize was read as "no step given",
+// so the expansion ran with the unit step and the author was told nothing:
 //
-//	expand {Interval[1, 10]} per 'abc'           expands as if no step were given
-//	expand {Interval[1, 10]} per true            the same
-//	expand {Interval[1, 10]} per Interval[1,2]   the same
-//	expand {Interval[1, 10]}                     what all of them answer
+//	expand {Interval[1, 10]} per 'abc'   expanded by one, silently
+//	expand {Interval[1, 10]} per {2}     expanded by one, not by two
 //
-// It belongs in the semantic phase — `per` takes a quantity, and nothing checks
-// that — rather than in the reader, which is why it is not folded in here: making
-// the reader decline would answer the empty list, and the empty list is not right
-// either. The author should be told.
-//
-// Asserted rather than described so that closing it breaks this test. When it is
-// closed, these should report a diagnostic naming the type; check that the
-// spellings CQL does allow — an integer, a decimal, a quantity, a temporal
-// keyword, and none at all — still work.
-func TestAStepOfTheWrongTypeIsReadAsNoStep(t *testing.T) {
-	noStep := evalDefaultUnit(t, "expand {Interval[1, 10]}")
-	if noStep == "{}" {
-		t.Fatalf("expanding with no step is empty, so this test is measuring nothing")
-	}
-	for _, expr := range []string{
-		"expand {Interval[1, 10]} per 'abc'",
-		"expand {Interval[1, 10]} per true",
-		"expand {Interval[1, 10]} per @2020-01-01",
-		"expand {Interval[1, 10]} per Interval[1,2]",
-		"expand {Interval[1, 10]} per {1}",
+// The semantic phase inferred the step and threw the type away. It checks it now.
+// The fix belongs there rather than in the reader: making the reader decline would
+// answer the empty list, and an empty list is not what an author who wrote
+// `per 'abc'` needs to see either.
+func TestAStepOfTheWrongTypeIsReported(t *testing.T) {
+	for _, tt := range []struct{ expr, named string }{
+		{"expand {Interval[1, 10]} per 'abc'", "System.String"},
+		{"expand {Interval[1, 10]} per true", "System.Boolean"},
+		{"expand {Interval[1, 10]} per Interval[1,2]", "Interval<System.Integer>"},
+		{"expand {Interval[1, 10]} per {1}", "List<System.Integer>"},
 	} {
-		if got := evalDefaultUnit(t, expr); got != noStep {
-			t.Errorf("%s = %s — the step's type is being looked at now. It should be "+
-				"reported to the author rather than answered; check that an integer, a "+
-				"decimal, a quantity, a temporal keyword and no step at all still work.",
-				expr, got)
+		got := evalDefaultUnit(t, tt.expr)
+		if !strings.Contains(got, "semantic error") {
+			t.Errorf("%s = %s, want a diagnostic", tt.expr, got)
+		}
+		// The message names the type it was given, because a diagnostic that
+		// does not is half a diagnostic.
+		if !strings.Contains(got, tt.named) {
+			t.Errorf("the diagnostic for %s does not name %s: %s", tt.expr, tt.named, got)
 		}
 	}
 
-	// The spellings that are meant to work, so closing the above cannot quietly
-	// take them with it.
+	// Every spelling CQL does allow still compiles and still answers, so closing
+	// the hole did not narrow the door.
 	for _, tt := range []struct{ expr, want string }{
 		{"Count(expand {Interval[1, 10]} per 2)", "5"},
 		{"Count(expand {Interval[1.0, 3.0]} per 0.5)", "5"},
 		{"Count(expand {Interval[1 'cm', 3 'cm']} per 1 'cm')", "3"},
 		{"Count(expand {Interval[@2018-01-01, @2018-01-04]} per day)", "4"},
+		{"Count(expand {Interval[@2018-01-01, @2018-01-04]} per 2 days)", "2"},
+		{"Count(expand {Interval[@T10:00, @T12:30]} per hour)", "3"},
+		{"Count(expand {Interval[1, 10]} per 2L)", "5"},
+		{"Count(expand {Interval[1, 10]} per null)", "10"},
+		{"Count(expand {Interval[1, 10]})", "10"},
 	} {
 		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
 			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
 		}
+	}
+}
+
+// TestAOneElementListIsNotAStep draws the line the check had to be careful about.
+//
+// CQL declares a one-element list implicitly convertible to its element, so
+// asking Convertible alone accepted `per {2}` — and the evaluator, which performs
+// no such conversion anywhere, expanded by one instead of by two. The engine does
+// not do that conversion for `{2} + 3` either, which is an error.
+//
+// So a list is refused here rather than accepted and ignored. A model type that
+// really does convert — a FHIR.Quantity, which the evaluator coerces — still
+// passes, and that is asserted beside it so the refusal cannot widen into one.
+func TestAOneElementListIsNotAStep(t *testing.T) {
+	if got := evalDefaultUnit(t, "expand {Interval[1, 10]} per {2}"); !strings.Contains(got, "semantic error") {
+		t.Errorf("per {2} = %s, want a diagnostic — it expanded by one, not by two", got)
+	}
+	// The conversion CQL declares is not one this engine performs anywhere.
+	if got := evalDefaultUnit(t, "{2} + 3"); !strings.Contains(got, "ERROR") {
+		t.Errorf("{2} + 3 = %s — the engine has learned the one-element list conversion; "+
+			"if it now performs it everywhere, a list step may be allowed again", got)
+	}
+}
+
+// TestTheDiagnosticNamesTheOperationTheAuthorWrote covers that `collapse` reaches
+// the same check, since both spellings carry a `per` and share one function.
+//
+// A diagnostic about a `collapse` that says "expand" sends the reader looking at
+// the wrong line, which is the kind of half-diagnostic this repository has had to
+// fix before.
+func TestTheDiagnosticNamesTheOperationTheAuthorWrote(t *testing.T) {
+	// The article is checked along with the noun. Accepting either one let "the
+	// step of a expand" through, which is what the first version of this test did.
+	for _, tt := range []struct{ expr, phrase string }{
+		{"expand {Interval[1, 3]} per 'abc'", "the step of an expand"},
+		{"collapse {Interval[1, 3]} per 'abc'", "the step of a collapse"},
+		{"collapse {Interval[1, 3]} per {2}", "the step of a collapse"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); !strings.Contains(got, tt.phrase) {
+			t.Errorf("%s reported: %s — it should say %q", tt.expr, got, tt.phrase)
+		}
+	}
+}
+
+// TestCollapsePerIsIgnored asserts a defect this change did not cause and does not
+// fix, found while checking that `collapse` reaches the check above.
+//
+// `collapse … per` is accepted and then ignored: intervals separated by less than
+// the step should merge, and none of these do.
+//
+//	collapse {Interval[1, 3], Interval[5, 7]} per 3   should be {Interval[1, 7]}
+//	                                                  is two intervals
+//
+// The gap between 3 and 5 is 2, which is inside a step of 3. Identical on main —
+// the evaluator's collapse never looks at Per at all — so it is untouched here and
+// gets its own change. Asserted rather than described, with the no-per spelling
+// beside it: if a `per` ever starts making a difference, this fails.
+func TestCollapsePerIsIgnored(t *testing.T) {
+	withoutPer := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[5, 7]}")
+	for _, per := range []string{" per 3", " per 1", " per 10"} {
+		got := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[5, 7]}"+per)
+		if got != withoutPer {
+			t.Errorf("collapse%s = %s but without per = %s — the step now makes a "+
+				"difference. With a step of 3 the right answer is {Interval[1, 7]}, "+
+				"since the gap between 3 and 5 is 2.", per, got, withoutPer)
+		}
+	}
+	// The collapsing it does do is unaffected, which is what makes the above a
+	// missing feature rather than a broken one.
+	if got := evalDefaultUnit(t, "collapse {Interval[1, 4], Interval[3, 7]}"); got != "{Interval[1, 7]}" {
+		t.Errorf("collapsing two overlapping intervals = %s, want {Interval[1, 7]}", got)
+	}
+}
+
+// TestTheStepCheckDoesNotCryWolf is the limit on the diagnostic above, and the
+// half that decides whether a check is worth having.
+//
+// A checker that reports a step it merely could not work out is worse than one
+// that stays quiet, so everything a step can legitimately be written as has to go
+// through. Each of these types the step differently — a parameter, a define, a
+// call into an included library whose type this phase cannot see, a FHIR choice
+// element, a conditional — and none of them is refused.
+func TestTheStepCheckDoesNotCryWolf(t *testing.T) {
+	const fhir = "using FHIR version '4.0.1'\n" +
+		"include FHIRHelpers version '4.0.1' called FHIRHelpers\ncontext Patient\n"
+	for _, tt := range []struct{ what, header, expr string }{
+		{"a quantity parameter", "parameter P Quantity\n", "expand {Interval[1 'cm', 9 'cm']} per P"},
+		{"an integer parameter", "parameter P Integer\n", "expand {Interval[1, 9]} per P"},
+		{"a define", "define S: 2\n", "expand {Interval[1, 9]} per S"},
+		{"a quantity define", "define S: 2 'cm'\n", "expand {Interval[1 'cm', 9 'cm']} per S"},
+		{"a call this phase cannot type", "include FHIRHelpers version '4.0.1' called FH\n",
+			"expand {Interval[1, 9]} per FH.ToString(2)"},
+		{"a choice element", fhir, "expand {Interval[1 'cm', 9 'cm']} per First([Observation] O).value"},
+		{"a choice element cast", fhir,
+			"expand {Interval[1 'cm', 9 'cm']} per (First([Observation] O).value as FHIR.Quantity)"},
+		{"a conditional", "", "expand {Interval[1 'cm', 9 'cm']} per (if true then 1 'cm' else 2 'cm')"},
+	} {
+		src := "library T version '1.0'\n" + tt.header + "define X: " + tt.expr + "\n"
+		diags, err := NewEngine().Check(src)
+		if err != nil {
+			t.Errorf("%s did not check: %v", tt.what, err)
+			continue
+		}
+		for _, d := range diags {
+			if strings.Contains(d.Message, "the step of") {
+				t.Errorf("%s was refused: %s", tt.what, d.Message)
+			}
+		}
+	}
+
+	// And a type that is genuinely not a step is still refused, so the above is
+	// not passing because the check stopped running.
+	if got := evalDefaultUnit(t, "expand {Interval[1, 9]} per 1:2"); !strings.Contains(got, "the step of") {
+		t.Errorf("a ratio step = %s, want the diagnostic — the check is not running", got)
+	}
+
+	// Both spellings of expand carry a step, and the check has to reach wherever
+	// one is written rather than only at the top of a define.
+	for _, expr := range []string{
+		"expand Interval[1, 3] per 'abc'",
+		"expand {Interval[1, 3]} per 'abc'",
+		"Count(expand Interval[1, 3] per 'abc')",
+		"if true then expand Interval[1, 3] per 'abc' else {}",
+	} {
+		if got := evalDefaultUnit(t, expr); !strings.Contains(got, "the step of") {
+			t.Errorf("%s = %s, want the diagnostic", expr, got)
+		}
+	}
+
+	// Two bad steps are two diagnostics. The semantic phase is meant to reach the
+	// end of the library rather than stop at the first thing it finds, and a check
+	// that aborted the walk would report one of these and hide the other.
+	src := "library T version '1.0'\n" +
+		"define X: expand (expand {Interval[1, 3]} per 'abc') per 'xyz'\n"
+	diags, err := NewEngine().Check(src)
+	if err != nil {
+		t.Fatalf("checking two bad steps: %v", err)
+	}
+	var steps int
+	for _, d := range diags {
+		if strings.Contains(d.Message, "the step of") {
+			steps++
+		}
+	}
+	if steps != 2 {
+		t.Errorf("two bad steps gave %d diagnostics, want 2", steps)
 	}
 }
