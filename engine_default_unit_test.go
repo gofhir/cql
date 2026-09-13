@@ -1619,3 +1619,57 @@ func TestEveryAgeAgreesWithTheTodayBesideIt(t *testing.T) {
 		}
 	}
 }
+
+// TestTheFourAgeAtSpellingsAllExist covers the family CQL defines, which the
+// engine exposed half of.
+//
+// `AgeInYearsAt` and `AgeInMonthsAt` were registered; `AgeInWeeksAt` and
+// `AgeInDaysAt` were an unknown function, though funcs had all four implemented
+// and the no-reference spellings — AgeInWeeks, AgeInDays — worked. The two that
+// were missing are the two whose CalculateAgeIn… branches were ignoring their
+// reference, which is how they came to be looked at.
+//
+// Checked against each other rather than against four written numbers: the four
+// units describe one span, so they have to agree about it.
+func TestTheFourAgeAtSpellingsAllExist(t *testing.T) {
+	at := time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)
+	patient := []byte(`{"resourceType":"Patient","id":"p1","birthDate":"2000-01-15"}`)
+	ask := func(expr string) string {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine X: " + expr + "\n"
+		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
+			context.Background(), src, "X", patient, nil)
+		if err != nil {
+			return "ERROR: " + err.Error()
+		}
+		if got == nil {
+			return "null"
+		}
+		return got.String()
+	}
+	for _, tt := range []struct{ unit, want string }{
+		{"Years", "10"}, {"Months", "120"}, {"Weeks", "521"}, {"Days", "3653"},
+	} {
+		if got := ask("AgeIn" + tt.unit + "At(@2010-01-15)"); got != tt.want {
+			t.Errorf("AgeIn%sAt(@2010-01-15) = %s, want %s", tt.unit, got, tt.want)
+		}
+	}
+	// Ten years, the same ten years, four ways: the days divide into the weeks and
+	// the months into the years.
+	if ask("AgeInDaysAt(@2010-01-15) div 7 = AgeInWeeksAt(@2010-01-15)") != "true" {
+		t.Errorf("the days and the weeks disagree: %s vs %s",
+			ask("AgeInDaysAt(@2010-01-15)"), ask("AgeInWeeksAt(@2010-01-15)"))
+	}
+	if ask("AgeInMonthsAt(@2010-01-15) div 12 = AgeInYearsAt(@2010-01-15)") != "true" {
+		t.Errorf("the months and the years disagree: %s vs %s",
+			ask("AgeInMonthsAt(@2010-01-15)"), ask("AgeInYearsAt(@2010-01-15)"))
+	}
+	// And with no reference at all they measure to the evaluation timestamp, like
+	// the spellings without At.
+	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
+		withAt := ask("AgeIn" + unit + "At(Today())")
+		plain := ask("AgeIn" + unit + "()")
+		if withAt != plain {
+			t.Errorf("AgeIn%sAt(Today()) = %s but AgeIn%s() = %s", unit, withAt, unit, plain)
+		}
+	}
+}

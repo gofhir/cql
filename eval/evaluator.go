@@ -2720,6 +2720,31 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return funcs.AgeInMonthsAt(bd, asOf)
 		}
 		return funcs.AgeInMonthsAt(bd, e.evaluationNow())
+	// CQL defines the same four units for AgeIn…At as for AgeIn…, and funcs has
+	// all four; only years and months were registered, so `AgeInWeeksAt(x)` was an
+	// unknown function while `AgeInWeeks()` was not. The two that were missing are
+	// the two whose CalculateAgeIn… branches were ignoring their reference, which
+	// is how they came to be looked at at all.
+	case "ageinweeksat":
+		bd := e.getPatientBirthDate()
+		if len(n.Operands) > 0 {
+			asOf, err := e.Eval(n.Operands[0])
+			if err != nil {
+				return nil, err
+			}
+			return funcs.AgeInWeeksAt(bd, asOf)
+		}
+		return funcs.AgeInWeeksAt(bd, e.evaluationNow())
+	case "ageindaysat":
+		bd := e.getPatientBirthDate()
+		if len(n.Operands) > 0 {
+			asOf, err := e.Eval(n.Operands[0])
+			if err != nil {
+				return nil, err
+			}
+			return funcs.AgeInDaysAt(bd, asOf)
+		}
+		return funcs.AgeInDaysAt(bd, e.evaluationNow())
 	case "calculateageinyears":
 		if len(n.Operands) > 0 {
 			bd, err := e.Eval(n.Operands[0])
