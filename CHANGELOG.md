@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.4](https://github.com/gofhir/cql/compare/v1.21.3...v1.21.4) (2026-09-13)
+
+
+### Bug Fixes
+
+* **sema:** report a step of the wrong type instead of expanding by one ([#107](https://github.com/gofhir/cql/issues/107)) ([d126f13](https://github.com/gofhir/cql/commit/d126f137402a5aa1d74456143622508b7554b66c))
+
 ## [1.21.3](https://github.com/gofhir/cql/compare/v1.21.2...v1.21.3) (2026-09-12)
 
 
