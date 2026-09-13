@@ -919,36 +919,68 @@ func TestCollapsePerMergesWhatIsWithinAStep(t *testing.T) {
 	}
 }
 
-// TestTwoSuccessorsDisagreeAboutDates asserts a defect this change worked around
-// rather than fixed, and which it is the reason for finding.
+// TestOneSuccessorForEveryOperator covers the repair of a split this file used to
+// assert: there were two implementations of "the next value", and one did not know
+// Date.
 //
-// There are two implementations of "the next value". cqltypes.Successor knows
-// Integer, Decimal, DateTime, Date, Time and Quantity, and guards the range.
-// funcs.intervalSuccessor knows everything but Date — so through it, two
-// consecutive days do not touch while two consecutive integers do:
+// cqltypes.Successor knows Integer, Decimal, DateTime, Date, Time and Quantity and
+// guards the representable range. funcs.intervalSuccessor knew everything but
+// Date, and sat under `meets`, `except` and the collapse that rests on `meets` — so
+// two consecutive days did not touch while two consecutive integers did, though
+// the engine answered `successor of @2020-01-03` correctly all along. That is what
+// made it a contradiction rather than a limit.
 //
-//	Interval[1, 3] meets Interval[4, 7]                                 true
-//	Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, …]    false
-//	successor of @2020-01-03                                            2020-01-04
-//
-// The engine knows the successor of that date perfectly well through the other
-// implementation, which is what makes this a contradiction rather than a limit.
-//
-// collapse … per uses cqltypes.Successor to avoid inheriting it. Fixing the copy
-// belongs in its own change: intervalSuccessor sits under `meets` and `overlaps`,
-// so moving it moves answers this one does not touch.
-func TestTwoSuccessorsDisagreeAboutDates(t *testing.T) {
-	if got := evalDefaultUnit(t, "Interval[1, 3] meets Interval[4, 7]"); got != "true" {
-		t.Errorf("consecutive integers meet: %s", got)
+// Every row is the integer spelling beside the date one, because agreeing with
+// itself across point types is the property, not any particular answer.
+func TestOneSuccessorForEveryOperator(t *testing.T) {
+	for _, tt := range []struct{ what, integers, dates, want string }{
+		{"meets",
+			"Interval[1, 3] meets Interval[4, 7]",
+			"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, @2020-01-07]", "true"},
+		{"meets before",
+			"Interval[1, 3] meets before Interval[4, 7]",
+			"Interval[@2020-01-01, @2020-01-03] meets before Interval[@2020-01-04, @2020-01-07]", "true"},
+		{"meets after",
+			"Interval[4, 7] meets after Interval[1, 3]",
+			"Interval[@2020-01-04, @2020-01-07] meets after Interval[@2020-01-01, @2020-01-03]", "true"},
+		{"not meeting",
+			"Interval[1, 3] meets Interval[5, 7]",
+			"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-05, @2020-01-07]", "false"},
+		{"overlaps, which they do not",
+			"Interval[1, 3] overlaps Interval[4, 7]",
+			"Interval[@2020-01-01, @2020-01-03] overlaps Interval[@2020-01-04, @2020-01-07]", "false"},
+	} {
+		gotInt := evalDefaultUnit(t, tt.integers)
+		gotDate := evalDefaultUnit(t, tt.dates)
+		if gotInt != tt.want || gotDate != tt.want {
+			t.Errorf("%s: integers = %s, dates = %s, want %s for both",
+				tt.what, gotInt, gotDate, tt.want)
+		}
 	}
+
+	// collapse rests on meets, and except builds a new boundary out of the step.
+	// Both were reading the copy that did not know Date.
+	for _, tt := range []struct{ integers, dates string }{
+		{"collapse {Interval[1, 3], Interval[4, 7]}",
+			"collapse {Interval[@2020-01-01, @2020-01-03], Interval[@2020-01-04, @2020-01-07]}"},
+		{"Interval[1, 10] except Interval[1, 3]",
+			"Interval[@2020-01-01, @2020-01-10] except Interval[@2020-01-01, @2020-01-03]"},
+		{"Interval[1, 10] except Interval[8, 10]",
+			"Interval[@2020-01-01, @2020-01-10] except Interval[@2020-01-08, @2020-01-10]"},
+	} {
+		gotInt := evalDefaultUnit(t, tt.integers)
+		gotDate := evalDefaultUnit(t, tt.dates)
+		// The shapes differ by their values; what has to match is that neither
+		// answer is written with an open bound where the other has a closed one.
+		if strings.ContainsAny(gotInt, "()") != strings.ContainsAny(gotDate, "()") {
+			t.Errorf("%s gave %s but %s gave %s — one built a closed boundary and the other an open one",
+				tt.integers, gotInt, tt.dates, gotDate)
+		}
+	}
+
+	// And the operator that was right all along still is.
 	if got := evalDefaultUnit(t, "successor of @2020-01-03"); got != "2020-01-04" {
-		t.Errorf("the engine's own successor of a date = %s", got)
-	}
-	if got := evalDefaultUnit(t,
-		"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, @2020-01-07]"); got != "false" {
-		t.Errorf("consecutive days now meet (%s) — funcs.intervalSuccessor has learned "+
-			"Date. Check `meets`, `overlaps` and collapse without a step together, and "+
-			"delete this test.", got)
+		t.Errorf("successor of a date = %s", got)
 	}
 }
 
