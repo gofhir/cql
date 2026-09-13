@@ -958,6 +958,22 @@ func TestOneSuccessorForEveryOperator(t *testing.T) {
 		}
 	}
 
+	// union is the fourth caller, and the one where the copy cost a wrong answer
+	// rather than a differently written one: two intervals that touch have a union,
+	// and over dates it was null.
+	for _, tt := range []struct{ expr, want string }{
+		{"Interval[@2020-01-01, @2020-01-03] union Interval[@2020-01-04, @2020-01-07]",
+			"Interval[2020-01-01, 2020-01-07]"},
+		// Not touching is still no union, and overlapping still unions.
+		{"Interval[@2020-01-01, @2020-01-03] union Interval[@2020-01-05, @2020-01-07]", "null"},
+		{"Interval[@2020-01-01, @2020-01-05] union Interval[@2020-01-03, @2020-01-07]",
+			"Interval[2020-01-01, 2020-01-07]"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
 	// collapse rests on meets, and except builds a new boundary out of the step.
 	// Both were reading the copy that did not know Date.
 	for _, tt := range []struct{ integers, dates string }{
@@ -975,6 +991,21 @@ func TestOneSuccessorForEveryOperator(t *testing.T) {
 		if strings.ContainsAny(gotInt, "()") != strings.ContainsAny(gotDate, "()") {
 			t.Errorf("%s gave %s but %s gave %s — one built a closed boundary and the other an open one",
 				tt.integers, gotInt, tt.dates, gotDate)
+		}
+	}
+
+	// `except` used to write its new boundary open where the integer spelling
+	// writes it closed. Those describe the same interval, which is measured here
+	// rather than asserted in a comment: the engine agrees through `=`, `~`,
+	// `start of`, `contains` and `width`.
+	for _, expr := range []string{
+		"Interval(@2020-01-03, @2020-01-10] = Interval[@2020-01-04, @2020-01-10]",
+		"Interval(@2020-01-03, @2020-01-10] ~ Interval[@2020-01-04, @2020-01-10]",
+		"start of Interval(@2020-01-03, @2020-01-10] = start of Interval[@2020-01-04, @2020-01-10]",
+		"width of Interval(3, 10] = width of Interval[4, 10]",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "true" {
+			t.Errorf("%s = %s — the open and closed spellings are not the same interval after all", expr, got)
 		}
 	}
 
