@@ -1066,3 +1066,62 @@ func TestTheStepOfACollapseFollowsTheArithmeticItIsMadeOf(t *testing.T) {
 			"a step of 1 'a' should now close a one-year gap too", got)
 	}
 }
+
+// TestExpandAndCollapseWithTheSameStepIsTheIdentity is the property the two
+// operators owe each other, and the closest thing to an oracle either of them has.
+//
+// Expanding an interval by a step and collapsing the pieces by that same step must
+// give the interval back. Neither operator was written against the other, so their
+// agreeing is evidence about both — and it is what a step of nothing cannot do
+// over a continuous type: the pieces of `[1 'cm', 5 'cm']` are a centimeter apart,
+// which is a gap until a step says it is not.
+func TestExpandAndCollapseWithTheSameStepIsTheIdentity(t *testing.T) {
+	// The interval has to divide by the step, because expand drops a final piece
+	// that would not fit: `expand {Interval[1, 9]} per 2` stops at [7, 8] and the
+	// 9 is gone before collapse ever sees it. That is expand's documented
+	// behavior and the corpus pins it, so the identity is stated where it holds.
+	//
+	// Compared with the engine's own `=` rather than by rendering both: a decimal
+	// interval comes back printed 1 where it was written 1.0, which is the same
+	// interval and a different string.
+	for _, tt := range []struct{ interval, per string }{
+		{"Interval[1, 5]", "1"},
+		{"Interval[1, 8]", "4"},
+		{"Interval[1 'cm', 5 'cm']", "1 'cm'"},
+		{"Interval[1.0, 3.0]", "0.5"},
+		{"Interval[@2020-01-01, @2020-01-05]", "1 day"},
+	} {
+		// Parenthesized, because `per` swallows what follows it: written without
+		// them, `collapse … per 1 = {…}` parses as `per (1 = {…})` and the step
+		// becomes a Boolean. The step diagnostic caught that while this test was
+		// being written, which is the first thing it has been useful for.
+		expr := "(collapse (expand {" + tt.interval + "} per " + tt.per + ") per " + tt.per +
+			") = {" + tt.interval + "}"
+		if got := evalDefaultUnit(t, expr); got != "true" {
+			t.Errorf("expanding %s per %s and collapsing it back is not the same interval (%s): got %s, wanted %s",
+				tt.interval, tt.per, got,
+				evalDefaultUnit(t, "collapse (expand {"+tt.interval+"} per "+tt.per+") per "+tt.per),
+				evalDefaultUnit(t, "{"+tt.interval+"}"))
+		}
+	}
+
+	// Collapsing twice is collapsing once.
+	once := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[5, 7]} per 1")
+	twice := evalDefaultUnit(t, "collapse (collapse {Interval[1, 3], Interval[5, 7]} per 1) per 1")
+	if once != twice {
+		t.Errorf("collapsing twice gave %s and once gave %s", twice, once)
+	}
+
+	// A step changes nothing about intervals that already overlap, however wide it
+	// is, and the nulls a collapse drops are dropped the same way with one.
+	for _, tt := range []struct{ expr, want string }{
+		{"collapse {Interval[1, 5], Interval[3, 8]} per 100", "{Interval[1, 8]}"},
+		{"collapse {Interval[1, 3], null} per 1", "{Interval[1, 3]}"},
+		{"collapse {Interval(null, null)} per 1", "{}"},
+		{"collapse {Interval[1, 3]} per 1", "{Interval[1, 3]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
