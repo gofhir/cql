@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.1](https://github.com/gofhir/cql/compare/v1.22.0...v1.22.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* **funcs:** one implementation of the next value, so dates touch like integers ([#111](https://github.com/gofhir/cql/issues/111)) ([ddc0852](https://github.com/gofhir/cql/commit/ddc0852810d9130ae0c9958c8b2b9b09a4e6b4c5))
+
 ## [1.22.0](https://github.com/gofhir/cql/compare/v1.21.4...v1.22.0) (2026-09-13)
 
 
