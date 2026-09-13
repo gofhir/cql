@@ -180,9 +180,24 @@ func IntervalMeetsAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 // already does for every point type, temporal included, while subtracting two
 // bounds to get a gap is not defined over temporals at all — `width of` refuses
 // there.
-func collapseReaches(high, low, perVal fptypes.Value) bool {
+func collapseReaches(high fptypes.Value, highClosed bool, low fptypes.Value, lowClosed bool, perVal fptypes.Value) bool {
 	if high == nil || low == nil || perVal == nil {
 		return false
+	}
+	// An open bound is not part of its interval, so the value to step from — and
+	// the value to reach — is one in from it. `[1, 3)` holds up to 2, so its gap to
+	// `[5, 7]` is two points and a step of one does not close it. Without this the
+	// four combinations of open and closed answered the same, which the rest of
+	// this package does not do: intervalEndMeetsStart has a case for each.
+	if !highClosed {
+		if pred, err := cqltypes.Predecessor(high); err == nil && pred != nil {
+			high = pred
+		}
+	}
+	if !lowClosed {
+		if succ, err := cqltypes.Successor(low); err == nil && succ != nil {
+			low = succ
+		}
 	}
 	amount, unit, usable := expandGetStep(perVal)
 	if !usable || amount.IsZero() {
@@ -283,7 +298,7 @@ func IntervalCollapse(intervals []cqltypes.Interval, perVal fptypes.Value) ([]cq
 		last := &result[len(result)-1]
 		overlaps, _ := last.Overlaps(iv) //nolint:errcheck // best-effort merge
 		meets := intervalEndMeetsStart(last.High, last.HighClosed, iv.Low, iv.LowClosed)
-		if overlaps || meets || collapseReaches(last.High, iv.Low, perVal) {
+		if overlaps || meets || collapseReaches(last.High, last.HighClosed, iv.Low, iv.LowClosed, perVal) {
 			// Merge
 			if iv.High != nil && last.High != nil {
 				cmp, _ := compareVals(iv.High, last.High) //nolint:errcheck // best-effort merge

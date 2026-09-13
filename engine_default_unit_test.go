@@ -876,6 +876,37 @@ func TestCollapsePerMergesWhatIsWithinAStep(t *testing.T) {
 		}
 	}
 
+	// An open bound is not part of its interval, so it widens the gap by one point
+	// and the step has to grow to match. Without this the four combinations of open
+	// and closed answered the same, which the rest of the package does not do.
+	for _, tt := range []struct{ expr, want string }{
+		// [1, 3) holds up to 2, so the gap to [5, 7] is two points, not one.
+		{"collapse {Interval[1, 3), Interval[5, 7]} per 1", "{Interval[1, 3), Interval[5, 7]}"},
+		{"collapse {Interval[1, 3), Interval[5, 7]} per 2", "{Interval[1, 7]}"},
+		// (5, 7] starts at 6, so it is the low bound that moves in.
+		{"collapse {Interval[1, 3], Interval(5, 7]} per 1", "{Interval[1, 3], Interval(5, 7]}"},
+		{"collapse {Interval[1, 3], Interval(5, 7]} per 2", "{Interval[1, 7]}"},
+		// Both open: three points between them.
+		{"collapse {Interval[1, 3), Interval(5, 7]} per 2", "{Interval[1, 3), Interval(5, 7]}"},
+		{"collapse {Interval[1, 3), Interval(5, 7]} per 3", "{Interval[1, 7]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// A chain merges through, and one link too far away breaks it.
+	for _, tt := range []struct{ expr, want string }{
+		{"collapse {Interval[1, 3], Interval[5, 7], Interval[9, 11]} per 1", "{Interval[1, 11]}"},
+		{"collapse {Interval[1, 3], Interval[5, 7], Interval[20, 21]} per 1", "{Interval[1, 7], Interval[20, 21]}"},
+		// The order they are written in does not decide it; they are sorted first.
+		{"collapse {Interval[9, 11], Interval[1, 3], Interval[5, 7]} per 1", "{Interval[1, 11]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
 	// What collapse already did is untouched: overlapping and touching intervals
 	// merge with no step at all.
 	for _, tt := range []struct{ expr, want string }{
