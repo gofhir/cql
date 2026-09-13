@@ -226,16 +226,6 @@ func stepOrStay(stepped fptypes.Value, err error, original fptypes.Value) (fptyp
 	return stepped, true
 }
 
-// TemporalUnit maps DateTime precision to a duration unit string.
-func TemporalUnit(prec fptypes.DateTimePrecision) string {
-	return cqltypes.DateTimeUnit(prec)
-}
-
-// AdjustTime adds delta units at the Time's precision (e.g., +1 ms, -1 second).
-func AdjustTime(t fptypes.Time, delta int) fptypes.Value {
-	return cqltypes.AdjustTime(t, delta)
-}
-
 // IntervalExcept returns a minus b for intervals.
 func IntervalExcept(a, b cqltypes.Interval) (fptypes.Value, error) {
 	overlap, err := a.Overlaps(b)

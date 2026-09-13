@@ -1261,3 +1261,51 @@ func TestALongBoundIsAnIntegerBound(t *testing.T) {
 		}
 	}
 }
+
+// TestTheOneSuccessorReadsEveryPointTypeTheSameWay enumerates what the two
+// implementations could have differed on, since a shared implementation replacing
+// a copy moves whatever the copy read differently.
+//
+// The dimensions are: which point types it knows, what it does at the ends of the
+// representable range, and how coarse a precision it steps at. The decimal step is
+// the fourth and was checked before the change rather than after — the two
+// constants are the same 0.00000001, and a delegation between different ones would
+// have moved every decimal boundary in the engine without failing a test.
+func TestTheOneSuccessorReadsEveryPointTypeTheSameWay(t *testing.T) {
+	// A Long boundary reads as an Integer one, in both operators.
+	for _, tt := range [][2]string{
+		{"Interval[1, 3] meets Interval[4, 7]", "Interval[1L, 3L] meets Interval[4L, 7L]"},
+		{"Interval[1, 10] except Interval[1, 3]", "Interval[1L, 10L] except Interval[1L, 3L]"},
+	} {
+		if a, b := evalDefaultUnit(t, tt[0]), evalDefaultUnit(t, tt[1]); a != b {
+			t.Errorf("%s = %s but %s = %s", tt[0], a, tt[1], b)
+		}
+	}
+
+	// The ends of the calendar, where the shared implementation guards the range
+	// and the copy did not.
+	for _, tt := range []struct{ expr, want string }{
+		{"Interval[@9999-12-01, @9999-12-30] meets Interval[@9999-12-31, @9999-12-31]", "true"},
+		{"Interval[@0001-01-01, @0001-01-02] meets Interval[@0001-01-03, @0001-01-04]", "true"},
+		{"Interval[@9999-12-01, @9999-12-31] except Interval[@9999-12-31, @9999-12-31]",
+			"Interval[9999-12-01, 9999-12-30]"},
+		// Sharing a bound is overlapping, not meeting, at either end of the day.
+		{"Interval[@T22:00:00, @T23:59:59] meets Interval[@T23:59:59, @T23:59:59]", "false"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// A step is taken at the boundary's own precision: the month after @2020-03 is
+	// @2020-04, not the next day.
+	for _, expr := range []string{
+		"Interval[@2020-01, @2020-03] meets Interval[@2020-04, @2020-06]",
+		"Interval[@2020, @2021] meets Interval[@2022, @2023]",
+		"Interval[@2020-01-01T10, @2020-01-01T11] meets Interval[@2020-01-01T12, @2020-01-01T13]",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "true" {
+			t.Errorf("%s = %s, want true — the step should be one of whatever the bound states", expr, got)
+		}
+	}
+}
