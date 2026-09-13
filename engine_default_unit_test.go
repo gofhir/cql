@@ -1026,3 +1026,43 @@ func TestTheStepCheckDoesNotCryWolf(t *testing.T) {
 		t.Errorf("two bad steps gave %d diagnostics, want 2", steps)
 	}
 }
+
+// TestTheStepOfACollapseFollowsTheArithmeticItIsMadeOf covers what a step may be,
+// which is decided by whether the engine can add it to a bound.
+//
+// Every row here is the arithmetic answering, not a rule written for collapse: a
+// step in another dimension cannot be added, a bare step is read in the bound's
+// own unit, and the UCUM year and month codes are refused by this engine's date
+// arithmetic on purpose — `@2020-01-01 + 1 'a'` is an error, and a step of `1 'a'`
+// therefore closes no gap while `1 year` does.
+func TestTheStepOfACollapseFollowsTheArithmeticItIsMadeOf(t *testing.T) {
+	for _, tt := range []struct{ what, expr, want string }{
+		{"another dimension", "collapse {Interval[1 'cm', 3 'cm'], Interval[5 'cm', 7 'cm']} per 1 's'",
+			"{Interval[1 'cm', 3 'cm'], Interval[5 'cm', 7 'cm']}"},
+		{"a bare step over quantities", "collapse {Interval[1 'cm', 3 'cm'], Interval[5 'cm', 7 'cm']} per 2",
+			"{Interval[1 'cm', 7 'cm']}"},
+		{"the UCUM day code", "collapse {Interval[@2020-01-01, @2020-01-03], Interval[@2020-01-05, @2020-01-07]} per 1 'd'",
+			"{Interval[2020-01-01, 2020-01-07]}"},
+		{"a calendar year", "collapse {Interval[@2020-01-01, @2020-06-01], Interval[@2021-01-01, @2021-06-01]} per 1 year",
+			"{Interval[2020-01-01, 2021-06-01]}"},
+		{"the UCUM year code", "collapse {Interval[@2020-01-01, @2020-06-01], Interval[@2021-01-01, @2021-06-01]} per 1 'a'",
+			"{Interval[2020-01-01, 2020-06-01], Interval[2021-01-01, 2021-06-01]}"},
+		{"months, at month precision", "collapse {Interval[@2020-01, @2020-03], Interval[@2020-05, @2020-07]} per 1 month",
+			"{Interval[2020-01, 2020-07]}"},
+		{"hours", "collapse {Interval[@2020-01-01T10:00:00, @2020-01-01T11:00:00], Interval[@2020-01-01T13:00:00, @2020-01-01T14:00:00]} per 2 hours",
+			"{Interval[2020-01-01T10:00:00, 2020-01-01T14:00:00]}"},
+		{"bounds of different types", "collapse {Interval[1, 3], Interval[5 'cm', 7 'cm']} per 1",
+			"{Interval[1, 3], Interval[5 'cm', 7 'cm']}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
+		}
+	}
+
+	// The UCUM year row above is only right while the arithmetic refuses it. If
+	// that policy changes, the step should follow it rather than stay behind.
+	if got := evalDefaultUnit(t, "@2020-01-01 + 1 'a'"); !strings.Contains(got, "ERROR") {
+		t.Errorf("@2020-01-01 + 1 'a' = %s — the engine has learned the UCUM year; "+
+			"a step of 1 'a' should now close a one-year gap too", got)
+	}
+}
