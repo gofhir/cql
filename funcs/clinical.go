@@ -13,6 +13,12 @@ func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 		return nil, nil
 	}
 	ref := referenceDate(asOf)
+	if ref.IsZero() {
+		// No reference to measure against: there is no age, which CQL answers
+		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
+		// against the machine's clock instead.
+		return nil, nil
+	}
 	years := ref.Year() - bd.Year()
 	if ref.YearDay() < bd.YearDay() {
 		years--
@@ -27,6 +33,12 @@ func CalculateAgeInMonths(birthDate, asOf fptypes.Value) (fptypes.Value, error) 
 		return nil, nil
 	}
 	ref := referenceDate(asOf)
+	if ref.IsZero() {
+		// No reference to measure against: there is no age, which CQL answers
+		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
+		// against the machine's clock instead.
+		return nil, nil
+	}
 	months := (ref.Year()-bd.Year())*12 + int(ref.Month()) - int(bd.Month())
 	if ref.Day() < bd.Day() {
 		months--
@@ -41,6 +53,12 @@ func CalculateAgeInWeeks(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 		return nil, nil
 	}
 	ref := referenceDate(asOf)
+	if ref.IsZero() {
+		// No reference to measure against: there is no age, which CQL answers
+		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
+		// against the machine's clock instead.
+		return nil, nil
+	}
 	days := int(ref.Sub(bd).Hours() / 24)
 	return fptypes.NewInteger(int64(days / 7)), nil
 }
@@ -52,6 +70,12 @@ func CalculateAgeInDays(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 		return nil, nil
 	}
 	ref := referenceDate(asOf)
+	if ref.IsZero() {
+		// No reference to measure against: there is no age, which CQL answers
+		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
+		// against the machine's clock instead.
+		return nil, nil
+	}
 	days := int(ref.Sub(bd).Hours() / 24)
 	return fptypes.NewInteger(int64(days)), nil
 }
@@ -83,10 +107,16 @@ func referenceDate(asOf fptypes.Value) time.Time {
 			return t
 		}
 	}
-	// Reading the clock here is the last resort. The evaluator passes the
-	// evaluation's frozen timestamp, so that an age agrees with the Today() in
-	// the same expression; only a direct caller of this package lands here.
-	return time.Now().UTC()
+	// No clock is read here. The comment that used to stand in its place said the
+	// evaluator always passes the evaluation's frozen timestamp and that only a
+	// direct caller of this package could land here — and that was not true: two
+	// branches of the evaluator's age switch passed a nil through, and an age came
+	// back seven years off the Today() beside it.
+	//
+	// With nothing to measure against there is no age, which is null in CQL rather
+	// than an age against whatever the machine's clock says. The callers turn this
+	// zero time into that null.
+	return time.Time{}
 }
 
 func toTime(v fptypes.Value) (time.Time, error) { //nolint:unparam // error kept for future format additions

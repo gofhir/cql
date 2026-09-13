@@ -2764,7 +2764,14 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return funcs.CalculateAgeInWeeks(bd, e.evaluationNow())
+			asOf := e.evaluationNow()
+			if len(n.Operands) > 1 {
+				asOf, err = e.Eval(n.Operands[1])
+				if err != nil {
+					return nil, err
+				}
+			}
+			return funcs.CalculateAgeInWeeks(bd, asOf)
 		}
 		return nil, nil
 	case "calculateageindays":
@@ -2773,7 +2780,14 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			return funcs.CalculateAgeInDays(bd, e.evaluationNow())
+			asOf := e.evaluationNow()
+			if len(n.Operands) > 1 {
+				asOf, err = e.Eval(n.Operands[1])
+				if err != nil {
+					return nil, err
+				}
+			}
+			return funcs.CalculateAgeInDays(bd, asOf)
 		}
 		return nil, nil
 

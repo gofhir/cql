@@ -1565,8 +1565,14 @@ func TestEveryAgeAgreesWithTheTodayBesideIt(t *testing.T) {
 	ask := func(expr string) string {
 		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine X: " + expr + "\n"
 		got, err := engine.EvaluateExpression(context.Background(), src, "X", patient, nil)
-		if err != nil || got == nil {
-			return "ERROR"
+		if err != nil {
+			return "ERROR: " + err.Error()
+		}
+		// null is a value here, not a failure: a reference given as null makes the
+		// whole age null, and a helper that folded the two together would report
+		// that as an error.
+		if got == nil {
+			return "null"
 		}
 		return got.String()
 	}
@@ -1589,5 +1595,27 @@ func TestEveryAgeAgreesWithTheTodayBesideIt(t *testing.T) {
 	}
 	if got := ask("Today()"); got != "2019-06-01" {
 		t.Errorf("Today() = %s, want 2019-06-01", got)
+	}
+
+	// A reference that is given is the one used. Weeks and days ignored theirs
+	// entirely and answered the age at the evaluation timestamp whatever date they
+	// were handed — 1011 weeks where the answer to the question asked is 521.
+	for _, tt := range []struct{ unit, want string }{
+		{"Years", "10"}, {"Months", "120"}, {"Weeks", "521"}, {"Days", "3653"},
+	} {
+		expr := "CalculateAgeIn" + tt.unit + "(@2000-01-15, @2010-01-15)"
+		if got := ask(expr); got != tt.want {
+			t.Errorf("%s = %s, want %s — the reference given is the one to measure to", expr, got, tt.want)
+		}
+	}
+
+	// A reference given as null is null, not an age against something else. CQL
+	// propagates null, and answering the machine's clock here was how the clock got
+	// in even after the no-operand case was closed.
+	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
+		expr := "CalculateAgeIn" + unit + "(@2000-01-15, null)"
+		if got := ask(expr); got != "null" {
+			t.Errorf("%s = %s, want null", expr, got)
+		}
 	}
 }
