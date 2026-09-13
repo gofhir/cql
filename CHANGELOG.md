@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.23.0](https://github.com/gofhir/cql/compare/v1.22.1...v1.23.0) (2026-09-13)
+
+
+### Features
+
+* **eval:** ages measure to the reference they are given, and AgeInWeeksAt and AgeInDaysAt exist ([#113](https://github.com/gofhir/cql/issues/113)) ([a7dff3a](https://github.com/gofhir/cql/commit/a7dff3a0b34496592aab3c3af5e2f5907c8257c7))
+
+  Three ways an age reached the machine's clock instead of the evaluation's
+  timestamp are closed, and one answer that was wrong with an explicit argument:
+  `CalculateAgeInYears(bd)` measured against the real calendar, seven years off the
+  `Today()` beside it; `CalculateAgeInYears(bd, null)` did the same; and
+  `CalculateAgeInWeeks(bd, @2010-01-15)` ignored the date it was given and answered
+  the age today. A reference given as null is now null. `AgeInWeeksAt` and
+  `AgeInDaysAt`, which CQL defines and this engine implemented but never
+  registered, now exist.
+
+  **Removed from the `funcs` package**, none of them called anywhere and each
+  offering a worse answer than the path the engine takes: `AgeInYears`,
+  `AgeInMonths`, `AgeInWeeks`, `AgeInDays`, `Now`, `Today`, `TimeOfDay` (all seven
+  were the only way to read the machine's clock — use the `…At` variants, which
+  take the instant), `AsType` (compares a type name, with none of the narrowing
+  `as` performs) and `IntervalExpand` (use `IntervalExpandPoints` or
+  `IntervalExpandIntervals`). Nothing in the engine or its one consumer imports
+  them.
+
 ## [1.22.1](https://github.com/gofhir/cql/compare/v1.22.0...v1.22.1) (2026-09-13)
 
 
