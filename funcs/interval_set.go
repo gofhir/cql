@@ -166,7 +166,137 @@ func IntervalMeetsAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 }
 
 // IntervalCollapse collapses a list of intervals into non-overlapping intervals.
-func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error) {
+// collapseReaches reports whether one interval's high bound, moved up by the
+// step, arrives at the next interval's low bound — which is what `collapse … per`
+// asks and what decides whether the two merge.
+//
+// The step was read and thrown away: the evaluator never passed it here and this
+// function never took it, so `collapse {Interval[1, 3], Interval[5, 7]} per 3`
+// answered two intervals where the gap between them is 2. Every `per` gave the
+// same answer as writing none.
+//
+// It is posed as "does the high bound reach" rather than "is the gap smaller than
+// the step" on purpose: advancing a value by a quantity is arithmetic this package
+// already does for every point type, temporal included, while subtracting two
+// bounds to get a gap is not defined over temporals at all — `width of` refuses
+// there.
+func collapseReaches(high fptypes.Value, highClosed bool, low fptypes.Value, lowClosed bool, perVal fptypes.Value) bool {
+	if high == nil || low == nil || perVal == nil {
+		return false
+	}
+	// An open bound is not part of its interval, so the value to step from — and
+	// the value to reach — is one in from it. `[1, 3)` holds up to 2, so its gap to
+	// `[5, 7]` is two points and a step of one does not close it. Without this the
+	// four combinations of open and closed answered the same, which the rest of
+	// this package does not do: intervalEndMeetsStart has a case for each.
+	if !highClosed {
+		if pred, err := cqltypes.Predecessor(high); err == nil && pred != nil {
+			high = pred
+		}
+	}
+	if !lowClosed {
+		if succ, err := cqltypes.Successor(low); err == nil && succ != nil {
+			low = succ
+		}
+	}
+	amount, unit, usable := expandGetStep(perVal)
+	if !usable || amount.IsZero() {
+		return false
+	}
+	// The successor first, then the step. Both orders read the same over a whole
+	// step, and only this one survives a fractional one: advancing 3 by 1.5 gives
+	// a decimal, whose successor is an epsilon rather than the next integer — so
+	// `per 1` merged a one-point gap, `per 1.5` did not, and `per 2` did again. A
+	// wider step cannot merge less than a narrower one.
+	//
+	// Taking the successor of the bound itself asks the question in the bound's own
+	// type, which is where the discreteness lives: the next integer after 3 is 4,
+	// the next day after the 3rd is the 4th, and the next decimal is a hair away.
+	from := high
+	if succ, err := cqltypes.Successor(high); err == nil && succ != nil {
+		from = succ
+	}
+	advanced, ok := advanceBy(from, amount, unit)
+	if !ok {
+		// The step could not be applied — its unit does not convert to the bound's,
+		// or taking it would leave the representable range. Fall back to asking
+		// whether the successor alone already arrives, which is the same question
+		// with a step of nothing and is the answer in both cases: a step in seconds
+		// does not carry a bound in centimeters anywhere, and two consecutive days
+		// at the end of the calendar touch whether or not a further day exists to
+		// step to. Without this, `[@9999-12-28, @9999-12-30]` and
+		// `[@9999-12-31, @9999-12-31]` stayed apart because 10000-01-01 does not
+		// exist.
+		advanced = from
+	}
+	// Time arithmetic wraps: `@T23:00:00 + 1 hour` is `00:00:00`, not an error and
+	// not 24:00. A step that wraps therefore lands *before* where it started, and
+	// comparing it against the next low bound answered "does not reach" for a gap
+	// the step covers several times over — `[@T22:00:00, @T23:00:00]` and
+	// `[@T23:59:59, @T23:59:59]` stayed apart under a step of an hour, a minute
+	// short of touching.
+	//
+	// Having wrapped means the step reached the end of the day, so it reaches any
+	// bound at or after where it set off from.
+	if back, err := compareVals(advanced, from); err == nil && back < 0 {
+		cmp, err := compareVals(low, from)
+		return err == nil && cmp >= 0
+	}
+	cmp, err := compareVals(advanced, low)
+	if err != nil {
+		return false
+	}
+	return cmp >= 0
+}
+
+// advanceBy moves a boundary up by a step, in whatever the boundary is.
+func advanceBy(v fptypes.Value, amount decimal.Decimal, unit string) (fptypes.Value, bool) {
+	if isTemporalValue(v) {
+		u := unit
+		if u == "" || u == "1" {
+			u = defaultTemporalUnit(v)
+		}
+		u, err := normalizeTemporalUnit(u)
+		if err != nil {
+			return nil, false
+		}
+		out, err := DateAdd(v, int(amount.IntPart()), u)
+		if err != nil || out == nil {
+			return nil, false
+		}
+		return out, true
+	}
+	if q, ok := v.(fptypes.Quantity); ok {
+		step := amount
+		if unit != "" && unit != "1" {
+			converted, ok := fptypes.NewQuantityFromDecimal(amount, unit).ConvertTo(q.Unit())
+			if !ok {
+				return nil, false
+			}
+			step = converted.Value()
+		}
+		return fptypes.NewQuantityFromDecimal(q.Value().Add(step), q.Unit()), true
+	}
+	n, ok := v.(fptypes.Numeric)
+	if !ok {
+		return nil, false
+	}
+	sum := n.ToDecimal().Value().Add(amount)
+	if _, isInt := v.(fptypes.Integer); isInt && amount.Equal(amount.Truncate(0)) {
+		return fptypes.NewInteger(sum.IntPart()), true
+	}
+	return decimalToValue(sum), true
+}
+
+func isTemporalValue(v fptypes.Value) bool {
+	switch v.(type) {
+	case fptypes.DateTime, fptypes.Date, fptypes.Time:
+		return true
+	}
+	return false
+}
+
+func IntervalCollapse(intervals []cqltypes.Interval, perVal fptypes.Value) ([]cqltypes.Interval, error) {
 	if len(intervals) == 0 {
 		return nil, nil
 	}
@@ -190,7 +320,7 @@ func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error
 		last := &result[len(result)-1]
 		overlaps, _ := last.Overlaps(iv) //nolint:errcheck // best-effort merge
 		meets := intervalEndMeetsStart(last.High, last.HighClosed, iv.Low, iv.LowClosed)
-		if overlaps || meets {
+		if overlaps || meets || collapseReaches(last.High, last.HighClosed, iv.Low, iv.LowClosed, perVal) {
 			// Merge
 			if iv.High != nil && last.High != nil {
 				cmp, _ := compareVals(iv.High, last.High) //nolint:errcheck // best-effort merge

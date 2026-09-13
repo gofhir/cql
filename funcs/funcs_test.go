@@ -864,7 +864,7 @@ func TestIntervalCollapse(t *testing.T) {
 		cqltypes.NewInterval(fptypes.NewInteger(3), fptypes.NewInteger(8), true, true),
 		cqltypes.NewInterval(fptypes.NewInteger(10), fptypes.NewInteger(15), true, true),
 	}
-	result, err := IntervalCollapse(intervals)
+	result, err := IntervalCollapse(intervals, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
