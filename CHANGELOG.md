@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://github.com/gofhir/cql/compare/v1.21.4...v1.22.0) (2026-09-13)
+
+
+### Features
+
+* **funcs:** collapse merges what is within a step, instead of ignoring the step ([#109](https://github.com/gofhir/cql/issues/109)) ([1c3f231](https://github.com/gofhir/cql/commit/1c3f23143af1ba4212b51082da47b54472e8ab30))
+
 ## [1.21.4](https://github.com/gofhir/cql/compare/v1.21.3...v1.21.4) (2026-09-13)
 
 
