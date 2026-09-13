@@ -805,33 +805,97 @@ func TestTheDiagnosticNamesTheOperationTheAuthorWrote(t *testing.T) {
 	}
 }
 
-// TestCollapsePerIsIgnored asserts a defect this change did not cause and does not
-// fix, found while checking that `collapse` reaches the check above.
+// TestCollapsePerMergesWhatIsWithinAStep covers `collapse … per`, which was
+// accepted and then ignored: the evaluator never passed the step down and the
+// collapse never took one, so `per 1`, `per 3` and `per 10` all answered what
+// writing no `per` answers.
 //
-// `collapse … per` is accepted and then ignored: intervals separated by less than
-// the step should merge, and none of these do.
+// Two intervals merge when the high bound of one, moved up by the step, reaches
+// the low bound of the next. It is posed that way — rather than as "is the gap
+// smaller than the step" — because advancing a value by a quantity is arithmetic
+// this engine does for every point type, temporal included, while subtracting two
+// bounds to get a gap is not defined over temporals at all.
 //
-//	collapse {Interval[1, 3], Interval[5, 7]} per 3   should be {Interval[1, 7]}
-//	                                                  is two intervals
-//
-// The gap between 3 and 5 is 2, which is inside a step of 3. Identical on main —
-// the evaluator's collapse never looks at Per at all — so it is untouched here and
-// gets its own change. Asserted rather than described, with the no-per spelling
-// beside it: if a `per` ever starts making a difference, this fails.
-func TestCollapsePerIsIgnored(t *testing.T) {
-	withoutPer := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[5, 7]}")
-	for _, per := range []string{" per 3", " per 1", " per 10"} {
-		got := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[5, 7]}"+per)
-		if got != withoutPer {
-			t.Errorf("collapse%s = %s but without per = %s — the step now makes a "+
-				"difference. With a step of 3 the right answer is {Interval[1, 7]}, "+
-				"since the gap between 3 and 5 is 2.", per, got, withoutPer)
+// The reach is measured to the successor, because that is how two bounds touching
+// is already defined here: `[1, 3]` and `[5, 7]` are one point apart, so `per 1`
+// closes that gap and no step at all does not. Which also means a step of nothing
+// means exactly what it meant before.
+func TestCollapsePerMergesWhatIsWithinAStep(t *testing.T) {
+	const twoApart = "collapse {Interval[1, 3], Interval[5, 7]}"
+	for _, tt := range []struct{ per, want string }{
+		// One point lies between them, so one step closes it and none does not.
+		{" per 1", "{Interval[1, 7]}"},
+		{" per 3", "{Interval[1, 7]}"},
+		{" per 0", "{Interval[1, 3], Interval[5, 7]}"},
+		{"", "{Interval[1, 3], Interval[5, 7]}"},
+	} {
+		if got := evalDefaultUnit(t, twoApart+tt.per); got != tt.want {
+			t.Errorf("collapse%s = %s, want %s", tt.per, got, tt.want)
 		}
 	}
-	// The collapsing it does do is unaffected, which is what makes the above a
-	// missing feature rather than a broken one.
-	if got := evalDefaultUnit(t, "collapse {Interval[1, 4], Interval[3, 7]}"); got != "{Interval[1, 7]}" {
-		t.Errorf("collapsing two overlapping intervals = %s, want {Interval[1, 7]}", got)
+
+	// Far enough apart is still far enough apart, whatever the step.
+	if got := evalDefaultUnit(t, "collapse {Interval[1, 3], Interval[8, 9]} per 1"); got != "{Interval[1, 3], Interval[8, 9]}" {
+		t.Errorf("a gap wider than the step = %s, want two intervals", got)
+	}
+
+	// Every point type takes the same reading, which is the property that makes
+	// this one rule rather than four.
+	for _, tt := range []struct{ what, expr, want string }{
+		{"decimals", "collapse {Interval[1.0, 3.0], Interval[5.0, 7.0]} per 2.0", "{Interval[1.0, 7.0]}"},
+		{"quantities", "collapse {Interval[1 'cm', 3 'cm'], Interval[5 'cm', 7 'cm']} per 2 'cm'", "{Interval[1 'cm', 7 'cm']}"},
+		// A step written in another scale of the same dimension converts first.
+		{"a step in millimeters", "collapse {Interval[1 'cm', 3 'cm'], Interval[5 'cm', 7 'cm']} per 20 'mm'", "{Interval[1 'cm', 7 'cm']}"},
+		{"dates, one day apart", "collapse {Interval[@2020-01-01, @2020-01-03], Interval[@2020-01-05, @2020-01-07]} per 1 day", "{Interval[2020-01-01, 2020-01-07]}"},
+		{"dates, two days apart", "collapse {Interval[@2020-01-01, @2020-01-03], Interval[@2020-01-06, @2020-01-07]} per 1 day", "{Interval[2020-01-01, 2020-01-03], Interval[2020-01-06, 2020-01-07]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
+		}
+	}
+
+	// What collapse already did is untouched: overlapping and touching intervals
+	// merge with no step at all.
+	for _, tt := range []struct{ expr, want string }{
+		{"collapse {Interval[1, 4], Interval[3, 7]}", "{Interval[1, 7]}"},
+		{"collapse {Interval[1, 3], Interval[4, 7]}", "{Interval[1, 7]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
+
+// TestTwoSuccessorsDisagreeAboutDates asserts a defect this change worked around
+// rather than fixed, and which it is the reason for finding.
+//
+// There are two implementations of "the next value". cqltypes.Successor knows
+// Integer, Decimal, DateTime, Date, Time and Quantity, and guards the range.
+// funcs.intervalSuccessor knows everything but Date — so through it, two
+// consecutive days do not touch while two consecutive integers do:
+//
+//	Interval[1, 3] meets Interval[4, 7]                                 true
+//	Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, …]    false
+//	successor of @2020-01-03                                            2020-01-04
+//
+// The engine knows the successor of that date perfectly well through the other
+// implementation, which is what makes this a contradiction rather than a limit.
+//
+// collapse … per uses cqltypes.Successor to avoid inheriting it. Fixing the copy
+// belongs in its own change: intervalSuccessor sits under `meets` and `overlaps`,
+// so moving it moves answers this one does not touch.
+func TestTwoSuccessorsDisagreeAboutDates(t *testing.T) {
+	if got := evalDefaultUnit(t, "Interval[1, 3] meets Interval[4, 7]"); got != "true" {
+		t.Errorf("consecutive integers meet: %s", got)
+	}
+	if got := evalDefaultUnit(t, "successor of @2020-01-03"); got != "2020-01-04" {
+		t.Errorf("the engine's own successor of a date = %s", got)
+	}
+	if got := evalDefaultUnit(t,
+		"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, @2020-01-07]"); got != "false" {
+		t.Errorf("consecutive days now meet (%s) — funcs.intervalSuccessor has learned "+
+			"Date. Check `meets`, `overlaps` and collapse without a step together, and "+
+			"delete this test.", got)
 	}
 }
 

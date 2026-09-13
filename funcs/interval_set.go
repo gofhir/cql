@@ -166,7 +166,104 @@ func IntervalMeetsAfter(a, b cqltypes.Interval) (fptypes.Value, error) {
 }
 
 // IntervalCollapse collapses a list of intervals into non-overlapping intervals.
-func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error) {
+// collapseReaches reports whether one interval's high bound, moved up by the
+// step, arrives at the next interval's low bound — which is what `collapse … per`
+// asks and what decides whether the two merge.
+//
+// The step was read and thrown away: the evaluator never passed it here and this
+// function never took it, so `collapse {Interval[1, 3], Interval[5, 7]} per 3`
+// answered two intervals where the gap between them is 2. Every `per` gave the
+// same answer as writing none.
+//
+// It is posed as "does the high bound reach" rather than "is the gap smaller than
+// the step" on purpose: advancing a value by a quantity is arithmetic this package
+// already does for every point type, temporal included, while subtracting two
+// bounds to get a gap is not defined over temporals at all — `width of` refuses
+// there.
+func collapseReaches(high, low, perVal fptypes.Value) bool {
+	if high == nil || low == nil || perVal == nil {
+		return false
+	}
+	amount, unit, usable := expandGetStep(perVal)
+	if !usable || amount.IsZero() {
+		return false
+	}
+	advanced, ok := advanceBy(high, amount, unit)
+	if !ok {
+		return false
+	}
+	// The successor, because that is how two bounds touching is already defined
+	// here: intervalEndMeetsStart asks whether the successor of one high bound is
+	// the next low bound. Asking the same question after the step keeps the two as
+	// one reading, and makes a step of nothing mean what `meets` means — `[1, 3]`
+	// and `[5, 7]` are one point apart, so `per 1` closes that and no step does
+	// not.
+	//
+	// cqltypes.Successor rather than the intervalSuccessor next door, which is a
+	// second implementation of the same idea and does not know about Date at all:
+	// through it, `per 1 day` would not close a one-day gap while `per 1` closes a
+	// one-integer gap. That copy is why `Interval[@2020-01-01, @2020-01-03] meets
+	// Interval[@2020-01-04, @2020-01-07]` is false today while the integer
+	// spelling is true — a defect of its own, older than this, and left for its
+	// own change rather than fixed underneath `meets` and `overlaps` here.
+	if succ, err := cqltypes.Successor(advanced); err == nil && succ != nil {
+		advanced = succ
+	}
+	cmp, err := compareVals(advanced, low)
+	if err != nil {
+		return false
+	}
+	return cmp >= 0
+}
+
+// advanceBy moves a boundary up by a step, in whatever the boundary is.
+func advanceBy(v fptypes.Value, amount decimal.Decimal, unit string) (fptypes.Value, bool) {
+	if isTemporalValue(v) {
+		u := unit
+		if u == "" || u == "1" {
+			u = defaultTemporalUnit(v)
+		}
+		u, err := normalizeTemporalUnit(u)
+		if err != nil {
+			return nil, false
+		}
+		out, err := DateAdd(v, int(amount.IntPart()), u)
+		if err != nil || out == nil {
+			return nil, false
+		}
+		return out, true
+	}
+	if q, ok := v.(fptypes.Quantity); ok {
+		step := amount
+		if unit != "" && unit != "1" {
+			converted, ok := fptypes.NewQuantityFromDecimal(amount, unit).ConvertTo(q.Unit())
+			if !ok {
+				return nil, false
+			}
+			step = converted.Value()
+		}
+		return fptypes.NewQuantityFromDecimal(q.Value().Add(step), q.Unit()), true
+	}
+	n, ok := v.(fptypes.Numeric)
+	if !ok {
+		return nil, false
+	}
+	sum := n.ToDecimal().Value().Add(amount)
+	if _, isInt := v.(fptypes.Integer); isInt && amount.Equal(amount.Truncate(0)) {
+		return fptypes.NewInteger(sum.IntPart()), true
+	}
+	return decimalToValue(sum), true
+}
+
+func isTemporalValue(v fptypes.Value) bool {
+	switch v.(type) {
+	case fptypes.DateTime, fptypes.Date, fptypes.Time:
+		return true
+	}
+	return false
+}
+
+func IntervalCollapse(intervals []cqltypes.Interval, perVal fptypes.Value) ([]cqltypes.Interval, error) {
 	if len(intervals) == 0 {
 		return nil, nil
 	}
@@ -190,7 +287,7 @@ func IntervalCollapse(intervals []cqltypes.Interval) ([]cqltypes.Interval, error
 		last := &result[len(result)-1]
 		overlaps, _ := last.Overlaps(iv) //nolint:errcheck // best-effort merge
 		meets := intervalEndMeetsStart(last.High, last.HighClosed, iv.Low, iv.LowClosed)
-		if overlaps || meets {
+		if overlaps || meets || collapseReaches(last.High, iv.Low, perVal) {
 			// Merge
 			if iv.High != nil && last.High != nil {
 				cmp, _ := compareVals(iv.High, last.High) //nolint:errcheck // best-effort merge
