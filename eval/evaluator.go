@@ -6800,7 +6800,7 @@ func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Val
 		if len(intervals) == 0 {
 			return cqltypes.NewList(nil), nil
 		}
-		collapsed, err := funcs.IntervalCollapse(intervals)
+		collapsed, err := funcs.IntervalCollapse(intervals, perVal)
 		if err != nil {
 			return nil, err
 		}
