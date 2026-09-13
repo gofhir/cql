@@ -218,7 +218,16 @@ func collapseReaches(high fptypes.Value, highClosed bool, low fptypes.Value, low
 	}
 	advanced, ok := advanceBy(from, amount, unit)
 	if !ok {
-		return false
+		// The step could not be applied — its unit does not convert to the bound's,
+		// or taking it would leave the representable range. Fall back to asking
+		// whether the successor alone already arrives, which is the same question
+		// with a step of nothing and is the answer in both cases: a step in seconds
+		// does not carry a bound in centimeters anywhere, and two consecutive days
+		// at the end of the calendar touch whether or not a further day exists to
+		// step to. Without this, `[@9999-12-28, @9999-12-30]` and
+		// `[@9999-12-31, @9999-12-31]` stayed apart because 10000-01-01 does not
+		// exist.
+		advanced = from
 	}
 	cmp, err := compareVals(advanced, low)
 	if err != nil {

@@ -1125,3 +1125,49 @@ func TestExpandAndCollapseWithTheSameStepIsTheIdentity(t *testing.T) {
 		}
 	}
 }
+
+// TestAStepThatCannotBeTakenStillAsksWhetherTheBoundsTouch covers the ends of the
+// representable range, where advancing a bound is not possible at all.
+//
+//	collapse {Interval[@9999-12-28, @9999-12-30],
+//	          Interval[@9999-12-31, @9999-12-31]} per 1 day
+//
+// Those two are consecutive days. Stepping a day past the 31st leaves the calendar
+// — there is no 10000-01-01 — so the step was discarded and the intervals stayed
+// apart, even though the successor had already arrived before the step was taken.
+//
+// A step that cannot be applied now falls back to the question with no step in it,
+// which is the right answer in both cases it happens: two consecutive days touch
+// whether or not a further day exists, and a step in seconds carries a bound in
+// centimeters nowhere, so the fallback does not merge what a wrong unit should
+// have left alone.
+func TestAStepThatCannotBeTakenStillAsksWhetherTheBoundsTouch(t *testing.T) {
+	for _, tt := range []struct{ what, expr, want string }{
+		{"the end of the calendar",
+			"collapse {Interval[@9999-12-28, @9999-12-30], Interval[@9999-12-31, @9999-12-31]} per 1 day",
+			"{Interval[9999-12-28, 9999-12-31]}"},
+		{"a step past the end",
+			"collapse {Interval[@9999-12-28, @9999-12-31], Interval[@9999-12-31, @9999-12-31]} per 1000 years",
+			"{Interval[9999-12-28, 9999-12-31]}"},
+		{"the start of the calendar",
+			"collapse {Interval[@0001-01-01, @0001-01-02], Interval[@0001-01-04, @0001-01-05]} per 1 day",
+			"{Interval[0001-01-01, 0001-01-05]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
+		}
+	}
+
+	// And the fallback does not turn an unusable unit into a merge: these are the
+	// rows from the arithmetic test above, which have to keep declining.
+	for _, tt := range []struct{ expr, want string }{
+		{"collapse {Interval[1 'cm', 3 'cm'], Interval[5 'cm', 7 'cm']} per 1 's'",
+			"{Interval[1 'cm', 3 'cm'], Interval[5 'cm', 7 'cm']}"},
+		{"collapse {Interval[@2020-01-01, @2020-06-01], Interval[@2021-01-01, @2021-06-01]} per 1 'a'",
+			"{Interval[2020-01-01, 2020-06-01], Interval[2021-01-01, 2021-06-01]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s — the fallback must not merge on a unit that does not apply", tt.expr, got, tt.want)
+		}
+	}
+}
