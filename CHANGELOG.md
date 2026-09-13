@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.22.1](https://github.com/gofhir/cql/compare/v1.22.0...v1.22.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* **funcs:** one implementation of the next value, so dates touch like integers ([#111](https://github.com/gofhir/cql/issues/111)) ([ddc0852](https://github.com/gofhir/cql/commit/ddc0852810d9130ae0c9958c8b2b9b09a4e6b4c5))
+
+  There were two implementations of "the next value" and one did not know Date, so
+  two consecutive days did not touch while two consecutive integers did. Answers
+  that change, all of them over intervals of Date: `meets`, `meets before` and
+  `meets after` were false and are true; `union` of two touching intervals was null
+  and is the union; `collapse` leaves one interval where it left two; and `except`
+  writes its new boundary closed where it wrote it open, which is the same interval
+  written the way the integer spelling writes it. DateTime and Time are untouched,
+  and the one collapse in the 19 published measures — over DateTime — answers
+  exactly as before.
+
 ## [1.22.0](https://github.com/gofhir/cql/compare/v1.21.4...v1.22.0) (2026-09-13)
 
 
