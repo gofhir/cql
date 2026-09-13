@@ -1673,3 +1673,92 @@ func TestTheFourAgeAtSpellingsAllExist(t *testing.T) {
 		}
 	}
 }
+
+// TestTheWholeAgeMatrixAgrees walks the family rather than sampling it, which is
+// what the last few rounds of this branch kept showing was the difference between
+// finding a defect and missing one.
+//
+// Four units, three spellings, three kinds of reference. Every column has to agree
+// with the others about the same span: AgeInX() and CalculateAgeInX(bd) both
+// measure to the evaluation timestamp, AgeInXAt(d) and CalculateAgeInX(bd, d) both
+// measure to d, and a null reference is null throughout.
+func TestTheWholeAgeMatrixAgrees(t *testing.T) {
+	at := time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)
+	patient := []byte(`{"resourceType":"Patient","id":"p1","birthDate":"2000-01-15"}`)
+	ask := func(expr string) string {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine X: " + expr + "\n"
+		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
+			context.Background(), src, "X", patient, nil)
+		if err != nil {
+			return "ERROR: " + err.Error()
+		}
+		if got == nil {
+			return "null"
+		}
+		return got.String()
+	}
+	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
+		toEvaluation := ask("AgeIn" + unit + "()")
+		if got := ask("CalculateAgeIn" + unit + "(@2000-01-15)"); got != toEvaluation {
+			t.Errorf("%s: AgeIn…() = %s but CalculateAgeIn…(bd) = %s", unit, toEvaluation, got)
+		}
+		toDate := ask("AgeIn" + unit + "At(@2010-01-15)")
+		if got := ask("CalculateAgeIn" + unit + "(@2000-01-15, @2010-01-15)"); got != toDate {
+			t.Errorf("%s: AgeIn…At(d) = %s but CalculateAgeIn…(bd, d) = %s", unit, toDate, got)
+		}
+		if toDate == toEvaluation {
+			t.Errorf("%s: measuring to 2010 and to 2019 gave the same answer (%s), so this row proves nothing",
+				unit, toDate)
+		}
+		for _, expr := range []string{
+			"AgeIn" + unit + "At(null)",
+			"CalculateAgeIn" + unit + "(@2000-01-15, null)",
+		} {
+			if got := ask(expr); got != "null" {
+				t.Errorf("%s = %s, want null", expr, got)
+			}
+		}
+	}
+}
+
+// TestAgeWithoutABirthDate pins the edges, which are answers rather than errors.
+//
+// A patient with no birth date has no age: null, not zero and not a failure. A
+// birth date stated only to the year is read at the start of it. A birth date in
+// the future gives a negative age — that is what the arithmetic says, the corpus
+// has no case for it, and it is recorded rather than decided here, so that
+// choosing null instead is a deliberate change with a test to break.
+func TestAgeWithoutABirthDate(t *testing.T) {
+	at := time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)
+	ask := func(patient, expr string) string {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine X: " + expr + "\n"
+		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
+			context.Background(), src, "X", []byte(patient), nil)
+		if err != nil {
+			return "ERROR"
+		}
+		if got == nil {
+			return "null"
+		}
+		return got.String()
+	}
+	const none = `{"resourceType":"Patient","id":"p1"}`
+	const empty = `{"resourceType":"Patient","id":"p1","birthDate":""}`
+	const yearOnly = `{"resourceType":"Patient","id":"p1","birthDate":"2000"}`
+	const future = `{"resourceType":"Patient","id":"p1","birthDate":"2030-01-15"}`
+
+	for _, p := range []string{none, empty} {
+		for _, expr := range []string{"AgeInYears()", "AgeInYearsAt(@2010-01-15)", "AgeInDaysAt(@2010-01-15)"} {
+			if got := ask(p, expr); got != "null" {
+				t.Errorf("with no birth date, %s = %s, want null", expr, got)
+			}
+		}
+	}
+	if got := ask(yearOnly, "AgeInYears()"); got != "19" {
+		t.Errorf("a birth date of 2000 alone gives %s at a 2019 evaluation, want 19", got)
+	}
+	if got := ask(future, "AgeInYears()"); got != "-11" {
+		t.Errorf("a birth date in the future gives %s; it was -11. If this is now null, "+
+			"that is a decision worth keeping — check the other units follow it.", got)
+	}
+}
