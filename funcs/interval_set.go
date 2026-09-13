@@ -188,26 +188,22 @@ func collapseReaches(high, low, perVal fptypes.Value) bool {
 	if !usable || amount.IsZero() {
 		return false
 	}
-	advanced, ok := advanceBy(high, amount, unit)
+	// The successor first, then the step. Both orders read the same over a whole
+	// step, and only this one survives a fractional one: advancing 3 by 1.5 gives
+	// a decimal, whose successor is an epsilon rather than the next integer — so
+	// `per 1` merged a one-point gap, `per 1.5` did not, and `per 2` did again. A
+	// wider step cannot merge less than a narrower one.
+	//
+	// Taking the successor of the bound itself asks the question in the bound's own
+	// type, which is where the discreteness lives: the next integer after 3 is 4,
+	// the next day after the 3rd is the 4th, and the next decimal is a hair away.
+	from := high
+	if succ, err := cqltypes.Successor(high); err == nil && succ != nil {
+		from = succ
+	}
+	advanced, ok := advanceBy(from, amount, unit)
 	if !ok {
 		return false
-	}
-	// The successor, because that is how two bounds touching is already defined
-	// here: intervalEndMeetsStart asks whether the successor of one high bound is
-	// the next low bound. Asking the same question after the step keeps the two as
-	// one reading, and makes a step of nothing mean what `meets` means — `[1, 3]`
-	// and `[5, 7]` are one point apart, so `per 1` closes that and no step does
-	// not.
-	//
-	// cqltypes.Successor rather than the intervalSuccessor next door, which is a
-	// second implementation of the same idea and does not know about Date at all:
-	// through it, `per 1 day` would not close a one-day gap while `per 1` closes a
-	// one-integer gap. That copy is why `Interval[@2020-01-01, @2020-01-03] meets
-	// Interval[@2020-01-04, @2020-01-07]` is false today while the integer
-	// spelling is true — a defect of its own, older than this, and left for its
-	// own change rather than fixed underneath `meets` and `overlaps` here.
-	if succ, err := cqltypes.Successor(advanced); err == nil && succ != nil {
-		advanced = succ
 	}
 	cmp, err := compareVals(advanced, low)
 	if err != nil {

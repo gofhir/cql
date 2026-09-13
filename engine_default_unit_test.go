@@ -854,6 +854,28 @@ func TestCollapsePerMergesWhatIsWithinAStep(t *testing.T) {
 		}
 	}
 
+	// Widening the step can only merge more, never less. It could not: advancing
+	// an integer bound by a fractional step gives a decimal, whose successor is an
+	// epsilon rather than the next integer, so `per 1` merged a one-point gap,
+	// `per 1.5` did not, and `per 2` did again. Taking the successor of the bound
+	// before stepping asks the question in the bound's own type, where the
+	// discreteness is.
+	var merged []string
+	for _, per := range []string{"0.5", "1", "1.5", "2", "2.5", "3"} {
+		got := evalDefaultUnit(t, twoApart+" per "+per)
+		merged = append(merged, per+"="+got)
+		if got == "{Interval[1, 7]}" {
+			continue
+		}
+		// Once a step has merged, no wider one may stop merging.
+		for _, earlier := range merged[:len(merged)-1] {
+			if strings.HasSuffix(earlier, "{Interval[1, 7]}") {
+				t.Errorf("a wider step merges less than a narrower one: %v", merged)
+				break
+			}
+		}
+	}
+
 	// What collapse already did is untouched: overlapping and touching intervals
 	// merge with no step at all.
 	for _, tt := range []struct{ expr, want string }{
