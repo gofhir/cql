@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.21.4](https://github.com/gofhir/cql/compare/v1.21.3...v1.21.4) (2026-09-13)
+
+
+### Bug Fixes
+
+* **sema:** report a step of the wrong type instead of expanding by one ([#107](https://github.com/gofhir/cql/issues/107)) ([d126f13](https://github.com/gofhir/cql/commit/d126f137402a5aa1d74456143622508b7554b66c))
+
+  A `per` whose type the evaluator does not recognize was read as *no step given*,
+  so `expand {Interval[1, 10]} per 'abc'` expanded by one and said nothing, and
+  `per {2}` expanded by one rather than by two. Those are reported now. Every
+  spelling CQL allows still compiles: a number, a decimal, a quantity, the temporal
+  keywords, a parameter, a define, a FHIR choice element, and a call whose type
+  this phase cannot see.
+
 ## [1.21.3](https://github.com/gofhir/cql/compare/v1.21.2...v1.21.3) (2026-09-12)
 
 
