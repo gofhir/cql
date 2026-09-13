@@ -919,36 +919,99 @@ func TestCollapsePerMergesWhatIsWithinAStep(t *testing.T) {
 	}
 }
 
-// TestTwoSuccessorsDisagreeAboutDates asserts a defect this change worked around
-// rather than fixed, and which it is the reason for finding.
+// TestOneSuccessorForEveryOperator covers the repair of a split this file used to
+// assert: there were two implementations of "the next value", and one did not know
+// Date.
 //
-// There are two implementations of "the next value". cqltypes.Successor knows
-// Integer, Decimal, DateTime, Date, Time and Quantity, and guards the range.
-// funcs.intervalSuccessor knows everything but Date — so through it, two
-// consecutive days do not touch while two consecutive integers do:
+// cqltypes.Successor knows Integer, Decimal, DateTime, Date, Time and Quantity and
+// guards the representable range. funcs.intervalSuccessor knew everything but
+// Date, and sat under `meets`, `except` and the collapse that rests on `meets` — so
+// two consecutive days did not touch while two consecutive integers did, though
+// the engine answered `successor of @2020-01-03` correctly all along. That is what
+// made it a contradiction rather than a limit.
 //
-//	Interval[1, 3] meets Interval[4, 7]                                 true
-//	Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, …]    false
-//	successor of @2020-01-03                                            2020-01-04
-//
-// The engine knows the successor of that date perfectly well through the other
-// implementation, which is what makes this a contradiction rather than a limit.
-//
-// collapse … per uses cqltypes.Successor to avoid inheriting it. Fixing the copy
-// belongs in its own change: intervalSuccessor sits under `meets` and `overlaps`,
-// so moving it moves answers this one does not touch.
-func TestTwoSuccessorsDisagreeAboutDates(t *testing.T) {
-	if got := evalDefaultUnit(t, "Interval[1, 3] meets Interval[4, 7]"); got != "true" {
-		t.Errorf("consecutive integers meet: %s", got)
+// Every row is the integer spelling beside the date one, because agreeing with
+// itself across point types is the property, not any particular answer.
+func TestOneSuccessorForEveryOperator(t *testing.T) {
+	for _, tt := range []struct{ what, integers, dates, want string }{
+		{"meets",
+			"Interval[1, 3] meets Interval[4, 7]",
+			"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, @2020-01-07]", "true"},
+		{"meets before",
+			"Interval[1, 3] meets before Interval[4, 7]",
+			"Interval[@2020-01-01, @2020-01-03] meets before Interval[@2020-01-04, @2020-01-07]", "true"},
+		{"meets after",
+			"Interval[4, 7] meets after Interval[1, 3]",
+			"Interval[@2020-01-04, @2020-01-07] meets after Interval[@2020-01-01, @2020-01-03]", "true"},
+		{"not meeting",
+			"Interval[1, 3] meets Interval[5, 7]",
+			"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-05, @2020-01-07]", "false"},
+		{"overlaps, which they do not",
+			"Interval[1, 3] overlaps Interval[4, 7]",
+			"Interval[@2020-01-01, @2020-01-03] overlaps Interval[@2020-01-04, @2020-01-07]", "false"},
+	} {
+		gotInt := evalDefaultUnit(t, tt.integers)
+		gotDate := evalDefaultUnit(t, tt.dates)
+		if gotInt != tt.want || gotDate != tt.want {
+			t.Errorf("%s: integers = %s, dates = %s, want %s for both",
+				tt.what, gotInt, gotDate, tt.want)
+		}
 	}
+
+	// union is the fourth caller, and the one where the copy cost a wrong answer
+	// rather than a differently written one: two intervals that touch have a union,
+	// and over dates it was null.
+	for _, tt := range []struct{ expr, want string }{
+		{"Interval[@2020-01-01, @2020-01-03] union Interval[@2020-01-04, @2020-01-07]",
+			"Interval[2020-01-01, 2020-01-07]"},
+		// Not touching is still no union, and overlapping still unions.
+		{"Interval[@2020-01-01, @2020-01-03] union Interval[@2020-01-05, @2020-01-07]", "null"},
+		{"Interval[@2020-01-01, @2020-01-05] union Interval[@2020-01-03, @2020-01-07]",
+			"Interval[2020-01-01, 2020-01-07]"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// collapse rests on meets, and except builds a new boundary out of the step.
+	// Both were reading the copy that did not know Date.
+	for _, tt := range []struct{ integers, dates string }{
+		{"collapse {Interval[1, 3], Interval[4, 7]}",
+			"collapse {Interval[@2020-01-01, @2020-01-03], Interval[@2020-01-04, @2020-01-07]}"},
+		{"Interval[1, 10] except Interval[1, 3]",
+			"Interval[@2020-01-01, @2020-01-10] except Interval[@2020-01-01, @2020-01-03]"},
+		{"Interval[1, 10] except Interval[8, 10]",
+			"Interval[@2020-01-01, @2020-01-10] except Interval[@2020-01-08, @2020-01-10]"},
+	} {
+		gotInt := evalDefaultUnit(t, tt.integers)
+		gotDate := evalDefaultUnit(t, tt.dates)
+		// The shapes differ by their values; what has to match is that neither
+		// answer is written with an open bound where the other has a closed one.
+		if strings.ContainsAny(gotInt, "()") != strings.ContainsAny(gotDate, "()") {
+			t.Errorf("%s gave %s but %s gave %s — one built a closed boundary and the other an open one",
+				tt.integers, gotInt, tt.dates, gotDate)
+		}
+	}
+
+	// `except` used to write its new boundary open where the integer spelling
+	// writes it closed. Those describe the same interval, which is measured here
+	// rather than asserted in a comment: the engine agrees through `=`, `~`,
+	// `start of`, `contains` and `width`.
+	for _, expr := range []string{
+		"Interval(@2020-01-03, @2020-01-10] = Interval[@2020-01-04, @2020-01-10]",
+		"Interval(@2020-01-03, @2020-01-10] ~ Interval[@2020-01-04, @2020-01-10]",
+		"start of Interval(@2020-01-03, @2020-01-10] = start of Interval[@2020-01-04, @2020-01-10]",
+		"width of Interval(3, 10] = width of Interval[4, 10]",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "true" {
+			t.Errorf("%s = %s — the open and closed spellings are not the same interval after all", expr, got)
+		}
+	}
+
+	// And the operator that was right all along still is.
 	if got := evalDefaultUnit(t, "successor of @2020-01-03"); got != "2020-01-04" {
-		t.Errorf("the engine's own successor of a date = %s", got)
-	}
-	if got := evalDefaultUnit(t,
-		"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, @2020-01-07]"); got != "false" {
-		t.Errorf("consecutive days now meet (%s) — funcs.intervalSuccessor has learned "+
-			"Date. Check `meets`, `overlaps` and collapse without a step together, and "+
-			"delete this test.", got)
+		t.Errorf("successor of a date = %s", got)
 	}
 }
 
@@ -1227,5 +1290,147 @@ func TestALongBoundIsAnIntegerBound(t *testing.T) {
 		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
 			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
 		}
+	}
+}
+
+// TestTheOneSuccessorReadsEveryPointTypeTheSameWay enumerates what the two
+// implementations could have differed on, since a shared implementation replacing
+// a copy moves whatever the copy read differently.
+//
+// The dimensions are: which point types it knows, what it does at the ends of the
+// representable range, and how coarse a precision it steps at. The decimal step is
+// the fourth and was checked before the change rather than after — the two
+// constants are the same 0.00000001, and a delegation between different ones would
+// have moved every decimal boundary in the engine without failing a test.
+func TestTheOneSuccessorReadsEveryPointTypeTheSameWay(t *testing.T) {
+	// A Long boundary reads as an Integer one, in both operators.
+	for _, tt := range [][2]string{
+		{"Interval[1, 3] meets Interval[4, 7]", "Interval[1L, 3L] meets Interval[4L, 7L]"},
+		{"Interval[1, 10] except Interval[1, 3]", "Interval[1L, 10L] except Interval[1L, 3L]"},
+	} {
+		if a, b := evalDefaultUnit(t, tt[0]), evalDefaultUnit(t, tt[1]); a != b {
+			t.Errorf("%s = %s but %s = %s", tt[0], a, tt[1], b)
+		}
+	}
+
+	// The ends of the calendar, where the shared implementation guards the range
+	// and the copy did not.
+	for _, tt := range []struct{ expr, want string }{
+		{"Interval[@9999-12-01, @9999-12-30] meets Interval[@9999-12-31, @9999-12-31]", "true"},
+		{"Interval[@0001-01-01, @0001-01-02] meets Interval[@0001-01-03, @0001-01-04]", "true"},
+		{"Interval[@9999-12-01, @9999-12-31] except Interval[@9999-12-31, @9999-12-31]",
+			"Interval[9999-12-01, 9999-12-30]"},
+		// Sharing a bound is overlapping, not meeting, at either end of the day.
+		{"Interval[@T22:00:00, @T23:59:59] meets Interval[@T23:59:59, @T23:59:59]", "false"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// A step is taken at the boundary's own precision: the month after @2020-03 is
+	// @2020-04, not the next day.
+	for _, expr := range []string{
+		"Interval[@2020-01, @2020-03] meets Interval[@2020-04, @2020-06]",
+		"Interval[@2020, @2021] meets Interval[@2022, @2023]",
+		"Interval[@2020-01-01T10, @2020-01-01T11] meets Interval[@2020-01-01T12, @2020-01-01T13]",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "true" {
+			t.Errorf("%s = %s, want true — the step should be one of whatever the bound states", expr, got)
+		}
+	}
+}
+
+// TestThePublishedCollapseDoesNotMove is the measurement that decides what this
+// change costs published CQL, rather than what it costs a fixture.
+//
+// The transitive closure of the two functions this branch replaced is six
+// operators: meets, meets before, meets after, union, except and collapse. Of
+// those, the 19 published measures use `union` 74 times across 11 libraries and
+// `collapse` once; `meets` and `except` not at all. The unions are all unions of
+// lists of resources — `union [Encounter: "ED"]` — which this does not touch.
+//
+// The one collapse is this function, and its intervals are DateTime, which the
+// replaced copy already knew. Only Date was missing from it. So the answer here is
+// the same before and after, and the change reaches published CQL nowhere:
+//
+//	CumulativeDays over DateTime intervals    18, 19, 18, 19 — identical on main
+//	the same shape written with Date          two intervals on main, one here
+func TestThePublishedCollapseDoesNotMove(t *testing.T) {
+	const fn = "define function CumulativeDays(Intervals List<Interval<DateTime>>):\n" +
+		"  Sum((collapse Intervals) CollapsedInterval return all duration in days of CollapsedInterval)\n"
+	for _, tt := range []struct{ what, call, want string }{
+		{"consecutive days", "CumulativeDays({Interval[@2020-01-01T00:00:00, @2020-01-10T00:00:00], " +
+			"Interval[@2020-01-11T00:00:00, @2020-01-20T00:00:00]})", "18"},
+		{"overlapping", "CumulativeDays({Interval[@2020-01-01T00:00:00, @2020-01-10T00:00:00], " +
+			"Interval[@2020-01-05T00:00:00, @2020-01-20T00:00:00]})", "19"},
+		{"far apart", "CumulativeDays({Interval[@2020-01-01T00:00:00, @2020-01-10T00:00:00], " +
+			"Interval[@2020-02-01T00:00:00, @2020-02-10T00:00:00]})", "18"},
+		{"a millisecond apart", "CumulativeDays({Interval[@2020-01-01T00:00:00.000, @2020-01-10T00:00:00.000], " +
+			"Interval[@2020-01-10T00:00:00.001, @2020-01-20T00:00:00.000]})", "19"},
+	} {
+		src := "library T version '1.0'\n" + fn + "define X: " + tt.call + "\n"
+		got, err := NewEngine().EvaluateExpression(context.Background(), src, "X", nil, nil)
+		if err != nil {
+			t.Errorf("%s: %v", tt.what, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s: CumulativeDays = %v, want %s", tt.what, got, tt.want)
+		}
+	}
+
+	// And the Date spelling is where the change does land, which is what makes the
+	// rows above a measurement rather than a coincidence.
+	if got := evalDefaultUnit(t,
+		"collapse {Interval[@2020-01-01, @2020-01-10], Interval[@2020-01-11, @2020-01-20]}"); got != "{Interval[2020-01-01, 2020-01-20]}" {
+		t.Errorf("the Date spelling = %s, want one merged interval", got)
+	}
+}
+
+// TestTheStepIsTakenAtThePrecisionTheValueStates is what a sweep of every
+// interval operator over Date against DateTime turned up, and it is a property
+// rather than a defect — though it looked like four defects first.
+//
+// Comparing `Interval[@2020-01-01, @2020-01-03]` against
+// `Interval[@2020-01-01T00:00:00, @2020-01-03T00:00:00]` as though they were the
+// same shape makes meets, meets before, union and collapse all disagree between
+// the two. They are not the same shape: the successor of a value is one of
+// whatever precision it states, so the date after the 3rd is the 4th while the
+// second after 00:00:00 on the 3rd is 00:00:01 on the 3rd. Written at matching
+// precision, the two agree everywhere.
+//
+// Worth pinning because the disagreement reads exactly like a defect, and because
+// it is the rule the whole successor rests on.
+func TestTheStepIsTakenAtThePrecisionTheValueStates(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"successor of @2020-01-03", "2020-01-04"},
+		{"successor of @2020-01-03T00:00:00", "2020-01-03T00:00:01"},
+		{"successor of @2020-01-03T", "2020-01-04"},
+		{"successor of @2020-01", "2020-02"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+
+	// At matching precision, a DateTime interval meets exactly where a Date one
+	// does — which is what makes the four operators agree once the shapes really
+	// are the same.
+	for _, expr := range []string{
+		"Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, @2020-01-07]",
+		"Interval[@2020-01-01T, @2020-01-03T] meets Interval[@2020-01-04T, @2020-01-07T]",
+		"Interval[@2020-01-01T00:00:00, @2020-01-03T00:00:00] meets Interval[@2020-01-03T00:00:01, @2020-01-07T00:00:00]",
+	} {
+		if got := evalDefaultUnit(t, expr); got != "true" {
+			t.Errorf("%s = %s, want true", expr, got)
+		}
+	}
+
+	// And a day apart at second precision is not touching, which is the row that
+	// looked like a defect.
+	if got := evalDefaultUnit(t,
+		"Interval[@2020-01-01T00:00:00, @2020-01-03T00:00:00] meets Interval[@2020-01-04T00:00:00, @2020-01-07T00:00:00]"); got != "false" {
+		t.Errorf("a day apart at second precision = %s, want false", got)
 	}
 }

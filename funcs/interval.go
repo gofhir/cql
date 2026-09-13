@@ -1,8 +1,6 @@
 package funcs
 
 import (
-	"github.com/shopspring/decimal"
-
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	cqltypes "github.com/gofhir/cql/types"
@@ -190,79 +188,42 @@ func IntervalIntersect(a, b cqltypes.Interval) (fptypes.Value, error) {
 	return cqltypes.NewInterval(low, high, lowClosed, highClosed), nil
 }
 
-// intervalPredecessor returns the predecessor for discrete types, adjusting the boundary
-// to be closed. For types without a known step, returns (val, false) with open boundary.
+// intervalPredecessor and intervalSuccessor are the value one step before and
+// after a boundary, and whether there was a step to take.
+//
+// They were a second implementation of cqltypes.Predecessor and Successor, and a
+// poorer one: those know Integer, Decimal, DateTime, Date, Time and Quantity and
+// guard the representable range, while the copies here knew everything except
+// Date. Through them, two consecutive days did not touch while two consecutive
+// integers did:
+//
+//	Interval[1, 3] meets Interval[4, 7]                                true
+//	Interval[@2020-01-01, @2020-01-03] meets Interval[@2020-01-04, …]   false
+//	successor of @2020-01-03                                           2020-01-04
+//
+// The engine knew the successor of that date perfectly well through the other
+// implementation, which is what made it a contradiction rather than a limit. The
+// three callers here — `meets`, `except`, and the collapse that rests on `meets` —
+// now get the answer the operator gives.
+//
+// The false return means "no step to take", which is what the callers read to
+// decide whether a new boundary is closed or open. An error from the range guard
+// reads the same way: at the end of the calendar there is no next day to move to.
 func intervalPredecessor(v fptypes.Value) (fptypes.Value, bool) {
-	if iv, ok := v.(fptypes.Integer); ok {
-		return fptypes.NewInteger(iv.Value() - 1), true
-	}
-	if dv, ok := v.(fptypes.Decimal); ok {
-		pred := dv.Value().Sub(smallDecimalStep)
-		result := decimalToValue(pred)
-		if result != nil {
-			return result, true
-		}
-	}
-	if dt, ok := v.(fptypes.DateTime); ok {
-		// TemporalUnit only ever yields a calendar keyword, so the error is unreachable;
-		// treating it as "no known step" keeps this function total either way.
-		pred, err := dt.SubtractDuration(1, TemporalUnit(dt.Precision()))
-		if err != nil {
-			return v, false
-		}
-		return pred, true
-	}
-	if t, ok := v.(fptypes.Time); ok {
-		return AdjustTime(t, -1), true
-	}
-	if q, ok := v.(fptypes.Quantity); ok {
-		pred := q.Value().Sub(smallDecimalStep)
-		newQ := fptypes.NewQuantityFromDecimal(pred, q.Unit())
-		return newQ, true
-	}
-	return v, false
+	stepped, err := cqltypes.Predecessor(v)
+	return stepOrStay(stepped, err, v)
 }
 
-// intervalSuccessor returns the successor for discrete types, adjusting the boundary
-// to be closed. For types without a known step, returns (val, false) with open boundary.
 func intervalSuccessor(v fptypes.Value) (fptypes.Value, bool) {
-	if iv, ok := v.(fptypes.Integer); ok {
-		return fptypes.NewInteger(iv.Value() + 1), true
-	}
-	if dv, ok := v.(fptypes.Decimal); ok {
-		succ := dv.Value().Add(smallDecimalStep)
-		result := decimalToValue(succ)
-		if result != nil {
-			return result, true
-		}
-	}
-	if dt, ok := v.(fptypes.DateTime); ok {
-		// As in intervalPredecessor, the error cannot fire for a precision-derived unit.
-		succ, err := dt.AddDuration(1, TemporalUnit(dt.Precision()))
-		if err != nil {
-			return v, false
-		}
-		return succ, true
-	}
-	if t, ok := v.(fptypes.Time); ok {
-		return AdjustTime(t, 1), true
-	}
-	if q, ok := v.(fptypes.Quantity); ok {
-		succ := q.Value().Add(smallDecimalStep)
-		newQ := fptypes.NewQuantityFromDecimal(succ, q.Unit())
-		return newQ, true
-	}
-	return v, false
+	stepped, err := cqltypes.Successor(v)
+	return stepOrStay(stepped, err, v)
 }
 
-// TemporalUnit maps DateTime precision to a duration unit string.
-func TemporalUnit(prec fptypes.DateTimePrecision) string {
-	return cqltypes.DateTimeUnit(prec)
-}
-
-// AdjustTime adds delta units at the Time's precision (e.g., +1 ms, -1 second).
-func AdjustTime(t fptypes.Time, delta int) fptypes.Value {
-	return cqltypes.AdjustTime(t, delta)
+func stepOrStay(stepped fptypes.Value, err error, original fptypes.Value) (fptypes.Value, bool) {
+	if err != nil || stepped == nil {
+		return original, false
+	}
+	return stepped, true
 }
 
 // IntervalExcept returns a minus b for intervals.
@@ -378,8 +339,6 @@ func intervalEndMeetsStart(aHigh fptypes.Value, aHighClosed bool, bLow fptypes.V
 	}
 	return false
 }
-
-var smallDecimalStep = decimal.RequireFromString("0.00000001")
 
 // IntervalMeets checks if interval a meets interval b (a.high = b.low or a.low = b.high).
 func IntervalMeets(a, b cqltypes.Interval) (fptypes.Value, error) {
