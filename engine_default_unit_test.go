@@ -1340,3 +1340,50 @@ func TestTheOneSuccessorReadsEveryPointTypeTheSameWay(t *testing.T) {
 		}
 	}
 }
+
+// TestThePublishedCollapseDoesNotMove is the measurement that decides what this
+// change costs published CQL, rather than what it costs a fixture.
+//
+// The transitive closure of the two functions this branch replaced is six
+// operators: meets, meets before, meets after, union, except and collapse. Of
+// those, the 19 published measures use `union` 74 times across 11 libraries and
+// `collapse` once; `meets` and `except` not at all. The unions are all unions of
+// lists of resources — `union [Encounter: "ED"]` — which this does not touch.
+//
+// The one collapse is this function, and its intervals are DateTime, which the
+// replaced copy already knew. Only Date was missing from it. So the answer here is
+// the same before and after, and the change reaches published CQL nowhere:
+//
+//	CumulativeDays over DateTime intervals    18, 19, 18, 19 — identical on main
+//	the same shape written with Date          two intervals on main, one here
+func TestThePublishedCollapseDoesNotMove(t *testing.T) {
+	const fn = "define function CumulativeDays(Intervals List<Interval<DateTime>>):\n" +
+		"  Sum((collapse Intervals) CollapsedInterval return all duration in days of CollapsedInterval)\n"
+	for _, tt := range []struct{ what, call, want string }{
+		{"consecutive days", "CumulativeDays({Interval[@2020-01-01T00:00:00, @2020-01-10T00:00:00], " +
+			"Interval[@2020-01-11T00:00:00, @2020-01-20T00:00:00]})", "18"},
+		{"overlapping", "CumulativeDays({Interval[@2020-01-01T00:00:00, @2020-01-10T00:00:00], " +
+			"Interval[@2020-01-05T00:00:00, @2020-01-20T00:00:00]})", "19"},
+		{"far apart", "CumulativeDays({Interval[@2020-01-01T00:00:00, @2020-01-10T00:00:00], " +
+			"Interval[@2020-02-01T00:00:00, @2020-02-10T00:00:00]})", "18"},
+		{"a millisecond apart", "CumulativeDays({Interval[@2020-01-01T00:00:00.000, @2020-01-10T00:00:00.000], " +
+			"Interval[@2020-01-10T00:00:00.001, @2020-01-20T00:00:00.000]})", "19"},
+	} {
+		src := "library T version '1.0'\n" + fn + "define X: " + tt.call + "\n"
+		got, err := NewEngine().EvaluateExpression(context.Background(), src, "X", nil, nil)
+		if err != nil {
+			t.Errorf("%s: %v", tt.what, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s: CumulativeDays = %v, want %s", tt.what, got, tt.want)
+		}
+	}
+
+	// And the Date spelling is where the change does land, which is what makes the
+	// rows above a measurement rather than a coincidence.
+	if got := evalDefaultUnit(t,
+		"collapse {Interval[@2020-01-01, @2020-01-10], Interval[@2020-01-11, @2020-01-20]}"); got != "{Interval[2020-01-01, 2020-01-20]}" {
+		t.Errorf("the Date spelling = %s, want one merged interval", got)
+	}
+}
