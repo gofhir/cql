@@ -11,21 +11,6 @@ func AgeInYears(birthDate fptypes.Value) (fptypes.Value, error) {
 	return CalculateAgeInYears(birthDate, nil)
 }
 
-// AgeInMonths calculates the patient's age in months from birthDate to "today".
-func AgeInMonths(birthDate fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInMonths(birthDate, nil)
-}
-
-// AgeInWeeks calculates the patient's age in weeks from birthDate to "today".
-func AgeInWeeks(birthDate fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInWeeks(birthDate, nil)
-}
-
-// AgeInDays calculates the patient's age in days from birthDate to "today".
-func AgeInDays(birthDate fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInDays(birthDate, nil)
-}
-
 // CalculateAgeInYears calculates years between birthDate and asOf (or today if nil).
 func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 	bd, err := toTime(birthDate)

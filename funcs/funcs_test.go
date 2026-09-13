@@ -873,28 +873,6 @@ func TestIntervalCollapse(t *testing.T) {
 	}
 }
 
-func TestIntervalExpand(t *testing.T) {
-	iv := cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(5), true, true)
-	result, err := IntervalExpand(iv, decimal.Zero)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(result) != 5 {
-		t.Fatalf("expected 5 expanded unit intervals, got %d", len(result))
-	}
-	// Each result should be a unit interval [n, n]
-	for i, r := range result {
-		ri, ok := r.(cqltypes.Interval)
-		if !ok {
-			t.Fatalf("Expand[%d]: expected Interval, got %T", i, r)
-		}
-		expected := int64(i + 1)
-		if li, ok := ri.Low.(fptypes.Integer); !ok || li.Value() != expected {
-			t.Fatalf("Expand[%d].Low: expected %d, got %v", i, expected, ri.Low)
-		}
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Phase 2 — Advanced List Operations
 // ---------------------------------------------------------------------------

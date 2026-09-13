@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 )
 
 func evalDefaultUnit(t *testing.T, expr string) string {
@@ -1432,5 +1433,107 @@ func TestTheStepIsTakenAtThePrecisionTheValueStates(t *testing.T) {
 	if got := evalDefaultUnit(t,
 		"Interval[@2020-01-01T00:00:00, @2020-01-03T00:00:00] meets Interval[@2020-01-04T00:00:00, @2020-01-07T00:00:00]"); got != "false" {
 		t.Errorf("a day apart at second precision = %s, want false", got)
+	}
+}
+
+// TestAgeIsMeasuredFromTheEvaluationTimestamp is the property the deleted
+// wrappers could have broken, and the reason they went rather than a tidiness
+// argument.
+//
+// funcs.AgeInDays, AgeInMonths and AgeInWeeks were one-line wrappers that passed a
+// nil reference date, and referenceDate says what that means in its own comment:
+// "Reading the clock here is the last resort. The evaluator passes the evaluation's
+// frozen timestamp, so that an age agrees with the Today() in the same expression;
+// only a direct caller of this package lands here." Those three wrappers were the
+// only way to be that direct caller, and nothing called them.
+//
+// So they existed solely to reach the behavior the engine avoids: an age measured
+// against the machine's clock rather than the request's timestamp, which would
+// disagree with the Today() beside it. This engine learned that lesson in v1.19.0,
+// when Now() and Today() answering in UTC moved whole populations.
+//
+// The test asserts the property rather than the deletion: an age and the Today()
+// in the same expression are measured from the same instant, whatever the clock
+// says.
+func TestAgeIsMeasuredFromTheEvaluationTimestamp(t *testing.T) {
+	const src = "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
+		"define Y: AgeInYearsAt(Today())\n" +
+		"define D: AgeInDaysAt(Today())\n" +
+		"define T: Today()\n"
+	// A timestamp far from the machine's clock: an age read off the real clock
+	// would be wrong by decades.
+	engine := NewEngine(WithEvaluationTimestamp(time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)))
+	patient := []byte(`{"resourceType":"Patient","id":"p1","birthDate":"2000-01-15"}`)
+	// The birth date is deliberately away from the anniversary: on the anniversary
+	// itself this engine answers a year short for anyone born in a leap year after
+	// February, which is a defect of its own and is asserted just below.
+	for _, tt := range []struct{ define, want string }{
+		{"Y", "19"},
+		{"T", "2019-06-01"},
+	} {
+		got, err := engine.EvaluateExpression(context.Background(), src, tt.define, patient, nil)
+		if err != nil {
+			t.Errorf("%s: %v", tt.define, err)
+			continue
+		}
+		if got == nil || got.String() != tt.want {
+			t.Errorf("%s = %v, want %s — the age is not being read from the evaluation timestamp",
+				tt.define, got, tt.want)
+		}
+	}
+}
+
+// TestAgeOnTheAnniversaryIsAYearShortInALeapYear asserts a defect found while
+// checking the age path, older than this change and not fixed by it.
+//
+// On the anniversary itself, someone born in a leap year after February is
+// reported a year younger than they are:
+//
+//	born 2000-06-01, on 2019-06-01   18, and they turn 19 that day
+//	born 2001-06-01, on 2019-06-01   18, correct
+//	born 2000-06-01, on 2020-06-01   20, correct
+//
+// CalculateAgeInYears compares day-of-year numbers: `if ref.YearDay() <
+// bd.YearDay() { years-- }`. After the 29th of February a leap year's day numbers
+// run one ahead, so the 1st of June is day 153 in 2000 and day 152 in 2019, and
+// the anniversary reads as "not yet reached". It is wrong for exactly one day a
+// year, for anyone born in a leap year after February.
+//
+// It matters because age decides populations: a measure asking
+// `AgeInYearsAt(start of "Measurement Period") >= 18` drops a patient who turns 18
+// on that first day. Asserted rather than described so that closing it breaks this
+// test; the fix is to compare month and day rather than day-of-year, and the rows
+// below are what to check it against.
+func TestAgeOnTheAnniversaryIsAYearShortInALeapYear(t *testing.T) {
+	age := func(birth string, at time.Time) string {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
+			"define X: AgeInYearsAt(Today())\n"
+		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
+			context.Background(), src, "X",
+			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"`+birth+`"}`), nil)
+		if err != nil || got == nil {
+			return "ERROR"
+		}
+		return got.String()
+	}
+	on := func(d string) time.Time {
+		parsed, _ := time.Parse("2006-01-02", d)
+		return parsed.Add(12 * time.Hour)
+	}
+	for _, tt := range []struct{ birth, at, is, shouldBe string }{
+		{"2000-06-01", "2019-06-01", "18", "19"},
+		// The rows that are already right, so closing it cannot break them.
+		{"2001-06-01", "2019-06-01", "18", "18"},
+		{"2000-06-01", "2020-06-01", "20", "20"},
+		{"2001-06-01", "2020-06-01", "19", "19"},
+		{"2000-01-15", "2019-06-01", "19", "19"},
+		{"2000-12-31", "2019-06-01", "18", "18"},
+	} {
+		got := age(tt.birth, on(tt.at))
+		if got != tt.is {
+			t.Errorf("born %s, on %s = %s, was %s. If this is now %s, the anniversary "+
+				"defect is fixed: delete this test and check the other rows still hold.",
+				tt.birth, tt.at, got, tt.is, tt.shouldBe)
+		}
 	}
 }

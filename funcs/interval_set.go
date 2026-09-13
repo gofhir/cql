@@ -989,17 +989,3 @@ func normalizeTemporalUnit(unit string) (string, error) {
 }
 
 // IntervalExpand expands an interval into a list of unit intervals per the given per quantity.
-// Kept for backward compatibility.
-func IntervalExpand(interval cqltypes.Interval, per decimal.Decimal) ([]fptypes.Value, error) {
-	var perVal fptypes.Value
-	if !per.IsZero() {
-		perVal = fptypes.NewQuantityFromDecimal(per, "1")
-	}
-	result, err := IntervalExpandIntervals(interval, perVal)
-	if err != nil {
-		return nil, err
-	}
-	vals := make([]fptypes.Value, len(result))
-	copy(vals, result)
-	return vals, nil
-}

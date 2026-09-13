@@ -158,17 +158,6 @@ func IsType(v fptypes.Value, typeName string) bool {
 	return strings.EqualFold(v.Type(), typeName)
 }
 
-// AsType performs a safe cast, returning nil if the type doesn't match.
-func AsType(v fptypes.Value, typeName string) fptypes.Value {
-	if v == nil {
-		return nil
-	}
-	if strings.EqualFold(v.Type(), typeName) {
-		return v
-	}
-	return nil
-}
-
 // Convert attempts to convert a value to the specified type.
 func Convert(v fptypes.Value, typeName string) (fptypes.Value, error) {
 	if v == nil {
