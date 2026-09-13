@@ -229,6 +229,19 @@ func collapseReaches(high fptypes.Value, highClosed bool, low fptypes.Value, low
 		// exist.
 		advanced = from
 	}
+	// Time arithmetic wraps: `@T23:00:00 + 1 hour` is `00:00:00`, not an error and
+	// not 24:00. A step that wraps therefore lands *before* where it started, and
+	// comparing it against the next low bound answered "does not reach" for a gap
+	// the step covers several times over — `[@T22:00:00, @T23:00:00]` and
+	// `[@T23:59:59, @T23:59:59]` stayed apart under a step of an hour, a minute
+	// short of touching.
+	//
+	// Having wrapped means the step reached the end of the day, so it reaches any
+	// bound at or after where it set off from.
+	if back, err := compareVals(advanced, from); err == nil && back < 0 {
+		cmp, err := compareVals(low, from)
+		return err == nil && cmp >= 0
+	}
 	cmp, err := compareVals(advanced, low)
 	if err != nil {
 		return false

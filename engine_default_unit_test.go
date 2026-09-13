@@ -1171,3 +1171,61 @@ func TestAStepThatCannotBeTakenStillAsksWhetherTheBoundsTouch(t *testing.T) {
 		}
 	}
 }
+
+// TestTimeStepsWrapAtMidnight covers the one point type whose arithmetic wraps.
+//
+// `@T23:00:00 + 1 hour` is `00:00:00` in this engine — not an error and not 24:00.
+// So a step taken near midnight lands *before* where it set off from, and
+// comparing it against the next low bound answered "does not reach" for a gap the
+// step covers several times over: `[@T22:00:00, @T23:00:00]` and
+// `[@T23:59:59, @T23:59:59]` are a minute short of touching and stayed apart under
+// a step of an hour.
+//
+// Having wrapped means the step reached the end of the day, so it reaches any
+// bound at or after where it started — and no further, which is why the last row
+// does not join the beginning of one day to the end of it.
+func TestTimeStepsWrapAtMidnight(t *testing.T) {
+	for _, tt := range []struct{ what, expr, want string }{
+		{"a step that wraps still reaches what is left of the day",
+			"collapse {Interval[@T22:00:00, @T23:00:00], Interval[@T23:59:59, @T23:59:59]} per 1 hour",
+			"{Interval[22:00:00, 23:59:59]}"},
+		{"and reaches no further than it should",
+			"collapse {Interval[@T22:00:00, @T23:00:00], Interval[@T23:30:00, @T23:59:59]} per 1 minute",
+			"{Interval[22:00:00, 23:00:00], Interval[23:30:00, 23:59:59]}"},
+		{"midnight is not next to the end of the day",
+			"collapse {Interval[@T00:00:00, @T01:00:00], Interval[@T23:00:00, @T23:30:00]} per 1 hour",
+			"{Interval[00:00:00, 01:00:00], Interval[23:00:00, 23:30:00]}"},
+		{"and away from midnight nothing changed",
+			"collapse {Interval[@T10:00:00, @T11:00:00], Interval[@T13:00:00, @T14:00:00]} per 2 hours",
+			"{Interval[10:00:00, 14:00:00]}"},
+		{"including where it should not merge",
+			"collapse {Interval[@T10:00:00, @T11:00:00], Interval[@T13:00:00, @T14:00:00]} per 1 hour",
+			"{Interval[10:00:00, 11:00:00], Interval[13:00:00, 14:00:00]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
+		}
+	}
+
+	// The wrap is the arithmetic's, not this function's, and the rule here is to
+	// follow it. If Time ever stops wrapping, the row above stops being right.
+	if got := evalDefaultUnit(t, "@T23:00:00 + 1 hour"); got != "00:00:00" {
+		t.Errorf("@T23:00:00 + 1 hour = %s — Time no longer wraps, so a step near "+
+			"midnight needs rereading", got)
+	}
+}
+
+// TestALongBoundIsAnIntegerBound covers the last point type, which behaves as the
+// integer one does at every step width.
+func TestALongBoundIsAnIntegerBound(t *testing.T) {
+	for _, tt := range []struct{ expr, want string }{
+		{"collapse {Interval[1L, 3L], Interval[5L, 7L]} per 1", "{Interval[1, 7]}"},
+		{"collapse {Interval[1L, 3L], Interval[5L, 7L]} per 1L", "{Interval[1, 7]}"},
+		{"collapse {Interval[1L, 3L], Interval[8L, 9L]} per 1", "{Interval[1, 3], Interval[8, 9]}"},
+		{"collapse {Interval[1, 3], Interval[5, 7]} per 1L", "{Interval[1, 7]}"},
+	} {
+		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
+		}
+	}
+}
