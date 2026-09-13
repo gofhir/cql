@@ -2726,7 +2726,13 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			var asOf fptypes.Value
+			// Without a second operand the reference is the evaluation's
+			// timestamp, not the machine's clock — the same instant Today()
+			// answers with in the same expression. The weeks and days cases below
+			// already did this; these two passed a nil through to funcs, where
+			// reading the clock is the documented last resort, and an age came out
+			// seven years off the Today() beside it.
+			asOf := e.evaluationNow()
 			if len(n.Operands) > 1 {
 				asOf, err = e.Eval(n.Operands[1])
 				if err != nil {
@@ -2742,7 +2748,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			if err != nil {
 				return nil, err
 			}
-			var asOf fptypes.Value
+			asOf := e.evaluationNow()
 			if len(n.Operands) > 1 {
 				asOf, err = e.Eval(n.Operands[1])
 				if err != nil {

@@ -6,11 +6,6 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
-// Now returns the current date and time as a DateTime value.
-func Now() (fptypes.Value, error) {
-	return NowAt(time.Now())
-}
-
 // NowAt returns the given instant as a DateTime. CQL asks for the timestamp of
 // the evaluation request rather than the clock's reading at the moment of the
 // call, so that every Now in one evaluation agrees with every other.
@@ -24,22 +19,12 @@ func NowAt(t time.Time) (fptypes.Value, error) {
 	return fptypes.NewDateTime(t.Format("2006-01-02T15:04:05.000Z07:00"))
 }
 
-// Today returns the current date as a Date value.
-func Today() (fptypes.Value, error) {
-	return TodayAt(time.Now())
-}
-
 // TodayAt returns the given instant's date. See NowAt.
 func TodayAt(t time.Time) (fptypes.Value, error) {
 	// The date of the request in its own zone. At UTC this dated a late-evening
 	// request in a western zone to the following day, which is the answer a
 	// measure reads when it asks what "today" is.
 	return fptypes.NewDate(t.Format("2006-01-02"))
-}
-
-// TimeOfDay returns the current time as a Time value.
-func TimeOfDay() (fptypes.Value, error) {
-	return TimeOfDayAt(time.Now())
 }
 
 // TimeOfDayAt returns the given instant's time of day. See NowAt.

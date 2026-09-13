@@ -1537,3 +1537,57 @@ func TestAgeOnTheAnniversaryIsAYearShortInALeapYear(t *testing.T) {
 		}
 	}
 }
+
+// TestEveryAgeAgreesWithTheTodayBesideIt covers a path that reached the machine's
+// clock from CQL, which is what closing the last of the clock-reading wrappers
+// turned up.
+//
+// referenceDate's own comment says reading the clock is "the last resort… only a
+// direct caller of this package lands here". That was not true: the evaluator
+// landed there too. `CalculateAgeInYears(birthDate)` with no second operand passed
+// a nil through, and the age came back measured against the real calendar:
+//
+//	Today()                                     2019-06-01
+//	CalculateAgeInYears(@2000-01-15, Today())   19
+//	CalculateAgeInYears(@2000-01-15)            26   — seven years off
+//
+// The weeks and days cases in the same switch already passed the evaluation's
+// timestamp; years and months did not, so the engine disagreed with itself about
+// what "now" is depending on which unit was asked for.
+//
+// The property is asserted rather than the four numbers: every spelling of age
+// measures from the same instant Today() reports, so they all land within a few
+// days of each other in years, months, weeks and days.
+func TestEveryAgeAgreesWithTheTodayBesideIt(t *testing.T) {
+	at := time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)
+	patient := []byte(`{"resourceType":"Patient","id":"p1","birthDate":"2000-01-15"}`)
+	engine := NewEngine(WithEvaluationTimestamp(at))
+	ask := func(expr string) string {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine X: " + expr + "\n"
+		got, err := engine.EvaluateExpression(context.Background(), src, "X", patient, nil)
+		if err != nil || got == nil {
+			return "ERROR"
+		}
+		return got.String()
+	}
+
+	// With and without the second operand must agree, for every unit.
+	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
+		bare := ask("CalculateAgeIn" + unit + "(@2000-01-15)")
+		explicit := ask("CalculateAgeIn" + unit + "(@2000-01-15, Today())")
+		if bare != explicit {
+			t.Errorf("CalculateAgeIn%s: without a reference = %s, with Today() = %s — "+
+				"the bare form is reading a different clock", unit, bare, explicit)
+		}
+	}
+
+	// And the reference really is the evaluation's, not the machine's: a patient
+	// born in 2000 is 19 at an evaluation timestamped 2019, whatever year it is
+	// when this test runs.
+	if got := ask("CalculateAgeInYears(@2000-01-15)"); got != "19" {
+		t.Errorf("age without a reference = %s, want 19 — the evaluation is timestamped 2019", got)
+	}
+	if got := ask("Today()"); got != "2019-06-01" {
+		t.Errorf("Today() = %s, want 2019-06-01", got)
+	}
+}

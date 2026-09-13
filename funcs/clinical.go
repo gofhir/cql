@@ -6,11 +6,6 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
-// AgeInYears calculates the patient's age in years from birthDate to "today".
-func AgeInYears(birthDate fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInYears(birthDate, nil)
-}
-
 // CalculateAgeInYears calculates years between birthDate and asOf (or today if nil).
 func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 	bd, err := toTime(birthDate)
