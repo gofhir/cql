@@ -1651,3 +1651,101 @@ func TestAgeWithoutABirthDate(t *testing.T) {
 			"that is a decision worth keeping — check the other units follow it.", got)
 	}
 }
+
+// TestTheFourUnitsStayCoherentOverAWideSweep is the wide net around the
+// anniversary fix, and it measures something different from the anniversary
+// sweep: that one lands on the anniversary itself, where the defect was, while
+// this one walks 576 unrelated pairs looking for any place the four units stop
+// agreeing with each other.
+//
+// Only one of the 576 was incoherent before the fix, precisely because a
+// reference on the 1st, 15th or 28th rarely falls on an anniversary. Two nets of
+// different shapes: the narrow one proves the repair, the wide one proves the
+// repair broke nothing.
+//
+// The births are chosen for the calendar's awkward spots — the 31st of a month,
+// the 29th of February, the 30th of April, the 31st of December — against
+// references in both a common year and a leap one.
+func TestTheFourUnitsStayCoherentOverAWideSweep(t *testing.T) {
+	src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
+		"define Y: AgeInYears()\ndefine M: AgeInMonths()\n" +
+		"define W: AgeInWeeks()\ndefine D: AgeInDays()\n"
+	ask := func(birth string, at time.Time, define string) int64 {
+		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
+			context.Background(), src, define,
+			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"`+birth+`"}`), nil)
+		if err != nil || got == nil {
+			t.Fatalf("born %s at %s, %s: %v (%v)", birth, at.Format("2006-01-02"), define, got, err)
+		}
+		var n int64
+		if _, err := fmt.Sscanf(got.String(), "%d", &n); err != nil {
+			t.Fatalf("not a number: %s", got.String())
+		}
+		return n
+	}
+	var checked int
+	for _, birth := range []string{
+		"2000-01-31", "2000-02-29", "2000-03-31", "2000-04-30",
+		"2001-01-31", "1999-12-31", "2000-12-31", "2000-06-15",
+	} {
+		for _, year := range []int{2019, 2020} {
+			for month := 1; month <= 12; month++ {
+				for _, day := range []int{1, 15, 28} {
+					at := time.Date(year, time.Month(month), day, 12, 0, 0, 0, time.UTC)
+					years, months := ask(birth, at, "Y"), ask(birth, at, "M")
+					weeks, days := ask(birth, at, "W"), ask(birth, at, "D")
+					checked++
+					if months/12 != years {
+						t.Errorf("born %s at %s: %d years but %d months (%d/12 = %d)",
+							birth, at.Format("2006-01-02"), years, months, months, months/12)
+					}
+					if days/7 != weeks {
+						t.Errorf("born %s at %s: %d weeks but %d days (%d/7 = %d)",
+							birth, at.Format("2006-01-02"), weeks, days, days, days/7)
+					}
+					if days < 0 || years < 0 {
+						t.Errorf("born %s at %s: negative age (%d years, %d days)",
+							birth, at.Format("2006-01-02"), years, days)
+					}
+				}
+			}
+		}
+	}
+	if checked != 576 {
+		t.Fatalf("the sweep covered %d pairs, want 576", checked)
+	}
+}
+
+// TestAPartialBirthDateIsReadAtItsStart covers the dates FHIR allows and real
+// data uses, since a birth date need not be complete.
+func TestAPartialBirthDateIsReadAtItsStart(t *testing.T) {
+	at := time.Date(2019, 6, 15, 12, 0, 0, 0, time.UTC)
+	ask := func(birth, define string) string {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
+			"define Y: AgeInYears()\ndefine Agree: AgeInMonths() div 12 = AgeInYears()\n"
+		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
+			context.Background(), src, define,
+			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"`+birth+`"}`), nil)
+		if err != nil {
+			return "ERROR"
+		}
+		if got == nil {
+			return "null"
+		}
+		return got.String()
+	}
+	for _, tt := range []struct{ birth, years string }{
+		{"2000", "19"},       // read at 2000-01-01
+		{"2000-06", "19"},    // at 2000-06-01
+		{"2000-06-15", "19"}, // the anniversary itself
+		{"2000-06-16", "18"}, // a day short of it
+		{"2000-07", "18"},    // next month, so not yet
+	} {
+		if got := ask(tt.birth, "Y"); got != tt.years {
+			t.Errorf("birthDate %s = %s years, want %s", tt.birth, got, tt.years)
+		}
+		if got := ask(tt.birth, "Agree"); got != "true" {
+			t.Errorf("birthDate %s: the months and the years disagree", tt.birth)
+		}
+	}
+}
