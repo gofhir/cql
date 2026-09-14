@@ -1749,3 +1749,61 @@ func TestAPartialBirthDateIsReadAtItsStart(t *testing.T) {
 		}
 	}
 }
+
+// TestTheAnniversaryFallsOnTheRequestsLocalDate is the dimension the sweeps above
+// do not reach: they fix the timestamp in UTC, so none of them can tell whether an
+// age reads the request's local date or the instant behind it.
+//
+// It matters here more than anywhere. An anniversary is a date, and at half past
+// midnight in Kiritimati the UTC instant is still the previous day — so an age
+// that normalized to UTC would hand someone their birthday a day late at +14 and a
+// day early at -11, and would disagree with the Today() beside it. That is the
+// shape of the defect v1.19.0 was about, where a request at 23:30 in UTC-5 dated
+// Today() to the following day and moved whole populations.
+//
+// Asserted as the agreement rather than as six ages: whatever Today() says the
+// date is, the age is measured to that date.
+func TestTheAnniversaryFallsOnTheRequestsLocalDate(t *testing.T) {
+	const birth = `{"resourceType":"Patient","id":"p1","birthDate":"2000-06-01"}`
+	const src = "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
+		"define Y: AgeInYears()\ndefine T: Today()\n"
+	ask := func(at time.Time, define string) string {
+		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
+			context.Background(), src, define, []byte(birth), nil)
+		if err != nil {
+			return "ERROR: " + err.Error()
+		}
+		if got == nil {
+			return "null"
+		}
+		return got.String()
+	}
+	for _, zone := range []struct {
+		name  string
+		hours int
+	}{{"UTC", 0}, {"Kiritimati", 14}, {"Midway", -11}} {
+		loc := time.FixedZone(zone.name, zone.hours*3600)
+
+		// Half past midnight on the anniversary: the local date is the birthday
+		// even where the UTC instant is not.
+		onIt := time.Date(2019, 6, 1, 0, 30, 0, 0, loc)
+		if got := ask(onIt, "T"); got != "2019-06-01" {
+			t.Errorf("%s: Today() at 00:30 on the anniversary = %s", zone.name, got)
+		}
+		if got := ask(onIt, "Y"); got != "19" {
+			t.Errorf("%s: age at 00:30 on the anniversary = %s, want 19 (UTC instant is %s)",
+				zone.name, got, onIt.UTC().Format("2006-01-02 15:04"))
+		}
+
+		// Half past eleven the night before: still not the birthday, even where
+		// the UTC instant has already rolled over.
+		nightBefore := time.Date(2019, 5, 31, 23, 30, 0, 0, loc)
+		if got := ask(nightBefore, "T"); got != "2019-05-31" {
+			t.Errorf("%s: Today() at 23:30 the night before = %s", zone.name, got)
+		}
+		if got := ask(nightBefore, "Y"); got != "18" {
+			t.Errorf("%s: age at 23:30 the night before = %s, want 18 (UTC instant is %s)",
+				zone.name, got, nightBefore.UTC().Format("2006-01-02 15:04"))
+		}
+	}
+}
