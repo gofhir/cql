@@ -19,8 +19,23 @@ func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 		// against the machine's clock instead.
 		return nil, nil
 	}
+	// Month and day, not day-of-year. A leap year's day numbers run one ahead of a
+	// common year's after the 29th of February, so comparing them read the
+	// anniversary as not yet reached for anyone born in a leap year after that
+	// date: someone born 2000-06-01 was 18 on 2019-06-01, the day they turned 19.
+	//
+	// That is everyone born between the 1st of March and the 31st of December of a
+	// leap year — roughly one person in five — on exactly the day their age
+	// matters most. Age decides populations: a measure asking
+	// `AgeInYearsAt(start of "Measurement Period") >= 18` dropped a patient who
+	// turned 18 on that first day.
+	//
+	// The engine already answered this correctly one function over, which is what
+	// settles it without reaching for the specification: CalculateAgeInMonths
+	// compares month and day and returned 228 for that pair, and 228 months is 19
+	// years. The two now agree.
 	years := ref.Year() - bd.Year()
-	if ref.YearDay() < bd.YearDay() {
+	if ref.Month() < bd.Month() || (ref.Month() == bd.Month() && ref.Day() < bd.Day()) {
 		years--
 	}
 	return fptypes.NewInteger(int64(years)), nil

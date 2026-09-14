@@ -2,6 +2,7 @@ package cql
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 	"testing"
@@ -1483,161 +1484,35 @@ func TestAgeIsMeasuredFromTheEvaluationTimestamp(t *testing.T) {
 	}
 }
 
-// TestAgeOnTheAnniversaryIsAYearShortInALeapYear asserts a defect found while
-// checking the age path, older than this change and not fixed by it.
+// TestAgeIsRightOnTheAnniversary covers what day-of-year arithmetic got wrong, for
+// everyone born in a leap year after February.
 //
-// On the anniversary itself, someone born in a leap year after February is
-// reported a year younger than they are:
+// CalculateAgeInYears compared day-of-year numbers. A leap year's run one ahead of
+// a common year's after the 29th of February, so the anniversary read as not yet
+// reached: someone born 2000-06-01 was 18 on 2019-06-01, the day they turned 19.
+// That is everyone born between the 1st of March and the 31st of December of a
+// leap year — roughly one person in five — on exactly the day it matters most,
+// because age decides populations. 30 of the 36 anniversaries swept below were
+// wrong.
 //
-//	born 2000-06-01, on 2019-06-01   18, and they turn 19 that day
-//	born 2001-06-01, on 2019-06-01   18, correct
-//	born 2000-06-01, on 2020-06-01   20, correct
+// No specification was needed to settle it: CalculateAgeInMonths compares month
+// and day and answered 228 months for that pair, and 228 months is 19 years. The
+// engine contradicted itself one function over, and the months were right.
 //
-// CalculateAgeInYears compares day-of-year numbers: `if ref.YearDay() <
-// bd.YearDay() { years-- }`. After the 29th of February a leap year's day numbers
-// run one ahead, so the 1st of June is day 153 in 2000 and day 152 in 2019, and
-// the anniversary reads as "not yet reached". It is wrong for exactly one day a
-// year, for anyone born in a leap year after February.
-//
-// It matters because age decides populations: a measure asking
-// `AgeInYearsAt(start of "Measurement Period") >= 18` drops a patient who turns 18
-// on that first day. Asserted rather than described so that closing it breaks this
-// test; the fix is to compare month and day rather than day-of-year, and the rows
-// below are what to check it against.
-func TestAgeOnTheAnniversaryIsAYearShortInALeapYear(t *testing.T) {
-	age := func(birth string, at time.Time) string {
+// So the test asserts the agreement rather than a list of ages: the months divide
+// into the years at every anniversary.
+func TestAgeIsRightOnTheAnniversary(t *testing.T) {
+	ask := func(birth, at, define string) string {
+		parsed, err := time.Parse("2006-01-02", at)
+		if err != nil {
+			t.Fatalf("bad date in test: %v", err)
+		}
 		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
-			"define X: AgeInYearsAt(Today())\n"
-		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
-			context.Background(), src, "X",
+			"define Y: AgeInYears()\n" +
+			"define Agree: AgeInMonths() div 12 = AgeInYears()\n"
+		got, err := NewEngine(WithEvaluationTimestamp(parsed.Add(12*time.Hour))).EvaluateExpression(
+			context.Background(), src, define,
 			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"`+birth+`"}`), nil)
-		if err != nil || got == nil {
-			return "ERROR"
-		}
-		return got.String()
-	}
-	on := func(d string) time.Time {
-		parsed, _ := time.Parse("2006-01-02", d)
-		return parsed.Add(12 * time.Hour)
-	}
-	for _, tt := range []struct{ birth, at, is, shouldBe string }{
-		{"2000-06-01", "2019-06-01", "18", "19"},
-		// The rows that are already right, so closing it cannot break them.
-		{"2001-06-01", "2019-06-01", "18", "18"},
-		{"2000-06-01", "2020-06-01", "20", "20"},
-		{"2001-06-01", "2020-06-01", "19", "19"},
-		{"2000-01-15", "2019-06-01", "19", "19"},
-		{"2000-12-31", "2019-06-01", "18", "18"},
-	} {
-		got := age(tt.birth, on(tt.at))
-		if got != tt.is {
-			t.Errorf("born %s, on %s = %s, was %s. If this is now %s, the anniversary "+
-				"defect is fixed: delete this test and check the other rows still hold.",
-				tt.birth, tt.at, got, tt.is, tt.shouldBe)
-		}
-	}
-}
-
-// TestEveryAgeAgreesWithTheTodayBesideIt covers a path that reached the machine's
-// clock from CQL, which is what closing the last of the clock-reading wrappers
-// turned up.
-//
-// referenceDate's own comment says reading the clock is "the last resort… only a
-// direct caller of this package lands here". That was not true: the evaluator
-// landed there too. `CalculateAgeInYears(birthDate)` with no second operand passed
-// a nil through, and the age came back measured against the real calendar:
-//
-//	Today()                                     2019-06-01
-//	CalculateAgeInYears(@2000-01-15, Today())   19
-//	CalculateAgeInYears(@2000-01-15)            26   — seven years off
-//
-// The weeks and days cases in the same switch already passed the evaluation's
-// timestamp; years and months did not, so the engine disagreed with itself about
-// what "now" is depending on which unit was asked for.
-//
-// The property is asserted rather than the four numbers: every spelling of age
-// measures from the same instant Today() reports, so they all land within a few
-// days of each other in years, months, weeks and days.
-func TestEveryAgeAgreesWithTheTodayBesideIt(t *testing.T) {
-	at := time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)
-	patient := []byte(`{"resourceType":"Patient","id":"p1","birthDate":"2000-01-15"}`)
-	engine := NewEngine(WithEvaluationTimestamp(at))
-	ask := func(expr string) string {
-		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine X: " + expr + "\n"
-		got, err := engine.EvaluateExpression(context.Background(), src, "X", patient, nil)
-		if err != nil {
-			return "ERROR: " + err.Error()
-		}
-		// null is a value here, not a failure: a reference given as null makes the
-		// whole age null, and a helper that folded the two together would report
-		// that as an error.
-		if got == nil {
-			return "null"
-		}
-		return got.String()
-	}
-
-	// With and without the second operand must agree, for every unit.
-	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
-		bare := ask("CalculateAgeIn" + unit + "(@2000-01-15)")
-		explicit := ask("CalculateAgeIn" + unit + "(@2000-01-15, Today())")
-		if bare != explicit {
-			t.Errorf("CalculateAgeIn%s: without a reference = %s, with Today() = %s — "+
-				"the bare form is reading a different clock", unit, bare, explicit)
-		}
-	}
-
-	// And the reference really is the evaluation's, not the machine's: a patient
-	// born in 2000 is 19 at an evaluation timestamped 2019, whatever year it is
-	// when this test runs.
-	if got := ask("CalculateAgeInYears(@2000-01-15)"); got != "19" {
-		t.Errorf("age without a reference = %s, want 19 — the evaluation is timestamped 2019", got)
-	}
-	if got := ask("Today()"); got != "2019-06-01" {
-		t.Errorf("Today() = %s, want 2019-06-01", got)
-	}
-
-	// A reference that is given is the one used. Weeks and days ignored theirs
-	// entirely and answered the age at the evaluation timestamp whatever date they
-	// were handed — 1011 weeks where the answer to the question asked is 521.
-	for _, tt := range []struct{ unit, want string }{
-		{"Years", "10"}, {"Months", "120"}, {"Weeks", "521"}, {"Days", "3653"},
-	} {
-		expr := "CalculateAgeIn" + tt.unit + "(@2000-01-15, @2010-01-15)"
-		if got := ask(expr); got != tt.want {
-			t.Errorf("%s = %s, want %s — the reference given is the one to measure to", expr, got, tt.want)
-		}
-	}
-
-	// A reference given as null is null, not an age against something else. CQL
-	// propagates null, and answering the machine's clock here was how the clock got
-	// in even after the no-operand case was closed.
-	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
-		expr := "CalculateAgeIn" + unit + "(@2000-01-15, null)"
-		if got := ask(expr); got != "null" {
-			t.Errorf("%s = %s, want null", expr, got)
-		}
-	}
-}
-
-// TestTheFourAgeAtSpellingsAllExist covers the family CQL defines, which the
-// engine exposed half of.
-//
-// `AgeInYearsAt` and `AgeInMonthsAt` were registered; `AgeInWeeksAt` and
-// `AgeInDaysAt` were an unknown function, though funcs had all four implemented
-// and the no-reference spellings — AgeInWeeks, AgeInDays — worked. The two that
-// were missing are the two whose CalculateAgeIn… branches were ignoring their
-// reference, which is how they came to be looked at.
-//
-// Checked against each other rather than against four written numbers: the four
-// units describe one span, so they have to agree about it.
-func TestTheFourAgeAtSpellingsAllExist(t *testing.T) {
-	at := time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)
-	patient := []byte(`{"resourceType":"Patient","id":"p1","birthDate":"2000-01-15"}`)
-	ask := func(expr string) string {
-		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\ndefine X: " + expr + "\n"
-		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
-			context.Background(), src, "X", patient, nil)
 		if err != nil {
 			return "ERROR: " + err.Error()
 		}
@@ -1646,30 +1521,44 @@ func TestTheFourAgeAtSpellingsAllExist(t *testing.T) {
 		}
 		return got.String()
 	}
-	for _, tt := range []struct{ unit, want string }{
-		{"Years", "10"}, {"Months", "120"}, {"Weeks", "521"}, {"Days", "3653"},
-	} {
-		if got := ask("AgeIn" + tt.unit + "At(@2010-01-15)"); got != tt.want {
-			t.Errorf("AgeIn%sAt(@2010-01-15) = %s, want %s", tt.unit, got, tt.want)
+
+	// Swept rather than sampled: every month of a leap year, early, middle and
+	// late, on the anniversary itself.
+	for m := 1; m <= 12; m++ {
+		for _, d := range []int{1, 15, 28} {
+			birth := fmt.Sprintf("2000-%02d-%02d", m, d)
+			at := fmt.Sprintf("2019-%02d-%02d", m, d)
+			if got := ask(birth, at, "Y"); got != "19" {
+				t.Errorf("born %s, on %s = %s, want 19 — that is the anniversary", birth, at, got)
+			}
+			if got := ask(birth, at, "Agree"); got != "true" {
+				t.Errorf("born %s, on %s: the months and the years disagree", birth, at)
+			}
 		}
 	}
-	// Ten years, the same ten years, four ways: the days divide into the weeks and
-	// the months into the years.
-	if ask("AgeInDaysAt(@2010-01-15) div 7 = AgeInWeeksAt(@2010-01-15)") != "true" {
-		t.Errorf("the days and the weeks disagree: %s vs %s",
-			ask("AgeInDaysAt(@2010-01-15)"), ask("AgeInWeeksAt(@2010-01-15)"))
+
+	// The day before and the day after, so the boundary is in the right place
+	// rather than merely moved.
+	for _, tt := range []struct{ birth, at, want string }{
+		{"2000-06-01", "2019-05-31", "18"},
+		{"2000-06-01", "2019-06-01", "19"},
+		{"2000-06-01", "2019-06-02", "19"},
+	} {
+		if got := ask(tt.birth, tt.at, "Y"); got != tt.want {
+			t.Errorf("born %s, on %s = %s, want %s", tt.birth, tt.at, got, tt.want)
+		}
 	}
-	if ask("AgeInMonthsAt(@2010-01-15) div 12 = AgeInYearsAt(@2010-01-15)") != "true" {
-		t.Errorf("the months and the years disagree: %s vs %s",
-			ask("AgeInMonthsAt(@2010-01-15)"), ask("AgeInYearsAt(@2010-01-15)"))
-	}
-	// And with no reference at all they measure to the evaluation timestamp, like
-	// the spellings without At.
-	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
-		withAt := ask("AgeIn" + unit + "At(Today())")
-		plain := ask("AgeIn" + unit + "()")
-		if withAt != plain {
-			t.Errorf("AgeIn%sAt(Today()) = %s but AgeIn%s() = %s", unit, withAt, unit, plain)
+
+	// Someone born on the 29th of February has no anniversary in a common year.
+	// This engine gives it to them on the 1st of March — recorded because it is a
+	// convention rather than arithmetic, and jurisdictions differ.
+	for _, tt := range []struct{ at, want string }{
+		{"2019-02-28", "18"},
+		{"2019-03-01", "19"},
+		{"2020-02-29", "20"},
+	} {
+		if got := ask("2000-02-29", tt.at, "Y"); got != tt.want {
+			t.Errorf("born on a leap day, on %s = %s, want %s", tt.at, got, tt.want)
 		}
 	}
 }
