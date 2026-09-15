@@ -1491,9 +1491,12 @@ func TestAgeIsMeasuredFromTheEvaluationTimestamp(t *testing.T) {
 // a common year's after the 29th of February, so the anniversary read as not yet
 // reached: someone born 2000-06-01 was 18 on 2019-06-01, the day they turned 19.
 // That is everyone born between the 1st of March and the 31st of December of a
-// leap year — roughly one person in five — on exactly the day it matters most,
-// because age decides populations. 30 of the 36 anniversaries swept below were
+// leap year, on their birthday, and 30 of the 36 anniversaries swept below were
 // wrong.
+//
+// What that costs published CQL is measured in
+// TestWhoTheAnniversaryFixActuallyReaches and is narrower than the shape of the
+// defect suggests — stated there rather than guessed at here.
 //
 // No specification was needed to settle it: CalculateAgeInMonths compares month
 // and day and answered 228 months for that pair, and 228 months is 19 years. The
