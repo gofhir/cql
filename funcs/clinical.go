@@ -25,10 +25,19 @@ func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 	// date: someone born 2000-06-01 was 18 on 2019-06-01, the day they turned 19.
 	//
 	// That is everyone born between the 1st of March and the 31st of December of a
-	// leap year — roughly one person in five — on exactly the day their age
-	// matters most. Age decides populations: a measure asking
-	// `AgeInYearsAt(start of "Measurement Period") >= 18` dropped a patient who
-	// turned 18 on that first day.
+	// leap year, on their birthday.
+	//
+	// Who it reaches in published CQL is narrower than that sounds, and was
+	// measured rather than assumed. Of the 25 uses of AgeInYearsAt across the 19
+	// published measures, 21 measure against the start of the measurement period —
+	// which every one of them puts on the 1st of January, so the reference can only
+	// be an anniversary for someone born in January, before the leap day, where
+	// day-of-year numbers still agree. Those do not move.
+	//
+	// The other three measure against a clinical date: an encounter's period, a
+	// test's effective time. Those land on any day of the year, so a patient born
+	// in a leap year after February whose encounter begins on their birthday was
+	// counted a year younger, and a threshold like `>= 18` turns on that.
 	//
 	// The engine already answered this correctly one function over, which is what
 	// settles it without reaching for the specification: CalculateAgeInMonths
