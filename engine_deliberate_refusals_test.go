@@ -91,7 +91,7 @@ func TestUCUMYearAndMonthAreRefusedInCalendarArithmetic(t *testing.T) {
 // 1 's'` is null, and Min over the pair is null. A sort cannot do that. Its job is
 // to produce an ordering, and there is no null ordering — the elements have to
 // come out in some sequence, and any sequence it invented would be a claim about
-// which of a centimetre and a second is larger.
+// which of a centimeter and a second is larger.
 //
 // Ordering them as equal was the alternative, and it is the same mistake this
 // repository already reverted for unorderable sort keys: they would land together
