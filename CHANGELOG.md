@@ -7,6 +7,20 @@
 
 * **funcs:** an age is right on the anniversary, for leap-year births too ([#115](https://github.com/gofhir/cql/issues/115)) ([c5ed55a](https://github.com/gofhir/cql/commit/c5ed55a0e7b3b9fb1a27c97d17023fb813ad8456))
 
+  An age compared day-of-year numbers, which run one ahead in a leap year after the
+  29th of February — so the anniversary read as not yet reached: someone born
+  2000-06-01 was 18 on 2019-06-01, the day they turned 19. That is everyone born
+  between the 1st of March and the 31st of December of a leap year, on their
+  birthday.
+
+  What it reaches in published CQL is narrower, and was measured: of the 25 uses of
+  `AgeInYearsAt` across the 19 published measures, 21 measure against the start of
+  the measurement period, which every one of them puts on the 1st of January — the
+  reference can only be an anniversary for someone born in January, before the leap
+  day, so those answers are unchanged. The three that measure against a clinical
+  date — an encounter's period, a test's effective time — do change, and a
+  threshold like `>= 18` turns on them.
+
 ## [1.23.0](https://github.com/gofhir/cql/compare/v1.22.1...v1.23.0) (2026-09-13)
 
 
