@@ -5013,7 +5013,7 @@ func (e *Evaluator) evalListExpr(n *ast.ListExpression) (fptypes.Value, error) {
 	return cqltypes.NewList(values), nil
 }
 
-func (e *Evaluator) evalCodeExpr(n *ast.CodeExpression) (fptypes.Value, error) {
+func (e *Evaluator) evalCodeExpr(n *ast.CodeExpression) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
 	system := n.System
 	// Resolve system name to URL if it's a codesystem reference
 	if cs, ok := e.ctx.CodeSystems[system]; ok {
@@ -5036,7 +5036,7 @@ func (e *Evaluator) evalConceptExpr(n *ast.ConceptExpression) (fptypes.Value, er
 	return cqltypes.NewConcept(codes, n.Display), nil
 }
 
-func (e *Evaluator) evalExternalConstant(n *ast.ExternalConstant) (fptypes.Value, error) {
+func (e *Evaluator) evalExternalConstant(n *ast.ExternalConstant) (fptypes.Value, error) { //nolint:unparam // error is part of the eval interface
 	if val, ok := e.ctx.Parameters[n.Name]; ok {
 		return val, nil
 	}
