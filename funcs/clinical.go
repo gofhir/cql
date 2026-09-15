@@ -19,8 +19,32 @@ func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
 		// against the machine's clock instead.
 		return nil, nil
 	}
+	// Month and day, not day-of-year. A leap year's day numbers run one ahead of a
+	// common year's after the 29th of February, so comparing them read the
+	// anniversary as not yet reached for anyone born in a leap year after that
+	// date: someone born 2000-06-01 was 18 on 2019-06-01, the day they turned 19.
+	//
+	// That is everyone born between the 1st of March and the 31st of December of a
+	// leap year, on their birthday.
+	//
+	// Who it reaches in published CQL is narrower than that sounds, and was
+	// measured rather than assumed. Of the 25 uses of AgeInYearsAt across the 19
+	// published measures, 21 measure against the start of the measurement period —
+	// which every one of them puts on the 1st of January, so the reference can only
+	// be an anniversary for someone born in January, before the leap day, where
+	// day-of-year numbers still agree. Those do not move.
+	//
+	// The other three measure against a clinical date: an encounter's period, a
+	// test's effective time. Those land on any day of the year, so a patient born
+	// in a leap year after February whose encounter begins on their birthday was
+	// counted a year younger, and a threshold like `>= 18` turns on that.
+	//
+	// The engine already answered this correctly one function over, which is what
+	// settles it without reaching for the specification: CalculateAgeInMonths
+	// compares month and day and returned 228 for that pair, and 228 months is 19
+	// years. The two now agree.
 	years := ref.Year() - bd.Year()
-	if ref.YearDay() < bd.YearDay() {
+	if ref.Month() < bd.Month() || (ref.Month() == bd.Month() && ref.Day() < bd.Day()) {
 		years--
 	}
 	return fptypes.NewInteger(int64(years)), nil
