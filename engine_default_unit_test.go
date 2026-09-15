@@ -1807,3 +1807,64 @@ func TestTheAnniversaryFallsOnTheRequestsLocalDate(t *testing.T) {
 		}
 	}
 }
+
+// TestWhoTheAnniversaryFixActuallyReaches measures what this costs published CQL,
+// which turns out to be narrower than the defect's shape suggests and worth
+// stating precisely rather than dramatically.
+//
+// `AgeInYearsAt` is used 25 times across 12 of the 19 published measures, and the
+// conformance corpus has no case of age at all — which is why the defect could sit
+// there. But 21 of those 25 measure against `start of "Measurement Period"`, and
+// all 14 measures that declare a period start it on the 1st of January. The defect
+// needs the reference to land on the anniversary, so those would need a patient
+// born on the 1st of January — and January is before the 29th of February, where
+// day-of-year numbers still agree. Nothing moves.
+//
+// The remaining 3 measure against a clinical date instead — an encounter's period,
+// a test's effective time — which falls on any day of the year. That is where this
+// bites: a patient born in a leap year after February whose encounter begins on
+// their birthday.
+func TestWhoTheAnniversaryFixActuallyReaches(t *testing.T) {
+	age := func(birth, referenceDate string) string {
+		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
+			"define P: Interval[@" + referenceDate + "T00:00:00, @" + referenceDate + "T23:59:59]\n" +
+			"define A: AgeInYearsAt(start of P)\n"
+		got, err := NewEngine().EvaluateExpression(context.Background(), src, "A",
+			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"`+birth+`"}`), nil)
+		if err != nil {
+			return "ERROR"
+		}
+		if got == nil {
+			return "null"
+		}
+		return got.String()
+	}
+
+	// A measurement period starting on the 1st of January, which is what every
+	// published measure that declares one uses. No birth date is affected: the
+	// reference would have to be someone's anniversary, and a January anniversary
+	// is before the leap day.
+	for _, tt := range []struct{ birth, want string }{
+		{"2000-01-01", "19"},
+		{"2000-03-01", "18"},
+		{"2000-06-01", "18"},
+		{"2001-01-01", "18"},
+	} {
+		if got := age(tt.birth, "2019-01-01"); got != tt.want {
+			t.Errorf("born %s, period starting 2019-01-01 = %s, want %s", tt.birth, got, tt.want)
+		}
+	}
+
+	// A clinical date, which is what the other three calls use and which lands
+	// anywhere. Here the anniversary is reachable, and here the answer moved.
+	if got := age("2000-07-01", "2019-07-01"); got != "19" {
+		t.Errorf("born 2000-07-01, measured on their 19th birthday = %s, want 19", got)
+	}
+	// The day either side, so the boundary is placed rather than merely shifted.
+	if got := age("2000-07-01", "2019-06-30"); got != "18" {
+		t.Errorf("the day before the birthday = %s, want 18", got)
+	}
+	if got := age("2000-07-01", "2019-07-02"); got != "19" {
+		t.Errorf("the day after the birthday = %s, want 19", got)
+	}
+}
