@@ -1,6 +1,7 @@
 package cql
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -177,11 +178,18 @@ func TestUncertaintyAggregates(t *testing.T) {
 		t.Run(name+" declines", func(t *testing.T) {
 			expr := name + "({" + U + ", " + U + "})"
 			got, err := evalCQL(t, expr)
-			if err != nil {
-				return // an error naming the gap is the answer wanted
+			// An error, and specifically not null. undefinedOverUncertainty says
+			// why in its own comment: "null is what an empty collection gives, and
+			// an author reading null cannot tell that the engine declined to answer
+			// a question it was asked." This test used to accept either, which is
+			// looser than the rule it guards — null would have passed it.
+			if err == nil {
+				t.Fatalf("%s = %v, want the error that names the gap", expr, got)
 			}
-			if got != nil {
-				t.Errorf("%s = %s, want an error or null, not a number", expr, got.String())
+			// And the message names the aggregate, so the author knows which one
+			// has no rule rather than only that something did not work.
+			if !strings.Contains(err.Error(), name) {
+				t.Errorf("the refusal for %s does not name it: %v", expr, err)
 			}
 		})
 	}
