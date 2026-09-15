@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.1](https://github.com/gofhir/cql/compare/v1.23.0...v1.23.1) (2026-09-15)
+
+
+### Bug Fixes
+
+* **funcs:** an age is right on the anniversary, for leap-year births too ([#115](https://github.com/gofhir/cql/issues/115)) ([c5ed55a](https://github.com/gofhir/cql/commit/c5ed55a0e7b3b9fb1a27c97d17023fb813ad8456))
+
 ## [1.23.0](https://github.com/gofhir/cql/compare/v1.22.1...v1.23.0) (2026-09-13)
 
 
