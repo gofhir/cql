@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
+
+	"github.com/gofhir/cql/fhirhelpers"
 )
 
 func TestEngine_NewEngineDefaults(t *testing.T) {
@@ -355,4 +358,56 @@ func TestErrorTypes(t *testing.T) {
 			t.Errorf("error = %q", err.Error())
 		}
 	})
+}
+
+// Engines share one parse of FHIRHelpers, and evaluating through it from many
+// Engines at once must neither race nor change what any of them answers. The
+// suite has no parallel tests, so without this one -race would never see two
+// Engines read the shared tree at the same time.
+func TestEngine_FHIRHelpers_ParseSharedAcrossEngines(t *testing.T) {
+	a, _, err := NewEngine().compileOrCache(fhirhelpers.Source)
+	if err != nil {
+		t.Fatalf("compiling FHIRHelpers: %v", err)
+	}
+	b, _, err := NewEngine().compileOrCache(fhirhelpers.Source)
+	if err != nil {
+		t.Fatalf("compiling FHIRHelpers: %v", err)
+	}
+	if a != b {
+		t.Fatal("two Engines parsed FHIRHelpers separately; the parse is meant to be shared")
+	}
+
+	patient := json.RawMessage(`{"resourceType": "Patient", "id": "p1", "gender": "female",
+		"birthDate": "1962-07-22", "name": [{"family": "Smith", "given": ["Jane"]}]}`)
+	src := `library Test version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+context Patient
+define Gender: FHIRHelpers.ToString(Patient.gender)
+define Born: FHIRHelpers.ToDate(Patient.birthDate)
+define Family: FHIRHelpers.ToString(Patient.name.first().family)`
+
+	const engines = 8
+	var wg sync.WaitGroup
+	errs := make(chan error, engines)
+	for range engines {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results, err := NewEngine().EvaluateLibrary(context.Background(), src, patient, nil)
+			if err != nil {
+				errs <- err
+				return
+			}
+			got := fmt.Sprintf("%v %v %v", results["Gender"], results["Born"], results["Family"])
+			if got != "female 1962-07-22 Smith" {
+				errs <- fmt.Errorf("got %q", got)
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Error(err)
+	}
 }
