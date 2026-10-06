@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"sync"
 	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -289,7 +290,7 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, *sema.Result, e
 		return entry.lib, entry.plan, nil
 	}
 
-	lib, err := compiler.Compile(cqlSource)
+	lib, err := parse(cqlSource)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -300,6 +301,28 @@ func (e *Engine) compileOrCache(cqlSource string) (*ast.Library, *sema.Result, e
 	plan := sema.Check(lib, e.semanticModel())
 	e.compiledCache.store(key, cachedLibrary{source: cqlSource, lib: lib, plan: plan})
 	return lib, plan, nil
+}
+
+// fhirHelpersParse is the parse of the built-in FHIRHelpers, shared by every
+// Engine in the process. Its source is a constant, and a parse is only read
+// after it is built: the semantic phase keeps what it decides in its own maps,
+// keyed by node, and the evaluator does not write to the tree. Each Engine still
+// checks it against its own model.
+//
+// Every Engine used to parse FHIRHelpers again the first time a library
+// included it. Measured on this module's tests, which build an Engine per test,
+// that was 11.7 of the 13.6 GB the root package allocates.
+var fhirHelpersParse = sync.OnceValues(func() (*ast.Library, error) {
+	return compiler.Compile(fhirhelpers.Source)
+})
+
+// parse compiles CQL source, reusing the shared parse of the built-in
+// FHIRHelpers.
+func parse(cqlSource string) (*ast.Library, error) {
+	if cqlSource == fhirhelpers.Source {
+		return fhirHelpersParse()
+	}
+	return compiler.Compile(cqlSource)
 }
 
 // resolveIncludes compiles a library's includes, and then theirs, so that the
