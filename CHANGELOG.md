@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.2](https://github.com/gofhir/cql/compare/v1.23.1...v1.23.2) (2026-10-06)
+
+
+### Performance Improvements
+
+* **engine:** parse the built-in FHIRHelpers once per process, not per Engine ([#118](https://github.com/gofhir/cql/issues/118)) ([582030b](https://github.com/gofhir/cql/commit/582030b3f48b3d7a72e10fabfa26d7c265c08476))
+
 ## [1.23.1](https://github.com/gofhir/cql/compare/v1.23.0...v1.23.1) (2026-09-15)
 
 
