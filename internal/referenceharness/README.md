@@ -148,6 +148,10 @@ compares with its own code, not with this engine's `String` or `Equal`.
   not with the other, the test fails and asks for the specification to settle
   it. It is never settled by majority, since two runtimes that share a
   translator can share its mistake.
+- **Disputed answers:** where the references disagree with each other, the
+  row records how the disagreement was settled and pins this engine's answer.
+  The test fails once the references agree, since the row is then no longer
+  a dispute.
 - **Decided answers:** where this engine differs from every reference on
   purpose, only its own answer is checked, and changing it means arguing with
   the recorded reason.

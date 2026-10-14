@@ -1940,9 +1940,15 @@ func (b *builder) VisitWithoutClause(ctx *grammar.WithoutClauseContext) interfac
 
 func (b *builder) VisitReturnClause(ctx *grammar.ReturnClauseContext) interface{} {
 	// Grammar: 'return' ('all' | 'distinct')? expression
+	//
+	// Distinct unless the query says `all`: "By default, queries return a distinct
+	// list of results" (Author's Guide 3.2), and the reference translator emits a
+	// ReturnClause whose distinct is true unless `all` is written. Reading only the
+	// keyword made `return X` keep its duplicates, so Count over it counted rows
+	// the specification removes.
 	rc := &ast.ReturnClause{}
-	rc.Distinct = hasKeyword(ctx, "distinct")
 	rc.All = hasKeyword(ctx, "all")
+	rc.Distinct = !rc.All
 	if expr := ctx.Expression(); expr != nil {
 		rc.Expression = b.visitExpression(expr)
 	}

@@ -287,6 +287,11 @@ type WithoutClause struct {
 }
 
 // ReturnClause specifies what a query returns.
+//
+// All is what decides: a return clause is distinct unless it says `all`, so the
+// zero value is a distinct return, as CQL's default is. Distinct mirrors !All
+// for readers; reading it instead made a clause built without either field
+// mean `return all`, a combination CQL cannot write.
 type ReturnClause struct {
 	Distinct   bool
 	All        bool

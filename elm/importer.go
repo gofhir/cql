@@ -769,6 +769,7 @@ func importQuery(node *ExpressionNode) *ast.Query {
 		q.Return = &ast.ReturnClause{
 			Expression: ImportExpression(node.Return.Expression),
 			Distinct:   node.Return.Distinct,
+			All:        !node.Return.Distinct,
 		}
 	}
 

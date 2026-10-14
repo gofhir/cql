@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -42,6 +43,7 @@ type runtimeRefValue struct {
 	Precision string          `json:"precision,omitempty"`
 	Instant   string          `json:"instant,omitempty"`
 	Elements  json.RawMessage `json:"elements,omitempty"`
+	Fields    json.RawMessage `json:"fields,omitempty"`
 	Error     string          `json:"error,omitempty"`
 	Message   string          `json:"message,omitempty"`
 }
@@ -106,7 +108,6 @@ var knownRuntimeDivergences = map[string]struct {
 	// The reference and the specification agree; this engine does not.
 	"WithAggregate":           {"Integer(6)", "the aggregate loop iterates the unfiltered product and reapplies only where"},
 	"WithoutAggregate":        {"Integer(6)", "same cause as WithAggregate"},
-	"ReturnDefault":           {"List[Integer(1), Integer(1), Integer(2)]", "return without all is not distinct"},
 	"UnionDuplicates":         {"List[Integer(1), Integer(1), Integer(2)]", "union keeps duplicates from one operand"},
 	"ExceptDuplicates":        {"List[Integer(1), Integer(1), Integer(2)]", "except keeps duplicates from the first operand"},
 	"AggDistinctNilNull":      {"Integer(1)", "distinctCombos keys rows by String(): null and 'nil' collide"},
@@ -137,6 +138,20 @@ var decidedRuntimeAnswers = map[string]struct {
 		"hour precision, and this engine's comparisons depend on it: without the rule a day-precision value was " +
 		"normalized as if it were an instant, and answered wrong at UTC+14. Both references assume the " +
 		"evaluation offset, as the specification words it"},
+}
+
+// disputedRuntimeAnswers are the definitions the references disagree on, each
+// with this engine's exact answer and how the disagreement was settled. The
+// test checks this engine's answer, and that the references still disagree:
+// once they agree, the row is no longer a dispute and has to leave the list.
+var disputedRuntimeAnswers = map[string]struct {
+	got string
+	why string
+}{
+	"NoReturn": {"List[Integer(1), Integer(1), Integer(2)]", "a single source with no return clause: the " +
+		"reference translator emits no return clause, and the Java engine keeps the duplicates; cql-execution " +
+		"removes them. The specification's \"by default, queries return a distinct list\" is written about " +
+		"the return clause, so this engine follows the translator"},
 }
 
 // unorderedRuntimeResults are the definitions whose list result is compared as
@@ -226,6 +241,12 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 	for name := range unorderedRuntimeResults {
 		listed("unorderedRuntimeResults", name)
 	}
+	for name := range disputedRuntimeAnswers {
+		listed("disputedRuntimeAnswers", name)
+		if _, ok := knownRuntimeDivergences[name]; ok {
+			t.Errorf("%s is both disputed and a known divergence: it is one or the other", name)
+		}
+	}
 
 	for _, name := range names {
 		got, evalErr := engine.EvaluateParsedExpression(context.Background(), lib, name, nil, nil)
@@ -259,6 +280,20 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 			} else {
 				disagree = append(disagree, r.name+": "+m)
 			}
+		}
+
+		if pin, disputed := disputedRuntimeAnswers[name]; disputed {
+			switch {
+			case len(agree) == 0 || len(disagree) == 0:
+				t.Errorf("%s is listed as disputed, and the references no longer disagree: "+
+					"remove it from disputedRuntimeAnswers and compare it like any other row", name)
+			case evalErr != nil:
+				t.Errorf("%s is disputed, pinned at %s (%s), and now fails: %v", name, pin.got, pin.why, evalErr)
+			case describeRuntimeValue(got) != pin.got:
+				t.Errorf("%s is disputed, pinned at %s, and now answers %s. How it was settled: %s",
+					name, pin.got, describeRuntimeValue(got), pin.why)
+			}
+			continue
 		}
 
 		known, isKnown := knownRuntimeDivergences[name]
@@ -430,6 +465,23 @@ func runtimeMatches(t *testing.T, name string, want *runtimeRefValue, got fptype
 		return hasOffset && g.ToTime().Equal(instant) && gotOffset*60 == wantOffset &&
 				precisionName(g.Precision()) == want.Precision,
 			"same instant, offset and precision"
+	case "Tuple":
+		var fields map[string]*runtimeRefValue
+		mustDecode(t, name, want.Fields, &fields)
+		g, ok := got.(cqltypes.Tuple)
+		if !ok || len(g.Elements) != len(fields) {
+			return false, fmt.Sprintf("a Tuple of %d fields", len(fields))
+		}
+		for k, w := range fields {
+			v, present := g.Elements[k]
+			if !present {
+				return false, "a Tuple with field " + k
+			}
+			if ok, why := runtimeMatches(t, name, w, v, true); !ok {
+				return false, "field " + k + ": " + why
+			}
+		}
+		return true, ""
 	case "Time":
 		g, ok := got.(fptypes.Time)
 		if !ok {
@@ -516,6 +568,17 @@ func describeRuntimeValue(v fptypes.Value) string {
 	case fptypes.Time:
 		return fmt.Sprintf("Time(%02d:%02d:%02d.%03d/%s)", x.Hour(), x.Minute(), x.Second(), x.Millisecond(),
 			timePrecisionName(x.Precision()))
+	case cqltypes.Tuple:
+		keys := make([]string, 0, len(x.Elements))
+		for k := range x.Elements {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		parts := make([]string, len(keys))
+		for i, k := range keys {
+			parts[i] = k + ": " + describeRuntimeValue(x.Elements[k])
+		}
+		return "Tuple{" + strings.Join(parts, ", ") + "}"
 	case cqltypes.List:
 		parts := make([]string, len(x.Values))
 		for i, e := range x.Values {

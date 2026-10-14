@@ -12,7 +12,7 @@ This engine was run on `main`, at fhirpath v1.14.1. Values below are what each
 one returned, not what any of them should return.
 
 `engine_runtime_reference_test.go` pins each row with this engine's answer, in
-`knownRuntimeDivergences` and `decidedRuntimeAnswers`. This file and those
+`knownRuntimeDivergences`, `disputedRuntimeAnswers` and `decidedRuntimeAnswers`. This file and those
 lists have to change together.
 
 Both runtimes run the ELM the reference translator produces. Where they agree
@@ -24,7 +24,6 @@ with each other they are two opinions on evaluation, and one on translation.
 | --- | --- | --- | --- | --- |
 | `WithAggregate` | 6 | 2 | 2 | `with` filters the rows the aggregate reduces |
 | `WithoutAggregate` | 6 | 4 | 4 | same, for `without` |
-| `ReturnDefault` | `{1, 1, 2}` | `{1, 2}` | `{1, 2}` | Author's Guide 3.2: "By default, queries return a distinct list of results" |
 | `UnionDuplicates` | `{1, 1, 2}` | `{1, 2}` | `{1, 2}` | Union: "returns a list with all unique elements from both arguments" |
 | `ExceptDuplicates` | `{1, 1, 2}` | `{1, 2}` | `{1, 2}` | Except: "each element will appear in the result at most once" |
 | `AggDistinctNilNull` | 1 | 2 | 2 | `'nil'` is not null |
@@ -95,3 +94,22 @@ That is a decision, not an oversight. The engine's comparisons depend on it.
 Without the rule, a day-precision value was normalized as if it were an
 instant, and it answered wrong at UTC+14. `decidedRuntimeAnswers` pins it,
 and changing it means arguing with that reason.
+
+## Disputed: a single source with no return clause
+
+```cql
+define NoReturn: ({1, 1, 2}) X
+// Java: {1, 1, 2}   cql-execution: {1, 2}   this engine: {1, 1, 2}
+```
+
+The references disagree. The specification says "By default, queries return a
+distinct list of results" in the section on the return clause, and does not
+say what a query without one returns.
+
+The reference translator settles it in its ELM. For a single source with no
+return clause it emits no return clause, so the Java engine keeps the
+duplicates. For several sources with no return clause it emits one, a Tuple of
+the aliases with distinct set. This engine follows the translator in both
+cases. The disagreement belongs to cql-execution, which removes duplicates
+either way. `disputedRuntimeAnswers` pins this engine's answer and fails once
+the references agree.
