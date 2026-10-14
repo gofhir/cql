@@ -45,6 +45,8 @@ internal/referenceharness/lib/
 internal/referenceharness/out/
 internal/referenceharness/elm.json
 internal/referenceharness/runtime.json
+internal/referenceharness/runtime-js.json
+internal/referenceharness/js/node_modules/
 
 # Local tool configuration. `.claude/settings.json` was committed by accident and
 # carried absolute paths from one machine — /Users/<name>/go/pkg/mod/... and a

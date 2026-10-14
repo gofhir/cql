@@ -1,0 +1,8 @@
+{
+  "name": "referenceharness-js",
+  "private": true,
+  "description": "Runs the ELM of a probe with cql-execution, the second reference runtime.",
+  "dependencies": {
+    "cql-execution": "3.3.2"
+  }
+}

@@ -91,7 +91,42 @@ DateTimes without an offset do not depend on the machine. It is deliberately
 not UTC. At UTC, an engine that defaulted to UTC instead of the evaluation
 offset would give the same answers, and the difference would not show.
 
-`TestRuntimeMatchesTheReference` diffs this engine against that file. It
+## Running the second runtime
+
+`js/evaluate.js` runs the same probe with `cql-execution`, pinned exactly in
+`js/package.json` and `js/package-lock.json`. It runs the ELM the reference
+translator produces, so it is a second opinion on evaluation, not on
+translation. It writes the same encoding as `Evaluate.java`, at the same
+evaluation time.
+
+`cql-execution` differs from the Java engine in three representations, and
+the encoding accounts for each:
+
+- **Integer and Decimal** are one JavaScript number. A number's type is read
+  from the static type the translator annotated, so `cql-execution` is not
+  consulted on a row about the type itself (`ListIntDec`).
+- **A Decimal** is computed in binary floating point, so `0.1 + 0.2` is
+  `0.30000000000000004` there. It is recorded as held, not rounded to the
+  scale of 8. Rounding would put an answer in its mouth: `10.0 / 3.0 =
+  3.33333333` is false in `cql-execution`. It is not consulted on decimal
+  arithmetic.
+- **A Time** is a DateTime with no date, so it is recognised before
+  DateTime. **A Long** comes back as text, so its type is read first.
+
+```sh
+cd internal/referenceharness
+docker run --rm -v "$PWD/js":/w -w /w node:20 npm ci
+docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
+  maven:3-eclipse-temurin-21 java -cp "out:lib/*" Translate /cql/runtime.cql /cql \
+  > elm.json
+docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
+  node:20 node js/evaluate.js elm.json /cql/runtime.cql \
+  > runtime-js.json && mv runtime-js.json ../../testdata/reference/runtime.expected.js.json
+```
+
+## The comparison
+
+`TestRuntimeMatchesTheReference` diffs this engine against both files. It
 compares with its own code, not with this engine's `String` or `Equal`.
 
 - **Lists:** compared in order, except the few where the specification fixes
@@ -106,10 +141,16 @@ compares with its own code, not with this engine's `String` or `Equal`.
   instead of reading as a divergence of this engine. A reference with
   definitions missing fails against the names read from the `.cql` text.
 
-- **Pinned answers:** some definitions the reference cannot settle. These
-  include quantities, since with this configuration the reference does not
-  convert units. Only this engine's answer is checked for them, because
-  agreeing with the reference there could be a regression.
+- **Per-reference exclusions:** a reference is not consulted where it is not
+  an oracle. The Java engine, as configured here, does not convert units, so
+  it is excluded from the quantity rows. `cql-execution` settles them.
+- **References that disagree:** if this engine agrees with one reference and
+  not with the other, the test fails and asks for the specification to settle
+  it. It is never settled by majority, since two runtimes that share a
+  translator can share its mistake.
+- **Decided answers:** where this engine differs from every reference on
+  purpose, only its own answer is checked, and changing it means arguing with
+  the recorded reason.
 
 `testdata/reference/runtime.divergences.md` explains each case.
 
