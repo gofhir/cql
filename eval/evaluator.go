@@ -2199,10 +2199,10 @@ func (e *Evaluator) evalCast(n *ast.CastExpression) (fptypes.Value, error) {
 // to DateTime` and ToDateTime of the same string are the same operation, and they
 // were answering differently about the offset. Naming the type a DateTime already
 // has is not a door — it produces the value it was given, and placing that value
-// would place whatever it happens to be. `maximum DateTime` is the case that
-// shows it: the largest value the type holds is not one someone wrote without an
-// offset, and `maximum DateTime = (cast (maximum DateTime) as DateTime)` stopped
-// being true once the cast placed it.
+// would place whatever it happens to be. A DateTime parameter supplied with no
+// offset is the case that shows it: `cast P as DateTime` has to answer what P
+// answers, and placing the result made it answer the evaluation offset instead.
+// (`maximum DateTime` showed it too, until it came to state its own offset.)
 func (e *Evaluator) situateConversion(from, to fptypes.Value) fptypes.Value {
 	if _, wasDateTime := from.(fptypes.DateTime); wasDateTime {
 		return to
@@ -2225,7 +2225,11 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 			d := decimal.RequireFromString("-99999999999999999999.99999999")
 			return fptypes.NewDecimal(d.String())
 		case "datetime":
-			return fptypes.NewDateTime("0001-01-01T00:00:00.000")
+			// Stated at UTC, as the specification and the reference engine give
+			// it. Not the evaluation offset: at an eastern one the minimum would
+			// sit before the start of the range it defines, and at a western one
+			// the maximum past its end. A stated Z moves neither.
+			return fptypes.NewDateTime("0001-01-01T00:00:00.000Z")
 		case "date":
 			return fptypes.NewDate("0001-01-01")
 		case "time":
@@ -2245,7 +2249,8 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 		d := decimal.RequireFromString("99999999999999999999.99999999")
 		return fptypes.NewDecimal(d.String())
 	case "datetime":
-		return fptypes.NewDateTime("9999-12-31T23:59:59.999")
+		// Stated at UTC, for the reason given for the minimum above.
+		return fptypes.NewDateTime("9999-12-31T23:59:59.999Z")
 	case "date":
 		return fptypes.NewDate("9999-12-31")
 	case "time":

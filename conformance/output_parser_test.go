@@ -288,7 +288,12 @@ func TestParseExpectedOutput(t *testing.T) {
 	t.Run("datetime full", func(t *testing.T) {
 		v, err := parseNotation("@2016-07-07T06:25:33.910")
 		assertNoError(t, err)
-		expected, _ := fptypes.NewDateTime("2016-07-07T06:25:33.910")
+		// Through the same door the parser uses: a value with an hour and no
+		// offset is placed at the assumed one, which outputParser{} sets to UTC.
+		// NewDateTime alone builds a value nobody placed, and since fhirpath
+		// v1.14 that is not equal to a placed one — both print the same.
+		bare, _ := fptypes.NewDateTime("2016-07-07T06:25:33.910")
+		expected := bare.WithDefaultOffset(0)
 		if !expected.Equal(v) {
 			t.Errorf("expected %v, got %v", expected, v)
 		}
