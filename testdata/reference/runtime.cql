@@ -92,5 +92,5 @@ define UnionEmptySecond: {1, 1} union {} // control
 define UnionDecimalScale: {1.0} union {1.00} // control
 define ExceptDecimalScale: {1.0, 2.0} except {1.00} // control
 define IntervalExceptNull: Interval[1, 5] except null // control
-define TypedListNullsUnion: (null as List<Integer>) union (null as List<Integer>)
+define TypedListNullsUnion: (null as List<Integer>) union (null as List<Integer>) // control
 define TypedIntervalNullsUnion: (null as Interval<Integer>) union (null as Interval<Integer>) // control

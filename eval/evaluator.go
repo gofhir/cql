@@ -1097,13 +1097,14 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		case ast.OpUnion:
 			// For a list the null is an empty list, and the union is the other
 			// operand's unique elements: "if either argument is null, it is
-			// considered an empty list". Returning the list as it was kept its
-			// duplicates. For an interval, union with null is null. A single
+			// considered an empty list". The static type says it is a list, so
+			// a repeating FHIR element with one entry, which arrives
+			// unwrapped, is still one: its union with an absent element was
+			// null before. For an interval, union with null is null. A single
 			// value that is neither (scalarShape) is the other operand as it
-			// is, as it always was: a repeating FHIR element with one entry
-			// arrives unwrapped, and that one entry is what it was before. Two
-			// nulls are null: nothing at runtime says they were lists.
-			switch setShape(left, right) {
+			// is. Two nulls are null, unless their static types say they were
+			// lists, which `(null as List<Integer>)` does.
+			switch e.setShape(n, left, right) {
 			case listShape:
 				return e.evalSetOp(ast.OpUnion, left, right)
 			case scalarShape:
@@ -1131,7 +1132,7 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 			if left == nil {
 				return nil, nil
 			}
-			switch setShape(left, nil) {
+			switch e.setShape(n, left, nil) {
 			case listShape:
 				return e.evalSetOp(ast.OpExcept, left, nil)
 			case scalarShape:
@@ -1555,12 +1556,12 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 // ---------------------------------------------------------------------------
 
 // evalSetOperation is union, intersect or except of two present operands: the
-// interval operation, intervalOp, when setShape does not say it is a list and
+// interval operation, intervalOp, when setShape says the operation is one and
 // both operands convert to intervals, and the list operation otherwise.
 func (e *Evaluator) evalSetOperation(n *ast.BinaryExpression, left, right fptypes.Value,
 	intervalOp func(a, b cqltypes.Interval) (fptypes.Value, error),
 ) (fptypes.Value, error) {
-	if setShape(left, right) != listShape {
+	if e.setShape(n, left, right) != listShape {
 		lIv, rIv, ok, err := e.asIntervals(left, right)
 		if err != nil {
 			return nil, err
@@ -1718,14 +1719,58 @@ const (
 	scalarShape
 )
 
-// setShape decides which set operation n is, from its operands as they are:
-// a list is the list operation, an interval the interval one, and anything else
-// is a single value (scalarShape). Nothing is converted to ask, so a value that
-// would not convert cannot fail an operation that does not use the conversion.
-func setShape(left, right fptypes.Value) setKind {
-	// A FHIR Period is one entry of a list of Periods as often as it is an
-	// interval, and nothing about the value tells which; converting it to ask
-	// made the union of a one-entry list with null an interval union, and null.
+// setShape decides which set operation n is.
+//
+// The static type of the whole operation answers first, as the semantic phase
+// decided it from the operands' declared types. A runtime value cannot: a
+// repeating FHIR element with one entry arrives unwrapped, so a single Period
+// from a list of Periods looks like an interval, and Count(Patient.name.period
+// union Patient.contact.period) was 0 or 1 for a patient with one of each,
+// depending on whether the two overlapped, instead of 2. A null cast to a list
+// looks like any other null, and a System.Integer that evaluates to an
+// uncertainty looks like an interval.
+//
+// A list type is the list operation. An interval type, or a FHIR Period or
+// Range, is the interval one. A System value's type, a tuple's, or a concrete
+// FHIR type's is a single value (scalarShape). Any other type — a choice, a
+// supertype, another model's, System.Any, or none at all, as for imported ELM
+// and for definitions of included libraries — leaves it to the value, read as
+// it is and never converted.
+func (e *Evaluator) setShape(n *ast.BinaryExpression, left, right fptypes.Value) setKind {
+	if e.ctx.Plan != nil {
+		switch t := e.ctx.Plan.TypeOf(n).(type) {
+		case *sema.List:
+			return listShape
+		case *sema.Interval:
+			return intervalShape
+		case *sema.Named:
+			switch {
+			case t.Model == "FHIR" && (t.Name == "Period" || t.Name == "Range"):
+				return intervalShape
+			case t.Model == "System" && t.Name != "Any":
+				// Never an interval: an Integer that evaluates to an
+				// uncertainty is still an Integer.
+				return scalarShape
+			case t.Model == "FHIR" && !e.canHoldInterval(t.Name):
+				// A FHIR type that neither is nor contains Period or Range is
+				// not one either, and needs no conversion to be told so:
+				// converting a Quantity with a comparator fails, and asking
+				// would fail the evaluation over a question the type answers.
+				return scalarShape
+			}
+		case *sema.Tuple:
+			return scalarShape
+		}
+		// A choice, a supertype such as FHIR.Element, or another model's
+		// type can hold an interval or not; the value says which.
+	}
+	// Without a type that decides, the value decides, as it is: a list is the
+	// list operation, an interval the interval one, and anything else is a
+	// single value. Nothing is converted to ask. A FHIR Period read through a
+	// definition of an included library, which the semantic phase leaves
+	// untyped, is one entry of a list of Periods as often as it is an
+	// interval; converting it to ask made the union of that one-entry list
+	// with null an interval union, and null.
 	shape := unknownShape
 	for _, v := range []fptypes.Value{left, right} {
 		switch v.(type) {
@@ -1742,6 +1787,17 @@ func setShape(left, right fptypes.Value) setKind {
 		}
 	}
 	return shape
+}
+
+// canHoldInterval reports whether a value of the FHIR type name may be a Period
+// or a Range: whether either is that type or descends from it, as the model
+// declares the chain. Without a model it cannot be told, and the answer is
+// yes, which leaves it to the value.
+func (e *Evaluator) canHoldInterval(name string) bool {
+	if e.ctx.ModelInfo == nil {
+		return true
+	}
+	return e.modelSaysSubtype("Period", name) || e.modelSaysSubtype("Range", name)
 }
 
 // nullSafeSame is the element equality of the collection operations: two

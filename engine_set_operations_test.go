@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/gofhir/cql/eval"
@@ -22,7 +23,8 @@ func TestASetOperationWithAnAbsentOperandDoesNotDependOnCardinality(t *testing.T
 		"context Patient\n" +
 		"define UnionCount: Count(Patient.name union Patient.contact)\n" +
 		"define ExceptCount: Count(Patient.name except Patient.contact)\n" +
-		"define PeriodsUnionNull: Count(Patient.name.period union null)\n"
+		"define PeriodsUnionNull: Count(Patient.name.period union null)\n" +
+		"define PeriodUnionNull: First(Patient.name).period union null\n"
 	e := NewEngine()
 	for _, tt := range []struct {
 		patient, names string
@@ -36,15 +38,77 @@ func TestASetOperationWithAnAbsentOperandDoesNotDependOnCardinality(t *testing.T
 				t.Errorf("%s with %s names = %v, %v; want %s", def, tt.names, v, err, tt.names)
 			}
 		}
+		// A single Period is an interval, and its union with null is null; its
+		// static type, FHIR.Period, is what says so.
+		v, err := e.EvaluateExpression(context.Background(), src, "PeriodUnionNull", []byte(tt.patient), nil)
+		if err != nil || v != nil {
+			t.Errorf("a Period union null with %s names = %v, %v; want null, as for any interval", tt.names, v, err)
+		}
 		// A one-entry list of Periods arrives as a single Period. Asked of one
 		// name only: path navigation through two names is null today whatever
 		// follows it — a separate defect, Patient.name.family included.
 		if tt.names == "1" {
-			v, err := e.EvaluateExpression(context.Background(), src, "PeriodsUnionNull", []byte(tt.patient), nil)
+			v, err = e.EvaluateExpression(context.Background(), src, "PeriodsUnionNull", []byte(tt.patient), nil)
 			if err != nil || valueString(v) != "1" {
 				t.Errorf("Count(Patient.name.period union null) with one name = %v, %v; want 1", v, err)
 			}
 		}
+	}
+}
+
+// TestASetOperationIsTheOneItsTypesName covers the choice between the list
+// operation and the interval one when both operands are present.
+//
+// It was made from the runtime values: two Periods were two intervals. But a
+// list of Periods with one entry arrives as a single Period, so a patient with
+// one name period and one contact period had the interval union taken of
+// them — null when they did not overlap, one merged interval when they did —
+// and Count said 0 or 1 where the list union has 2. The static type of the
+// operation is what says which it is.
+func TestASetOperationIsTheOneItsTypesName(t *testing.T) {
+	src := "library T version '1.0'\nusing FHIR version '4.0.1'\ninclude FHIRHelpers version '4.0.1' called FH\n" +
+		"context Patient\n" +
+		"define ListUnion: Count(Patient.name.period union Patient.contact.period)\n" +
+		"define IntervalUnion: First(Patient.name).period union First(Patient.contact).period\n" +
+		"define TypedListNulls: (null as List<Integer>) union (null as List<Integer>)\n" +
+		"define Uncertain: (months between @2020 and @2021-06) union null\n"
+	e := NewEngine()
+	ask := func(t *testing.T, patient, def string) string {
+		t.Helper()
+		v, err := e.EvaluateExpression(context.Background(), src, def, []byte(patient), nil)
+		if err != nil {
+			return "ERROR: " + err.Error()
+		}
+		if v == nil {
+			return "null"
+		}
+		return valueString(v)
+	}
+	disjoint := `{"resourceType":"Patient","id":"p","name":[{"family":"A","period":{"start":"2020-01-01","end":"2020-02-01"}}],` +
+		`"contact":[{"period":{"start":"2021-01-01","end":"2021-02-01"}}]}`
+	overlapping := `{"resourceType":"Patient","id":"p","name":[{"period":{"start":"2020-01-01","end":"2020-03-01"}}],` +
+		`"contact":[{"period":{"start":"2020-02-01","end":"2020-04-01"}}]}`
+
+	for _, patient := range []string{disjoint, overlapping} {
+		if got := ask(t, patient, "ListUnion"); got != "2" {
+			t.Errorf("Count of a list union of one period and one period = %s, want 2", got)
+		}
+	}
+	// Two single Periods are two intervals, and stay so.
+	if got := ask(t, disjoint, "IntervalUnion"); got != "null" {
+		t.Errorf("the interval union of two disjoint periods = %s, want null", got)
+	}
+	if got := ask(t, overlapping, "IntervalUnion"); !strings.HasPrefix(got, "Interval[") {
+		t.Errorf("the interval union of two overlapping periods = %s, want one interval", got)
+	}
+	// Two nulls cast to lists are two empty lists, whose union is empty.
+	if got := ask(t, disjoint, "TypedListNulls"); got != "{}" {
+		t.Errorf("(null as List<Integer>) union (null as List<Integer>) = %s, want {}", got)
+	}
+	// An Integer that evaluates to an uncertainty is still an Integer, not an
+	// interval to be nulled.
+	if got := ask(t, disjoint, "Uncertain"); got == "null" {
+		t.Errorf("an uncertain Integer union null = %s, want the value as it is", got)
 	}
 }
 
