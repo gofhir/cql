@@ -12,7 +12,8 @@ This engine was run on `main`, at fhirpath v1.14.1. Values below are what each
 one returned, not what any of them should return.
 
 `engine_runtime_reference_test.go` pins each row with this engine's answer, in
-`knownRuntimeDivergences`, `disputedRuntimeAnswers` and `decidedRuntimeAnswers`. This file and those
+`knownRuntimeDivergences`, `disputedRuntimeAnswers` and `decidedRuntimeAnswers`,
+and records each reference's exclusions in `runtimeReferences[].notOracle`. This file and those
 lists have to change together.
 
 Both runtimes run the ELM the reference translator produces. Where they agree
@@ -96,21 +97,44 @@ Without the rule, a day-precision value was normalized as if it were an
 instant, and it answered wrong at UTC+14. `decidedRuntimeAnswers` pins it,
 and changing it means arguing with that reason.
 
-## Disputed: a single source with no return clause
+## Disputed, and settled by the conformance suite: a single source with no return clause
 
 ```cql
 define NoReturn: ({1, 1, 2}) X
 // Java: {1, 1, 2}   cql-execution: {1, 2}   this engine: {1, 1, 2}
+define NoReturnSortedConformance: ({4, 5, 1, 6, 2, 1}) sL sort asc
+// Java: {1, 1, 2, 4, 5, 6}   cql-execution: {1, 2, 4, 5, 6}   this engine: {1, 1, 2, 4, 5, 6}
+define NoReturnSortedDescConformance: ({4, 5, 1, 6, 2, 1}) sL sort desc
+// Java: {6, 5, 4, 2, 1, 1}   cql-execution: {6, 5, 4, 2, 1}   this engine: {6, 5, 4, 2, 1, 1}
 ```
 
-The references disagree. The specification says "By default, queries return a
-distinct list of results" in the section on the return clause, and does not
-say what a query without one returns.
+The references disagree. The conformance suite keeps the duplicates of a
+single source with no return clause:
 
-The reference translator settles it in its ELM. For a single source with no
-return clause it emits no return clause, so the Java engine keeps the
-duplicates. For several sources with no return clause it emits one, a Tuple of
-the aliases with distinct set. This engine follows the translator in both
-cases. The disagreement belongs to cql-execution, which removes duplicates
-either way. `disputedRuntimeAnswers` pins this engine's answer and fails once
-the references agree.
+```
+simpleSortAsc:  ({4, 5, 1, 6, 2, 1}) sL sort asc   =>  {1, 1, 2, 4, 5, 6}
+simpleSortDesc: ({4, 5, 1, 6, 2, 1}) sL sort desc  =>  {6, 5, 4, 2, 1, 1}
+```
+
+(CqlListOperatorsTest, which this engine runs and passes.) The two sorted rows
+are those cases themselves, so the harness checks them directly, and
+cql-execution fails them. `NoReturn` has no sort, and no conformance case
+does without one. It rests on them by analogy: a sort orders the elements a
+query keeps, and does not decide which it keeps.
+
+The specification text points the other way, and the tension stays recorded
+here. The Developer's Guide says: "the default for return clauses is
+distinct, as opposed to all, so if no return clause is specified, duplicates
+will be eliminated from the result". The sentence reads the same in the 1.5
+ballot ([May 2020](https://cql.hl7.org/2020May/03-developersguide.html)) and
+in v2.0.0 ([current](https://cql.hl7.org/03-developersguide.html)), both
+checked on 14 October 2026. It sits in the section on multi-source queries, and there the reference
+translator does supply a return clause, a distinct Tuple of the aliases. For
+a single source the translator supplies none, and the Java engine and the
+conformance suite keep the duplicates. This engine does the same.
+
+The rows stay in `disputedRuntimeAnswers`. That pins this engine's answer,
+records how the dispute was settled, and names the Java engine as the
+reference that agrees. The test fails the day cql-execution agrees, and the
+rows then leave the list. If the Java engine changes instead, it fails with a
+different message, since that reopens the dispute rather than settling it.

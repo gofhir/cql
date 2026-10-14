@@ -1,6 +1,6 @@
 {
   "library": "RuntimeProbe",
-  "sourceSha256": "d6c4eb89a14922c624d810a0a0525c57524639a75c9de84cee973e0a08ea0a75",
+  "sourceSha256": "ae4fa2361970e8bc10eb16f13da1b0fd8f6e01d2b7910a55ef7e3c3c3f23f84d",
   "engine": "cql-execution 3.3.2",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -325,6 +325,56 @@
         {
           "type": "Integer",
           "value": "2"
+        }
+      ]
+    },
+    "NoReturnSortedConformance": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        },
+        {
+          "type": "Integer",
+          "value": "4"
+        },
+        {
+          "type": "Integer",
+          "value": "5"
+        },
+        {
+          "type": "Integer",
+          "value": "6"
+        }
+      ]
+    },
+    "NoReturnSortedDescConformance": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "6"
+        },
+        {
+          "type": "Integer",
+          "value": "5"
+        },
+        {
+          "type": "Integer",
+          "value": "4"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        },
+        {
+          "type": "Integer",
+          "value": "1"
         }
       ]
     },

@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -136,18 +137,38 @@ var decidedRuntimeAnswers = map[string]struct {
 }
 
 // disputedRuntimeAnswers are the definitions the references disagree on, each
-// with this engine's exact answer and how the disagreement was settled. The
-// test checks this engine's answer, and that the references still disagree:
-// once they agree, the row is no longer a dispute and has to leave the list.
+// with this engine's exact answer and how the disagreement was settled — by
+// the conformance suite or the specification, never by majority. The test
+// checks this engine's answer, and that the references still disagree: once
+// they agree, the row is no longer a dispute and has to leave the list.
+//
+// A reference that answers wrong here is not excluded with notOracle. That is
+// for what a runtime cannot answer at all, and has no check that it is still
+// needed; this list fails the day the reference is fixed.
+//
+// Each row names the references that agree with this engine, so that the
+// test can tell the reference in the wrong being fixed from the one in the
+// right changing: the first ends the dispute, the second reopens it.
 var disputedRuntimeAnswers = map[string]struct {
-	got string
-	why string
+	got   string
+	agree []string
+	why   string
 }{
-	"NoReturn": {"List[Integer(1), Integer(1), Integer(2)]", "a single source with no return clause: the " +
-		"reference translator emits no return clause, and the Java engine keeps the duplicates; cql-execution " +
-		"removes them. The specification's \"by default, queries return a distinct list\" is written about " +
-		"the return clause, so this engine follows the translator"},
+	"NoReturn": {"List[Integer(1), Integer(1), Integer(2)]", []string{"the Java engine"},
+		noReturnSettled + ". This row has no sort, which the conformance cases have; it rests on them by " +
+			"analogy, since a sort orders the elements a query keeps and does not decide which"},
+	"NoReturnSortedConformance": {"List[Integer(1), Integer(1), Integer(2), Integer(4), Integer(5), Integer(6)]",
+		[]string{"the Java engine"}, noReturnSettled + ". This row is simpleSortAsc itself, which cql-execution fails"},
+	"NoReturnSortedDescConformance": {"List[Integer(6), Integer(5), Integer(4), Integer(2), Integer(1), Integer(1)]",
+		[]string{"the Java engine"}, noReturnSettled + ". This row is simpleSortDesc itself, which cql-execution fails"},
 }
+
+// noReturnSettled is how the NoReturn dispute was settled.
+const noReturnSettled = "a single source with no return clause keeps its duplicates: the Java engine keeps them, " +
+	"cql-execution removes them, and the conformance suite keeps them (CqlListOperatorsTest simpleSortAsc, " +
+	"({4, 5, 1, 6, 2, 1}) sL sort asc = {1, 1, 2, 4, 5, 6}). The Developer's Guide says \"if no return clause is " +
+	"specified, duplicates will be eliminated\", in its section on multi-source queries, where the translator " +
+	"does supply a distinct return clause"
 
 // unorderedRuntimeResults are the definitions whose list result is compared as
 // a multiset, each with the reason its order is not part of the answer. Every
@@ -236,6 +257,28 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 	for name := range unorderedRuntimeResults {
 		listed("unorderedRuntimeResults", name)
 	}
+	referenceNamed := map[string]bool{}
+	for _, r := range runtimeReferences {
+		referenceNamed[r.name] = true
+	}
+	for name, pin := range disputedRuntimeAnswers {
+		for _, who := range pin.agree {
+			if !referenceNamed[who] {
+				t.Errorf("%s is disputed with %q agreeing, which names no reference", name, who)
+			}
+		}
+		if len(pin.agree) == 0 {
+			t.Errorf("%s is disputed with no reference agreeing: that is a known divergence, not a dispute", name)
+		}
+		if _, ok := decidedRuntimeAnswers[name]; ok {
+			t.Errorf("%s is both disputed and decided: it is one or the other", name)
+		}
+		for _, r := range runtimeReferences {
+			if _, ok := r.notOracle[name]; ok {
+				t.Errorf("%s is disputed and excluded for %s: a reference that answers wrong stays in the row", name, r.name)
+			}
+		}
+	}
 	for name := range disputedRuntimeAnswers {
 		listed("disputedRuntimeAnswers", name)
 		if _, ok := knownRuntimeDivergences[name]; ok {
@@ -278,15 +321,31 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 		}
 
 		if pin, disputed := disputedRuntimeAnswers[name]; disputed {
+			// This engine first: a failure here is a regression of this
+			// engine's, not a change in the references, and reading it as
+			// one would ask for the pin that records the settlement to go.
 			switch {
-			case len(agree) == 0 || len(disagree) == 0:
-				t.Errorf("%s is listed as disputed, and the references no longer disagree: "+
-					"remove it from disputedRuntimeAnswers and compare it like any other row", name)
 			case evalErr != nil:
 				t.Errorf("%s is disputed, pinned at %s (%s), and now fails: %v", name, pin.got, pin.why, evalErr)
 			case describeRuntimeValue(got) != pin.got:
 				t.Errorf("%s is disputed, pinned at %s, and now answers %s. How it was settled: %s",
 					name, pin.got, describeRuntimeValue(got), pin.why)
+			case unanswered:
+				// Reported as a reference to regenerate. Read as agreement, a
+				// missing answer would ask for the pin to go.
+			case len(disagree) == 0:
+				t.Errorf("%s is listed as disputed, and every reference now answers as this engine does: "+
+					"remove it from disputedRuntimeAnswers and compare it like any other row", name)
+			case len(agree) == 0:
+				// The reference that agreed has moved to the other side. This
+				// engine is alone against every reference now, which is no
+				// longer the dispute that was settled.
+				t.Errorf("%s was disputed with %s agreeing, and no reference agrees now. It is no longer "+
+					"the dispute that was settled: argue it again against the evidence, or move it to "+
+					"knownRuntimeDivergences. How it was settled: %s", name, strings.Join(pin.agree, ", "), pin.why)
+			case !sameNames(agree, pin.agree):
+				t.Errorf("%s is disputed with %s agreeing, and now %s agree. How it was settled: %s",
+					name, strings.Join(pin.agree, ", "), strings.Join(agree, ", "), pin.why)
 			}
 			continue
 		}
@@ -318,6 +377,15 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 			}
 		}
 	}
+}
+
+// sameNames reports whether two lists of reference names hold the same names,
+// in whatever order.
+func sameNames(a, b []string) bool {
+	x, y := slices.Clone(a), slices.Clone(b)
+	slices.Sort(x)
+	slices.Sort(y)
+	return slices.Equal(x, y)
 }
 
 // loadRuntimeReference reads one reference's answers and checks that they are

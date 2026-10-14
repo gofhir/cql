@@ -151,7 +151,11 @@ compares with its own code, not with this engine's `String` or `Equal`.
 - **Disputed answers:** where the references disagree with each other, the
   row records how the disagreement was settled and pins this engine's answer.
   The test fails once the references agree, since the row is then no longer
-  a dispute.
+  a dispute. A disagreement goes to the conformance suite and the
+  specification, never to a vote, and the row records which settled it, as
+  `NoReturn` does. A reference that answers wrong stays in the row rather than
+  being excluded: an exclusion (`notOracle`) is for what a runtime cannot
+  answer at all, and only a disputed row fails when the reference is fixed.
 - **Decided answers:** where this engine differs from every reference on
   purpose, only its own answer is checked, and changing it means arguing with
   the recorded reason.
