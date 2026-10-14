@@ -1,0 +1,201 @@
+{
+  "library" : "RuntimeProbe",
+  "sourceSha256" : "bd00de38a54c3a67490ba481b909a0527364f75f980f954d5f0f129b4eab2867",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "WithAggregate" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "WithoutAggregate" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "WhereAggregate" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "ReturnDefault" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "ReturnAll" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "ReturnDistinct" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "UnionDuplicates" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "ExceptDuplicates" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "IntersectDuplicates" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "AggDistinctNilNull" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "AggDistinctPairs" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "AggDistinctIntDec" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "AggDistinctQuantity" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "AggDistinctOffsets" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "ListIntDec" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Decimal",
+        "value" : "1"
+      }, {
+        "type" : "Decimal",
+        "value" : "1.0"
+      } ]
+    },
+    "DistinctQuantity" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Quantity",
+        "value" : "1",
+        "unit" : "m"
+      }, {
+        "type" : "Quantity",
+        "value" : "100",
+        "unit" : "cm"
+      } ]
+    },
+    "DistinctOffsets" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "DateTime",
+        "value" : "2020-01-01T10:00:00",
+        "precision" : "second",
+        "offset" : "Z",
+        "instant" : "2020-01-01T10:00:00Z"
+      } ]
+    },
+    "QuantityEqual" : null,
+    "QuantityEquivalent" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "ExpandWeekPerMinute" : {
+      "type" : "Integer",
+      "value" : "10080"
+    },
+    "ExpandThirtyYearsPerDay" : {
+      "type" : "Integer",
+      "value" : "10958"
+    },
+    "ExpandIntegers" : {
+      "type" : "Integer",
+      "value" : "100000"
+    },
+    "ExpandSmall" : {
+      "type" : "Integer",
+      "value" : "10"
+    },
+    "DateTimeYear" : {
+      "type" : "DateTime",
+      "value" : "2020",
+      "precision" : "year",
+      "offset" : "-03:00",
+      "instant" : "2020-01-01T00:00:00-03:00"
+    },
+    "DateTimeMinute" : {
+      "type" : "DateTime",
+      "value" : "2020-01-01T10:30",
+      "precision" : "minute",
+      "offset" : "-03:00",
+      "instant" : "2020-01-01T10:30:00-03:00"
+    },
+    "DateTimeMillis" : {
+      "type" : "DateTime",
+      "value" : "2020-01-01T10:30:00.123+00:00",
+      "precision" : "millisecond",
+      "offset" : "Z",
+      "instant" : "2020-01-01T10:30:00.123Z"
+    },
+    "DateTimeOffset" : {
+      "type" : "DateTime",
+      "value" : "2020-01-01T07:00:00",
+      "precision" : "second",
+      "offset" : "-03:00",
+      "instant" : "2020-01-01T07:00:00-03:00"
+    },
+    "SortDescending" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "3"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      }, {
+        "type" : "Integer",
+        "value" : "1"
+      } ]
+    },
+    "SameDayAcrossOffsets" : {
+      "type" : "Boolean",
+      "value" : true
+    }
+  }
+}

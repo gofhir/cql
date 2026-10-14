@@ -44,6 +44,7 @@ go.work.sum
 internal/referenceharness/lib/
 internal/referenceharness/out/
 internal/referenceharness/elm.json
+internal/referenceharness/runtime.json
 
 # Local tool configuration. `.claude/settings.json` was committed by accident and
 # carried absolute paths from one machine — /Users/<name>/go/pkg/mod/... and a
