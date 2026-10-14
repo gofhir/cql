@@ -101,7 +101,8 @@ var runtimeReferences = []struct {
 
 // knownRuntimeDivergences are the definitions where this engine is known to
 // answer differently from the reference, each with this engine's exact answer
-// as describeRuntimeValue writes it.
+// as pinnedAs writes it: describeRuntimeValue, with the elements sorted for a
+// definition in unorderedRuntimeResults.
 //
 // Pinning the answer, not just the name, is what keeps the list honest: a
 // divergence that changes into a different wrong answer fails here, and one
@@ -112,13 +113,13 @@ var knownRuntimeDivergences = map[string]struct {
 	why string
 }{
 	// The reference and the specification agree; this engine does not.
-	"UnionDuplicates":  {"List[Integer(1), Integer(1), Integer(2)]", "union keeps duplicates from one operand"},
-	"ExceptDuplicates": {"List[Integer(1), Integer(1), Integer(2)]", "except keeps duplicates from the first operand"},
-	"ListIntDec":       {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
+	"ListIntDec": {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
 	"SameDayAcrossOffsets": {"Boolean(false)", "values at different offsets are normalized to UTC; the " +
 		"specification normalizes to the evaluation offset, and only below day precision"},
 	"DecimalDivision": {"Decimal(3.3333333333333333)", "a quotient is not brought to the Decimal scale of 8; " +
 		"the specification gives the type a scale of 8, and both references answer 3.33333333"},
+	"TypedListNullsUnion": {"null", "two nulls reach union with nothing at runtime to say they were lists; " +
+		"as lists they are empty, and the union is {}. This engine answers null, which is right for intervals"},
 }
 
 // decidedRuntimeAnswers are the definitions where this engine answers
@@ -161,7 +162,18 @@ var disputedRuntimeAnswers = map[string]struct {
 		[]string{"the Java engine"}, noReturnSettled + ". This row is simpleSortAsc itself, which cql-execution fails"},
 	"NoReturnSortedDescConformance": {"List[Integer(6), Integer(5), Integer(4), Integer(2), Integer(1), Integer(1)]",
 		[]string{"the Java engine"}, noReturnSettled + ". This row is simpleSortDesc itself, which cql-execution fails"},
+	"UnionNullFirst":   {"List[Integer(1), Integer(2)]", []string{"the Java engine"}, setOpNullSettled},
+	"UnionNullSecond":  {"List[Integer(1), Integer(2)]", []string{"the Java engine"}, setOpNullSettled},
+	"ExceptNullSecond": {"List[Integer(1), Integer(2)]", []string{"the Java engine"}, setOpNullSettled},
 }
+
+// setOpNullSettled is how the dispute over a null operand of union and except
+// was settled.
+const setOpNullSettled = "a null operand of union, or the second of except, is an empty list, and the " +
+	"result still has set semantics: Union \"if either argument is null, it is considered an empty list\" " +
+	"and returns \"all unique elements\"; Except \"the operation is performed as though the second argument " +
+	"was an empty list\" and \"each element will appear in the result at most once\" (CQL 1.5, list " +
+	"operators). The Java engine answers so; cql-execution returns the other operand with its duplicates"
 
 // noReturnSettled is how the NoReturn dispute was settled.
 const noReturnSettled = "a single source with no return clause keeps its duplicates: the Java engine keeps them, " +
@@ -175,13 +187,22 @@ const noReturnSettled = "a single source with no return clause keeps its duplica
 // other list is compared in order: a sort that returned its elements reversed
 // would pass an unordered comparison, and that is a defect worth finding.
 var unorderedRuntimeResults = map[string]string{
-	"ReturnDefault":       "distinct fixes which elements remain, not their order",
-	"ReturnDistinct":      "same as ReturnDefault",
-	"UnionDuplicates":     "Union: no expectation that the order of elements in the inputs will be preserved",
-	"ExceptDuplicates":    "Except is a set operation",
-	"IntersectDuplicates": "Intersect is a set operation",
-	"DistinctQuantity":    "same as ReturnDefault",
-	"DistinctOffsets":     "same as ReturnDefault",
+	"ReturnDefault":         "distinct fixes which elements remain, not their order",
+	"ReturnDistinct":        "same as ReturnDefault",
+	"UnionDuplicates":       "Union: no expectation that the order of elements in the inputs will be preserved",
+	"ExceptDuplicates":      "Except is a set operation",
+	"IntersectDuplicates":   "Intersect is a set operation",
+	"DistinctQuantity":      "same as ReturnDefault",
+	"DistinctOffsets":       "same as ReturnDefault",
+	"UnionNullFirst":        "Union: no expectation that the order of elements in the inputs will be preserved",
+	"UnionNullSecond":       "same as UnionNullFirst",
+	"ExceptNullSecond":      "Except is a set operation",
+	"UnionNullElements":     "same as UnionNullFirst",
+	"ExceptNullElement":     "Except is a set operation",
+	"IntersectNullElements": "Intersect is a set operation",
+	"UnionEmptySecond":      "same as UnionNullFirst",
+	"UnionDecimalScale":     "same as UnionNullFirst",
+	"ExceptDecimalScale":    "Except is a set operation",
 }
 
 // TestRuntimeMatchesTheReference covers what this engine answers against what
@@ -293,9 +314,9 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 			switch {
 			case evalErr != nil:
 				t.Errorf("%s is decided at %s (%s) and now fails: %v", name, pin.got, pin.why, evalErr)
-			case describeRuntimeValue(got) != pin.got:
+			case pinnedAs(name, got) != pin.got:
 				t.Errorf("%s is decided at %s and now answers %s. The decision: %s. "+
-					"Argue with it before moving the pin", name, pin.got, describeRuntimeValue(got), pin.why)
+					"Argue with it before moving the pin", name, pin.got, pinnedAs(name, got), pin.why)
 			}
 			continue
 		}
@@ -327,9 +348,9 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 			switch {
 			case evalErr != nil:
 				t.Errorf("%s is disputed, pinned at %s (%s), and now fails: %v", name, pin.got, pin.why, evalErr)
-			case describeRuntimeValue(got) != pin.got:
+			case pinnedAs(name, got) != pin.got:
 				t.Errorf("%s is disputed, pinned at %s, and now answers %s. How it was settled: %s",
-					name, pin.got, describeRuntimeValue(got), pin.why)
+					name, pin.got, pinnedAs(name, got), pin.why)
 			case unanswered:
 				// Reported as a reference to regenerate. Read as agreement, a
 				// missing answer would ask for the pin to go.
@@ -371,7 +392,7 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 			if evalErr != nil {
 				t.Errorf("%s was a known divergence (%s, because %s) and now fails: %v",
 					name, known.got, known.why, evalErr)
-			} else if d := describeRuntimeValue(got); d != known.got {
+			} else if d := pinnedAs(name, got); d != known.got {
 				t.Errorf("%s was a known divergence answering %s, because %s; it now answers %s — "+
 					"still not the references', but not the one that was understood", name, known.got, known.why, d)
 			}
@@ -602,6 +623,25 @@ func runtimeMatches(t *testing.T, name string, want *runtimeRefValue, got fptype
 	// pass as compared. Reported as a mismatch rather than a Fatalf, so one
 	// unusual row does not stop every other definition from being compared.
 	return false, fmt.Sprintf("a %s, which this test cannot compare yet", want.Type)
+}
+
+// pinnedAs is how this engine's answer for a definition is compared with its
+// pin. A list from a definition whose order is not part of the answer
+// (unorderedRuntimeResults) has its elements sorted, so that a reordering the
+// specification allows does not read as a changed answer. Such a pin is
+// written in that sorted form — by the text of each element, so Integer(10)
+// before Integer(9) — and failures print it the same way.
+func pinnedAs(name string, v fptypes.Value) string {
+	list, isList := v.(cqltypes.List)
+	if unorderedRuntimeResults[name] == "" || !isList {
+		return describeRuntimeValue(v)
+	}
+	parts := make([]string, len(list.Values))
+	for i, e := range list.Values {
+		parts[i] = describeRuntimeValue(e)
+	}
+	sort.Strings(parts)
+	return "List[" + strings.Join(parts, ", ") + "]"
 }
 
 // describeRuntimeValue writes a value of this engine with its type, the way the
