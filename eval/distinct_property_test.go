@@ -43,7 +43,7 @@ func show(c fptypes.Collection) string {
 	return "[" + strings.Join(parts, ", ") + "]"
 }
 
-// TestBucketedDistinctAnswersAsTheQuadraticOne compares indexedDistinct, called
+// TestBucketedDistinctAnswersAsTheQuadraticOne compares indexedDistinctPositions, called
 // directly so that short lists reach it too, with the pairwise answer over random
 // collections of values chosen to cross the buckets and the quantity index:
 // numbers of both types and a dimensionless quantity that sameValue matches
@@ -167,9 +167,20 @@ func TestBucketedDistinctAnswersAsTheQuadraticOne(t *testing.T) {
 			c[j] = pool[rng.Intn(len(pool))]
 		}
 		want := quadraticDistinct(c)
-		got := indexedDistinct(c, make(fptypes.Collection, 0, len(c)))
-		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("distinct of %s\n  bucketed:  %s\n  quadratic: %s", show(c), show(got), show(want))
+		// Both ways to the positions: indexed, and distinctPositions, which
+		// compares a list this short pairwise. They have to keep the same
+		// values, and the same first occurrence of each.
+		for name, positions := range map[string][]int{
+			"indexed":           indexedDistinctPositions(c),
+			"distinctPositions": distinctPositions(c),
+		} {
+			got := make(fptypes.Collection, 0, len(c))
+			for _, at := range positions {
+				got = append(got, c[at])
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("distinct of %s\n  %s: %s\n  quadratic: %s", show(c), name, show(got), show(want))
+			}
 		}
 	}
 }

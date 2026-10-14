@@ -67,3 +67,9 @@ define MultiSourceReturn: from ({1, 1}) A, ({2}) B return A + B // control
 define MultiSourceNoReturn: from ({1, 1}) A, ({2}) B // control
 // One source and no return clause: the references disagree. See runtime.divergences.md.
 define NoReturn: ({1, 1, 2}) X
+
+// aggregate over the rows every filter keeps, with the lets they were kept with.
+define AggregateLetWithout: ({1, 2, 3}) X let L: X * 10 without ({2}) Y such that X = Y aggregate A starting 0: A + L // control
+define AggregateDistinctLetWith: ({1, 1, 2, 3}) X let L: X * 10 with ({1, 2}) Y such that X = Y aggregate distinct A starting 0: A + L // control
+define AggregateDistinctSources: from ({1, 1}) P, ({2, 2}) Q aggregate distinct S starting 0: S + P + Q // control
+define AggregateAllSources: from ({1, 1}) P, ({2, 2}) Q aggregate S starting 0: S + P + Q // control

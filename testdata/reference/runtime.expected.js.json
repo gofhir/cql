@@ -1,6 +1,6 @@
 {
   "library": "RuntimeProbe",
-  "sourceSha256": "32da3fe3f7e2d4615b8a163d6b4c7cd3730a56bd188b0f9a49b0214d4b9750ca",
+  "sourceSha256": "d6c4eb89a14922c624d810a0a0525c57524639a75c9de84cee973e0a08ea0a75",
   "engine": "cql-execution 3.3.2",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -327,6 +327,22 @@
           "value": "2"
         }
       ]
+    },
+    "AggregateLetWithout": {
+      "type": "Integer",
+      "value": "40"
+    },
+    "AggregateDistinctLetWith": {
+      "type": "Integer",
+      "value": "30"
+    },
+    "AggregateDistinctSources": {
+      "type": "Integer",
+      "value": "3"
+    },
+    "AggregateAllSources": {
+      "type": "Integer",
+      "value": "12"
     }
   }
 }

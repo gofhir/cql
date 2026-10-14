@@ -74,6 +74,11 @@ var runtimeReferences = []struct {
 			"QuantityEquivalent":  "it does not convert units: it answers false",
 			"DistinctQuantity":    "it does not convert units, and keeps both",
 			"AggDistinctQuantity": "it does not convert units, and answers 2",
+			// The engine fails reading a let from the aggregate expression:
+			// State.resolveVariable returns null for it. cql-execution and
+			// this engine both bind it.
+			"AggregateLetWithout":      "it fails resolving a let inside aggregate: a NullPointerException in State.resolveVariable",
+			"AggregateDistinctLetWith": "it fails resolving a let inside aggregate distinct, after a with: the same NullPointerException",
 		},
 	},
 	{
@@ -106,18 +111,11 @@ var knownRuntimeDivergences = map[string]struct {
 	why string
 }{
 	// The reference and the specification agree; this engine does not.
-	"WithAggregate":      {"Integer(6)", "the aggregate loop iterates the unfiltered product and reapplies only where"},
-	"WithoutAggregate":   {"Integer(6)", "same cause as WithAggregate"},
-	"UnionDuplicates":    {"List[Integer(1), Integer(1), Integer(2)]", "union keeps duplicates from one operand"},
-	"ExceptDuplicates":   {"List[Integer(1), Integer(1), Integer(2)]", "except keeps duplicates from the first operand"},
-	"AggDistinctNilNull": {"Integer(1)", "distinctCombos keys rows by String(): null and 'nil' collide"},
-	"AggDistinctPairs":   {"Integer(3)", "distinctCombos joins keys with a comma that the values can contain"},
-	"AggDistinctIntDec":  {"Integer(2)", "distinctCombos compares text, and 1 = 1.0"},
-	"AggDistinctOffsets": {"Integer(2)", "distinctCombos compares text, and the two are the same instant"},
-	"ListIntDec":         {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
+	"UnionDuplicates":  {"List[Integer(1), Integer(1), Integer(2)]", "union keeps duplicates from one operand"},
+	"ExceptDuplicates": {"List[Integer(1), Integer(1), Integer(2)]", "except keeps duplicates from the first operand"},
+	"ListIntDec":       {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
 	"SameDayAcrossOffsets": {"Boolean(false)", "values at different offsets are normalized to UTC; the " +
 		"specification normalizes to the evaluation offset, and only below day precision"},
-	"AggDistinctQuantity": {"Integer(2)", "distinctCombos compares text, and 1 'm' = 100 'cm'"},
 	"DecimalDivision": {"Decimal(3.3333333333333333)", "a quotient is not brought to the Decimal scale of 8; " +
 		"the specification gives the type a scale of 8, and both references answer 3.33333333"},
 }
@@ -171,7 +169,7 @@ var unorderedRuntimeResults = map[string]string{
 // The comparison is written here rather than borrowed from the engine: decimals
 // are compared with math/big, instants with time, and nothing goes through this
 // engine's String or Equal. An oracle that used them would inherit the defects
-// it exists to find — distinctCombos is wrong precisely because it trusted
+// it exists to find — aggregate distinct was wrong precisely because it trusted
 // String.
 func TestRuntimeMatchesTheReference(t *testing.T) {
 	src, err := os.ReadFile("testdata/reference/runtime.cql")
