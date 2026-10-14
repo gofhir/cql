@@ -1,0 +1,138 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.cqframework.cql.cql2elm.*;
+import org.hl7.elm.r1.ExpressionDef;
+import org.hl7.elm.r1.FunctionDef;
+import org.hl7.elm.r1.Library;
+import org.opencds.cqf.cql.engine.execution.CqlEngine;
+import org.opencds.cqf.cql.engine.execution.Environment;
+import org.opencds.cqf.cql.engine.runtime.*;
+import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import java.nio.file.*;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+/** Ejecuta cada definición con el engine de referencia y registra el valor
+ *  tipado, para que lo que el motor responde se compare contra un resultado
+ *  y no contra lo que uno cree que la spec dice.
+ *
+ *  La salida no pasa por nada de go-cql: un oráculo que usara su String() o su
+ *  igualdad heredaría los mismos defectos que tiene que encontrar. */
+public class Evaluate {
+    // Fijo, para que Now() y los DateTime sin offset no dependan de la máquina. No
+    // es UTC a propósito: un motor que tomara UTC por defecto en vez del offset de
+    // la evaluación respondería lo mismo, y la diferencia no se vería.
+    static final ZonedDateTime EVALUATION = ZonedDateTime.parse("2026-01-01T00:00:00-03:00");
+
+    public static void main(String[] args) throws Exception {
+        if (args.length < 1) {
+            System.err.println("uso: Evaluate <fichero.cql> [dir-de-librerias]");
+            System.exit(2);
+        }
+        Path file = Paths.get(args[0]);
+        Path dir = args.length > 1 ? Paths.get(args[1]) : file.getParent();
+        String text = Files.readString(file);
+
+        ModelManager models = new ModelManager();
+        LibraryManager libs = new LibraryManager(models);
+        // El texto va primero: el engine resuelve la raíz por su identificador,
+        // y el nombre del fichero no tiene por qué coincidir con él.
+        libs.getLibrarySourceLoader().registerProvider(new StringLibrarySourceProvider(List.of(text)));
+        libs.getLibrarySourceLoader().registerProvider(new DefaultLibrarySourceProvider(dir));
+        libs.getCqlCompilerOptions().setOptions(
+                CqlCompilerOptions.Options.EnableResultTypes,
+                CqlCompilerOptions.Options.EnableLocators);
+
+        CqlTranslator t = CqlTranslator.fromText(text, libs);
+        if (!t.getErrors().isEmpty()) {
+            // Igual que Translate: sin salida, para que un fallo de traducción
+            // nunca quede registrado como referencia.
+            for (Object e : t.getErrors()) System.err.println("ERROR: " + e);
+            System.exit(1);
+        }
+        Library lib = t.toELM();
+
+        CqlEngine engine = new CqlEngine(new Environment(libs));
+        Map<String, Object> results = new LinkedHashMap<>();
+        for (ExpressionDef def : lib.getStatements().getDef()) {
+            if (def instanceof FunctionDef || def.getName().equals("Patient")) continue;
+            Object entry;
+            try {
+                entry = encode(engine.evaluate(lib.getIdentifier(), Set.of(def.getName()), null, null, null, EVALUATION)
+                        .forExpression(def.getName()).value());
+            } catch (Exception | StackOverflowError e) {
+                // Un error es una respuesta: se registra, no aborta el resto. Una
+                // recursión sin fondo también, aunque Java no la cuente como Exception.
+                Map<String, Object> err = new LinkedHashMap<>();
+                err.put("error", e.getClass().getSimpleName());
+                err.put("message", String.valueOf(e.getMessage()));
+                entry = err;
+            }
+            results.put(def.getName(), entry);
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("library", lib.getIdentifier().getId());
+        // El hash ata la referencia al texto exacto: una definición editada sin
+        // regenerar se detecta, en vez de leerse como una divergencia del motor.
+        out.put("sourceSha256", HexFormat.of().formatHex(
+                MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file))));
+        out.put("engine", CqlEngine.class.getPackage().getImplementationVersion());
+        // ISO completo: toString() omite los segundos cuando son cero.
+        out.put("evaluationDateTime", EVALUATION.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        out.put("results", results);
+        System.out.println(new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(out));
+    }
+
+    /** Codifica un valor con su tipo CQL explícito. null es JSON null; una lista
+     *  vacía sigue siendo una lista, para no confundir las dos. Los números van
+     *  como texto, para que 1 y 1.0 no se vuelvan iguales al serializar. */
+    static Object encode(Object v) {
+        if (v == null) return null;
+        Map<String, Object> m = new LinkedHashMap<>();
+        if (v instanceof Boolean b) {
+            m.put("type", "Boolean"); m.put("value", b);
+        } else if (v instanceof Integer || v instanceof Long) {
+            m.put("type", v instanceof Integer ? "Integer" : "Long"); m.put("value", v.toString());
+        } else if (v instanceof BigDecimal d) {
+            m.put("type", "Decimal"); m.put("value", d.toPlainString());
+        } else if (v instanceof String s) {
+            m.put("type", "String"); m.put("value", s);
+        } else if (v instanceof Quantity q) {
+            m.put("type", "Quantity"); m.put("value", q.getValue().toPlainString()); m.put("unit", q.getUnit());
+        } else if (v instanceof DateTime d) {
+            // toString() es para leerlo: omite el offset en unas precisiones y lo
+            // agrega en otras. Lo que se compara es instant, ISO completo siempre.
+            m.put("type", "DateTime"); m.put("value", d.toString()); m.put("precision", d.getPrecision().toString());
+            m.put("offset", String.valueOf(d.getZoneOffset()));
+            m.put("instant", d.getDateTime().format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        } else if (v instanceof Date d) {
+            m.put("type", "Date"); m.put("value", d.toString()); m.put("precision", d.getPrecision().toString());
+        } else if (v instanceof Time d) {
+            m.put("type", "Time"); m.put("value", d.toString()); m.put("precision", d.getPrecision().toString());
+        } else if (v instanceof Interval i) {
+            m.put("type", "Interval");
+            m.put("low", encode(i.getLow())); m.put("lowClosed", i.getLowClosed());
+            m.put("high", encode(i.getHigh())); m.put("highClosed", i.getHighClosed());
+        } else if (v instanceof Tuple tu) {
+            Map<String, Object> el = new TreeMap<>();
+            tu.getElements().forEach((k, x) -> el.put(k, encode(x)));
+            m.put("type", "Tuple"); m.put("fields", el);
+        } else if (v instanceof Iterable<?> it) {
+            List<Object> el = new ArrayList<>();
+            for (Object x : it) el.add(encode(x));
+            m.put("type", "List"); m.put("elements", el);
+        } else {
+            // Sin codificación propia: se deja visible en vez de adivinarla.
+            m.put("type", "Unencoded:" + v.getClass().getName()); m.put("value", v.toString());
+        }
+        return m;
+    }
+}
