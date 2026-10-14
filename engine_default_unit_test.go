@@ -605,11 +605,12 @@ func TestANegativeStepExpandsNothing(t *testing.T) {
 		}
 	}
 
-	// And the runaway guard is still what stops a positive step that is merely
-	// very small, which is the case it was there for and which this does not
-	// replace.
-	if got := evalDefaultUnit(t, "Count(expand Interval[0.0, 1.0] per 0.00001)"); got != "10001" {
-		t.Errorf("a tiny positive step gives %s points, want the guard's 10001", got)
+	// And the size limit is still what stops a positive step that is merely
+	// very small, which is the case the guard was there for and which this does
+	// not replace. It stops it with an error: the guard used to answer the first
+	// 10001 points as though they were all of them.
+	if got := evalDefaultUnit(t, "Count(expand Interval[0.0, 1.0] per 0.00001)"); !strings.Contains(got, "too costly") {
+		t.Errorf("a tiny positive step gives %s, want the expand size limit's error", got)
 	}
 }
 

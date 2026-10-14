@@ -32,9 +32,6 @@ with each other they are two opinions on evaluation, and one on translation.
 | `AggDistinctOffsets` | 2 | 1 | 1 | the same instant; this engine's own `distinct` agrees |
 | `AggDistinctQuantity` | 2 | (not an oracle) | 1 | `1 'm' = 100 'cm'`; this engine's own `distinct` agrees |
 | `ListIntDec` | `{1, 1.0}`, Integer and Decimal | two Decimals | (not an oracle: the type is the translator's) | the translator converts the list to `List<Decimal>` |
-| `ExpandWeekPerMinute` | 10001 | 10080 | 10080 | the expansion has no length limit |
-| `ExpandThirtyYearsPerDay` | 10001 | 10958 | 10958 | same |
-| `ExpandIntegers` | 10001 | 100000 | 100000 | same |
 | `DecimalDivision` | 3.3333333333333333 | 3.33333333 | (not an oracle: 3.3333333333333335, binary floating point) | Decimal: "a precision ... of 28 and a scale (meaning number of possible digits to the right of the decimal) of 8" |
 | `SameDayAcrossOffsets` | false | true | true | Same As: "When comparing DateTime values with different timezone offsets, implementations should normalize to the timezone offset of the evaluation request timestamp, but only when the comparison precision is hours, minutes, seconds, or milliseconds" |
 
@@ -49,9 +46,6 @@ matters beyond printing: `10.0 / 3.0 = 3.33333333` is true in the Java engine
 and false here. It is false in cql-execution too, which divides in binary
 floating point. That runtime is not an oracle for decimal arithmetic, and its
 row is the Java engine and the specification alone.
-
-The three `Expand*` rows come from a guard in `funcs/interval_set.go`. It stops
-at 10001 elements and returns what it has, without an error.
 
 `SameDayAcrossOffsets` was already wrong before fhirpath v1.14. This engine
 normalizes both sides to UTC, which moves `23:00Z` into the next day. At day

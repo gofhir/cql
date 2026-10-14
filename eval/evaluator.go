@@ -788,7 +788,8 @@ func libraryName(lib *ast.Library) string {
 // message once the depth limit made ten thousand levels reachable. The limit
 // errors already say everything useful, so they are passed through untouched.
 func wrapUnlessLimit(err error, format string, args ...interface{}) error {
-	if errors.Is(err, ErrMaxDepthExceeded) || errors.Is(err, ErrMaxRetrieveSizeExceeded) {
+	if errors.Is(err, ErrMaxDepthExceeded) || errors.Is(err, ErrMaxRetrieveSizeExceeded) ||
+		errors.Is(err, ErrMaxExpandSizeExceeded) {
 		return err
 	}
 	return fmt.Errorf(fmt.Sprintf(format, args...)+": %w", err)
@@ -7131,7 +7132,7 @@ func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Val
 		// 2. expand { Interval[a, b] } → returns list of unit intervals
 		if iv, ok := asRange(operand); ok {
 			// Single interval overload — returns point values
-			points, err := funcs.IntervalExpandPoints(iv, perVal)
+			points, err := funcs.IntervalExpandPointsUpTo(iv, perVal, e.ctx.MaxExpandSize)
 			if err != nil {
 				return nil, err
 			}
@@ -7140,13 +7141,32 @@ func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Val
 		// List-of-intervals overload — returns unit intervals
 		c := toCollection(operand)
 		var result fptypes.Collection
+		limit := e.ctx.MaxExpandSize
 		for _, item := range c {
-			if iv, ok := item.(cqltypes.Interval); ok {
-				intervals, err := funcs.IntervalExpandIntervals(iv, perVal)
-				if err != nil {
-					return nil, err
+			iv, ok := item.(cqltypes.Interval)
+			if !ok {
+				continue
+			}
+			// The limit is on the whole expand: ten intervals of ninety
+			// thousand units are past it together. Each interval gets what is
+			// left of it, so no more than the limit is ever built; with nothing
+			// left, it gets one, and one element is still past the total, which
+			// the check after it catches.
+			budget := limit
+			if limit > 0 {
+				budget = max(limit-len(result), 1)
+			}
+			intervals, err := funcs.IntervalExpandIntervalsUpTo(iv, perVal, budget)
+			if err != nil {
+				if limit > 0 && errors.Is(err, funcs.ErrExpandTooLarge) {
+					// Reported against the whole limit, not this interval's share.
+					return nil, funcs.ExpandLimitError(limit)
 				}
-				result = append(result, intervals...)
+				return nil, err
+			}
+			result = append(result, intervals...)
+			if limit > 0 && len(result) > limit {
+				return nil, funcs.ExpandLimitError(limit)
 			}
 		}
 		return cqltypes.NewList(result), nil
