@@ -1620,17 +1620,19 @@ func sameValue(a, b fptypes.Value) bool {
 	return a.Equal(b)
 }
 
-func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
-	if v == nil {
-		for _, item := range c {
-			if item == nil {
-				return true
-			}
-		}
-		return false
+// nullSafeSame is the element equality of the collection operations: two
+// nulls are the same, a null and a value are not, and two values are compared
+// with sameValue.
+func nullSafeSame(a, b fptypes.Value) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
 	}
+	return sameValue(a, b)
+}
+
+func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
 	for _, item := range c {
-		if item != nil && sameValue(item, v) {
+		if nullSafeSame(item, v) {
 			return true
 		}
 	}
@@ -1769,40 +1771,64 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 // everything kept, as before.
 //
 // A bucket never decides that two values are equal. It only rules out pairs
-// that cannot be, which is where distinctCombos went wrong: it let a key of
+// that cannot be. Aggregate distinct used to get this wrong: it let a key of
 // text decide equality, merging values that differ and splitting values that
 // do not.
 func nullSafeDistinct(c fptypes.Collection) fptypes.Collection {
 	if len(c) <= 1 {
 		return c
 	}
-	result := make(fptypes.Collection, 0, len(c))
-	// A short list is cheaper to compare pairwise than to index: the buckets
-	// cost maps and keys, and most query results for one patient are short.
-	if len(c) <= distinctPairwiseUpTo {
-		for _, item := range c {
-			if !nullSafeContains(result, item) {
-				result = append(result, item)
-			}
-		}
-		return result
+	positions := distinctPositions(c)
+	result := make(fptypes.Collection, len(positions))
+	for i, at := range positions {
+		result[i] = c[at]
 	}
-	return indexedDistinct(c, result)
+	return result
 }
 
-// indexedDistinct is nullSafeDistinct for a list long enough to index,
-// appending to result. It is its own function so that it can be held to the
-// pairwise answer on lists of any length, short ones included.
-func indexedDistinct(c, result fptypes.Collection) fptypes.Collection {
+// distinctPositions is nullSafeDistinct answered as the positions of the
+// values it keeps, in order, for a caller that has to keep something else
+// alongside each value: aggregate distinct keeps the row the value came from.
+func distinctPositions(c fptypes.Collection) []int {
+	// A short list is cheaper to compare pairwise than to index: the buckets
+	// cost maps and keys, and most query results for one patient are short.
+	if len(c) > distinctPairwiseUpTo {
+		return indexedDistinctPositions(c)
+	}
+	var positions []int
+	for at, item := range c {
+		if !keptAlready(c, positions, item) {
+			positions = append(positions, at)
+		}
+	}
+	return positions
+}
+
+// keptAlready is nullSafeContains over the values of c at positions, read in
+// place rather than copied into a list of their own.
+func keptAlready(c fptypes.Collection, positions []int, item fptypes.Value) bool {
+	for _, at := range positions {
+		if nullSafeSame(c[at], item) {
+			return true
+		}
+	}
+	return false
+}
+
+// indexedDistinctPositions is distinctPositions for a list long enough to
+// index. It is its own function so that it can be held to the pairwise answer
+// on lists of any length, short ones included.
+func indexedDistinctPositions(c fptypes.Collection) []int {
+	var positions []int
 	buckets := make(map[string][]fptypes.Value)
 	quantities := newQuantityIndex()
 	var numbers, quantityValues, others []fptypes.Value
 	seenNull := false
-	for _, item := range c {
+	for at, item := range c {
 		if item == nil {
 			if !seenNull {
 				seenNull = true
-				result = append(result, nil)
+				positions = append(positions, at)
 			}
 			continue
 		}
@@ -1820,12 +1846,12 @@ func indexedDistinct(c, result fptypes.Collection) fptypes.Collection {
 		case isQuantity:
 			dup = quantities.holds(q) || containsSameValue(numbers, item) || containsSameValue(others, item)
 		default:
-			dup = nullSafeContains(result, item)
+			dup = keptAlready(c, positions, item)
 		}
 		if dup {
 			continue
 		}
-		result = append(result, item)
+		positions = append(positions, at)
 		switch {
 		case bucketed:
 			buckets[key] = append(buckets[key], item)
@@ -1839,10 +1865,10 @@ func indexedDistinct(c, result fptypes.Collection) fptypes.Collection {
 			others = append(others, item)
 		}
 	}
-	return result
+	return positions
 }
 
-// distinctPairwiseUpTo is the length up to which nullSafeDistinct compares
+// distinctPairwiseUpTo is the length up to which distinctPositions compares
 // pairwise. Measured with BenchmarkEvaluateMeasureShapedLibrary: indexing
 // every list cost about a tenth of an evaluation in allocations alone.
 const distinctPairwiseUpTo = 32
@@ -4646,6 +4672,28 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	// from it are plain data — so rebinding is equivalent to the enter/exit scope
 	// a stack-based resolver would do.
 	var results fptypes.Collection
+	// An aggregate reduces the rows every filter let through, here where with,
+	// without and where have been applied, instead of reading them back from
+	// the unfiltered product, which reapplied only where. A plain aggregate
+	// reduces each row as it passes. `aggregate distinct` has to see them all
+	// first, so it keeps each with the lets it was filtered with and its index:
+	// the reduction then neither evaluates a let a second time nor sees the row
+	// under another index. The index is the row's place in the product, as its
+	// lets and filters saw it; `$index` is this engine's, since the reference
+	// translator refuses it in a query.
+	type aggregatedRow struct {
+		combo queryCombo
+		lets  map[string]fptypes.Value
+		index int
+	}
+	var aggregated []aggregatedRow
+	var accumulator fptypes.Value
+	if n.Aggregate != nil && n.Aggregate.Starting != nil {
+		var err error
+		if accumulator, err = e.Eval(n.Aggregate.Starting); err != nil {
+			return nil, err
+		}
+	}
 	child := e.ctx.ChildScope()
 	childEval := e.withContext(child)
 	for i, c := range combos {
@@ -4709,88 +4757,85 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 			}
 		}
 
-		// Apply return clause or use the item directly
-		if n.Aggregate == nil {
-			switch {
-			case n.Return != nil:
-				val, err := childEval.Eval(n.Return.Expression)
-				if err != nil {
-					return nil, err
+		if n.Aggregate != nil {
+			if n.Aggregate.Distinct {
+				var lets map[string]fptypes.Value
+				if len(child.LetBindings) > 0 {
+					lets = maps.Clone(child.LetBindings)
 				}
-				// Appended whatever it evaluated to, null included. A query
-				// produces one element per source row, and dropping the nulls
-				// made the list shorter than the thing it describes: three
-				// observations where one has no value returned two elements, so
-				// Count answered 2.
-				//
-				// The two branches below never filtered, and a list written by
-				// hand keeps its nulls — `{null, true}` has two elements here.
-				// `return all` settles it: its purpose is to remove nothing,
-				// since `return` alone means `return distinct`, so a `return all`
-				// that removes elements does the one thing the keyword rules out.
-				// Under `return` alone the distinct below does collapse repeated
-				// nulls into one, as distinct does everywhere.
-				results = append(results, val)
-			case len(n.Sources) > 1:
-				// Multi-source query without return: produce a Tuple with all aliases
-				tupleElems := make(map[string]fptypes.Value, len(n.Sources))
-				for _, src := range n.Sources {
-					tupleElems[src.Alias] = c.aliases[src.Alias]
-				}
-				results = append(results, cqltypes.NewTuple(tupleElems))
-			default:
-				results = append(results, child.This)
+				aggregated = append(aggregated, aggregatedRow{combo: c, lets: lets, index: i})
+				continue
 			}
-		}
-	}
-
-	// Handle aggregate clause - reduction over filtered combos
-	if n.Aggregate != nil {
-		// Evaluate the starting value
-		var accumulator fptypes.Value
-		if n.Aggregate.Starting != nil {
-			var err error
-			accumulator, err = e.Eval(n.Aggregate.Starting)
+			child.Aliases[n.Aggregate.Identifier] = accumulator
+			val, err := childEval.Eval(n.Aggregate.Expression)
 			if err != nil {
 				return nil, err
 			}
+			accumulator = val
+			continue
 		}
 
-		// Apply distinct to the cartesian product combos if requested
-		aggCombos := combos
+		// Apply return clause or use the item directly
+		switch {
+		case n.Return != nil:
+			val, err := childEval.Eval(n.Return.Expression)
+			if err != nil {
+				return nil, err
+			}
+			// Appended whatever it evaluated to, null included. A query
+			// produces one element per source row, and dropping the nulls
+			// made the list shorter than the thing it describes: three
+			// observations where one has no value returned two elements, so
+			// Count answered 2.
+			//
+			// The two branches below never filtered, and a list written by
+			// hand keeps its nulls — `{null, true}` has two elements here.
+			// `return all` settles it: its purpose is to remove nothing,
+			// since `return` alone means `return distinct`, so a `return all`
+			// that removes elements does the one thing the keyword rules out.
+			// Under `return` alone the distinct below does collapse repeated
+			// nulls into one, as distinct does everywhere.
+			results = append(results, val)
+		case len(n.Sources) > 1:
+			// Multi-source query without return: a Tuple with all aliases
+			results = append(results, queryRowValue(c, n.Sources))
+		default:
+			results = append(results, child.This)
+		}
+	}
+
+	// A plain aggregate is already reduced; `aggregate distinct` reduces here.
+	if n.Aggregate != nil {
+		// `aggregate distinct` reduces each distinct row once. A row is the
+		// value of its one source, or a Tuple of its sources' values, and rows
+		// are compared as distinct compares anything: by sameValue, not by
+		// their text, which merged 'nil' with null and split 1 from 1.0.
 		if n.Aggregate.Distinct {
-			aggCombos = distinctCombos(aggCombos, n.Sources)
+			rows := make(fptypes.Collection, len(aggregated))
+			for i, row := range aggregated {
+				rows[i] = queryRowValue(row.combo, n.Sources)
+			}
+			positions := distinctPositions(rows)
+			distinct := make([]aggregatedRow, len(positions))
+			for i, at := range positions {
+				distinct[i] = aggregated[at]
+			}
+			aggregated = distinct
 		}
 
-		for i, c := range aggCombos {
-			child := e.ctx.ChildScope()
-			for alias, val := range c.aliases {
-				child.Aliases[alias] = val
+		// One scope rebound per row, as the filtering loop does, and for the
+		// same reason.
+		for _, row := range aggregated {
+			if err := e.ctx.checkCanceled(); err != nil {
+				return nil, err
 			}
-			child.This = c.aliases[n.Sources[0].Alias]
-			child.Index = i
+			clear(child.Aliases)
+			clear(child.LetBindings)
+			maps.Copy(child.Aliases, row.combo.aliases)
+			maps.Copy(child.LetBindings, row.lets)
+			child.This = row.combo.aliases[n.Sources[0].Alias]
+			child.Index = row.index
 			child.Aliases[n.Aggregate.Identifier] = accumulator
-
-			// Process let bindings
-			childEval := e.withContext(child)
-			for _, let := range n.Let {
-				val, err := childEval.Eval(let.Expression)
-				if err != nil {
-					return nil, err
-				}
-				child.LetBindings[let.Identifier] = val
-			}
-
-			// Apply where filter
-			if n.Where != nil {
-				cond, err := childEval.Eval(n.Where)
-				if err != nil {
-					return nil, err
-				}
-				if !isTrue(cond) {
-					continue
-				}
-			}
 
 			val, err := childEval.Eval(n.Aggregate.Expression)
 			if err != nil {
@@ -4884,26 +4929,17 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	return cqltypes.NewList(results), nil
 }
 
-// distinctCombos removes duplicate alias combinations based on value equality.
-func distinctCombos(combos []queryCombo, sources []*ast.AliasedSource) []queryCombo {
-	var result []queryCombo
-	seen := make(map[string]bool)
-	for _, c := range combos {
-		var key string
-		for _, src := range sources {
-			v := c.aliases[src.Alias]
-			if v == nil {
-				key += "nil,"
-			} else {
-				key += v.String() + ","
-			}
-		}
-		if !seen[key] {
-			seen[key] = true
-			result = append(result, c)
-		}
+// queryRowValue is the value of one row of a query: its one source's value, or
+// a Tuple of every source's, as a query over several sources returns it.
+func queryRowValue(c queryCombo, sources []*ast.AliasedSource) fptypes.Value {
+	if len(sources) == 1 {
+		return c.aliases[sources[0].Alias]
 	}
-	return result
+	elements := make(map[string]fptypes.Value, len(sources))
+	for _, src := range sources {
+		elements[src.Alias] = c.aliases[src.Alias]
+	}
+	return cqltypes.NewTuple(elements)
 }
 
 // modelDeclaresElement reports whether a type declares an element.
@@ -5101,14 +5137,37 @@ func compareValues(a, b fptypes.Value) (int, error) {
 }
 
 func (e *Evaluator) evalWithClause(w *ast.WithClause) (bool, error) {
-	source, err := e.Eval(w.Source.Source)
+	return e.relationshipMatches(w.Source, w.Condition)
+}
+
+func (e *Evaluator) evalWithoutClause(w *ast.WithoutClause) (bool, error) {
+	matched, err := e.relationshipMatches(w.Source, w.Condition)
+	return !matched, err // without: exclude if any match
+}
+
+// relationshipMatches reports whether some item of a with or without source
+// satisfies its such-that condition.
+//
+// The alias is bound only while the condition is evaluated, then put back as
+// it was: it is the condition's, not the query's. Left bound, it reached the
+// where, return, sort and aggregate clauses evaluated after it, holding
+// whichever item was tried last.
+func (e *Evaluator) relationshipMatches(src *ast.AliasedSource, condition ast.Expression) (bool, error) {
+	source, err := e.Eval(src.Source)
 	if err != nil {
 		return false, err
 	}
-	items := toCollection(source)
-	for _, item := range items {
-		e.ctx.Aliases[w.Source.Alias] = item
-		cond, err := e.Eval(w.Condition)
+	previous, wasBound := e.ctx.Aliases[src.Alias]
+	defer func() {
+		if wasBound {
+			e.ctx.Aliases[src.Alias] = previous
+		} else {
+			delete(e.ctx.Aliases, src.Alias)
+		}
+	}()
+	for _, item := range toCollection(source) {
+		e.ctx.Aliases[src.Alias] = item
+		cond, err := e.Eval(condition)
 		if err != nil {
 			return false, err
 		}
@@ -5117,25 +5176,6 @@ func (e *Evaluator) evalWithClause(w *ast.WithClause) (bool, error) {
 		}
 	}
 	return false, nil
-}
-
-func (e *Evaluator) evalWithoutClause(w *ast.WithoutClause) (bool, error) {
-	source, err := e.Eval(w.Source.Source)
-	if err != nil {
-		return false, err
-	}
-	items := toCollection(source)
-	for _, item := range items {
-		e.ctx.Aliases[w.Source.Alias] = item
-		cond, err := e.Eval(w.Condition)
-		if err != nil {
-			return false, err
-		}
-		if isTrue(cond) {
-			return false, nil // without: exclude if any match
-		}
-	}
-	return true, nil
 }
 
 // ---------------------------------------------------------------------------

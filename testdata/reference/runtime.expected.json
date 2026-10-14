@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "32da3fe3f7e2d4615b8a163d6b4c7cd3730a56bd188b0f9a49b0214d4b9750ca",
+  "sourceSha256" : "d6c4eb89a14922c624d810a0a0525c57524639a75c9de84cee973e0a08ea0a75",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -288,6 +288,22 @@
         "type" : "Integer",
         "value" : "2"
       } ]
+    },
+    "AggregateLetWithout" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression AggregateLetWithout: Cannot invoke \"org.opencds.cqf.cql.engine.execution.Variable.getValue()\" because the return value of \"org.opencds.cqf.cql.engine.execution.State.resolveVariable(String)\" is null"
+    },
+    "AggregateDistinctLetWith" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression AggregateDistinctLetWith: Cannot invoke \"org.opencds.cqf.cql.engine.execution.Variable.getValue()\" because the return value of \"org.opencds.cqf.cql.engine.execution.State.resolveVariable(String)\" is null"
+    },
+    "AggregateDistinctSources" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "AggregateAllSources" : {
+      "type" : "Integer",
+      "value" : "12"
     }
   }
 }
