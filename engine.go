@@ -28,6 +28,7 @@ import (
 	"github.com/gofhir/cql/compiler"
 	"github.com/gofhir/cql/eval"
 	"github.com/gofhir/cql/fhirhelpers"
+	"github.com/gofhir/cql/funcs"
 	"github.com/gofhir/cql/model"
 	"github.com/gofhir/cql/sema"
 )
@@ -47,6 +48,7 @@ type Engine struct {
 	maxExpressionLen    int
 	evalTimeout         time.Duration
 	maxRetrieveSize     int
+	maxExpandSize       int
 	maxDepth            int
 	modelInfoExplicit   bool // caller supplied a model; do not second-guess it
 	evaluationTimestamp time.Time
@@ -101,6 +103,22 @@ func WithTimeout(d time.Duration) Option {
 func WithMaxRetrieveSize(n int) Option {
 	return func(e *Engine) {
 		e.maxRetrieveSize = n
+	}
+}
+
+// WithMaxExpandSize sets the maximum number of elements one expand may produce,
+// across all the intervals it expands. An expand past it fails with
+// ErrTooCostly rather than returning the elements it reached: an expansion that
+// stops short is a wrong answer that looks like a right one. The default is
+// funcs.DefaultMaxExpandSize, 100000: a year per hour, or a day per second.
+//
+// The limit is on each expand, as WithMaxRetrieveSize's is on each retrieve,
+// not on the evaluation: an expand inside a query is a new expand for every
+// row. Zero or less disables it, and an expansion as large as its interval asks
+// for may then take the process's memory with it.
+func WithMaxExpandSize(n int) Option {
+	return func(e *Engine) {
+		e.maxExpandSize = n
 	}
 }
 
@@ -246,6 +264,7 @@ func NewEngine(opts ...Option) *Engine {
 		maxExpressionLen:   100 * 1024, // 100KB default
 		evalTimeout:        30 * time.Second,
 		maxRetrieveSize:    10000,
+		maxExpandSize:      funcs.DefaultMaxExpandSize,
 		// Measured, not guessed: a 100-term `or` chain and a chain of 50 defines
 		// each reach depth ~100, and both are ordinary clinical CQL. The limit
 		// exists to stop runaway recursion — `define A: A` crashed the process
@@ -524,6 +543,7 @@ func (e *Engine) newEvalContext(
 	evalCtx.QuantityConverter = e.quantityConverter
 	evalCtx.MaxDepth = e.maxDepth
 	evalCtx.MaxRetrieveSize = e.maxRetrieveSize
+	evalCtx.MaxExpandSize = e.maxExpandSize
 
 	var cfg evalConfig
 	for _, opt := range evalOpts {
@@ -582,7 +602,8 @@ func (e *Engine) classifyEvalError(ctx context.Context, err error) error {
 	if ctx.Err() == context.DeadlineExceeded {
 		return &ErrTimeout{Duration: e.evalTimeout}
 	}
-	if errors.Is(err, eval.ErrMaxDepthExceeded) || errors.Is(err, eval.ErrMaxRetrieveSizeExceeded) {
+	if errors.Is(err, eval.ErrMaxDepthExceeded) || errors.Is(err, eval.ErrMaxRetrieveSizeExceeded) ||
+		errors.Is(err, eval.ErrMaxExpandSizeExceeded) {
 		return &ErrTooCostly{Msg: err.Error()}
 	}
 	return &ErrEvaluation{Cause: err}

@@ -12,6 +12,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
+	"github.com/gofhir/cql/funcs"
 	"github.com/gofhir/cql/model"
 	"github.com/gofhir/cql/sema"
 	cqltypes "github.com/gofhir/cql/types"
@@ -130,6 +131,10 @@ var (
 	// ErrMaxRetrieveSizeExceeded reports that a retrieve returned more
 	// resources than MaxRetrieveSize allows.
 	ErrMaxRetrieveSizeExceeded = errors.New("maximum retrieve size exceeded")
+	// ErrMaxExpandSizeExceeded reports that an expand would produce more
+	// elements than MaxExpandSize allows. It is funcs.ErrExpandTooLarge, so
+	// the error the expansion returns is this one.
+	ErrMaxExpandSizeExceeded = funcs.ErrExpandTooLarge
 	// ErrContextSubjectUnusable reports that a context resource was supplied
 	// but no subject id could be read from it. Evaluating on regardless would
 	// send an unscoped retrieve, which is indistinguishable from a deliberate
@@ -217,6 +222,9 @@ type Context struct {
 	// means unbounded for either.
 	MaxDepth        int
 	MaxRetrieveSize int
+	// MaxExpandSize bounds how many elements an expand may produce, all the
+	// intervals of one expand together. Zero means unbounded.
+	MaxExpandSize int
 
 	// depth counts the Eval calls currently on the stack. It is a pointer so
 	// that every scope of one evaluation shares the same counter: ChildScope
@@ -329,6 +337,10 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 		GoCtx:               goCtx,
 		Library:             lib,
 		EvaluationTimestamp: time.Now(),
+		// The expansion limit starts on, unlike the other two: expand had a
+		// guard of its own before the limit existed, and a Context built
+		// without the Engine should not lose it. The Engine sets its own.
+		MaxExpandSize:       funcs.DefaultMaxExpandSize,
 		depth:               new(int),
 		evalTicks:           new(int),
 		libraryScopes:       make(map[*ast.Library]*Context),
@@ -555,6 +567,7 @@ func (c *Context) ChildScope() *Context {
 		LetBindings:         make(map[string]fptypes.Value),
 		MaxDepth:            c.MaxDepth,
 		MaxRetrieveSize:     c.MaxRetrieveSize,
+		MaxExpandSize:       c.MaxExpandSize,
 		EvaluationTimestamp: c.EvaluationTimestamp,
 		StatementContext:    c.StatementContext,
 		depth:               c.depth,

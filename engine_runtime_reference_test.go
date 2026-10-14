@@ -106,18 +106,15 @@ var knownRuntimeDivergences = map[string]struct {
 	why string
 }{
 	// The reference and the specification agree; this engine does not.
-	"WithAggregate":           {"Integer(6)", "the aggregate loop iterates the unfiltered product and reapplies only where"},
-	"WithoutAggregate":        {"Integer(6)", "same cause as WithAggregate"},
-	"UnionDuplicates":         {"List[Integer(1), Integer(1), Integer(2)]", "union keeps duplicates from one operand"},
-	"ExceptDuplicates":        {"List[Integer(1), Integer(1), Integer(2)]", "except keeps duplicates from the first operand"},
-	"AggDistinctNilNull":      {"Integer(1)", "distinctCombos keys rows by String(): null and 'nil' collide"},
-	"AggDistinctPairs":        {"Integer(3)", "distinctCombos joins keys with a comma that the values can contain"},
-	"AggDistinctIntDec":       {"Integer(2)", "distinctCombos compares text, and 1 = 1.0"},
-	"AggDistinctOffsets":      {"Integer(2)", "distinctCombos compares text, and the two are the same instant"},
-	"ListIntDec":              {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
-	"ExpandWeekPerMinute":     {"Integer(10001)", "expand stops at 10001 elements without an error"},
-	"ExpandThirtyYearsPerDay": {"Integer(10001)", "same guard as ExpandWeekPerMinute"},
-	"ExpandIntegers":          {"Integer(10001)", "same guard as ExpandWeekPerMinute"},
+	"WithAggregate":      {"Integer(6)", "the aggregate loop iterates the unfiltered product and reapplies only where"},
+	"WithoutAggregate":   {"Integer(6)", "same cause as WithAggregate"},
+	"UnionDuplicates":    {"List[Integer(1), Integer(1), Integer(2)]", "union keeps duplicates from one operand"},
+	"ExceptDuplicates":   {"List[Integer(1), Integer(1), Integer(2)]", "except keeps duplicates from the first operand"},
+	"AggDistinctNilNull": {"Integer(1)", "distinctCombos keys rows by String(): null and 'nil' collide"},
+	"AggDistinctPairs":   {"Integer(3)", "distinctCombos joins keys with a comma that the values can contain"},
+	"AggDistinctIntDec":  {"Integer(2)", "distinctCombos compares text, and 1 = 1.0"},
+	"AggDistinctOffsets": {"Integer(2)", "distinctCombos compares text, and the two are the same instant"},
+	"ListIntDec":         {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
 	"SameDayAcrossOffsets": {"Boolean(false)", "values at different offsets are normalized to UTC; the " +
 		"specification normalizes to the evaluation offset, and only below day precision"},
 	"AggDistinctQuantity": {"Integer(2)", "distinctCombos compares text, and 1 'm' = 100 'cm'"},

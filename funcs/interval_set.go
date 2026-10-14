@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -351,7 +352,7 @@ func IntervalCollapse(intervals []cqltypes.Interval, perVal fptypes.Value) ([]cq
 // The middle two are the reason this is not left alone: every value they produce
 // lies outside the interval that was asked about, and the temporal one reports
 // intervals whose high bound precedes their low. Ten thousand of each, because
-// only the runaway guard stops them.
+// only the runaway guard of the time stopped them.
 //
 // The empty list is the answer the four now share. It is the only one that does
 // not invent something: normalizing to 1 reads `per -1` as `per 1`, which is a
@@ -374,10 +375,52 @@ func expandGetStep(perVal fptypes.Value) (amount decimal.Decimal, unit string, u
 	return amount, unit, !amount.IsNegative()
 }
 
-// IntervalExpandPoints expands an interval into a list of point values (single-interval overload).
-// expand Interval[1, 10] → {1, 2, 3, ..., 10}
-// expand Interval[1, 10] per 2 → {1, 3, 5, 7, 9}
+// DefaultMaxExpandSize is the largest expansion IntervalExpandPoints and
+// IntervalExpandIntervals produce. It is large enough for a year per hour or a
+// day per second, and small enough that an expansion asked of an interval of a
+// trillion points fails instead of taking the process's memory with it.
+const DefaultMaxExpandSize = 100000
+
+// ErrExpandTooLarge is the error an expansion past its limit ends with. It used
+// to stop at 10001 elements and return them as the answer, so a week per minute
+// had 10001 minutes in it, not 10080, and Count over it said so without an
+// error: a result that is wrong in silence, which is the one thing a limit must
+// not produce. A retrieve past its limit already failed rather than truncate.
+var ErrExpandTooLarge = errors.New("expand would produce more elements than the limit")
+
+// ExpandLimitError reports an expansion that reached limit and has more to go.
+// It wraps ErrExpandTooLarge, and is exported so that a caller limiting
+// several expansions together reports the limit in the same words.
+func ExpandLimitError(limit int) error {
+	return fmt.Errorf("%w (%d)", ErrExpandTooLarge, limit)
+}
+
+// passes reports whether v + n lies past hi, for v <= hi and n >= 0, without
+// computing v + n. Near the top of the Integer range that sum wraps round below
+// hi, and an integer walk that tested it never ended: the old element cap was
+// what stopped it. hi - v read unsigned is the distance, exact whenever v <= hi.
+func passes(v, hi, n int64) bool {
+	return uint64(hi)-uint64(v) < uint64(n) //nolint:gosec // two's-complement distance, exact for v <= hi, n >= 0
+}
+
+// overLimit reports whether a result of n elements is past limit. A limit of
+// zero or less is none.
+func overLimit(n, limit int) bool {
+	return limit > 0 && n > limit
+}
+
+// IntervalExpandPoints is IntervalExpandPointsUpTo at DefaultMaxExpandSize.
 func IntervalExpandPoints(interval cqltypes.Interval, perVal fptypes.Value) (fptypes.Collection, error) {
+	return IntervalExpandPointsUpTo(interval, perVal, DefaultMaxExpandSize)
+}
+
+// IntervalExpandPointsUpTo expands an interval into a list of point values
+// (the single-interval overload), failing with ErrExpandTooLarge when there are
+// more than limit of them. A limit of zero or less is none.
+//
+//	expand Interval[1, 10]        → {1, 2, 3, ..., 10}
+//	expand Interval[1, 10] per 2  → {1, 3, 5, 7, 9}
+func IntervalExpandPointsUpTo(interval cqltypes.Interval, perVal fptypes.Value, limit int) (fptypes.Collection, error) {
 	if interval.Low == nil || interval.High == nil {
 		return nil, nil
 	}
@@ -395,7 +438,7 @@ func IntervalExpandPoints(interval cqltypes.Interval, perVal fptypes.Value) (fpt
 				// For integer bounds with decimal per, the effective high is hi + 1 - per
 				// because integer 10 occupies [10.0, 10.9] at 0.1 precision
 				effHi := decimal.NewFromInt(hi.Value()).Add(decimal.NewFromInt(1)).Sub(perAmount)
-				return expandDecimalPoints(lo, effHi, interval.LowClosed, interval.HighClosed, perAmount)
+				return expandDecimalPoints(lo, effHi, interval.LowClosed, interval.HighClosed, perAmount, limit)
 			}
 			step := int64(1)
 			if !perAmount.IsZero() {
@@ -414,16 +457,18 @@ func IntervalExpandPoints(interval cqltypes.Interval, perVal fptypes.Value) (fpt
 			}
 			var result fptypes.Collection
 			for v := lo; v <= hi; v += step {
-				// For step > 1, the point represents a range [v, v+step-1]
-				// Only include if the end of that range is within bounds
-				if step > 1 {
-					end := v + step - 1
-					if end > hi {
-						break
-					}
+				// For step > 1, the point represents a range [v, v+step-1].
+				// Only include it if the end of that range is within bounds,
+				// asked without computing the end: near the top of the Long
+				// range v + step - 1 wraps round below hi.
+				if step > 1 && passes(v, hi, step-1) {
+					break
 				}
 				result = append(result, fptypes.NewInteger(v))
-				if len(result) > 10000 {
+				if overLimit(len(result), limit) {
+					return nil, ExpandLimitError(limit)
+				}
+				if passes(v, hi, step) {
 					break
 				}
 			}
@@ -438,13 +483,13 @@ func IntervalExpandPoints(interval cqltypes.Interval, perVal fptypes.Value) (fpt
 			if !perAmount.IsZero() {
 				step = perAmount
 			}
-			return expandDecimalPoints(ld.Value(), hd.Value(), interval.LowClosed, interval.HighClosed, step)
+			return expandDecimalPoints(ld.Value(), hd.Value(), interval.LowClosed, interval.HighClosed, step, limit)
 		}
 	}
 
 	// Quantity intervals, which are the decimal case wearing a unit.
 	if lo, hi, step, unit, ok := quantityExpansion(interval, perAmount, perUnit); ok {
-		points, err := expandDecimalPoints(lo, hi, interval.LowClosed, interval.HighClosed, step)
+		points, err := expandDecimalPoints(lo, hi, interval.LowClosed, interval.HighClosed, step, limit)
 		if err != nil {
 			return nil, err
 		}
@@ -453,20 +498,20 @@ func IntervalExpandPoints(interval cqltypes.Interval, perVal fptypes.Value) (fpt
 
 	// DateTime/Date intervals
 	if _, ok := interval.Low.(fptypes.DateTime); ok {
-		return expandTemporalPoints(interval, perAmount, perUnit)
+		return expandTemporalPoints(interval, perAmount, perUnit, limit)
 	}
 	if _, ok := interval.Low.(fptypes.Date); ok {
-		return expandTemporalPoints(interval, perAmount, perUnit)
+		return expandTemporalPoints(interval, perAmount, perUnit, limit)
 	}
 	// Time intervals
 	if _, ok := interval.Low.(fptypes.Time); ok {
-		return expandTemporalPoints(interval, perAmount, perUnit)
+		return expandTemporalPoints(interval, perAmount, perUnit, limit)
 	}
 
 	return nil, nil
 }
 
-func expandDecimalPoints(lo, hi decimal.Decimal, lowClosed, highClosed bool, step decimal.Decimal) (fptypes.Collection, error) {
+func expandDecimalPoints(lo, hi decimal.Decimal, lowClosed, highClosed bool, step decimal.Decimal, limit int) (fptypes.Collection, error) {
 	// For decimals, the effective bounds are based on the original interval bounds
 	// Open bounds exclude the boundary value, but we step from the low
 	effLo := lo
@@ -492,8 +537,8 @@ func expandDecimalPoints(lo, hi decimal.Decimal, lowClosed, highClosed bool, ste
 			break
 		}
 		result = append(result, dv)
-		if len(result) > 10000 {
-			break
+		if overLimit(len(result), limit) {
+			return nil, ExpandLimitError(limit)
 		}
 	}
 	return result, nil
@@ -580,10 +625,18 @@ func quantityBound(v fptypes.Value, unit string) fptypes.Value {
 	return v
 }
 
-// IntervalExpandIntervals expands an interval into a list of unit intervals (list-of-intervals overload).
-// expand { Interval[1, 10] } → {Interval[1,1], Interval[2,2], ..., Interval[10,10]}
-// expand { Interval[1, 10] } per 2 → {Interval[1,2], Interval[3,4], ..., Interval[9,10]}
+// IntervalExpandIntervals is IntervalExpandIntervalsUpTo at DefaultMaxExpandSize.
 func IntervalExpandIntervals(interval cqltypes.Interval, perVal fptypes.Value) (fptypes.Collection, error) {
+	return IntervalExpandIntervalsUpTo(interval, perVal, DefaultMaxExpandSize)
+}
+
+// IntervalExpandIntervalsUpTo expands an interval into a list of unit intervals
+// (the list-of-intervals overload), failing with ErrExpandTooLarge when there
+// are more than limit of them. A limit of zero or less is none.
+//
+//	expand { Interval[1, 10] }        → {Interval[1,1], Interval[2,2], ..., Interval[10,10]}
+//	expand { Interval[1, 10] } per 2  → {Interval[1,2], Interval[3,4], ..., Interval[9,10]}
+func IntervalExpandIntervalsUpTo(interval cqltypes.Interval, perVal fptypes.Value, limit int) (fptypes.Collection, error) {
 	if interval.Low == nil || interval.High == nil {
 		return nil, nil
 	}
@@ -599,7 +652,7 @@ func IntervalExpandIntervals(interval cqltypes.Interval, perVal fptypes.Value) (
 			if !perAmount.IsZero() && !perAmount.Equal(perAmount.Truncate(0)) {
 				lo := decimal.NewFromInt(li.Value())
 				effHi := decimal.NewFromInt(hi.Value()).Add(decimal.NewFromInt(1)).Sub(perAmount)
-				return expandDecimalIntervals(lo, effHi, interval.LowClosed, interval.HighClosed, perAmount)
+				return expandDecimalIntervals(lo, effHi, interval.LowClosed, interval.HighClosed, perAmount, limit)
 			}
 			step := int64(1)
 			if !perAmount.IsZero() {
@@ -618,16 +671,18 @@ func IntervalExpandIntervals(interval cqltypes.Interval, perVal fptypes.Value) (
 			}
 			var result fptypes.Collection
 			for v := lo; v <= hi; v += step {
-				end := v + step - 1
-				if end > hi {
+				end := hi
+				if !passes(v, hi, step-1) {
+					end = v + step - 1
+				} else if step > 1 {
 					// For step > 1, exclude the last incomplete interval
-					if step > 1 {
-						break
-					}
-					end = hi
+					break
 				}
 				result = append(result, cqltypes.NewInterval(fptypes.NewInteger(v), fptypes.NewInteger(end), true, true))
-				if len(result) > 10000 {
+				if overLimit(len(result), limit) {
+					return nil, ExpandLimitError(limit)
+				}
+				if passes(v, hi, step) {
 					break
 				}
 			}
@@ -642,14 +697,14 @@ func IntervalExpandIntervals(interval cqltypes.Interval, perVal fptypes.Value) (
 			if !perAmount.IsZero() {
 				step = perAmount
 			}
-			return expandDecimalIntervals(ld.Value(), hd.Value(), interval.LowClosed, interval.HighClosed, step)
+			return expandDecimalIntervals(ld.Value(), hd.Value(), interval.LowClosed, interval.HighClosed, step, limit)
 		}
 	}
 
 	// Quantity intervals, reduced the same way and by the same helper, so the two
 	// overloads cannot come to disagree about what a quantity step means.
 	if lo, hi, step, unit, ok := quantityExpansion(interval, perAmount, perUnit); ok {
-		ivals, err := expandDecimalIntervals(lo, hi, interval.LowClosed, interval.HighClosed, step)
+		ivals, err := expandDecimalIntervals(lo, hi, interval.LowClosed, interval.HighClosed, step, limit)
 		if err != nil {
 			return nil, err
 		}
@@ -658,20 +713,20 @@ func IntervalExpandIntervals(interval cqltypes.Interval, perVal fptypes.Value) (
 
 	// DateTime/Date intervals
 	if _, ok := interval.Low.(fptypes.DateTime); ok {
-		return expandTemporalIntervals(interval, perAmount, perUnit)
+		return expandTemporalIntervals(interval, perAmount, perUnit, limit)
 	}
 	if _, ok := interval.Low.(fptypes.Date); ok {
-		return expandTemporalIntervals(interval, perAmount, perUnit)
+		return expandTemporalIntervals(interval, perAmount, perUnit, limit)
 	}
 	// Time intervals
 	if _, ok := interval.Low.(fptypes.Time); ok {
-		return expandTemporalIntervals(interval, perAmount, perUnit)
+		return expandTemporalIntervals(interval, perAmount, perUnit, limit)
 	}
 
 	return nil, nil
 }
 
-func expandDecimalIntervals(lo, hi decimal.Decimal, lowClosed, highClosed bool, step decimal.Decimal) (fptypes.Collection, error) {
+func expandDecimalIntervals(lo, hi decimal.Decimal, lowClosed, highClosed bool, step decimal.Decimal, limit int) (fptypes.Collection, error) {
 	effLo := lo
 	if !lowClosed {
 		effLo = lo.Add(step)
@@ -710,8 +765,8 @@ func expandDecimalIntervals(lo, hi decimal.Decimal, lowClosed, highClosed bool, 
 			break
 		}
 		result = append(result, cqltypes.NewInterval(lowVal, highVal, true, true))
-		if len(result) > 10000 {
-			break
+		if overLimit(len(result), limit) {
+			return nil, ExpandLimitError(limit)
 		}
 	}
 	return result, nil
@@ -741,10 +796,10 @@ func temporalUnitPrecision(unit string) int {
 }
 
 // expandTemporalPoints expands a DateTime/Date/Time interval into point values.
-func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal, perUnit string) (fptypes.Collection, error) {
-	amount := int(1)
-	if !perAmount.IsZero() {
-		amount = int(perAmount.IntPart())
+func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal, perUnit string, limit int) (fptypes.Collection, error) {
+	amount, walks := temporalStep(perAmount)
+	if !walks {
+		return nil, nil
 	}
 	unit := perUnit
 	if unit == "" || unit == "1" {
@@ -772,7 +827,7 @@ func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal,
 
 	var result fptypes.Collection
 	cur := low
-	for i := 0; i < 10001; i++ {
+	for i := 0; ; i++ {
 		if cur == nil {
 			break
 		}
@@ -781,6 +836,9 @@ func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal,
 			break
 		}
 		result = append(result, cur)
+		if overLimit(len(result), limit) {
+			return nil, ExpandLimitError(limit)
+		}
 		next, err := DateAdd(cur, amount, unit)
 		if err != nil {
 			break
@@ -790,11 +848,28 @@ func expandTemporalPoints(interval cqltypes.Interval, perAmount decimal.Decimal,
 	return result, nil
 }
 
+// temporalStep is the whole number of units a temporal expansion advances by,
+// and whether it advances at all. No step given is one unit.
+//
+// A fractional step is cut to its whole units, as the reference engine cuts
+// it: `per 1.5 days` walks a day at a time there too. A step under one unit,
+// `per 0.5 days`, is cut to none, and a walk of none would stay on its first
+// value for ever — it did, with no limit to stop it, and cql-execution still
+// does. It names no sequence, as a negative step names none, and the reference
+// engine answers the empty list for it.
+func temporalStep(perAmount decimal.Decimal) (amount int, walks bool) {
+	if perAmount.IsZero() {
+		return 1, true
+	}
+	amount = int(perAmount.IntPart())
+	return amount, amount >= 1
+}
+
 // expandTemporalIntervals expands a DateTime/Date/Time interval into unit intervals.
-func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decimal, perUnit string) (fptypes.Collection, error) {
-	amount := int(1)
-	if !perAmount.IsZero() {
-		amount = int(perAmount.IntPart())
+func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decimal, perUnit string, limit int) (fptypes.Collection, error) {
+	amount, walks := temporalStep(perAmount)
+	if !walks {
+		return nil, nil
 	}
 	unit := perUnit
 	if unit == "" || unit == "1" {
@@ -822,7 +897,7 @@ func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decim
 
 	var result fptypes.Collection
 	cur := low
-	for i := 0; i < 10001; i++ {
+	for i := 0; ; i++ {
 		if cur == nil {
 			break
 		}
@@ -847,6 +922,9 @@ func expandTemporalIntervals(interval cqltypes.Interval, perAmount decimal.Decim
 			}
 		}
 		result = append(result, cqltypes.NewInterval(cur, end, true, true))
+		if overLimit(len(result), limit) {
+			return nil, ExpandLimitError(limit)
+		}
 		cur = next
 	}
 	return result, nil
