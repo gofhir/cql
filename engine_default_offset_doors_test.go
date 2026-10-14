@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	fptypes "github.com/gofhir/fhirpath/types"
+
 	"github.com/gofhir/cql/eval"
 )
 
@@ -31,6 +33,22 @@ func askAtOffset(t *testing.T, hours int, expr string) string {
 		time.Date(2020, 6, 1, 12, 0, 0, 0, time.FixedZone("", hours*3600)))).
 		EvaluateExpression(context.Background(), src, "A",
 			[]byte(`{"resourceType":"Patient","id":"p1"}`), nil)
+	if err != nil {
+		return "ERROR"
+	}
+	if got == nil {
+		return "null"
+	}
+	return valueString(got)
+}
+
+// askParamAtOffset evaluates expr with the DateTime parameter P set to p.
+func askParamAtOffset(t *testing.T, hours int, p fptypes.Value, expr string) string {
+	t.Helper()
+	src := "library T version '1.0'\nparameter P DateTime\ndefine A: " + expr + "\n"
+	got, err := NewEngine(WithEvaluationTimestamp(
+		time.Date(2020, 6, 1, 12, 0, 0, 0, time.FixedZone("", hours*3600)))).
+		EvaluateExpression(context.Background(), src, "A", nil, map[string]fptypes.Value{"P": p})
 	if err != nil {
 		return "ERROR"
 	}
@@ -90,44 +108,67 @@ func TestEveryDoorPlacesADateTime(t *testing.T) {
 // DateTime" taken literally gives wrong answers in three places, and each was
 // checked rather than assumed.
 //
+// The minimum and maximum of the type used to answer null here, carrying no
+// offset at all. That kept them out of the evaluation offset, which was the
+// point, but it also made them unequal to the @…Z the conformance corpus
+// expects once fhirpath v1.14 stopped treating a value with no offset as
+// equal to a stated one. They now state UTC, which keeps the point and
+// matches the corpus and the reference engine (timezoneoffset 0.0 there,
+// evaluated at -03:00).
+//
 // It is the counterpart of TestEveryDoorPlacesADateTime and exists for the same
 // reason: the two populations of value cost this engine several releases, and the
 // way not to repeat that is to write down where the line falls instead of
 // rediscovering it from a failing run.
 func TestWhatIsNotADoor(t *testing.T) {
-	for _, tt := range []struct{ what, expr, why string }{
+	for _, tt := range []struct{ what, expr, want, why string }{
 		{
-			"the maximum of the type", "timezoneoffset from maximum DateTime",
+			"the maximum of the type", "timezoneoffset from maximum DateTime", "0",
 			"9999-12-31T23:59:59.999 is the largest value the type holds, not a value someone " +
 				"wrote without an offset; placing it at a western offset would put it past the " +
-				"end of the range it defines",
+				"end of the range it defines. It is stated at UTC instead, as the specification " +
+				"and the reference engine give it, so the evaluation offset never applies",
 		},
 		{
-			"the minimum of the type", "timezoneoffset from minimum DateTime",
+			"the minimum of the type", "timezoneoffset from minimum DateTime", "0",
 			"same, at the other end",
 		},
 		{
-			"a DateTime no finer than the day", "timezoneoffset from ToDateTime(@2020-06-15)",
+			"a DateTime no finer than the day", "timezoneoffset from ToDateTime(@2020-06-15)", "null",
 			"a value with no hour names a day rather than an instant, so there is nothing for " +
 				"an offset to move — the rule framelessTemporal applies, and fhirpath reports no " +
 				"effective offset for one either",
 		},
-		// Naming the type a value already has is not a door, and these two say so
-		// where it is easiest to get wrong: a conversion that converts nothing.
-		// Placing the result of one placed whatever it was handed.
-		{
-			"a cast that converts nothing", "timezoneoffset from (cast (maximum DateTime) as DateTime)",
-			"`cast X as DateTime` where X is already a DateTime produces X — the door is a " +
-				"conversion that makes a DateTime out of something else, not the naming of a type",
-		},
-		{
-			"a convert that converts nothing", "timezoneoffset from (convert (maximum DateTime) to DateTime)",
-			"same, through the other spelling",
-		},
 	} {
 		for _, hours := range []int{0, -5, 9, 14, -11} {
-			if got := askAtOffset(t, hours, tt.expr); got != "null" {
-				t.Errorf("%s answers %s at UTC%+d, want null — %s", tt.what, got, hours, tt.why)
+			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
+				t.Errorf("%s answers %s at UTC%+d, want %s — %s", tt.what, got, hours, tt.want, tt.why)
+			}
+		}
+	}
+
+	// Naming the type a value already has is not a door: `cast X as DateTime`
+	// where X is already a DateTime produces X. The maximum used to show it, and
+	// stopped once it stated its offset — placing it changes nothing now. A
+	// DateTime handed in as a parameter arrives with no offset, and is what still
+	// tells a cast that keeps its operand from one that places it: with the guard
+	// in situateConversion removed, these answer the evaluation offset.
+	//
+	// Asserted against the operand rather than as null, so that a parameter door,
+	// if one is ever added, does not make this test fail for the wrong reason.
+	bare, err := fptypes.NewDateTime("2020-06-15T10:00:00")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, hours := range []int{0, -5, 9, 14, -11} {
+		operand := askParamAtOffset(t, hours, bare, "timezoneoffset from P")
+		for _, expr := range []string{
+			"timezoneoffset from (cast P as DateTime)",
+			"timezoneoffset from (convert P to DateTime)",
+		} {
+			if got := askParamAtOffset(t, hours, bare, expr); got != operand {
+				t.Errorf("%s answers %s at UTC%+d, and its operand %s — a conversion that "+
+					"converts nothing produces the value it was given", expr, got, hours, operand)
 			}
 		}
 	}
