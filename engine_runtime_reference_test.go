@@ -118,8 +118,6 @@ var knownRuntimeDivergences = map[string]struct {
 		"specification normalizes to the evaluation offset, and only below day precision"},
 	"DecimalDivision": {"Decimal(3.3333333333333333)", "a quotient is not brought to the Decimal scale of 8; " +
 		"the specification gives the type a scale of 8, and both references answer 3.33333333"},
-	"TypedListNullsUnion": {"null", "two nulls reach union with nothing at runtime to say they were lists; " +
-		"as lists they are empty, and the union is {}. This engine answers null, which is right for intervals"},
 }
 
 // decidedRuntimeAnswers are the definitions where this engine answers
