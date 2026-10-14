@@ -49,3 +49,9 @@ define SortDescending: ({3, 1, 2}) X sort desc // control
 
 // Comparison at day precision between values at different offsets.
 define SameDayAcrossOffsets: @2020-01-01T23:00:00Z same day as @2020-01-01T21:00:00-03:00
+
+// Controls for the encodings: a Decimal past what binary floating point holds
+// exactly, and a Time, which one runtime represents as a DateTime with no date.
+define DecimalDivision: 10.0 / 3.0 // control
+define DecimalSum: 0.1 + 0.2 // control
+define TimeLiteral: @T10:30 // control

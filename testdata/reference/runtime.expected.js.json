@@ -1,0 +1,238 @@
+{
+  "library": "RuntimeProbe",
+  "sourceSha256": "c200e0d4969d3da54e8c259324f73a64eea8ebe7a0042688546920c6bd4cabd7",
+  "engine": "cql-execution 3.3.2",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "WithAggregate": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "WithoutAggregate": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "WhereAggregate": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "ReturnDefault": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "ReturnAll": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "ReturnDistinct": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "UnionDuplicates": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "ExceptDuplicates": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "IntersectDuplicates": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "AggDistinctNilNull": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "AggDistinctPairs": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "AggDistinctIntDec": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "AggDistinctQuantity": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "AggDistinctOffsets": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "ListIntDec": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Decimal",
+          "value": "1"
+        },
+        {
+          "type": "Decimal",
+          "value": "1"
+        }
+      ]
+    },
+    "DistinctQuantity": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Quantity",
+          "value": "1",
+          "unit": "m"
+        }
+      ]
+    },
+    "DistinctOffsets": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "DateTime",
+          "value": "2020-01-01T10:00:00+00:00",
+          "precision": "second",
+          "instant": "2020-01-01T10:00:00Z"
+        }
+      ]
+    },
+    "QuantityEqual": {
+      "type": "Boolean",
+      "value": true
+    },
+    "QuantityEquivalent": {
+      "type": "Boolean",
+      "value": true
+    },
+    "ExpandWeekPerMinute": {
+      "type": "Integer",
+      "value": "10080"
+    },
+    "ExpandThirtyYearsPerDay": {
+      "type": "Integer",
+      "value": "10958"
+    },
+    "ExpandIntegers": {
+      "type": "Integer",
+      "value": "100000"
+    },
+    "ExpandSmall": {
+      "type": "Integer",
+      "value": "10"
+    },
+    "DateTimeYear": {
+      "type": "DateTime",
+      "value": "2020",
+      "precision": "year",
+      "instant": "2020-01-01T00:00:00-03:00"
+    },
+    "DateTimeMinute": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:30-03:00",
+      "precision": "minute",
+      "instant": "2020-01-01T10:30:00-03:00"
+    },
+    "DateTimeMillis": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:30:00.123+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:30:00.123Z"
+    },
+    "DateTimeOffset": {
+      "type": "DateTime",
+      "value": "2020-01-01T07:00:00-03:00",
+      "precision": "second",
+      "instant": "2020-01-01T07:00:00-03:00"
+    },
+    "SortDescending": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "3"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        },
+        {
+          "type": "Integer",
+          "value": "1"
+        }
+      ]
+    },
+    "SameDayAcrossOffsets": {
+      "type": "Boolean",
+      "value": true
+    },
+    "DecimalDivision": {
+      "type": "Decimal",
+      "value": "3.3333333333333335"
+    },
+    "DecimalSum": {
+      "type": "Decimal",
+      "value": "0.30000000000000004"
+    },
+    "TimeLiteral": {
+      "type": "Time",
+      "value": "10:30",
+      "precision": "minute"
+    }
+  }
+}

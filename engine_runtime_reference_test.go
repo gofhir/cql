@@ -20,10 +20,11 @@ import (
 	cqltypes "github.com/gofhir/cql/types"
 )
 
-// runtimeReference is what the reference engine answered for each definition of
+// runtimeReference is what a reference runtime answered for each definition of
 // testdata/reference/runtime.cql, recorded by internal/referenceharness
-// (Evaluate.java). It is committed for the same reason referenceELM is: the
-// engine needs a JVM, and the point is to diff against it, not to re-derive it.
+// (Evaluate.java, js/evaluate.js). It is committed for the same reason
+// referenceELM is: the runtimes need a JVM and Node, and the point is to diff
+// against them, not to re-derive them.
 type runtimeReference struct {
 	Library            string                      `json:"library"`
 	SourceSha256       string                      `json:"sourceSha256"`
@@ -45,10 +46,50 @@ type runtimeRefValue struct {
 	Message   string          `json:"message,omitempty"`
 }
 
-// runtimeReferenceEngine is the version the harness pins in its pom.xml. A
-// fixture regenerated with another one is a different oracle and has to be
-// reviewed as such, not slipped in under the same test.
-const runtimeReferenceEngine = "3.26.0"
+// runtimeReferences are the runtimes this engine is diffed against, each with
+// the version the harness pins and the definitions it is not an oracle for.
+//
+// The version is checked because an output regenerated with another one is a
+// different oracle and has to be reviewed as such, not slipped in under the
+// same test. The exclusions are per runtime because they are about the
+// runtime, not the definition: the Java engine, as Evaluate.java configures it,
+// does not convert units, and cql-execution does.
+//
+// Both run the ELM the reference translator produces. Where they agree they
+// are two runtimes, not two frontends.
+var runtimeReferences = []struct {
+	name      string
+	file      string
+	engine    string
+	notOracle map[string]string
+}{
+	{
+		name:   "the Java engine",
+		file:   "testdata/reference/runtime.expected.json",
+		engine: "3.26.0",
+		notOracle: map[string]string{
+			"QuantityEqual":       "it does not convert units: 1 'm' = 100 'cm' is null there",
+			"QuantityEquivalent":  "it does not convert units: it answers false",
+			"DistinctQuantity":    "it does not convert units, and keeps both",
+			"AggDistinctQuantity": "it does not convert units, and answers 2",
+		},
+	},
+	{
+		name:   "cql-execution",
+		file:   "testdata/reference/runtime.expected.js.json",
+		engine: "cql-execution 3.3.2",
+		notOracle: map[string]string{
+			// cql-execution keeps Integer and Decimal as one JavaScript number, so
+			// evaluate.js reads a number's type from the translator's annotation.
+			// On a row about the type itself, that is the translator answering.
+			"ListIntDec": "it cannot tell Integer from Decimal; the type it records is the translator's",
+			// Decimal arithmetic runs in binary floating point there, below the
+			// scale of 8 the specification gives the type.
+			"DecimalDivision": "it divides in binary floating point: 3.3333333333333335",
+			"DecimalSum":      "it adds in binary floating point: 0.30000000000000004",
+		},
+	},
+}
 
 // knownRuntimeDivergences are the definitions where this engine is known to
 // answer differently from the reference, each with this engine's exact answer
@@ -78,27 +119,24 @@ var knownRuntimeDivergences = map[string]struct {
 	"ExpandIntegers":          {"Integer(10001)", "same guard as ExpandWeekPerMinute"},
 	"SameDayAcrossOffsets": {"Boolean(false)", "values at different offsets are normalized to UTC; the " +
 		"specification normalizes to the evaluation offset, and only below day precision"},
+	"AggDistinctQuantity": {"Integer(2)", "distinctCombos compares text, and 1 'm' = 100 'cm'"},
+	"DecimalDivision": {"Decimal(3.3333333333333333)", "a quotient is not brought to the Decimal scale of 8; " +
+		"the specification gives the type a scale of 8, and both references answer 3.33333333"},
 }
 
-// pinnedRuntimeAnswers are the definitions the reference cannot settle, each
-// with this engine's exact answer and the reason the reference is not consulted.
-//
-// They are kept apart from knownRuntimeDivergences on purpose. There, agreeing
-// with the reference means fixed; here it can mean the opposite — this engine
-// breaking unit conversion would agree with a reference that never had it. So
-// only this engine's answer is checked, and any change to it fails until
-// someone checks it against the specification and moves the pin.
-var pinnedRuntimeAnswers = map[string]struct {
+// decidedRuntimeAnswers are the definitions where this engine answers
+// differently from every reference on purpose, each with its exact answer and
+// the reason. The references are not consulted for them: agreeing with them
+// would undo the decision, not fix a defect. Any change fails until someone
+// argues with the reason and moves the pin.
+var decidedRuntimeAnswers = map[string]struct {
 	got string
 	why string
 }{
-	"QuantityEqual":      {"Boolean(true)", "the reference does not convert units: 1 'm' = 100 'cm' is null there"},
-	"QuantityEquivalent": {"Boolean(true)", "the reference does not convert units: it answers false"},
-	"DistinctQuantity":   {"List[Quantity(1 'm')]", "the reference does not convert units and keeps both"},
-	"AggDistinctQuantity": {"Integer(2)", "the reference answers 2 too, but distinct is defined by equality and " +
-		"1 'm' = 100 'cm', so the specification says 1: both are probably wrong, for different reasons"},
-	"DateTimeYear": {"DateTime(2020-01-01T00:00:00/year, no offset)", "fhirpath's WithDefaultOffset gives no offset " +
-		"below hour precision, deliberately; the reference assumes the evaluation offset, as the specification words it"},
+	"DateTimeYear": {"DateTime(2020-01-01T00:00:00/year, no offset)", "fhirpath gives a DateTime no offset below " +
+		"hour precision, and this engine's comparisons depend on it: without the rule a day-precision value was " +
+		"normalized as if it were an instant, and answered wrong at UTC+14. Both references assume the " +
+		"evaluation offset, as the specification words it"},
 }
 
 // unorderedRuntimeResults are the definitions whose list result is compared as
@@ -128,111 +166,172 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading the runtime probe: %v", err)
 	}
-	data, err := os.ReadFile("testdata/reference/runtime.expected.json")
-	if err != nil {
-		t.Fatalf("reading the runtime reference: %v", err)
-	}
-	var ref runtimeReference
-	if err = json.Unmarshal(data, &ref); err != nil {
-		t.Fatalf("decoding the runtime reference: %v", err)
-	}
-	if ref.Engine != runtimeReferenceEngine {
-		t.Fatalf("the reference was produced by engine %q, the harness pins %q", ref.Engine, runtimeReferenceEngine)
-	}
-
-	// The names alone cannot tell a stale reference: a definition edited without
-	// regenerating keeps its name, and its old answer would read as a divergence
-	// of this engine — one that could then be pinned below as understood.
 	// Line endings are normalized first, so a checkout that converts them does
-	// not read as an edit. Evaluate.java hashes the file as committed, with LF.
+	// not read as an edit. The harness hashes the file as committed, with LF.
 	src = bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n"))
-	if sum := sha256.Sum256(src); hex.EncodeToString(sum[:]) != ref.SourceSha256 {
-		t.Fatalf("runtime.cql changed since the reference was produced — regenerate runtime.expected.json")
-	}
-	if m := libraryName.FindStringSubmatch(string(src)); len(m) < 2 || m[1] != ref.Library {
-		t.Fatalf("the reference answers for library %q, which is not the probe's", ref.Library)
+
+	names := runtimeProbeNames(t, string(src))
+	inProbe := make(map[string]bool, len(names))
+	for _, n := range names {
+		inProbe[n] = true
 	}
 
-	names := runtimeManifest(t, string(src), ref)
+	refs := make([]runtimeReference, len(runtimeReferences))
+	for i, r := range runtimeReferences {
+		refs[i] = loadRuntimeReference(t, r.file, r.engine, src)
+		runtimeCoverage(t, r.name, names, refs[i])
+		for name := range r.notOracle {
+			if !inProbe[name] {
+				t.Errorf("%s is excluded for %s and is not in the probe", name, r.name)
+			}
+		}
+	}
 
-	evaluatedAt, err := time.Parse(time.RFC3339, ref.EvaluationDateTime)
+	// One evaluation time for every reference, or their answers to anything
+	// that reads it are not answers to the same question.
+	evaluatedAt, err := time.Parse(time.RFC3339, refs[0].EvaluationDateTime)
 	if err != nil {
-		t.Fatalf("reading the reference evaluation time %q: %v", ref.EvaluationDateTime, err)
+		t.Fatalf("reading the reference evaluation time %q: %v", refs[0].EvaluationDateTime, err)
 	}
+	for i, ref := range refs[1:] {
+		other, perr := time.Parse(time.RFC3339, ref.EvaluationDateTime)
+		_, o1 := evaluatedAt.Zone()
+		_, o2 := other.Zone()
+		if perr != nil || !other.Equal(evaluatedAt) || o1 != o2 {
+			t.Fatalf("%s evaluates at %q and %s at %q", runtimeReferences[0].name,
+				refs[0].EvaluationDateTime, runtimeReferences[i+1].name, ref.EvaluationDateTime)
+		}
+	}
+
 	engine := NewEngine(WithEvaluationTimestamp(evaluatedAt))
 	lib, err := engine.Parse(string(src))
 	if err != nil {
 		t.Fatalf("parsing the runtime probe: %v", err)
 	}
 
-	for name := range knownRuntimeDivergences {
-		if _, ok := ref.Results[name]; !ok {
-			t.Errorf("%s is listed as a known divergence and is not in the probe", name)
+	listed := func(list, name string) {
+		if !inProbe[name] {
+			t.Errorf("%s is listed in %s and is not in the probe", name, list)
 		}
 	}
-	for name := range pinnedRuntimeAnswers {
-		if _, ok := ref.Results[name]; !ok {
-			t.Errorf("%s is pinned and is not in the probe", name)
-		}
+	for name := range knownRuntimeDivergences {
+		listed("knownRuntimeDivergences", name)
+	}
+	for name := range decidedRuntimeAnswers {
+		listed("decidedRuntimeAnswers", name)
 		if _, ok := knownRuntimeDivergences[name]; ok {
-			t.Errorf("%s is both pinned and a known divergence: it is one or the other", name)
+			t.Errorf("%s is both decided and a known divergence: it is one or the other", name)
 		}
 	}
 	for name := range unorderedRuntimeResults {
-		if _, ok := ref.Results[name]; !ok {
-			t.Errorf("%s is listed as unordered and is not in the probe", name)
-		}
+		listed("unorderedRuntimeResults", name)
 	}
 
 	for _, name := range names {
-		want, answered := ref.Results[name]
-		if !answered {
-			continue // runtimeManifest reported it; comparing would read it as null
-		}
 		got, evalErr := engine.EvaluateParsedExpression(context.Background(), lib, name, nil, nil)
 
-		if pin, pinned := pinnedRuntimeAnswers[name]; pinned {
+		if pin, decided := decidedRuntimeAnswers[name]; decided {
 			switch {
 			case evalErr != nil:
-				t.Errorf("%s is pinned at %s (%s) and now fails: %v", name, pin.got, pin.why, evalErr)
+				t.Errorf("%s is decided at %s (%s) and now fails: %v", name, pin.got, pin.why, evalErr)
 			case describeRuntimeValue(got) != pin.got:
-				t.Errorf("%s is pinned at %s and now answers %s. The reference cannot settle it (%s): "+
-					"check the change against the specification, then move the pin",
-					name, pin.got, describeRuntimeValue(got), pin.why)
+				t.Errorf("%s is decided at %s and now answers %s. The decision: %s. "+
+					"Argue with it before moving the pin", name, pin.got, describeRuntimeValue(got), pin.why)
 			}
 			continue
 		}
 
-		var mismatch string
-		switch {
-		case want != nil && want.Error != "":
-			if evalErr == nil {
-				mismatch = fmt.Sprintf("the reference fails (%s: %s) and this engine answers %s",
-					want.Error, want.Message, describeRuntimeValue(got))
+		// What this engine's answer has against each reference that can settle
+		// the definition.
+		var agree, disagree []string
+		unanswered := false
+		for i, r := range runtimeReferences {
+			if _, excluded := r.notOracle[name]; excluded {
+				continue
 			}
-		case evalErr != nil:
-			mismatch = fmt.Sprintf("this engine fails: %v", evalErr)
-		default:
-			mismatch = runtimeMismatch(t, name, want, got, unorderedRuntimeResults[name] == "")
+			want, answered := refs[i].Results[name]
+			if !answered {
+				unanswered = true // runtimeCoverage reported it; comparing would read it as null
+				continue
+			}
+			if m := runtimeAnswerMismatch(t, name, want, got, evalErr); m == "" {
+				agree = append(agree, r.name)
+			} else {
+				disagree = append(disagree, r.name+": "+m)
+			}
 		}
 
 		known, isKnown := knownRuntimeDivergences[name]
 		switch {
-		case mismatch == "" && isKnown:
-			t.Errorf("%s now agrees with the reference (it diverged because %s): remove it from "+
+		case len(agree) == 0 && len(disagree) == 0 && unanswered:
+			// Reported as a reference to regenerate. Asking for a decided pin here
+			// would be the wrong fix, and would hide the gap for good.
+		case len(agree) == 0 && len(disagree) == 0:
+			t.Errorf("%s: no reference can settle it — decide it and pin it in decidedRuntimeAnswers", name)
+		case len(agree) > 0 && len(disagree) > 0:
+			// Never settled by majority: two runtimes that share a translator can
+			// share its mistake.
+			t.Errorf("%s: the references disagree — this engine agrees with %s, and not with %s. "+
+				"Settle it against the specification", name, strings.Join(agree, ", "), strings.Join(disagree, "; "))
+		case len(disagree) == 0 && isKnown:
+			t.Errorf("%s now agrees with every reference that can settle it (it diverged because %s): remove it from "+
 				"knownRuntimeDivergences and from runtime.divergences.md", name, known.why)
-		case mismatch != "" && !isKnown:
-			t.Errorf("%s: %s", name, mismatch)
-		case mismatch != "" && isKnown:
+		case len(agree) == 0 && !isKnown:
+			t.Errorf("%s: %s", name, strings.Join(disagree, "; "))
+		case len(agree) == 0 && isKnown:
 			if evalErr != nil {
 				t.Errorf("%s was a known divergence (%s, because %s) and now fails: %v",
 					name, known.got, known.why, evalErr)
 			} else if d := describeRuntimeValue(got); d != known.got {
 				t.Errorf("%s was a known divergence answering %s, because %s; it now answers %s — "+
-					"still not the reference's, but not the one that was understood", name, known.got, known.why, d)
+					"still not the references', but not the one that was understood", name, known.got, known.why, d)
 			}
 		}
 	}
+}
+
+// loadRuntimeReference reads one reference's answers and checks that they are
+// answers to this probe, from the pinned version of that runtime.
+func loadRuntimeReference(t *testing.T, file, engine string, src []byte) runtimeReference {
+	t.Helper()
+	data, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatalf("reading %s: %v", file, err)
+	}
+	var ref runtimeReference
+	if err = json.Unmarshal(data, &ref); err != nil {
+		t.Fatalf("decoding %s: %v", file, err)
+	}
+	if ref.Engine != engine {
+		t.Fatalf("%s was produced by %q, the harness pins %q", file, ref.Engine, engine)
+	}
+	// The names alone cannot tell a stale reference: a definition edited without
+	// regenerating keeps its name, and its old answer would read as a divergence
+	// of this engine — one that could then be pinned as understood.
+	if sum := sha256.Sum256(src); hex.EncodeToString(sum[:]) != ref.SourceSha256 {
+		t.Fatalf("runtime.cql changed since %s was produced — regenerate it", file)
+	}
+	if m := libraryName.FindStringSubmatch(string(src)); len(m) < 2 || m[1] != ref.Library {
+		t.Fatalf("%s answers for library %q, which is not the probe's", file, ref.Library)
+	}
+	return ref
+}
+
+// runtimeAnswerMismatch says how this engine's answer, or its failure, differs
+// from one reference's, or "" when it does not.
+func runtimeAnswerMismatch(t *testing.T, name string, want *runtimeRefValue, got fptypes.Value, evalErr error) string {
+	t.Helper()
+	switch {
+	case want != nil && want.Error != "":
+		if evalErr == nil {
+			return fmt.Sprintf("it fails (%s: %s) and this engine answers %s",
+				want.Error, want.Message, describeRuntimeValue(got))
+		}
+		return ""
+	case evalErr != nil:
+		return fmt.Sprintf("this engine fails: %v", evalErr)
+	}
+	return runtimeMismatch(t, name, want, got, unorderedRuntimeResults[name] == "")
 }
 
 // defineName reads the definitions from the source text, deliberately without
@@ -243,11 +342,8 @@ var (
 	libraryName = regexp.MustCompile(`(?m)^library\s+(\w+)`)
 )
 
-// runtimeManifest returns the probe's definitions in source order, after
-// checking that the reference has exactly those. A reference regenerated from
-// another file, or truncated, would otherwise pass by comparing what little it
-// has.
-func runtimeManifest(t *testing.T, src string, ref runtimeReference) []string {
+// runtimeProbeNames returns the probe's definitions in source order.
+func runtimeProbeNames(t *testing.T, src string) []string {
 	t.Helper()
 	matches := defineName.FindAllStringSubmatch(src, -1)
 	names := make([]string, 0, len(matches))
@@ -257,15 +353,22 @@ func runtimeManifest(t *testing.T, src string, ref runtimeReference) []string {
 	if len(names) == 0 {
 		t.Fatal("the runtime probe defines nothing")
 	}
+	return names
+}
+
+// runtimeCoverage checks that a reference answers exactly the probe's
+// definitions. A reference regenerated from another file, or truncated, would
+// otherwise pass by comparing what little it has.
+func runtimeCoverage(t *testing.T, reference string, names []string, ref runtimeReference) {
+	t.Helper()
 	for _, n := range names {
 		if _, ok := ref.Results[n]; !ok {
-			t.Errorf("%s is in the probe and the reference has no answer for it — regenerate it", n)
+			t.Errorf("%s is in the probe and %s has no answer for it — regenerate it", n, reference)
 		}
 	}
 	if len(ref.Results) != len(names) {
-		t.Errorf("the reference answers %d definitions and the probe has %d", len(ref.Results), len(names))
+		t.Errorf("%s answers %d definitions and the probe has %d", reference, len(ref.Results), len(names))
 	}
-	return names
 }
 
 // runtimeMismatch says how got differs from the reference's answer, or "" when
@@ -313,6 +416,10 @@ func runtimeMatches(t *testing.T, name string, want *runtimeRefValue, got fptype
 		if !ok {
 			return false, "DateTime"
 		}
+		if want.Instant == "" {
+			// A reference DateTime with no offset has no instant to compare.
+			return false, "a DateTime with no offset, which this test cannot compare"
+		}
 		instant := javaDateTime(t, name, want)
 		// The offset is part of the answer, not only the instant: the same
 		// moment written at -03:00 is not what the reference returned at Z.
@@ -323,6 +430,25 @@ func runtimeMatches(t *testing.T, name string, want *runtimeRefValue, got fptype
 		return hasOffset && g.ToTime().Equal(instant) && gotOffset*60 == wantOffset &&
 				precisionName(g.Precision()) == want.Precision,
 			"same instant, offset and precision"
+	case "Time":
+		g, ok := got.(fptypes.Time)
+		if !ok {
+			return false, "Time"
+		}
+		// Read from the text by component, with this test's own parsing: the
+		// references write 10:30 at minute precision and 10:30:00.000 at
+		// millisecond, and a missing component is not a zero.
+		var h, m, sec, ms int
+		parts := strings.SplitN(strings.Replace(stringOf(t, name, want.Value), ".", ":", 1), ":", 4)
+		for i, dst := range []*int{&h, &m, &sec, &ms} {
+			if i < len(parts) {
+				if _, err := fmt.Sscanf(parts[i], "%d", dst); err != nil {
+					return false, fmt.Sprintf("a Time this test cannot read: %v", err)
+				}
+			}
+		}
+		return g.Hour() == h && g.Minute() == m && g.Second() == sec && g.Millisecond() == ms &&
+			timePrecisionName(g.Precision()) == want.Precision, "same components and precision"
 	case "List":
 		var elems []*runtimeRefValue
 		mustDecode(t, name, want.Elements, &elems)
@@ -357,10 +483,10 @@ func runtimeMatches(t *testing.T, name string, want *runtimeRefValue, got fptype
 		}
 		return true, ""
 	}
-	// Failing loudly is the point: a type with no comparison here would
-	// otherwise be counted as compared.
-	t.Fatalf("%s: the reference answers a %s, which this test cannot compare yet", name, want.Type)
-	return false, ""
+	// Never counted as agreeing: a type with no comparison here would otherwise
+	// pass as compared. Reported as a mismatch rather than a Fatalf, so one
+	// unusual row does not stop every other definition from being compared.
+	return false, fmt.Sprintf("a %s, which this test cannot compare yet", want.Type)
 }
 
 // describeRuntimeValue writes a value of this engine with its type, the way the
@@ -387,6 +513,9 @@ func describeRuntimeValue(v fptypes.Value) string {
 				x.ToTime().Format("2006-01-02T15:04:05.999999999"), precisionName(x.Precision()))
 		}
 		return fmt.Sprintf("DateTime(%s/%s)", x.ToTime().Format(time.RFC3339Nano), precisionName(x.Precision()))
+	case fptypes.Time:
+		return fmt.Sprintf("Time(%02d:%02d:%02d.%03d/%s)", x.Hour(), x.Minute(), x.Second(), x.Millisecond(),
+			timePrecisionName(x.Precision()))
 	case cqltypes.List:
 		parts := make([]string, len(x.Values))
 		for i, e := range x.Values {
@@ -403,6 +532,21 @@ func describeRuntimeRef(v *runtimeRefValue) string {
 	}
 	b, _ := json.Marshal(v)
 	return string(b)
+}
+
+// timePrecisionName is the references' name for each Time precision.
+func timePrecisionName(p fptypes.TimePrecision) string {
+	switch p {
+	case fptypes.HourPrecision:
+		return "hour"
+	case fptypes.MinutePrecision:
+		return "minute"
+	case fptypes.SecondPrecision:
+		return "second"
+	case fptypes.MillisPrecision:
+		return "millisecond"
+	}
+	return fmt.Sprintf("precision(%d)", int(p))
 }
 
 // precisionName is the reference's name for each precision.
@@ -431,9 +575,6 @@ func precisionName(p fptypes.DateTimePrecision) string {
 // toString(), which drops the offset at some precisions and keeps it at others.
 func javaDateTime(t *testing.T, name string, v *runtimeRefValue) time.Time {
 	t.Helper()
-	if v.Instant == "" {
-		t.Fatalf("%s: the reference DateTime carries no instant — regenerate it", name)
-	}
 	instant, err := time.Parse(time.RFC3339Nano, v.Instant)
 	if err != nil {
 		t.Fatalf("%s: reading the reference DateTime: %v", name, err)
