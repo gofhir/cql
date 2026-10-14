@@ -65,8 +65,12 @@ define ReturnTuple: ({1, 1}) X return Tuple { v: X } // control
 define MultiSourceReturn: from ({1, 1}) A, ({2}) B return A + B // control
 // Several sources and no return clause: the translator supplies a distinct one.
 define MultiSourceNoReturn: from ({1, 1}) A, ({2}) B // control
-// One source and no return clause: the references disagree. See runtime.divergences.md.
+// One source and no return clause keeps its duplicates. The references
+// disagree, and the conformance suite settles it; the two sorted rows are its
+// own cases. See runtime.divergences.md.
 define NoReturn: ({1, 1, 2}) X
+define NoReturnSortedConformance: ({4, 5, 1, 6, 2, 1}) sL sort asc
+define NoReturnSortedDescConformance: ({4, 5, 1, 6, 2, 1}) sL sort desc
 
 // aggregate over the rows every filter keeps, with the lets they were kept with.
 define AggregateLetWithout: ({1, 2, 3}) X let L: X * 10 without ({2}) Y such that X = Y aggregate A starting 0: A + L // control
