@@ -11,7 +11,7 @@ define WithoutAggregate: ({1,2,3}) X without ({2}) Y such that X = Y aggregate A
 define WhereAggregate: ({1,2,3}) X where X = 2 aggregate A starting 0: A + X // control
 
 // return without all.
-define ReturnDefault: ({1,1,2}) X return X
+define ReturnDefault: ({1,1,2}) X return X // control
 define ReturnAll: ({1,1,2}) X return all X // control
 define ReturnDistinct: ({1,1,2}) X return distinct X // control
 
@@ -55,3 +55,15 @@ define SameDayAcrossOffsets: @2020-01-01T23:00:00Z same day as @2020-01-01T21:00
 define DecimalDivision: 10.0 / 3.0 // control
 define DecimalSum: 0.1 + 0.2 // control
 define TimeLiteral: @T10:30 // control
+
+// return is distinct unless it says all, wherever the return clause is.
+define ReturnNulls: ({null, null, 1}) X return X // control
+define ReturnSorted: ({1, 1, 2}) X return X sort desc // control
+define ReturnLet: ({1, 1, 2}) X let Y: X * 10 return Y // control
+define CountReturn: Count(({1, 1, 2}) X return X) // control
+define ReturnTuple: ({1, 1}) X return Tuple { v: X } // control
+define MultiSourceReturn: from ({1, 1}) A, ({2}) B return A + B // control
+// Several sources and no return clause: the translator supplies a distinct one.
+define MultiSourceNoReturn: from ({1, 1}) A, ({2}) B // control
+// One source and no return clause: the references disagree. See runtime.divergences.md.
+define NoReturn: ({1, 1, 2}) X

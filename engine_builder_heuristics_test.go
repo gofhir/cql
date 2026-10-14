@@ -33,7 +33,10 @@ func TestBuilderTokenInspection(t *testing.T) {
 		{"except with literal containing union", `{'union','x'} except {'x'}`, "{union}"},
 		{"union with literal containing except", `{'except'} union {'x'}`, "{except, x}"},
 		{"intersect with literal containing union", `{'union','x'} intersect {'x'}`, "{x}"},
-		{"return with distinct inside nested call", `({1,1}) A return Count(distinct {A})`, "{1, 1}"},
+		// Distinct because `return` is distinct by default, not because of the
+		// nested `distinct`: the row value is 1 for both rows, and the clause
+		// removes the repeat. The keyword's own test is ReturnsAllLiteral below.
+		{"return with distinct inside nested call", `({1,1}) A return Count(distinct {A})`, "{1}"},
 		{"return distinct", `({1,1}) A return distinct A`, "{1}"},
 		{"between with literal containing properly", `3 between 1 and 5`, "true"},
 		{"sort by column", `({3,1,2}) A return A sort by $this`, "{1, 2, 3}"},
@@ -58,6 +61,10 @@ func TestBuilderTokenInspection(t *testing.T) {
 // could only ever appear in a nested expression: a function whose body is the
 // string 'external' was compiled as an external declaration, and a return clause
 // whose expression mentions 'distinct' was compiled as `return distinct`.
+//
+// Since `return` is distinct by default, the keyword that can be misread to
+// effect is `all`: a return clause whose expression mentions 'all', read as
+// `return all`, would keep the repeat. ReturnsAllLiteral is the case that sees it.
 func TestBuilderKeywordsInFunctionBodies(t *testing.T) {
 	src := `library Test version '1.0'
 
@@ -68,8 +75,8 @@ define ReturnsAllLiteral: ({1,1}) A return 'all'
 `
 	tests := []struct{ name, want string }{
 		{"BodyIsExternal", "external"},
-		{"ReturnsDistinctLiteral", "{distinct, distinct}"},
-		{"ReturnsAllLiteral", "{all, all}"},
+		{"ReturnsDistinctLiteral", "{distinct}"},
+		{"ReturnsAllLiteral", "{all}"},
 	}
 
 	engine := NewEngine()

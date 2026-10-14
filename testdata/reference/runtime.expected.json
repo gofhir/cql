@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "c200e0d4969d3da54e8c259324f73a64eea8ebe7a0042688546920c6bd4cabd7",
+  "sourceSha256" : "32da3fe3f7e2d4615b8a163d6b4c7cd3730a56bd188b0f9a49b0214d4b9750ca",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -209,6 +209,85 @@
       "type" : "Time",
       "value" : "10:30",
       "precision" : "minute"
+    },
+    "ReturnNulls" : {
+      "type" : "List",
+      "elements" : [ null, {
+        "type" : "Integer",
+        "value" : "1"
+      } ]
+    },
+    "ReturnSorted" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "2"
+      }, {
+        "type" : "Integer",
+        "value" : "1"
+      } ]
+    },
+    "ReturnLet" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "10"
+      }, {
+        "type" : "Integer",
+        "value" : "20"
+      } ]
+    },
+    "CountReturn" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "ReturnTuple" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Tuple",
+        "fields" : {
+          "v" : {
+            "type" : "Integer",
+            "value" : "1"
+          }
+        }
+      } ]
+    },
+    "MultiSourceReturn" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "3"
+      } ]
+    },
+    "MultiSourceNoReturn" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Tuple",
+        "fields" : {
+          "A" : {
+            "type" : "Integer",
+            "value" : "1"
+          },
+          "B" : {
+            "type" : "Integer",
+            "value" : "2"
+          }
+        }
+      } ]
+    },
+    "NoReturn" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
     }
   }
 }

@@ -355,9 +355,13 @@ type RelationshipClause struct {
 }
 
 // ReturnClause specifies what a query returns.
+//
+// Distinct defaults to true in ELM. ReturnClause's own MarshalJSON and
+// UnmarshalJSON (json.go) read and write it that way, so the tag below is not
+// what decides how it is encoded.
 type ReturnClause struct {
 	Expression *ExpressionNode `json:"expression,omitempty"`
-	Distinct   bool            `json:"distinct,omitempty"`
+	Distinct   bool            `json:"distinct"`
 }
 
 // SortClause specifies query result ordering.

@@ -237,3 +237,27 @@ func trimLeadingWhitespace(data []byte) []byte {
 	}
 	return nil
 }
+
+// UnmarshalJSON reads a return clause with distinct true when the document
+// leaves it out, which is the default ELM gives the attribute. The reference
+// translator writes it only to say false, for `return all`; decoding the
+// absence as Go's zero value turned every plain `return` into `return all`.
+func (r *ReturnClause) UnmarshalJSON(data []byte) error {
+	type plain ReturnClause
+	p := plain{Distinct: true}
+	if err := json.Unmarshal(data, &p); err != nil {
+		return err
+	}
+	*r = ReturnClause(p)
+	return nil
+}
+
+// MarshalJSON writes distinct whatever its value. Leaving it out when false,
+// as omitempty did, wrote `return all` as a document that reads back as
+// `return`.
+func (r ReturnClause) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Expression *ExpressionNode `json:"expression,omitempty"`
+		Distinct   bool            `json:"distinct"`
+	}{r.Expression, r.Distinct})
+}

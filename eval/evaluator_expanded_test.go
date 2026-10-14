@@ -1507,3 +1507,25 @@ func TestEval_SplitOnMatches_InvalidRegex(t *testing.T) {
 		t.Fatal("expected error for invalid regex")
 	}
 }
+
+// TestEval_Query_ZeroReturnClauseIsDistinct covers a return clause built
+// without either keyword field, as code that builds an AST by hand would write
+// it. CQL's default is distinct, and the zero value has to mean the same, not
+// `return all`.
+func TestEval_Query_ZeroReturnClauseIsDistinct(t *testing.T) {
+	ev := NewEvaluator(NewContext(context.Background(), nil))
+	one := &ast.Literal{ValueType: ast.LiteralInteger, Value: "1"}
+	val, err := ev.Eval(&ast.Query{
+		Sources: []*ast.AliasedSource{{
+			Source: &ast.ListExpression{Elements: []ast.Expression{one, one}},
+			Alias:  "X",
+		}},
+		Return: &ast.ReturnClause{Expression: &ast.IdentifierRef{Name: "X"}},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if list, ok := val.(cqltypes.List); !ok || list.Values.Count() != 1 {
+		t.Errorf("({1, 1}) X return X with a zero ReturnClause = %v, want {1}", val)
+	}
+}

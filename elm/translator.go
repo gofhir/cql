@@ -815,7 +815,21 @@ func translateQuery(q *ast.Query) *ExpressionNode {
 	if q.Return != nil {
 		node.Return = &ReturnClause{
 			Expression: TranslateExpression(q.Return.Expression),
-			Distinct:   q.Return.Distinct,
+			Distinct:   !q.Return.All,
+		}
+	} else if len(q.Sources) > 1 && q.Aggregate == nil {
+		// A query over several sources with no return clause returns a Tuple
+		// of its aliases, distinct, and the reference translator writes that
+		// return clause out. Leaving it implicit made the same CQL answer
+		// differently once exported: the engines that run ELM keep every row
+		// of the product where this one removes the repeats.
+		elements := make([]*ast.TupleElement, len(q.Sources))
+		for i, src := range q.Sources {
+			elements[i] = &ast.TupleElement{Name: src.Alias, Expression: &ast.IdentifierRef{Name: src.Alias}}
+		}
+		node.Return = &ReturnClause{
+			Expression: TranslateExpression(&ast.TupleExpression{Elements: elements}),
+			Distinct:   true,
 		}
 	}
 

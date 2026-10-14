@@ -114,6 +114,17 @@ function encode(v, spec) {
       high: encode(v.high, point), highClosed: v.highClosed,
     };
   }
+  // A tuple is a plain object there. Only a value the translator typed as a
+  // tuple is encoded as one: any other plain object stays Unencoded, rather
+  // than passing for a tuple and hiding what it is. Its fields are written
+  // sorted, as the Java encoding writes them, each with its declared type.
+  if (Object.getPrototypeOf(v) === Object.prototype && spec && spec.type === 'TupleTypeSpecifier') {
+    const declared = {};
+    for (const el of spec.element || []) declared[el.name] = el.elementType || el.type;
+    const fields = {};
+    for (const k of Object.keys(v).sort()) fields[k] = encode(v[k], declared[k] || null);
+    return { type: 'Tuple', fields };
+  }
   return { type: 'Unencoded:' + (v.constructor ? v.constructor.name : typeof v), value: String(v) };
 }
 

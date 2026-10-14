@@ -1755,18 +1755,329 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 	return fptypes.NewBoolean(true), nil
 }
 
-// nullSafeDistinct removes duplicates from a collection, handling nil properly.
+// nullSafeDistinct removes duplicates from a collection, keeping the first of
+// each and treating nulls as equal to one another. Duplicates are decided by
+// sameValue, as nullSafeContains decides them; nothing else decides equality.
+//
+// It used to compare each element with every one kept before it. That was
+// quadratic, and once `return` became distinct by default it ran over every
+// query result: a return of 5000 resources took a second. Now a value is
+// compared only with the kept values it could equal. Strings, booleans,
+// numbers and objects go into buckets (distinctBucket), and quantities are
+// indexed by unit (quantityIndex). Values with neither are compared with
+// everything kept, as before.
+//
+// A bucket never decides that two values are equal. It only rules out pairs
+// that cannot be, which is where distinctCombos went wrong: it let a key of
+// text decide equality, merging values that differ and splitting values that
+// do not.
 func nullSafeDistinct(c fptypes.Collection) fptypes.Collection {
 	if len(c) <= 1 {
 		return c
 	}
 	result := make(fptypes.Collection, 0, len(c))
+	// A short list is cheaper to compare pairwise than to index: the buckets
+	// cost maps and keys, and most query results for one patient are short.
+	if len(c) <= distinctPairwiseUpTo {
+		for _, item := range c {
+			if !nullSafeContains(result, item) {
+				result = append(result, item)
+			}
+		}
+		return result
+	}
+	return indexedDistinct(c, result)
+}
+
+// indexedDistinct is nullSafeDistinct for a list long enough to index,
+// appending to result. It is its own function so that it can be held to the
+// pairwise answer on lists of any length, short ones included.
+func indexedDistinct(c, result fptypes.Collection) fptypes.Collection {
+	buckets := make(map[string][]fptypes.Value)
+	quantities := newQuantityIndex()
+	var numbers, quantityValues, others []fptypes.Value
+	seenNull := false
 	for _, item := range c {
-		if !nullSafeContains(result, item) {
-			result = append(result, item)
+		if item == nil {
+			if !seenNull {
+				seenNull = true
+				result = append(result, nil)
+			}
+			continue
+		}
+		var dup bool
+		key, bucketed := distinctBucket(item)
+		q, isQuantity := item.(fptypes.Quantity)
+		switch {
+		case bucketed:
+			dup = containsSameValue(buckets[key], item) || containsSameValue(others, item)
+			// A number can equal a quantity: sameValue reads it as a
+			// dimensionless one. Nothing else in a bucket can.
+			if !dup && isNumber(item) {
+				dup = containsSameValue(quantityValues, item)
+			}
+		case isQuantity:
+			dup = quantities.holds(q) || containsSameValue(numbers, item) || containsSameValue(others, item)
+		default:
+			dup = nullSafeContains(result, item)
+		}
+		if dup {
+			continue
+		}
+		result = append(result, item)
+		switch {
+		case bucketed:
+			buckets[key] = append(buckets[key], item)
+			if isNumber(item) {
+				numbers = append(numbers, item)
+			}
+		case isQuantity:
+			quantities.add(q)
+			quantityValues = append(quantityValues, item)
+		default:
+			others = append(others, item)
 		}
 	}
 	return result
+}
+
+// distinctPairwiseUpTo is the length up to which nullSafeDistinct compares
+// pairwise. Measured with BenchmarkEvaluateMeasureShapedLibrary: indexing
+// every list cost about a tenth of an evaluation in allocations alone.
+const distinctPairwiseUpTo = 32
+
+func isNumber(v fptypes.Value) bool {
+	switch v.(type) {
+	case fptypes.Integer, fptypes.Decimal:
+		return true
+	}
+	return false
+}
+
+// containsSameValue reports whether c holds a value sameValue matches with v.
+func containsSameValue(c []fptypes.Value, v fptypes.Value) bool {
+	for _, item := range c {
+		if sameValue(item, v) {
+			return true
+		}
+	}
+	return false
+}
+
+// quantityIndex holds the quantities nullSafeDistinct has kept, by unit.
+//
+// It answers from the index only where Quantity.Equal does no arithmetic: in
+// the same unit, and against a quantity with no unit, the value carries over
+// untouched and equality is equality of value. Across two different units the
+// quantities are compared with sameValue, one by one, so the conversion is
+// UCUM's and the calendar's and not an imitation of them. In the common case,
+// a result in a single unit, that loop has nothing to visit.
+type quantityIndex struct {
+	values map[string]map[string]bool // unit → exact values kept in it
+	kept   map[string][]fptypes.Value // unit → the quantities kept in it
+}
+
+func newQuantityIndex() *quantityIndex {
+	return &quantityIndex{values: map[string]map[string]bool{}, kept: map[string][]fptypes.Value{}}
+}
+
+func (x *quantityIndex) add(q fptypes.Quantity) {
+	unit := q.Unit()
+	if x.values[unit] == nil {
+		x.values[unit] = map[string]bool{}
+	}
+	x.values[unit][q.Value().Rat().RatString()] = true
+	x.kept[unit] = append(x.kept[unit], q)
+}
+
+func (x *quantityIndex) holds(q fptypes.Quantity) bool {
+	unit, value := q.Unit(), q.Value().Rat().RatString()
+	if x.values[unit][value] {
+		return true
+	}
+	if unit == "" {
+		// Unitless equals any unit by value.
+		for _, values := range x.values {
+			if values[value] {
+				return true
+			}
+		}
+		return false
+	}
+	if x.values[""][value] {
+		return true
+	}
+	for other, kept := range x.kept {
+		if other != unit && other != "" && containsSameValue(kept, q) {
+			return true
+		}
+	}
+	return false
+}
+
+// distinctBucket is the bucket nullSafeDistinct sorts v into, or false when v
+// has none and has to be compared with every kept value.
+//
+// The one property a bucket has to keep is that two values sameValue matches
+// land in the same one. Each case below keeps it for a reason worth writing
+// down, since a bucket that split two equal values would keep a duplicate:
+//
+//   - String and Boolean equal only their own type, by value.
+//   - Integer and Decimal equal each other by numeric value, so 1 and 1.0 have
+//     to share a bucket: the key is the exact rational, not the text.
+//   - An object equals only another object, by its children, so equal objects
+//     have equal children (objectKey). fhirpath compares a child number by
+//     value and a child string by its text, so a number is keyed by its exact
+//     rational and anything else by a reading of its text that equal text
+//     cannot vary.
+//   - A Tuple equals only another Tuple with the same fields, each equal by the
+//     rule sameValue applies, so it is keyed by its field names and each
+//     field's own key — when every field has one. A tuple with a field that has
+//     none has no bucket.
+//   - A Date, and a DateTime coarser than the hour, equal one another by their
+//     components (sameValue takes @2020-03-01 and @2020-03-01T as the same), so
+//     both are keyed by them. A DateTime at the hour or finer equals another
+//     only at the same instant, so it is keyed by the instant ToTime places
+//     it at — the offset it states, the one it was given by default, or none.
+//
+// Quantities go to quantityIndex instead. Everything else has no bucket:
+// getting a key wrong costs a wrong answer, while having none costs only time.
+// Intervals are the case most worth explaining, since they are common results.
+// Equality steps an open bound to its successor, [1, 3] = [1, 4), and compares
+// bounds of the same closure directly, where 1 = 1.0 though their successors
+// differ. A key of the included point splits (1, 3] from (1.0, 3]; a key of the
+// written point splits (1, 3] from [2, 3]. No key of the bounds keeps both, so
+// intervals are compared pairwise: 5000 of them take about a fifth of a second.
+func distinctBucket(v fptypes.Value) (string, bool) {
+	switch x := v.(type) {
+	case fptypes.String:
+		return "s" + x.Value(), true
+	case fptypes.Boolean:
+		return "b" + strconv.FormatBool(x.Bool()), true
+	case fptypes.Integer:
+		// What RatString writes for an integral rational, without the Rat.
+		return "n" + strconv.FormatInt(x.Value(), 10), true
+	case fptypes.Decimal:
+		return "n" + x.Value().Rat().RatString(), true
+	case *fptypes.ObjectValue:
+		return "o" + objectKey(x, 0), true
+	case cqltypes.Tuple:
+		names := make([]string, 0, len(x.Elements))
+		for name := range x.Elements {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		var b strings.Builder
+		b.WriteString("u")
+		for _, name := range names {
+			b.WriteString(name)
+			b.WriteByte('=')
+			f := x.Elements[name]
+			if f == nil {
+				b.WriteByte('-')
+				b.WriteByte(';')
+				continue
+			}
+			k, ok := distinctBucket(f)
+			if !ok {
+				// A field with no bucket may still equal a bucketed one — a
+				// dimensionless quantity equals a number, 100 '%' equals 1 —
+				// so the tuple cannot be keyed by it. It has no bucket either,
+				// and is compared with every kept value.
+				return "", false
+			}
+			b.WriteByte('(')
+			b.WriteString(k)
+			b.WriteByte(')')
+			b.WriteByte(';')
+		}
+		return b.String(), true
+	case fptypes.Date:
+		return dateKey(x.Year(), x.Month(), x.Day(), int(x.Precision())), true
+	case fptypes.DateTime:
+		if x.Precision() < fptypes.DTHourPrecision {
+			return dateKey(x.Year(), x.Month(), x.Day(), int(x.Precision())), true
+		}
+		return "t" + x.ToTime().UTC().Format(time.RFC3339Nano), true
+	}
+	return "", false
+}
+
+// dateKey keys a value coarser than the hour by the components its precision
+// states. Date and DateTime number their year, month and day precisions alike.
+func dateKey(year, month, day, precision int) string {
+	switch precision {
+	case 0:
+		return fmt.Sprintf("d%04d", year)
+	case 1:
+		return fmt.Sprintf("d%04d-%02d", year, month)
+	}
+	return fmt.Sprintf("d%04d-%02d-%02d", year, month, day)
+}
+
+// objectKey keys an object for distinctBucket from its children.
+//
+// An object with an id is keyed by it alone: equal objects have equal ids, and
+// a resource then costs one read. Without one, every child that is not null
+// is keyed by its count of items and the first two of them, recursively to a
+// depth of three. Element keys (_given) and resourceType are left out, which
+// can only put more objects in a bucket, never split equal ones.
+func objectKey(o *fptypes.ObjectValue, depth int) string {
+	if id, ok := o.Get("id"); ok {
+		if s, ok := id.(fptypes.String); ok {
+			return "i" + s.Value()
+		}
+	}
+	if depth >= 3 {
+		return "?"
+	}
+	keys := o.Keys()
+	sort.Strings(keys)
+	var b strings.Builder
+	for _, k := range keys {
+		if k == "" || k[0] == '_' || k == "resourceType" {
+			continue
+		}
+		items := o.GetCollection(k)
+		if len(items) == 0 {
+			continue // null, or nothing: not a child
+		}
+		b.WriteString(k)
+		b.WriteByte('#')
+		b.WriteString(strconv.Itoa(len(items)))
+		for n, item := range items {
+			if n == 2 {
+				break
+			}
+			b.WriteByte(',')
+			b.WriteString(childValueKey(item, depth+1))
+		}
+		b.WriteByte(';')
+	}
+	return b.String()
+}
+
+// childValueKey keys one item of an object's child.
+func childValueKey(v fptypes.Value, depth int) string {
+	switch x := v.(type) {
+	case nil:
+		return "-"
+	case fptypes.String:
+		return "s" + x.Value()
+	case fptypes.Boolean:
+		return "b" + strconv.FormatBool(x.Bool())
+	case fptypes.Integer:
+		return "n" + strconv.FormatInt(x.Value(), 10)
+	case fptypes.Decimal:
+		return "n" + x.Value().Rat().RatString()
+	case *fptypes.ObjectValue:
+		return "{" + objectKey(x, depth) + "}"
+	}
+	if fptypes.IsTemporal(v) {
+		// Read from the child's text, which is identical in equal objects.
+		return "t" + v.String()
+	}
+	return "?"
 }
 
 func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
@@ -4414,9 +4725,10 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 				// The two branches below never filtered, and a list written by
 				// hand keeps its nulls — `{null, true}` has two elements here.
 				// `return all` settles it: its purpose is to remove nothing,
-				// since `return` alone already means `return distinct`, so a
-				// `return all` that removes elements does the one thing the
-				// keyword rules out.
+				// since `return` alone means `return distinct`, so a `return all`
+				// that removes elements does the one thing the keyword rules out.
+				// Under `return` alone the distinct below does collapse repeated
+				// nulls into one, as distinct does everywhere.
 				results = append(results, val)
 			case len(n.Sources) > 1:
 				// Multi-source query without return: produce a Tuple with all aliases
@@ -4488,8 +4800,12 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 		return accumulator, nil
 	}
 
-	// Apply distinct if specified
-	if n.Return != nil && n.Return.Distinct {
+	// A return clause is distinct unless it says `all`. A query over several
+	// sources with no return clause is too: the reference translator gives it
+	// one, a Tuple of the aliases, distinct like any other. A single source
+	// with no return clause is left as it is, as the translator leaves it —
+	// it emits no return clause there, and the Java engine keeps duplicates.
+	if (n.Return != nil && !n.Return.All) || (n.Return == nil && len(n.Sources) > 1) {
 		results = nullSafeDistinct(results)
 	}
 
