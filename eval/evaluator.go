@@ -1095,20 +1095,24 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		case ast.OpNotEquivalent:
 			return fptypes.NewBoolean(left != nil || right != nil), nil
 		case ast.OpUnion:
-			// For list union: null union list = list, list union null = list
-			// For interval union: null union interval = null
-			if left == nil {
-				if _, rok := right.(cqltypes.Interval); rok {
-					return nil, nil
+			// For a list the null is an empty list, and the union is the other
+			// operand's unique elements: "if either argument is null, it is
+			// considered an empty list". Returning the list as it was kept its
+			// duplicates. For an interval, union with null is null. A single
+			// value that is neither (scalarShape) is the other operand as it
+			// is, as it always was: a repeating FHIR element with one entry
+			// arrives unwrapped, and that one entry is what it was before. Two
+			// nulls are null: nothing at runtime says they were lists.
+			switch setShape(left, right) {
+			case listShape:
+				return e.evalSetOp(ast.OpUnion, left, right)
+			case scalarShape:
+				if left == nil {
+					return right, nil
 				}
-				return right, nil
+				return left, nil
 			}
-			if right == nil {
-				if _, lok := left.(cqltypes.Interval); lok {
-					return nil, nil
-				}
-			}
-			return left, nil
+			return nil, nil
 		case ast.OpConcatenate:
 			ls, rs := "", ""
 			if left != nil {
@@ -1119,8 +1123,18 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 			}
 			return fptypes.NewString(ls + rs), nil
 		case ast.OpExcept:
-			// list except null = list
-			if left != nil && right == nil {
+			// A null second argument of a list except is an empty list, and
+			// the result is still the first list's unique elements. Interval
+			// except with a null is null, which is what the reference engine
+			// answers; it used to return the interval. A single value that is
+			// neither is itself, as for union. A null first argument is null.
+			if left == nil {
+				return nil, nil
+			}
+			switch setShape(left, nil) {
+			case listShape:
+				return e.evalSetOp(ast.OpExcept, left, nil)
+			case scalarShape:
 				return left, nil
 			}
 			return nil, nil
@@ -1292,26 +1306,11 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		return fptypes.NewBoolean(isTrue(left) != isTrue(right)), nil
 
 	case ast.OpUnion:
-		if lIv, rIv, ok, err := e.asIntervals(left, right); err != nil {
-			return nil, err
-		} else if ok {
-			return funcs.IntervalUnion(lIv, rIv)
-		}
-		return e.evalSetOp(n.Operator, left, right)
+		return e.evalSetOperation(n, left, right, funcs.IntervalUnion)
 	case ast.OpIntersect:
-		if lIv, rIv, ok, err := e.asIntervals(left, right); err != nil {
-			return nil, err
-		} else if ok {
-			return funcs.IntervalIntersect(lIv, rIv)
-		}
-		return e.evalSetOp(n.Operator, left, right)
+		return e.evalSetOperation(n, left, right, funcs.IntervalIntersect)
 	case ast.OpExcept:
-		if lIv, rIv, ok, err := e.asIntervals(left, right); err != nil {
-			return nil, err
-		} else if ok {
-			return funcs.IntervalExcept(lIv, rIv)
-		}
-		return e.evalSetOp(n.Operator, left, right)
+		return e.evalSetOperation(n, left, right, funcs.IntervalExcept)
 
 	case ast.OpIn, ast.OpContains:
 		return e.evalInContains(n.Operator, left, right)
@@ -1555,6 +1554,24 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 // Set operations
 // ---------------------------------------------------------------------------
 
+// evalSetOperation is union, intersect or except of two present operands: the
+// interval operation, intervalOp, when setShape does not say it is a list and
+// both operands convert to intervals, and the list operation otherwise.
+func (e *Evaluator) evalSetOperation(n *ast.BinaryExpression, left, right fptypes.Value,
+	intervalOp func(a, b cqltypes.Interval) (fptypes.Value, error),
+) (fptypes.Value, error) {
+	if setShape(left, right) != listShape {
+		lIv, rIv, ok, err := e.asIntervals(left, right)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return intervalOp(lIv, rIv)
+		}
+	}
+	return e.evalSetOp(n.Operator, left, right)
+}
+
 func (e *Evaluator) evalSetOp(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
 	lc := toCollection(left)
 	rc := toCollection(right)
@@ -1569,41 +1586,105 @@ func (e *Evaluator) evalSetOp(op ast.BinaryOp, left, right fptypes.Value) (fptyp
 	return nil, nil
 }
 
-// nullSafeUnion performs union that handles nil elements properly.
+// The list set operations. All three are defined with set semantics — "each
+// element will appear in the result at most once" — and compare elements by
+// equality with nulls equal to one another, as distinct does. Union keeps each
+// first occurrence across both lists; except and intersect test the first list
+// against an index of the whole second (keepFirst). Long lists go through a
+// valueIndex, so that none searches one list for each element of the other.
+
+// nullSafeUnion is the unique elements of both lists, the first list's first.
+// It used to append the first list whole and add only the second's new
+// elements, so {1, 1, 2} union {2} kept both ones.
 func nullSafeUnion(lc, rc fptypes.Collection) fptypes.Collection {
 	result := make(fptypes.Collection, 0, len(lc)+len(rc))
-	result = append(result, lc...)
-	for _, item := range rc {
-		if !nullSafeContains(result, item) {
-			result = append(result, item)
+	if len(lc)+len(rc) <= distinctPairwiseUpTo {
+		for _, c := range []fptypes.Collection{lc, rc} {
+			for _, item := range c {
+				if !nullSafeContains(result, item) {
+					result = append(result, item)
+				}
+			}
+		}
+		return result
+	}
+	return indexedUnion(lc, rc, result)
+}
+
+// indexedUnion is nullSafeUnion through a valueIndex, appending to result. It
+// is its own function so that it can be held to the pairwise answer.
+func indexedUnion(lc, rc, result fptypes.Collection) fptypes.Collection {
+	kept := newValueIndex()
+	for _, c := range []fptypes.Collection{lc, rc} {
+		for _, item := range c {
+			if kept.addIfAbsent(item) {
+				result = append(result, item)
+			}
 		}
 	}
 	return result
 }
 
-// nullSafeIntersect performs intersect that handles nil elements properly.
-func nullSafeIntersect(lc, rc fptypes.Collection) fptypes.Collection {
-	var result fptypes.Collection
-	for _, item := range lc {
-		if nullSafeContains(rc, item) && !nullSafeContains(result, item) {
-			result = append(result, item)
-		}
-	}
-	return result
-}
-
-// nullSafeExclude performs except that handles nil elements properly.
+// nullSafeExclude is the unique elements of the first list that the second
+// does not hold. It used to keep every element of the first not in the
+// second, duplicates included, so {1, 1, 2} except {3} kept both ones.
+//
+// Each element of the first is tested against the whole second list, its
+// duplicates included, and against what has been kept: with an equality that
+// is not transitive, testing against the second list's distinct elements
+// alone could let through one equal to a duplicate that was dropped.
 func nullSafeExclude(lc, rc fptypes.Collection) fptypes.Collection {
-	var result fptypes.Collection
+	return keepFirst(lc, rc, false)
+}
+
+// nullSafeIntersect is the unique elements of the first list that the second
+// also holds.
+func nullSafeIntersect(lc, rc fptypes.Collection) fptypes.Collection {
+	return keepFirst(lc, rc, true)
+}
+
+// keepFirst is the unique elements of lc whose presence in rc is inRC: except
+// keeps those absent from rc, intersect those present. Short lists are
+// compared pairwise; long ones through a valueIndex of all of rc. The result
+// is never nil, so that an empty except reads as the empty union does.
+func keepFirst(lc, rc fptypes.Collection, inRC bool) fptypes.Collection {
+	// Pairwise costs len(lc)·len(rc) comparisons for membership and up to
+	// len(lc)² more for the result's own duplicates; an index costs a key for
+	// every element of both. Both terms have to be small: bounding the first
+	// alone sent `Population except Exclusions` with no exclusions — an empty
+	// second list — down the pairwise path, quadratic in the population, where
+	// it had been linear: 4000 encounters took 700 ms.
+	if len(lc) <= 1 || (len(lc) <= distinctPairwiseUpTo && len(lc)*len(rc) <= distinctPairwiseUpTo*distinctPairwiseUpTo) {
+		result := make(fptypes.Collection, 0, len(lc))
+		for _, item := range lc {
+			if nullSafeContains(rc, item) == inRC && !nullSafeContains(result, item) {
+				result = append(result, item)
+			}
+		}
+		return result
+	}
+	return indexedKeepFirst(lc, rc, inRC)
+}
+
+// indexedKeepFirst is keepFirst through a valueIndex. It is its own function
+// so that it can be held to the pairwise answer on lists of any length.
+func indexedKeepFirst(lc, rc fptypes.Collection, inRC bool) fptypes.Collection {
+	result := make(fptypes.Collection, 0, len(lc))
+	second := newValueIndex()
+	for _, item := range rc {
+		second.add(item)
+	}
+	kept := newValueIndex()
 	for _, item := range lc {
-		if !nullSafeContains(rc, item) {
+		k := keyOf(item)
+		if second.holdsKeyed(item, k) == inRC && !kept.holdsKeyed(item, k) {
 			result = append(result, item)
+			kept.addKeyed(item, k)
 		}
 	}
 	return result
 }
 
-// nullSafeContains checks if collection contains value, handling nil properly.
 // sameValue is element equality for the collection and tuple operations, which
 // have no null to return and so cannot use the `=` operator directly.
 //
@@ -1620,6 +1701,49 @@ func sameValue(a, b fptypes.Value) bool {
 	return a.Equal(b)
 }
 
+// setKind is whether union, intersect or except is the list operation or the
+// interval one: listShape, intervalShape, or unknownShape when neither the
+// types nor the values tell.
+type setKind int
+
+const (
+	unknownShape setKind = iota
+	listShape
+	intervalShape
+	// scalarShape is a single value that is neither a list nor an interval.
+	// `5 union null` is not CQL — the reference translator finds no Union
+	// for (Integer, Any) — and the semantic phase types it as the Integer, so
+	// with a null it is answered as it always was: the value itself, which
+	// keeps the result the type the plan says it is.
+	scalarShape
+)
+
+// setShape decides which set operation n is, from its operands as they are:
+// a list is the list operation, an interval the interval one, and anything else
+// is a single value (scalarShape). Nothing is converted to ask, so a value that
+// would not convert cannot fail an operation that does not use the conversion.
+func setShape(left, right fptypes.Value) setKind {
+	// A FHIR Period is one entry of a list of Periods as often as it is an
+	// interval, and nothing about the value tells which; converting it to ask
+	// made the union of a one-entry list with null an interval union, and null.
+	shape := unknownShape
+	for _, v := range []fptypes.Value{left, right} {
+		switch v.(type) {
+		case nil:
+			continue
+		case cqltypes.List:
+			shape = listShape
+		case cqltypes.Interval:
+			return intervalShape
+		default:
+			if shape == unknownShape {
+				shape = scalarShape
+			}
+		}
+	}
+	return shape
+}
+
 // nullSafeSame is the element equality of the collection operations: two
 // nulls are the same, a null and a value are not, and two values are compared
 // with sameValue.
@@ -1630,6 +1754,7 @@ func nullSafeSame(a, b fptypes.Value) bool {
 	return sameValue(a, b)
 }
 
+// nullSafeContains reports whether c holds a value nullSafeSame matches with v.
 func nullSafeContains(c fptypes.Collection, v fptypes.Value) bool {
 	for _, item := range c {
 		if nullSafeSame(item, v) {
@@ -1820,52 +1945,117 @@ func keptAlready(c fptypes.Collection, positions []int, item fptypes.Value) bool
 // on lists of any length, short ones included.
 func indexedDistinctPositions(c fptypes.Collection) []int {
 	var positions []int
-	buckets := make(map[string][]fptypes.Value)
-	quantities := newQuantityIndex()
-	var numbers, quantityValues, others []fptypes.Value
-	seenNull := false
+	kept := newValueIndex()
 	for at, item := range c {
-		if item == nil {
-			if !seenNull {
-				seenNull = true
-				positions = append(positions, at)
-			}
-			continue
-		}
-		var dup bool
-		key, bucketed := distinctBucket(item)
-		q, isQuantity := item.(fptypes.Quantity)
-		switch {
-		case bucketed:
-			dup = containsSameValue(buckets[key], item) || containsSameValue(others, item)
-			// A number can equal a quantity: sameValue reads it as a
-			// dimensionless one. Nothing else in a bucket can.
-			if !dup && isNumber(item) {
-				dup = containsSameValue(quantityValues, item)
-			}
-		case isQuantity:
-			dup = quantities.holds(q) || containsSameValue(numbers, item) || containsSameValue(others, item)
-		default:
-			dup = keptAlready(c, positions, item)
-		}
-		if dup {
-			continue
-		}
-		positions = append(positions, at)
-		switch {
-		case bucketed:
-			buckets[key] = append(buckets[key], item)
-			if isNumber(item) {
-				numbers = append(numbers, item)
-			}
-		case isQuantity:
-			quantities.add(q)
-			quantityValues = append(quantityValues, item)
-		default:
-			others = append(others, item)
+		if kept.addIfAbsent(item) {
+			positions = append(positions, at)
 		}
 	}
 	return positions
+}
+
+// valueIndex holds values so that whether it holds one equal to another, by
+// nullSafeSame, is answered without comparing against all of them. Values are
+// sorted into the buckets distinctBucket gives, quantities by unit; a value is
+// compared with its own bucket and with what can cross into it, never decided
+// equal by a key. Values with no bucket are compared with everything.
+type valueIndex struct {
+	buckets                         map[string][]fptypes.Value
+	quantities                      *quantityIndex
+	numbers, quantityValues, others []fptypes.Value
+	hasNull                         bool
+}
+
+func newValueIndex() *valueIndex {
+	return &valueIndex{buckets: map[string][]fptypes.Value{}, quantities: newQuantityIndex()}
+}
+
+// indexKey is what valueIndex files a value under, computed once per value:
+// distinctBucket builds a string, objectKey reads an object's children, and
+// keying a value for holds and again for add doubled the allocations of a
+// distinct over objects with no id.
+type indexKey struct {
+	key        string
+	bucketed   bool
+	quantity   fptypes.Quantity
+	isQuantity bool
+}
+
+func keyOf(v fptypes.Value) indexKey {
+	key, bucketed := distinctBucket(v)
+	q, isQuantity := v.(fptypes.Quantity)
+	return indexKey{key: key, bucketed: bucketed, quantity: q, isQuantity: isQuantity}
+}
+
+func (x *valueIndex) holdsKeyed(v fptypes.Value, k indexKey) bool {
+	if v == nil {
+		return x.hasNull
+	}
+	switch {
+	case k.bucketed:
+		if containsSameValue(x.buckets[k.key], v) || containsSameValue(x.others, v) {
+			return true
+		}
+		// A number can equal a quantity: sameValue reads it as a
+		// dimensionless one. Nothing else in a bucket can.
+		return isNumber(v) && containsSameValue(x.quantityValues, v)
+	case k.isQuantity:
+		return x.quantities.holds(k.quantity) || containsSameValue(x.numbers, v) || containsSameValue(x.others, v)
+	default:
+		// No bucket says what it could equal, so it is compared with every
+		// value held, reading them where they are rather than from a copy.
+		if containsSameValue(x.others, v) || containsSameValue(x.quantityValues, v) {
+			return true
+		}
+		for _, held := range x.buckets {
+			if containsSameValue(held, v) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// add puts v in the index.
+func (x *valueIndex) add(v fptypes.Value) {
+	x.addKeyed(v, keyOf(v))
+}
+
+func (x *valueIndex) addKeyed(v fptypes.Value, k indexKey) {
+	if v == nil {
+		x.hasNull = true
+		return
+	}
+	switch {
+	case k.bucketed:
+		x.buckets[k.key] = append(x.buckets[k.key], v)
+		if isNumber(v) {
+			x.numbers = append(x.numbers, v)
+		}
+	case k.isQuantity:
+		x.quantities.add(k.quantity)
+		x.quantityValues = append(x.quantityValues, v)
+	default:
+		x.others = append(x.others, v)
+	}
+}
+
+// addIfAbsent adds v unless the index holds a value equal to it, keying v
+// once for both, and reports whether it added it.
+func (x *valueIndex) addIfAbsent(v fptypes.Value) bool {
+	if v == nil {
+		if x.hasNull {
+			return false
+		}
+		x.hasNull = true
+		return true
+	}
+	k := keyOf(v)
+	if x.holdsKeyed(v, k) {
+		return false
+	}
+	x.addKeyed(v, k)
+	return true
 }
 
 // distinctPairwiseUpTo is the length up to which distinctPositions compares

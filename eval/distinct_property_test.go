@@ -160,6 +160,54 @@ func TestBucketedDistinctAnswersAsTheQuadraticOne(t *testing.T) {
 		cqltypes.NewInterval(fptypes.NewInteger(1), fptypes.NewInteger(2), true, true),
 	}
 
+	// except, intersect and union, each path against the pairwise answer:
+	// every element of the first list tested against the whole second list.
+	// A source of its own, so that the distinct loop below keeps the inputs
+	// it has always had.
+	setRNG := rand.New(rand.NewSource(2))
+	for range 3000 {
+		// Up to 60 a side, so that keepFirst takes its indexed branch too and
+		// not only the pairwise one, which the oracle below is a copy of.
+		lc := make(fptypes.Collection, setRNG.Intn(60))
+		rc := make(fptypes.Collection, setRNG.Intn(60))
+		for j := range lc {
+			lc[j] = pool[setRNG.Intn(len(pool))]
+		}
+		for j := range rc {
+			rc[j] = pool[setRNG.Intn(len(pool))]
+		}
+		for _, inRC := range []bool{false, true} {
+			want := make(fptypes.Collection, 0, len(lc))
+			for _, item := range lc {
+				if nullSafeContains(rc, item) == inRC && !nullSafeContains(want, item) {
+					want = append(want, item)
+				}
+			}
+			for name, got := range map[string]fptypes.Collection{
+				"indexed":   indexedKeepFirst(lc, rc, inRC),
+				"keepFirst": keepFirst(lc, rc, inRC),
+			} {
+				if !reflect.DeepEqual(got, want) {
+					t.Fatalf("keep of %s against %s (in=%t)\n  %s: %s\n  pairwise: %s",
+						show(lc), show(rc), inRC, name, show(got), show(want))
+				}
+			}
+		}
+		union := make(fptypes.Collection, 0, len(lc)+len(rc))
+		for _, item := range append(append(fptypes.Collection{}, lc...), rc...) {
+			if !nullSafeContains(union, item) {
+				union = append(union, item)
+			}
+		}
+		for name, got := range map[string]fptypes.Collection{
+			"indexed":       indexedUnion(lc, rc, make(fptypes.Collection, 0, len(lc)+len(rc))),
+			"nullSafeUnion": nullSafeUnion(lc, rc),
+		} {
+			if !reflect.DeepEqual(got, union) {
+				t.Fatalf("union of %s and %s\n  %s: %s\n  pairwise: %s", show(lc), show(rc), name, show(got), show(union))
+			}
+		}
+	}
 	rng := rand.New(rand.NewSource(1))
 	for range 5000 {
 		c := make(fptypes.Collection, rng.Intn(20))

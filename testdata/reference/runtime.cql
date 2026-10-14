@@ -77,3 +77,20 @@ define AggregateLetWithout: ({1, 2, 3}) X let L: X * 10 without ({2}) Y such tha
 define AggregateDistinctLetWith: ({1, 1, 2, 3}) X let L: X * 10 with ({1, 2}) Y such that X = Y aggregate distinct A starting 0: A + L // control
 define AggregateDistinctSources: from ({1, 1}) P, ({2, 2}) Q aggregate distinct S starting 0: S + P + Q // control
 define AggregateAllSources: from ({1, 1}) P, ({2, 2}) Q aggregate S starting 0: S + P + Q // control
+
+// List set operations: set semantics with null as an empty list, and
+// equality, not scale, deciding which elements are the same.
+// A null operand: the references disagree, and the specification settles it.
+define UnionNullFirst: null union {1, 1, 2}
+define UnionNullSecond: {1, 1, 2} union null
+define ExceptNullSecond: {1, 1, 2} except null
+define ExceptNullFirst: null except {1} // control
+define UnionNullElements: {1, null, null} union {null, 2} // control
+define ExceptNullElement: {1, null, 2, null} except {null} // control
+define IntersectNullElements: {1, 1, 2, null, null} intersect {1, null} // control
+define UnionEmptySecond: {1, 1} union {} // control
+define UnionDecimalScale: {1.0} union {1.00} // control
+define ExceptDecimalScale: {1.0, 2.0} except {1.00} // control
+define IntervalExceptNull: Interval[1, 5] except null // control
+define TypedListNullsUnion: (null as List<Integer>) union (null as List<Integer>)
+define TypedIntervalNullsUnion: (null as Interval<Integer>) union (null as Interval<Integer>) // control

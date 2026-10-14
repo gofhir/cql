@@ -23,10 +23,9 @@ with each other they are two opinions on evaluation, and one on translation.
 
 | Definition | This engine | Java | cql-execution | Specification |
 | --- | --- | --- | --- | --- |
-| `UnionDuplicates` | `{1, 1, 2}` | `{1, 2}` | `{1, 2}` | Union: "returns a list with all unique elements from both arguments" |
-| `ExceptDuplicates` | `{1, 1, 2}` | `{1, 2}` | `{1, 2}` | Except: "each element will appear in the result at most once" |
 | `ListIntDec` | `{1, 1.0}`, Integer and Decimal | two Decimals | (not an oracle: the type is the translator's) | the translator converts the list to `List<Decimal>` |
 | `DecimalDivision` | 3.3333333333333333 | 3.33333333 | (not an oracle: 3.3333333333333335, binary floating point) | Decimal: "a precision ... of 28 and a scale (meaning number of possible digits to the right of the decimal) of 8" |
+| `TypedListNullsUnion` | null | `{}` | `{}` | Union: "if either argument is null, it is considered an empty list" |
 | `SameDayAcrossOffsets` | false | true | true | Same As: "When comparing DateTime values with different timezone offsets, implementations should normalize to the timezone offset of the evaluation request timestamp, but only when the comparison precision is hours, minutes, seconds, or milliseconds" |
 
 `DecimalDivision` is a quotient left at sixteen places. The conformance corpus
@@ -35,6 +34,10 @@ matters beyond printing: `10.0 / 3.0 = 3.33333333` is true in the Java engine
 and false here. It is false in cql-execution too, which divides in binary
 floating point. That runtime is not an oracle for decimal arithmetic, and its
 row is the Java engine and the specification alone.
+
+`TypedListNullsUnion` is two nulls cast to lists. At runtime both are just
+null, with nothing to say they were lists rather than intervals, and for
+intervals null is the answer. Telling them apart needs the static types.
 
 `SameDayAcrossOffsets` was already wrong before fhirpath v1.14. This engine
 normalizes both sides to UTC, which moves `23:00Z` into the next day. At day
@@ -96,6 +99,24 @@ That is a decision, not an oversight. The engine's comparisons depend on it.
 Without the rule, a day-precision value was normalized as if it were an
 instant, and it answered wrong at UTC+14. `decidedRuntimeAnswers` pins it,
 and changing it means arguing with that reason.
+
+## Disputed, and settled by the specification: a null operand of union or except
+
+```cql
+define UnionNullFirst: null union {1, 1, 2}     // Java: {1, 2}   cql-execution: {1, 1, 2}   this engine: {1, 2}
+define UnionNullSecond: {1, 1, 2} union null    // the same
+define ExceptNullSecond: {1, 1, 2} except null  // the same
+```
+
+The specification settles it. Union says "if either argument is null, it is
+considered an empty list for the purposes of evaluating the union", and its
+result is "all unique elements from both arguments". Except says that with a
+null second argument "the operation is performed as though the second
+argument was an empty list", and that "each element will appear in the result
+at most once". An empty list does not exempt the other operand from set
+semantics, so the duplicates go. The Java engine answers so. cql-execution
+returns the other operand as it was, and so did this engine until union and
+except were rebuilt on distinct.
 
 ## Disputed, and settled by the conformance suite: a single source with no return clause
 
