@@ -44,14 +44,11 @@ func TestASetOperationWithAnAbsentOperandDoesNotDependOnCardinality(t *testing.T
 		if err != nil || v != nil {
 			t.Errorf("a Period union null with %s names = %v, %v; want null, as for any interval", tt.names, v, err)
 		}
-		// A one-entry list of Periods arrives as a single Period. Asked of one
-		// name only: path navigation through two names is null today whatever
-		// follows it — a separate defect, Patient.name.family included.
-		if tt.names == "1" {
-			v, err = e.EvaluateExpression(context.Background(), src, "PeriodsUnionNull", []byte(tt.patient), nil)
-			if err != nil || valueString(v) != "1" {
-				t.Errorf("Count(Patient.name.period union null) with one name = %v, %v; want 1", v, err)
-			}
+		// A one-entry list of Periods arrives as a single Period, and two as a
+		// list of them.
+		v, err = e.EvaluateExpression(context.Background(), src, "PeriodsUnionNull", []byte(tt.patient), nil)
+		if err != nil || valueString(v) != tt.names {
+			t.Errorf("Count(Patient.name.period union null) with %s names = %v, %v; want %s", tt.names, v, err, tt.names)
 		}
 	}
 }

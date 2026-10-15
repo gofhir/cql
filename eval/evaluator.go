@@ -843,9 +843,10 @@ func (e *Evaluator) choiceProperty(v fptypes.Value, name string) (fptypes.Value,
 // elementOf reads a named element off a value, reporting whether the value has
 // one at all.
 //
-// It is the whole of what "a name applied to a value" means in this engine, and
-// it is one function because the language has three spellings for it and they
-// have to answer alike:
+// It is the whole of what "a name applied to a single value" means in this
+// engine — a list is member access's to read through, entry by entry, and is
+// not a row with columns (see elementOfEach) — and it is one function because
+// the language has three spellings for it and they have to answer alike:
 //
 //	sort by effective         the only one CQL allows — "alias references are
 //	                          neither required nor allowed in the sort"
@@ -957,6 +958,59 @@ func (e *Evaluator) elementOf(v fptypes.Value, name string, at ast.Expression) (
 		}
 	}
 	return nil, false
+}
+
+// elementOfEach reads a named element off every entry of a list.
+//
+// A name applied to a list is a query over it: the reference translator writes
+// `Patient.name.family` as
+//
+//	Patient.name $this where $this.family is not null return all $this.family
+//
+// and wraps it in Flatten when the element itself repeats, as `given` does. So
+// the answer is a list, without the entries whose element is null, with
+// duplicates kept, one level flatter — and an empty list when no entry has one.
+// Flatten keeps nulls inside an entry's list: `({Tuple{a: {1, null}}}).a` is
+// {1, null}, as both reference engines answer.
+//
+// A repeating FHIR element arrives as a list only with two or more entries;
+// with one it is that entry, and the name is read off it directly. Before this
+// a list had no elements at all, so a patient with two names had a null
+// `Patient.name.family` and a Count(Patient.name.period) of 0.
+//
+// It is member access's, not elementOf's. elementOf also answers whether a
+// name is a column of a sort row, and a row that is a list has no columns:
+// `sort by a` over list rows is rejected by the translator, while
+// `sort by $this.a` is a member access and navigates.
+//
+// Whether an entry's element is flattened is decided by its value, where the
+// translator decides it by the element's type. Over FHIR data and valid CQL the
+// two agree: an element is a list exactly when it is declared to repeat. They
+// part only on lists the translator refuses — `({Tuple{a: 1}, Tuple{a: {2}}}).a`
+// is a list of Any, which has no element a.
+//
+// An entry that is itself a list is read through the same way. The translator
+// rejects `({{Tuple{a: 1}}}).a`, but the semantic phase accepts it and types it
+// List<Integer> — see propertyOf — and skipping the entry made the value {}
+// where the type promised the 1.
+func (e *Evaluator) elementOfEach(src cqltypes.List, name string, at ast.Expression) fptypes.Value {
+	out := make(fptypes.Collection, 0, len(src.Values))
+	for _, item := range src.Values {
+		var v fptypes.Value
+		if nested, ok := item.(cqltypes.List); ok {
+			v = e.elementOfEach(nested, name, at)
+		} else {
+			v, _ = e.elementOf(item, name, at)
+		}
+		switch v := v.(type) {
+		case nil:
+		case cqltypes.List:
+			out = append(out, v.Values...)
+		default:
+			out = append(out, v)
+		}
+	}
+	return cqltypes.NewList(out)
 }
 
 // ---------------------------------------------------------------------------
@@ -4707,8 +4761,15 @@ func (e *Evaluator) evalMemberAccess(n *ast.MemberAccess) (fptypes.Value, error)
 	if err != nil {
 		return nil, err
 	}
+	// A null list is null, not an empty one: both reference engines answer
+	// (null as List<Tuple{a Integer}>).a with null.
 	if source == nil {
 		return nil, nil
+	}
+	// A list is read entry by entry, which is member access's alone: a sort key
+	// asks about a row, and a row that is a list has no columns. See elementOfEach.
+	if list, ok := source.(cqltypes.List); ok {
+		return e.elementOfEach(list, n.Member, n), nil
 	}
 	// From here the question is only "what is element `Member` of this value",
 	// which is not a question about the member-access syntax: a sort key asks the

@@ -262,10 +262,14 @@ func (c *checker) inferMemberAccess(e *ast.MemberAccess) Type {
 // not a property is a different mistake from a dotted one that is not.
 //
 // A property of a list is the property of its elements, gathered back into a
-// list. CQL proper requires a query for that and the reference translator
-// refuses it; this engine's FHIRPath layer allows it, and the two disagreeing
-// about what is legal is not this phase's argument to have — it types what the
-// evaluator will do.
+// list and flattened one level. The reference translator allows it and writes
+// it as a query over the list, Flatten around it when the property is itself a
+// list; the evaluator does the same (see elementOfEach). Where this phase is
+// looser is a list of lists, which the translator refuses and this types by
+// reading through it — and the evaluator reads through it too, so the value is
+// what the type says. The evaluator flattens by the value of each entry and
+// this by the element's type; they differ only for an element whose type is a
+// choice of a list and something else, which the translator refuses as well.
 func (c *checker) propertyOf(source Type, name string, at ast.Expression) (Type, bool) {
 	switch s := source.(type) {
 	case nil:
