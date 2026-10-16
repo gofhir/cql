@@ -161,6 +161,11 @@ func (e *Evaluator) declaredDateTime(node ast.Expression, owner, member string) 
 // FHIR.instant is the same underlying value at a fixed precision, and its
 // FHIRHelpers accessor is ToDateTime for that reason. FHIR.date stays a Date.
 func holdsDateTime(t sema.Type) bool {
+	// An element read through a repeating one is typed as a list of it, and
+	// what is promoted is each entry.
+	if list, ok := t.(*sema.List); ok {
+		t = list.Element
+	}
 	named, ok := t.(*sema.Named)
 	if !ok {
 		return false

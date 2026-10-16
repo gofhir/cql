@@ -94,3 +94,13 @@ define ExceptDecimalScale: {1.0, 2.0} except {1.00} // control
 define IntervalExceptNull: Interval[1, 5] except null // control
 define TypedListNullsUnion: (null as List<Integer>) union (null as List<Integer>) // control
 define TypedIntervalNullsUnion: (null as Interval<Integer>) union (null as Interval<Integer>) // control
+
+// A name applied to a list is read off each entry: nulls dropped, duplicates
+// kept, one level flatter. A list stays a list with one entry or none.
+define PropertyOfList: ({Tuple{a: 1}, Tuple{a: null as Integer}, Tuple{a: 1}}).a
+define PropertyOfListOfLists: ({Tuple{a: {1, 2}}, Tuple{a: {3}}}).a
+define PropertyOfOneEntryList: ({Tuple{a: 1}}).a
+define PropertyOfEmptyList: (List<Tuple{a Integer}>{}).a
+define PropertyOfListAllNull: ({Tuple{a: null as Integer}, Tuple{a: null as Integer}}).a
+define PropertyOfListInnerNull: ({Tuple{a: {1, null as Integer}}, Tuple{a: {3}}}).a
+define PropertyOfNullList: (null as List<Tuple{a Integer}>).a

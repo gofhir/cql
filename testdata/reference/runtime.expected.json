@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "20d4b2d462d29ae36601a8f2ad344593d7e006ac8aa9bd698ccf20cc20c75d72",
+  "sourceSha256" : "a0a04858e6709e84d744e7f6d92ed82d99a4aa0629426c4a16ccd9ef9764bf44",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -433,6 +433,55 @@
       "type" : "List",
       "elements" : [ ]
     },
-    "TypedIntervalNullsUnion" : null
+    "TypedIntervalNullsUnion" : null,
+    "PropertyOfList" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "1"
+      } ]
+    },
+    "PropertyOfListOfLists" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      }, {
+        "type" : "Integer",
+        "value" : "3"
+      } ]
+    },
+    "PropertyOfOneEntryList" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      } ]
+    },
+    "PropertyOfEmptyList" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "PropertyOfListAllNull" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "PropertyOfListInnerNull" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, null, {
+        "type" : "Integer",
+        "value" : "3"
+      } ]
+    },
+    "PropertyOfNullList" : null
   }
 }
