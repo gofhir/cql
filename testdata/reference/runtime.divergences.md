@@ -25,7 +25,6 @@ with each other they are two opinions on evaluation, and one on translation.
 | --- | --- | --- | --- | --- |
 | `ListIntDec` | `{1, 1.0}`, Integer and Decimal | two Decimals | (not an oracle: the type is the translator's) | the translator converts the list to `List<Decimal>` |
 | `DecimalDivision` | 3.3333333333333333 | 3.33333333 | (not an oracle: 3.3333333333333335, binary floating point) | Decimal: "a precision ... of 28 and a scale (meaning number of possible digits to the right of the decimal) of 8" |
-| `SameDayAcrossOffsets` | false | true | true | Same As: "When comparing DateTime values with different timezone offsets, implementations should normalize to the timezone offset of the evaluation request timestamp, but only when the comparison precision is hours, minutes, seconds, or milliseconds" |
 
 `DecimalDivision` is a quotient left at sixteen places. The conformance corpus
 does not catch it, because its division cases are wrapped in `Round(…, 8)`. It
@@ -33,10 +32,6 @@ matters beyond printing: `10.0 / 3.0 = 3.33333333` is true in the Java engine
 and false here. It is false in cql-execution too, which divides in binary
 floating point. That runtime is not an oracle for decimal arithmetic, and its
 row is the Java engine and the specification alone.
-
-`SameDayAcrossOffsets` was already wrong before fhirpath v1.14. This engine
-normalizes both sides to UTC, which moves `23:00Z` into the next day. At day
-precision, the specification compares the days as written.
 
 ## Where the Java engine is not an oracle: quantities with different units
 

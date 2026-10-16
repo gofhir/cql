@@ -47,8 +47,23 @@ define DateTimeMillis: @2020-01-01T10:30:00.123Z // control
 define DateTimeOffset: @2020-01-01T07:00:00-03:00 // control
 define SortDescending: ({3, 1, 2}) X sort desc // control
 
-// Comparison at day precision between values at different offsets.
-define SameDayAcrossOffsets: @2020-01-01T23:00:00Z same day as @2020-01-01T21:00:00-03:00
+// Comparison at a precision between values at different offsets. At a
+// precision coarser than the hour they are read as written, the day each one
+// names; at the hour and finer they are compared as instants. These answered
+// as instants at every precision, which put 21:00-03:00 on the 2nd.
+define SameDayAcrossOffsets: @2020-01-01T23:00:00Z same day as @2020-01-01T21:00:00-03:00 // control
+define SameDayAcrossOffsetsSameInstant: @2020-01-01T23:00:00Z same day as @2020-01-02T01:00:00+02:00 // control
+define SameDayUnwrittenOffset: DateTime(2020, 3, 5, 23) same day as @2020-03-05T00:00:00Z // control
+define SameMonthAcrossOffsets: @2020-01-31T23:00:00Z same month as @2020-02-01T01:00:00+01:00 // control
+define BeforeDayAcrossOffsets: @2020-01-01T23:00:00Z before day of @2020-01-02T01:00:00+02:00 // control
+define AfterDayAcrossOffsets: @2020-01-02T01:00:00+02:00 after day of @2020-01-01T23:00:00Z // control
+define SameDayOrBeforeAcrossOffsets: @2020-01-02T01:00:00+02:00 same day or before @2020-01-01T23:00:00Z // control
+define InDayAcrossOffsets: @2020-01-01T23:00:00Z in day of Interval[@2020-01-02T00:00:00+02:00, @2020-01-02T05:00:00+02:00] // control
+define SameHourAcrossOffsets: @2020-01-01T23:00:00Z same hour as @2020-01-01T20:00:00-03:00 // control
+define IncludesDayAcrossOffsets: Interval[@2020-01-02T00:00:00+02:00, @2020-01-03T05:00:00+02:00] includes day of Interval[@2020-01-01T23:00:00Z, @2020-01-02T10:00:00Z] // control
+define IntervalSameDayAcrossOffsets: Interval[@2020-01-01T23:00:00Z, @2020-01-03T00:00:00Z] same day as Interval[@2020-01-02T01:00:00+02:00, @2020-01-03T00:00:00Z] // control
+define InHourAcrossOffsets: @2020-01-01T23:30:00Z in hour of Interval[@2020-01-01T22:00:00-03:00, @2020-01-02T05:00:00Z] // control
+define DuringDayAcrossOffsets: Interval[@2020-01-01T23:00:00Z, @2020-01-01T23:30:00Z] during day of Interval[@2020-01-02T00:00:00+02:00, @2020-01-02T05:00:00+02:00] // control
 
 // Controls for the encodings: a Decimal past what binary floating point holds
 // exactly, and a Time, which one runtime represents as a DateTime with no date.

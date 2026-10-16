@@ -6,11 +6,11 @@ import "testing"
 // review of the timezone work found and that work deliberately left open.
 //
 // `before`, `after`, `same as` and `same day as` reach the temporal comparison by
-// their own route — temporalCompareAtPrecision, over temporalComponents — and so
+// their own route — temporalCompareAtPrecision, over its component reader — and so
 // never saw the offset rule. Inside the 26-hour window `<` declined while
 // `before` answered true.
 //
-// The cause is one line in temporalComponents: a value that writes an offset is
+// The cause was one line in that reader: a value that writes an offset is
 // normalized to UTC, and one that does not keeps its local components. That
 // compares two different frames, which is the mistake CompareTemporal's own
 // comment warns about and avoids:
@@ -20,8 +20,10 @@ import "testing"
 //
 // The corpus says normalizing is right. SameAsTimezoneFalse compares
 // @2012-03-10T10:20:00.999+07:00 with @2012-03-10T10:20:00.999+06:00 at the hour
-// and expects false — 03:20 and 04:20 at UTC — so these operators read instants,
-// not the digits each value happens to be written with. An unwritten offset
+// and expects false — 03:20 and 04:20 at UTC — so at the hour and finer these
+// operators read instants, not the digits each value happens to be written with.
+// At a coarser precision Same As says the opposite, and they read the digits:
+// see readAsWritten and TestRuntimeMatchesTheReference. An unwritten offset
 // therefore leaves the instant unknown across the same window, and the same rule
 // applies: knowable where the whole window falls on one side.
 //
@@ -62,7 +64,10 @@ func TestTimingOperatorsAgreeWithTheOrderedComparisons(t *testing.T) {
 		_ = first
 	}
 
-	// Outside the window they answer, and they answer the same thing.
+	// Outside the window they answer, and they answer the same thing. The rows at
+	// day, month and year are read as written and have no window at all; they
+	// answer as the instants do because a month apart is a different day and
+	// month either way.
 	const far = "@2020-04-05T11:00:00.0" // a month later, no offset written
 	for _, tt := range []struct{ expr, want string }{
 		{a + " < " + far, "true"},
@@ -72,7 +77,7 @@ func TestTimingOperatorsAgreeWithTheOrderedComparisons(t *testing.T) {
 		{a + " same day as " + far, "false"},
 		{a + " same month as " + far, "false"},
 		{a + " on or before " + far, "true"},
-		// And a year is coarse enough to settle even at that precision.
+		// And the same year, as written.
 		{a + " same year as " + far, "true"},
 	} {
 		got, err := evalCQL(t, tt.expr)
