@@ -2862,16 +2862,8 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 		case "decimal":
 			d := decimal.RequireFromString("-99999999999999999999.99999999")
 			return fptypes.NewDecimal(d.String())
-		case "datetime":
-			// Stated at UTC, as the specification and the reference engine give
-			// it. Not the evaluation offset: at an eastern one the minimum would
-			// sit before the start of the range it defines, and at a western one
-			// the maximum past its end. A stated Z moves neither.
-			return fptypes.NewDateTime("0001-01-01T00:00:00.000Z")
-		case "date":
-			return fptypes.NewDate("0001-01-01")
-		case "time":
-			return fptypes.NewTime("00:00:00.000")
+		case "datetime", "date", "time":
+			return temporalExtreme(typeName, false)
 		case "boolean":
 			return nil, fmt.Errorf("minimum is not defined for Boolean")
 		default:
@@ -2886,13 +2878,8 @@ func (e *Evaluator) evalTypeExtent(n *ast.TypeExtent) (fptypes.Value, error) {
 	case "decimal":
 		d := decimal.RequireFromString("99999999999999999999.99999999")
 		return fptypes.NewDecimal(d.String())
-	case "datetime":
-		// Stated at UTC, for the reason given for the minimum above.
-		return fptypes.NewDateTime("9999-12-31T23:59:59.999Z")
-	case "date":
-		return fptypes.NewDate("9999-12-31")
-	case "time":
-		return fptypes.NewTime("23:59:59.999")
+	case "datetime", "date", "time":
+		return temporalExtreme(typeName, true)
 	case "boolean":
 		return nil, fmt.Errorf("maximum is not defined for Boolean")
 	default:
@@ -4879,7 +4866,7 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("retrieve [%s] date range eval: %w", resourceType, err)
 		}
-		dateRange = val
+		dateRange = widenForPrecision(val, n.DatePrecision)
 	}
 	// `[Condition: "Diabetes"]` says which codes to filter by but not which
 	// element carries them. That is the model's primary code path, and it was
@@ -4896,6 +4883,7 @@ func (e *Evaluator) evalRetrieve(n *ast.Retrieve) (fptypes.Value, error) {
 		Codes:          codes,
 		DatePath:       n.DatePath,
 		DateRange:      dateRange,
+		DatePrecision:  n.DatePrecision,
 		Limit:          retrieveLimit(e.ctx.MaxRetrieveSize),
 	}
 	if err := e.ctx.applyRetrieveContext(&req); err != nil {
@@ -6454,16 +6442,19 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		// Through Start/End, the way the offset path reads them: an open boundary
 		// excludes its own value, so `end of Interval[…, @2020-01-01)` is the
 		// instant before it and not the boundary as written. Reading Low/High raw
-		// made the same phrase answer differently with and without an offset.
-		point, perr := leftIv.End()
+		// made the same phrase answer differently with and without an offset. A
+		// closed null bound is the extreme it stands for (see startOf):
+		// `Interval[null, X] starts before @2020-01-01` is true, as both reference
+		// engines answer, where an unknown start made it null.
+		point, perr := endOf(leftIv)
 		if n.Operator.After {
-			point, perr = leftIv.Start()
+			point, perr = startOf(leftIv)
 		}
 		switch n.Operator.Boundary {
 		case "starts":
-			point, perr = leftIv.Start()
+			point, perr = startOf(leftIv)
 		case "ends":
-			point, perr = leftIv.End()
+			point, perr = endOf(leftIv)
 		}
 		if perr != nil {
 			return nil, perr
@@ -6524,19 +6515,25 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	// it applies here too: `A starts before B` is A's start against B, not the end
 	// that happens to face it. Comparing whole intervals ignored the word, so the
 	// interval-against-interval spelling disagreed with the scalar one.
+	//
+	// A closed null bound is the minimum or maximum of the point type here, as
+	// for the phrases at a precision (see startOf): `A starts before
+	// Interval[null, X]` is false, as both reference engines answer, where
+	// reading the bound as unknown made it null. The phrases without a word or a
+	// precision still go through funcs, which reads it as unknown.
 	if b := n.Operator.Boundary; b == "starts" || b == "ends" {
-		point, perr := leftIv.Start()
+		point, perr := startOf(leftIv)
 		if b == "ends" {
-			point, perr = leftIv.End()
+			point, perr = endOf(leftIv)
 		}
 		if perr != nil {
 			return nil, perr
 		}
 		// The right operand answers with the end that faces the comparison, the
 		// way it does without a boundary word.
-		against, aerr := rightIv.Start()
+		against, aerr := startOf(rightIv)
 		if n.Operator.After {
-			against, aerr = rightIv.End()
+			against, aerr = endOf(rightIv)
 		}
 		if aerr != nil {
 			return nil, aerr
@@ -6549,6 +6546,10 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 				return e.evalTemporalComparison(point, against, n.Operator)
 			}
 		}
+	}
+
+	if res, handled, err := e.intervalPhraseAtPrecision(leftIv, rightIv, n.Operator); handled {
+		return res, err
 	}
 
 	switch n.Operator.Kind {
@@ -6581,9 +6582,9 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	case ast.TimingIncludedIn, ast.TimingDuring:
 		// `A starts during B` asks about one point of A, not all of it.
 		if b := n.Operator.Boundary; b == "starts" || b == "ends" {
-			point, perr := leftIv.Start()
+			point, perr := startOf(leftIv)
 			if b == "ends" {
-				point, perr = leftIv.End()
+				point, perr = endOf(leftIv)
 			}
 			if perr != nil {
 				return nil, perr
@@ -6741,17 +6742,19 @@ func evalIntervalProperlyContainsPoint(iv cqltypes.Interval, point fptypes.Value
 	if point == nil {
 		return nil, nil
 	}
-	// First check if the interval contains the point
+	// A named precision is the precision the question is asked at, not a second
+	// chance for when the comparison at full precision cannot be made. As a
+	// retry it never ran for two fully specified DateTimes, so
+	// `Interval[@2020-01-01T10:00Z, …] properly includes day of
+	// @2020-01-01T12:00Z` was true — the instants are apart — where the Java
+	// engine answers false: at the day the point is the start.
+	if res, handled, err := properlyContainsPointAtPrecision(iv, point, precision); handled {
+		return res, err
+	}
 	contained, err := iv.Contains(point)
 	if err != nil {
-		// A named precision is a second chance, and only for the reason a second
-		// chance helps: comparing again at a precision both sides state. Two
-		// quantities of different dimensions have no such retry.
-		if precision != "" && cqltypes.AmbiguousTemporalComparison(err) {
-			return evalIntervalProperlyContainsPointAtPrecision(iv, point, precision)
-		}
-		// Otherwise it is the ordinary answer for a comparison that could not be
-		// made. Asking the narrow question here was wrong: it guards a retry, and
+		// It is the ordinary answer for a comparison that could not be made.
+		// Asking the narrow question here was wrong: it guards a retry, and
 		// with no precision named there is no retry to guard, so
 		// `Interval[1 'cm', 2 'cm'] properly includes 1 's'` raised an error while
 		// the same phrase over two intervals, and `contains` over the same point,
@@ -6770,82 +6773,6 @@ func evalIntervalProperlyContainsPoint(iv cqltypes.Interval, point fptypes.Value
 	}
 	if iv.High != nil && iv.HighClosed && point.Equal(iv.High) {
 		return fptypes.NewBoolean(false), nil
-	}
-	return fptypes.NewBoolean(true), nil
-}
-
-// evalIntervalProperlyContainsPointAtPrecision checks proper containment at a given precision.
-func evalIntervalProperlyContainsPointAtPrecision(iv cqltypes.Interval, point fptypes.Value, precision string) (fptypes.Value, error) {
-	pIdx := precisionIndex(precision)
-	if pIdx < 0 {
-		return nil, nil
-	}
-	// The point is read against each bound separately: whether its digits are
-	// moved depends on the bound it is compared with and on the precision (see
-	// readAsWritten), and the two bounds need not agree about the first. Its
-	// precision depends on neither, so the guard below can be settled once.
-	readable, pointMaxPrec := temporalComponentsAgainst(point, true)
-	if readable == nil {
-		return nil, nil
-	}
-	// If the requested precision exceeds the point's precision, result is null (ambiguous)
-	if pIdx > pointMaxPrec {
-		return nil, nil
-	}
-	cmpPrec := pIdx
-
-	// Check low bound
-	if iv.Low != nil {
-		lowComps, _, pointComps, _ := componentsAtPrecision(iv.Low, point, precision)
-		if lowComps != nil {
-			cmpResult := 0
-			for i := 0; i <= cmpPrec; i++ {
-				if pointComps[i] < lowComps[i] {
-					cmpResult = -1
-					break
-				}
-				if pointComps[i] > lowComps[i] {
-					cmpResult = 1
-					break
-				}
-			}
-			if iv.LowClosed && cmpResult < 0 {
-				return fptypes.NewBoolean(false), nil
-			}
-			if !iv.LowClosed && cmpResult <= 0 {
-				return fptypes.NewBoolean(false), nil
-			}
-			// For properly contains: point must not equal the low bound at this precision
-			if iv.LowClosed && cmpResult == 0 {
-				return fptypes.NewBoolean(false), nil
-			}
-		}
-	}
-	// Check high bound
-	if iv.High != nil {
-		highComps, _, pointComps, _ := componentsAtPrecision(iv.High, point, precision)
-		if highComps != nil {
-			cmpResult := 0
-			for i := 0; i <= cmpPrec; i++ {
-				if pointComps[i] < highComps[i] {
-					cmpResult = -1
-					break
-				}
-				if pointComps[i] > highComps[i] {
-					cmpResult = 1
-					break
-				}
-			}
-			if iv.HighClosed && cmpResult > 0 {
-				return fptypes.NewBoolean(false), nil
-			}
-			if !iv.HighClosed && cmpResult >= 0 {
-				return fptypes.NewBoolean(false), nil
-			}
-			if iv.HighClosed && cmpResult == 0 {
-				return fptypes.NewBoolean(false), nil
-			}
-		}
 	}
 	return fptypes.NewBoolean(true), nil
 }

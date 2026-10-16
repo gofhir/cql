@@ -490,10 +490,30 @@ func translateRetrieve(r *ast.Retrieve) *ExpressionNode {
 	if r.Codes != nil {
 		node.Codes = TranslateExpression(r.Codes)
 	}
+	// A range pushed down from a phrase at a precision is widened before a
+	// provider sees it (see eval.widenForPrecision), and ELM has nowhere to say
+	// so: written as a bare dateRange it would come back as an exact one, and a
+	// provider would drop the rows at the edges the phrase keeps. Leaving it out
+	// keeps the answer and costs only the narrowing; the where clause is still
+	// there to filter.
+	//
+	// A precision the evaluator does not compare at, such as week, is not
+	// widened either, and the range is written as it is.
 	if r.DateRange != nil {
-		node.DateRange = TranslateExpression(r.DateRange)
+		if widenedPrecisions[r.DatePrecision] {
+			node.DateProperty = ""
+		} else {
+			node.DateRange = TranslateExpression(r.DateRange)
+		}
 	}
 	return node
+}
+
+// widenedPrecisions are the precisions a pushed-down date range is widened
+// for before a provider sees it.
+var widenedPrecisions = map[string]bool{
+	"year": true, "month": true, "day": true, "hour": true,
+	"minute": true, "second": true, "millisecond": true,
 }
 
 func fhirModelURI(ns string) string {
@@ -660,11 +680,14 @@ func translateTiming(t *ast.TimingExpression) *ExpressionNode {
 		} else {
 			name = "Before"
 		}
-		if t.Operator.Properly {
+	}
+	// `same day or before` and `on or before` are SameAs with a direction, and
+	// ELM names them apart: written as a plain SameAs, the direction was lost.
+	if t.Operator.Kind == ast.TimingSameAs {
+		if t.Operator.Before {
 			name = "SameOrBefore"
-			if t.Operator.After {
-				name = "SameOrAfter"
-			}
+		} else if t.Operator.After {
+			name = "SameOrAfter"
 		}
 	}
 

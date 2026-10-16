@@ -241,6 +241,11 @@ type Retrieve struct {
 	Context        Expression // optional context identifier (e.g. Patient ->)
 	DatePath       string     // e.g. "onset" — date property for date-based filtering
 	DateRange      Expression // Interval expression constraining the date property
+	// DatePrecision is the precision the filter DateRange came from compared
+	// at, when it stated one. A provider compares instants, and a phrase at the
+	// day admits rows outside the interval as instants, so the range handed to
+	// it is widened first. See widenForPrecision.
+	DatePrecision string
 }
 
 func (*Retrieve) expression() {}

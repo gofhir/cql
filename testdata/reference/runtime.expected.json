@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "e3a3b85f947eb0d09515270669703bd9843011e4fc4e5e03343d73ad172830c8",
+  "sourceSha256" : "05d6fbf7431dbf9024785e4e60024421b4ef7d385fe60476e564523482d83fb4",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -244,6 +244,158 @@
     "DuringDayAcrossOffsets" : {
       "type" : "Boolean",
       "value" : false
+    },
+    "PhraseBeforeDay" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseBeforeDayTrue" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseAfterDay" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseMeetsDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseMeetsBeforeDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseMeetsAfterDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseMeetsDaySameDay" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseOverlapsDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseOverlapsBeforeDay" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseOverlapsAfterDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseStartsDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseEndsDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseProperlyIncludesIvDay" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseIncludesDayCtl" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseIvBeforeDayOfs" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseIvStartsDayOfs" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseIvEndsDayOfs" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseIvMeetsDayOfs" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseIvOverlapsDayOfs" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseBeforeDayYearOnly" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseBeforeHour" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseBeforeNullLow" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseBeforeNullHigh" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseOverlapsNullHigh" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseMeetsNullHigh" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseMeetsYearFar" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseMeetsYearBefore" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseMeetsMonthToYear" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseMeetsYearToMay" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseMeetsTimePastMidnight" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseMeetsTimeHourPastMidnight" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseStartsBeforeNullLow" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseEndsAfterNullHigh" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseStartsBeforeNullLowNoPrecision" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "PhraseStartsDuringNullLow" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseEndsDuringNullHigh" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseStartsBeforePointNullLow" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "PhraseSameDayOrBefore" : {
+      "type" : "Boolean",
+      "value" : true
     },
     "DecimalDivision" : {
       "type" : "Decimal",
