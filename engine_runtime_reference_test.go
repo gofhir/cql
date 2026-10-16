@@ -114,8 +114,6 @@ var knownRuntimeDivergences = map[string]struct {
 }{
 	// The reference and the specification agree; this engine does not.
 	"ListIntDec": {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
-	"SameDayAcrossOffsets": {"Boolean(false)", "values at different offsets are normalized to UTC; the " +
-		"specification normalizes to the evaluation offset, and only below day precision"},
 	"DecimalDivision": {"Decimal(3.3333333333333333)", "a quotient is not brought to the Decimal scale of 8; " +
 		"the specification gives the type a scale of 8, and both references answer 3.33333333"},
 }

@@ -1,6 +1,6 @@
 {
   "library": "RuntimeProbe",
-  "sourceSha256": "a0a04858e6709e84d744e7f6d92ed82d99a4aa0629426c4a16ccd9ef9764bf44",
+  "sourceSha256": "e3a3b85f947eb0d09515270669703bd9843011e4fc4e5e03343d73ad172830c8",
   "engine": "cql-execution 3.3.2",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -220,6 +220,54 @@
     "SameDayAcrossOffsets": {
       "type": "Boolean",
       "value": true
+    },
+    "SameDayAcrossOffsetsSameInstant": {
+      "type": "Boolean",
+      "value": false
+    },
+    "SameDayUnwrittenOffset": {
+      "type": "Boolean",
+      "value": true
+    },
+    "SameMonthAcrossOffsets": {
+      "type": "Boolean",
+      "value": false
+    },
+    "BeforeDayAcrossOffsets": {
+      "type": "Boolean",
+      "value": true
+    },
+    "AfterDayAcrossOffsets": {
+      "type": "Boolean",
+      "value": true
+    },
+    "SameDayOrBeforeAcrossOffsets": {
+      "type": "Boolean",
+      "value": false
+    },
+    "InDayAcrossOffsets": {
+      "type": "Boolean",
+      "value": false
+    },
+    "SameHourAcrossOffsets": {
+      "type": "Boolean",
+      "value": true
+    },
+    "IncludesDayAcrossOffsets": {
+      "type": "Boolean",
+      "value": false
+    },
+    "IntervalSameDayAcrossOffsets": {
+      "type": "Boolean",
+      "value": false
+    },
+    "InHourAcrossOffsets": {
+      "type": "Boolean",
+      "value": false
+    },
+    "DuringDayAcrossOffsets": {
+      "type": "Boolean",
+      "value": false
     },
     "DecimalDivision": {
       "type": "Decimal",
