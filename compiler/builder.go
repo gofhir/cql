@@ -1108,11 +1108,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 					}
 				}
 			}
-			if dtps := phrase.DateTimePrecisionSpecifier(); dtps != nil {
-				if dtp := dtps.DateTimePrecision(); dtp != nil {
-					op.Precision = strings.ToLower(dtp.GetText())
-				}
-			}
+			op.Precision = phrasePrecision(phrase.DateTimePrecisionSpecifier())
 			// The quantity offset and the boundary the phrase reads. Both were
 			// dropped, which left `ends 10 years or less on or before X` meaning
 			// nothing more than `on or before X`.
@@ -1144,11 +1140,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			if strings.Contains(text, "properly") {
 				op.Properly = true
 			}
-			if dtps := phrase.DateTimePrecisionSpecifier(); dtps != nil {
-				if dtp := dtps.DateTimePrecision(); dtp != nil {
-					op.Precision = strings.ToLower(dtp.GetText())
-				}
-			}
+			op.Precision = phrasePrecision(phrase.DateTimePrecisionSpecifier())
 		case *grammar.IncludedInIntervalOperatorPhraseContext:
 			op.Boundary = timingBoundaryWord(phrase.GetText())
 			op.Kind = ast.TimingIncludedIn
@@ -1156,11 +1148,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			if strings.Contains(text, "properly") {
 				op.Properly = true
 			}
-			if dtps := phrase.DateTimePrecisionSpecifier(); dtps != nil {
-				if dtp := dtps.DateTimePrecision(); dtp != nil {
-					op.Precision = strings.ToLower(dtp.GetText())
-				}
-			}
+			op.Precision = phrasePrecision(phrase.DateTimePrecisionSpecifier())
 		case *grammar.MeetsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingMeets
 			text := strings.ToLower(phrase.GetText())
@@ -1169,6 +1157,7 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			} else if strings.Contains(text, "after") {
 				op.After = true
 			}
+			op.Precision = phrasePrecision(phrase.DateTimePrecisionSpecifier())
 		case *grammar.OverlapsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingOverlaps
 			text := strings.ToLower(phrase.GetText())
@@ -1177,10 +1166,13 @@ func (b *builder) VisitTimingExpression(ctx *grammar.TimingExpressionContext) in
 			} else if strings.Contains(text, "after") {
 				op.After = true
 			}
+			op.Precision = phrasePrecision(phrase.DateTimePrecisionSpecifier())
 		case *grammar.StartsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingStarts
+			op.Precision = phrasePrecision(phrase.DateTimePrecisionSpecifier())
 		case *grammar.EndsIntervalOperatorPhraseContext:
 			op.Kind = ast.TimingEnds
+			op.Precision = phrasePrecision(phrase.DateTimePrecisionSpecifier())
 		case *grammar.WithinIntervalOperatorPhraseContext:
 			op.Boundary = timingBoundaryWord(phrase.GetText())
 			op.Kind = ast.TimingWithin
@@ -2010,4 +2002,20 @@ func (b *builder) VisitSortByItem(ctx *grammar.SortByItemContext) interface{} {
 		}
 	}
 	return sbi
+}
+
+// phrasePrecision reads the `day of` a timing phrase may end in. meets,
+// overlaps, starts and ends declare it in the grammar like the other phrases,
+// and it was not read for them, so `A meets day of B` was compared at full
+// precision as if the precision had not been written. Every phrase that ends
+// in `<precision> of` reads it here, so none can be left out again; `same day
+// as` names its precision without the `of` and reads it where it is built.
+func phrasePrecision(spec grammar.IDateTimePrecisionSpecifierContext) string {
+	if spec == nil {
+		return ""
+	}
+	if dtp := spec.DateTimePrecision(); dtp != nil {
+		return strings.ToLower(dtp.GetText())
+	}
+	return ""
 }

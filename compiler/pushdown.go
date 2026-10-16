@@ -56,12 +56,13 @@ func pushDownIntoQuery(query *ast.Query) {
 		return
 	}
 	for _, term := range conjuncts(query.Where) {
-		path, rng, ok := dateFilter(term, source.Alias)
+		path, rng, precision, ok := dateFilter(term, source.Alias)
 		if !ok {
 			continue
 		}
 		retrieve.DatePath = path
 		retrieve.DateRange = rng
+		retrieve.DatePrecision = precision
 		return
 	}
 }
@@ -83,7 +84,7 @@ func conjuncts(expr ast.Expression) []ast.Expression {
 
 // dateFilter reports the element path and interval a term constrains, when the
 // term is one this can safely hand to a provider.
-func dateFilter(term ast.Expression, alias string) (path string, rng ast.Expression, ok bool) {
+func dateFilter(term ast.Expression, alias string) (path string, rng ast.Expression, precision string, ok bool) {
 	var left, right ast.Expression
 	switch t := term.(type) {
 	case *ast.TimingExpression:
@@ -101,7 +102,7 @@ func dateFilter(term ast.Expression, alias string) (path string, rng ast.Express
 		switch t.Operator.Kind {
 		case ast.TimingDuring, ast.TimingIncludedIn, ast.TimingOverlaps:
 		default:
-			return "", nil, false
+			return "", nil, "", false
 		}
 		// `properly` narrows what qualifies, so the query stays a subset and
 		// pushing down is still safe.
@@ -114,8 +115,16 @@ func dateFilter(term ast.Expression, alias string) (path string, rng ast.Express
 		// right for each combination is work this has not done, and the cost of
 		// refusing is a slower query rather than a wrong one.
 		if t.Operator.Before || t.Operator.After {
-			return "", nil, false
+			return "", nil, "", false
 		}
+		// A stated precision travels with the range. At the day, a row is during
+		// or overlaps the interval when the days do, read as written — and a row
+		// ending at 10:00Z on the day an interval starts at 12:00Z, or one at
+		// 01:00Z on the day it starts at 00:00-03:00, is in it at the day and
+		// outside it as instants. A provider asked for the interval itself
+		// returns rows by instant and would drop those in silence, so the
+		// evaluator widens it first. See widenForPrecision.
+		precision = t.Operator.Precision
 		left, right = t.Left, t.Right
 	case *ast.MembershipExpression:
 		// `in` is membership of any kind, and most of what it tests is not a
@@ -127,23 +136,24 @@ func dateFilter(term ast.Expression, alias string) (path string, rng ast.Express
 		// A temporal `in` says so in the syntax: it names an interval, or it
 		// carries a date-time precision. Nothing else qualifies.
 		if t.Operator != "in" || !isTemporalMembership(t) {
-			return "", nil, false
+			return "", nil, "", false
 		}
+		precision = t.Precision
 		left, right = t.Left, t.Right
 	default:
-		return "", nil, false
+		return "", nil, "", false
 	}
 
 	path, ok = aliasPath(left, alias)
 	if !ok {
-		return "", nil, false
+		return "", nil, "", false
 	}
 	// The interval is evaluated before the retrieve runs, so it cannot be
 	// built from the rows the retrieve is about to return.
 	if !isAliasFree(right, alias) {
-		return "", nil, false
+		return "", nil, "", false
 	}
-	return path, right, true
+	return path, right, precision, true
 }
 
 // isTemporalMembership reports whether an `in` is asking about an interval

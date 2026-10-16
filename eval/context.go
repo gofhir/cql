@@ -49,7 +49,13 @@ type RetrieveRequest struct {
 	DatePath string
 
 	// DateRange narrows the retrieve to a period, when the query pushed one
-	// down. It is the interval the query named, already evaluated.
+	// down. It is the interval the query named, already evaluated — widened, when
+	// the query compared at a precision: at the day a row is in the interval when
+	// its day is, which can be up to a unit and the span of the offsets before
+	// the interval's first instant, so each bound is moved out by at least that.
+	// How far exactly depends on the precision and on how finely the bound is
+	// written. Treat it as the least a search must cover, not as an exact filter
+	// or a key; DatePrecision says when it was widened.
 	//
 	// A pushed-down range is a request, not a promise about what comes back.
 	// The query's where clause is still applied to whatever the provider
@@ -57,6 +63,12 @@ type RetrieveRequest struct {
 	// more than it asks for, which a FHIR date search does when it answers with
 	// an overlap, is equally safe.
 	DateRange interface{}
+
+	// DatePrecision is the precision the query compared DateRange at — "day"
+	// for `during day of` — or empty when it compared the instants. A provider
+	// that can search at a precision itself may use it instead of the widened
+	// range; one that cannot needs nothing from it.
+	DatePrecision string
 
 	// IDs restricts the retrieve to specific resource ids, as the FHIR _id
 	// search parameter does. It is set when the engine is resolving a

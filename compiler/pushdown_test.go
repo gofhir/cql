@@ -97,6 +97,29 @@ func TestDateRangePushesDown(t *testing.T) {
 	}
 }
 
+// TestDateRangeCarriesTheStatedPrecision covers a filter at a precision. It is
+// pushed down with the precision, which the evaluator widens the range by
+// before a provider sees it: at the day, rows outside the interval as instants
+// are in it.
+func TestDateRangeCarriesTheStatedPrecision(t *testing.T) {
+	for _, tt := range []struct{ name, body, want string }{
+		{"during day of", `[Encounter] E where E.period during day of "Measurement Period"`, "day"},
+		{"overlaps month of", `[Encounter] E where E.period overlaps month of "Measurement Period"`, "month"},
+		{"in day of", `[Condition] C where C.onset in day of "Measurement Period"`, "day"},
+		{"no precision", `[Encounter] E where E.period during "Measurement Period"`, ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			retrieve := retrieveOf(t, tt.body)
+			if retrieve.DateRange == nil {
+				t.Fatal("date range = nil, want the interval the query named")
+			}
+			if retrieve.DatePrecision != tt.want {
+				t.Errorf("date precision = %q, want %q", retrieve.DatePrecision, tt.want)
+			}
+		})
+	}
+}
+
 // TestDateRangeStaysPutWhenPushingItDownWouldChangeTheAnswer is the half of
 // this that matters. A filter pushed down wrongly does not fail; it returns
 // fewer rows, in silence, in a measure denominator.

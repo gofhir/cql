@@ -65,6 +65,51 @@ define IntervalSameDayAcrossOffsets: Interval[@2020-01-01T23:00:00Z, @2020-01-03
 define InHourAcrossOffsets: @2020-01-01T23:30:00Z in hour of Interval[@2020-01-01T22:00:00-03:00, @2020-01-02T05:00:00Z] // control
 define DuringDayAcrossOffsets: Interval[@2020-01-01T23:00:00Z, @2020-01-01T23:30:00Z] during day of Interval[@2020-01-02T00:00:00+02:00, @2020-01-02T05:00:00+02:00] // control
 
+// Interval phrases at a precision compare the intervals' start and end points
+// at that precision. meets, overlaps, starts and ends did not read the `day of`
+// at all, and before and after compared the raw bounds at full precision.
+define PhraseBeforeDay: Interval[@2020-01-01T10:00:00Z, @2020-01-01T12:00:00Z] before day of Interval[@2020-01-01T13:00:00Z, @2020-01-02T00:00:00Z] // control
+define PhraseBeforeDayTrue: Interval[@2020-01-01T10:00:00Z, @2020-01-01T12:00:00Z] before day of Interval[@2020-01-02T00:30:00Z, @2020-01-03T00:00:00Z] // control
+define PhraseAfterDay: Interval[@2020-01-01T13:00:00Z, @2020-01-02T00:00:00Z] after day of Interval[@2020-01-01T10:00:00Z, @2020-01-01T12:00:00Z] // control
+define PhraseMeetsDay: Interval[@2020-01-01T00:00:00Z, @2020-01-01T12:00:00Z] meets day of Interval[@2020-01-02T13:00:00Z, @2020-01-05T00:00:00Z] // control
+define PhraseMeetsBeforeDay: Interval[@2020-01-01T00:00:00Z, @2020-01-01T12:00:00Z] meets before day of Interval[@2020-01-02T13:00:00Z, @2020-01-05T00:00:00Z] // control
+define PhraseMeetsAfterDay: Interval[@2020-01-02T13:00:00Z, @2020-01-05T00:00:00Z] meets after day of Interval[@2020-01-01T00:00:00Z, @2020-01-01T12:00:00Z] // control
+define PhraseMeetsDaySameDay: Interval[@2020-01-01T00:00:00Z, @2020-01-01T12:00:00Z] meets day of Interval[@2020-01-01T13:00:00Z, @2020-01-05T00:00:00Z] // control
+define PhraseOverlapsDay: Interval[@2020-01-01T00:00:00Z, @2020-01-01T10:00:00Z] overlaps day of Interval[@2020-01-01T12:00:00Z, @2020-01-05T00:00:00Z] // control
+define PhraseOverlapsBeforeDay: Interval[@2020-01-01T00:00:00Z, @2020-01-01T10:00:00Z] overlaps before day of Interval[@2020-01-01T12:00:00Z, @2020-01-05T00:00:00Z] // control
+define PhraseOverlapsAfterDay: Interval[@2020-01-01T12:00:00Z, @2020-01-05T00:00:00Z] overlaps after day of Interval[@2020-01-01T00:00:00Z, @2020-01-01T10:00:00Z] // control
+define PhraseStartsDay: Interval[@2020-01-01T10:00:00Z, @2020-01-03T00:00:00Z] starts day of Interval[@2020-01-01T08:00:00Z, @2020-01-05T00:00:00Z] // control
+define PhraseEndsDay: Interval[@2020-01-03T00:00:00Z, @2020-01-05T10:00:00Z] ends day of Interval[@2020-01-01T08:00:00Z, @2020-01-05T08:00:00Z] // control
+define PhraseProperlyIncludesIvDay: Interval[@2020-01-01T10:00:00Z, @2020-01-05T00:00:00Z] properly includes day of Interval[@2020-01-01T12:00:00Z, @2020-01-03T00:00:00Z] // control
+define PhraseIncludesDayCtl: Interval[@2020-01-01T10:00:00Z, @2020-01-05T00:00:00Z] includes day of Interval[@2020-01-01T08:00:00Z, @2020-01-03T00:00:00Z] // control
+define PhraseIvBeforeDayOfs: Interval[@2020-01-01T10:00:00Z, @2020-01-01T23:00:00Z] before day of Interval[@2020-01-02T01:00:00+02:00, @2020-01-03T00:00:00Z] // control
+define PhraseIvStartsDayOfs: Interval[@2020-01-01T23:00:00Z, @2020-01-05T00:00:00Z] starts day of Interval[@2020-01-02T01:00:00+02:00, @2020-01-06T00:00:00Z] // control
+define PhraseIvEndsDayOfs: Interval[@2020-01-01T00:00:00Z, @2020-01-01T23:00:00Z] ends day of Interval[@2019-12-01T00:00:00Z, @2020-01-02T01:00:00+02:00] // control
+define PhraseIvMeetsDayOfs: Interval[@2019-12-01T00:00:00Z, @2020-01-01T23:00:00Z] meets day of Interval[@2020-01-02T01:00:00+02:00, @2020-02-01T00:00:00Z] // control
+define PhraseIvOverlapsDayOfs: Interval[@2019-12-01T00:00:00Z, @2020-01-01T23:00:00Z] overlaps day of Interval[@2020-01-02T01:00:00+02:00, @2020-02-01T00:00:00Z] // control
+define PhraseBeforeDayYearOnly: Interval[@2019, @2019] before day of Interval[@2020-01-01T00:00:00Z, @2020-02-01T00:00:00Z] // control
+define PhraseBeforeHour: Interval[@2020-01-01T10:00:00Z, @2020-01-01T12:00:00Z] before hour of Interval[@2020-01-01T12:30:00Z, @2020-01-02T00:00:00Z] // control
+
+// A closed null bound is the minimum or maximum value of the point type.
+define PhraseBeforeNullLow: Interval[@2020-01-01T00:00:00Z, @2020-01-05T00:00:00Z] before day of Interval[null, @2020-02-01T00:00:00Z] // control
+define PhraseBeforeNullHigh: Interval[@2020-01-01T00:00:00Z, null] before day of Interval[@2020-03-01T00:00:00Z, @2020-04-01T00:00:00Z] // control
+define PhraseOverlapsNullHigh: Interval[@2020-01-01T00:00:00Z, null] overlaps day of Interval[@2020-03-01T00:00:00Z, @2020-04-01T00:00:00Z] // control
+define PhraseMeetsNullHigh: Interval[@2020-01-01T00:00:00Z, null] meets day of Interval[@2020-03-01T00:00:00Z, @2020-04-01T00:00:00Z] // control
+// A point without the precision can still be too far to be the next one.
+define PhraseMeetsYearFar: Interval[DateTime(2020), DateTime(2020)] meets day of Interval[@2022-01-01T00:00:00Z, @2022-02-01T00:00:00Z] // control
+define PhraseMeetsYearBefore: Interval[DateTime(2020), DateTime(2020)] meets day of Interval[@2019-06-01T00:00:00Z, @2019-07-01T00:00:00Z] // control
+define PhraseMeetsMonthToYear: Interval[DateTime(2020, 6), DateTime(2020, 6)] meets day of Interval[DateTime(2021), DateTime(2021)] // control
+define PhraseMeetsYearToMay: Interval[DateTime(2020), DateTime(2020)] meets day of Interval[@2021-05-01T00:00:00Z, @2021-06-01T00:00:00Z] // control
+define PhraseMeetsTimePastMidnight: Interval[@T10:00, @T23:59] meets minute of Interval[@T00, @T01] // control
+define PhraseMeetsTimeHourPastMidnight: Interval[@T10, @T23] meets minute of Interval[@T00:00, @T01:00] // control
+define PhraseStartsBeforeNullLow: Interval[@2020-01-01T00:00:00Z, @2020-01-05T00:00:00Z] starts before day of Interval[null, @2020-02-01T00:00:00Z] // control
+define PhraseEndsAfterNullHigh: Interval[@2020-01-01T00:00:00Z, @2020-01-05T00:00:00Z] ends after day of Interval[@2019-01-01T00:00:00Z, null] // control
+define PhraseStartsBeforeNullLowNoPrecision: Interval[@2020-01-01T00:00:00Z, @2020-01-05T00:00:00Z] starts before Interval[null, @2020-02-01T00:00:00Z] // control
+define PhraseStartsDuringNullLow: Interval[null, @2020-01-05T00:00:00Z] starts during day of Interval[null, @2020-02-01T00:00:00Z] // control
+define PhraseEndsDuringNullHigh: Interval[@2020-01-01T00:00:00Z, null] ends during day of Interval[@2019-01-01T00:00:00Z, null] // control
+define PhraseStartsBeforePointNullLow: Interval[null, @2020-02-01T00:00:00Z] starts before @2020-01-01T00:00:00Z // control
+define PhraseSameDayOrBefore: Interval[@2020-01-01T00:00:00Z, @2020-01-01T10:00:00Z] same day or before Interval[@2020-01-01T12:00:00Z, @2020-01-05T00:00:00Z] // control
+
 // Controls for the encodings: a Decimal past what binary floating point holds
 // exactly, and a Time, which one runtime represents as a DateTime with no date.
 define DecimalDivision: 10.0 / 3.0 // control

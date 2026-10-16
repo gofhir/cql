@@ -595,13 +595,16 @@ var elmTimingKinds = map[string]struct {
 	before   bool
 	after    bool
 }{
-	"SameAs":           {kind: ast.TimingSameAs},
-	"Includes":         {kind: ast.TimingIncludes},
-	"IncludedIn":       {kind: ast.TimingIncludedIn},
-	"Before":           {kind: ast.TimingBeforeOrAfter, before: true},
-	"After":            {kind: ast.TimingBeforeOrAfter, after: true},
-	"SameOrBefore":     {kind: ast.TimingBeforeOrAfter, before: true, properly: true},
-	"SameOrAfter":      {kind: ast.TimingBeforeOrAfter, after: true, properly: true},
+	"SameAs":     {kind: ast.TimingSameAs},
+	"Includes":   {kind: ast.TimingIncludes},
+	"IncludedIn": {kind: ast.TimingIncludedIn},
+	"Before":     {kind: ast.TimingBeforeOrAfter, before: true},
+	"After":      {kind: ast.TimingBeforeOrAfter, after: true},
+	// `same day or before` and `on or before` are the SameAs phrase with a
+	// direction, as the compiler builds them. Imported as a properly before,
+	// they were evaluated as a strict before, false on equal endpoints.
+	"SameOrBefore":     {kind: ast.TimingSameAs, before: true},
+	"SameOrAfter":      {kind: ast.TimingSameAs, after: true},
 	"Meets":            {kind: ast.TimingMeets},
 	"MeetsBefore":      {kind: ast.TimingMeets, before: true},
 	"MeetsAfter":       {kind: ast.TimingMeets, after: true},
