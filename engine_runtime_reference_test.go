@@ -113,7 +113,6 @@ var knownRuntimeDivergences = map[string]struct {
 	why string
 }{
 	// The reference and the specification agree; this engine does not.
-	"ListIntDec": {"List[Integer(1), Decimal(1)]", "a list of Integer and Decimal is not converted to List<Decimal>"},
 	"DecimalDivision": {"Decimal(3.3333333333333333)", "a quotient is not brought to the Decimal scale of 8; " +
 		"the specification gives the type a scale of 8, and both references answer 3.33333333"},
 }
@@ -131,6 +130,9 @@ var decidedRuntimeAnswers = map[string]struct {
 		"hour precision, and this engine's comparisons depend on it: without the rule a day-precision value was " +
 		"normalized as if it were an instant, and answered wrong at UTC+14. Both references assume the " +
 		"evaluation offset, as the specification words it"},
+	"ListDateDateTime": {"Boolean(false)", "the numeric promotions to a list's common type are applied and Date to " +
+		"DateTime is not: a Date compared at the day is read as written and a DateTime is moved to an offset, so " +
+		"promoting it would change what every comparison it reaches answers"},
 }
 
 // disputedRuntimeAnswers are the definitions the references disagree on, each

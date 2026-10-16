@@ -1,6 +1,6 @@
 {
   "library": "RuntimeProbe",
-  "sourceSha256": "05d6fbf7431dbf9024785e4e60024421b4ef7d385fe60476e564523482d83fb4",
+  "sourceSha256": "4c610622462f7d4b9bdf9a4542a479676654f14b71660d899d58d62bae1869fa",
   "engine": "cql-execution 3.3.2",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -130,6 +130,126 @@
           "value": "1"
         }
       ]
+    },
+    "ListDecInt": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Decimal",
+          "value": "1"
+        },
+        {
+          "type": "Decimal",
+          "value": "1"
+        }
+      ]
+    },
+    "ListIntDecInt": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Decimal",
+          "value": "1"
+        },
+        {
+          "type": "Decimal",
+          "value": "2.5"
+        },
+        {
+          "type": "Decimal",
+          "value": "3"
+        }
+      ]
+    },
+    "ListQuantityInt": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Quantity",
+          "value": "1",
+          "unit": "mg"
+        },
+        {
+          "type": "Quantity",
+          "value": "2",
+          "unit": "1"
+        }
+      ]
+    },
+    "IfIntDec": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "CaseIntDec": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "CaseQuantityInt": {
+      "type": "Quantity",
+      "value": "2",
+      "unit": "1"
+    },
+    "MaxQuantityInt": {
+      "type": "Quantity",
+      "value": "150",
+      "unit": "1"
+    },
+    "ListOfListsIntDec": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "List",
+          "elements": [
+            {
+              "type": "Decimal",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "type": "List",
+          "elements": [
+            {
+              "type": "Decimal",
+              "value": "2.5"
+            }
+          ]
+        }
+      ]
+    },
+    "ListOfIntervalsIntDec": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "IntervalIntDec": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "CoalesceIntDec": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "IntervalIntQuantity": {
+      "type": "Quantity",
+      "value": "100",
+      "unit": "1"
+    },
+    "IfListIntDec": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Decimal",
+          "value": "1"
+        }
+      ]
+    },
+    "ToStringPromoted": {
+      "type": "String",
+      "value": "1"
+    },
+    "ListDateDateTime": {
+      "type": "Boolean",
+      "value": true
     },
     "DistinctQuantity": {
       "type": "List",

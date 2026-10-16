@@ -22,6 +22,11 @@ type Result struct {
 	// them beside the tree instead keeps the AST a record of what was written —
 	// which is what the ELM importer, the evaluator and the position stamps all
 	// assume — while still saying where a FHIRHelpers call belongs.
+	//
+	// A numeric promotion is recorded here too, with no Function: the Integer
+	// in `{1, 2.5}` reaching Decimal is ToDecimal in the reference translator's
+	// tree, and a system function, not a FHIRHelpers one. ConversionsByDefine
+	// lists only the conversions that call something.
 	Conversions map[ast.Expression]Conversion
 
 	// Defines is the type of each named expression in the library.
@@ -421,14 +426,28 @@ func (c *checker) reportf(at ast.Expression, sev Severity, format string, args .
 // needs the node, and a diff against the reference translator needs the
 // definition, because that is the granularity its ELM reports.
 func (c *checker) convert(expr ast.Expression, conv Conversion) {
-	if conv.Function == "" || c.speculative > 0 {
+	if c.speculative > 0 {
+		return
+	}
+	// A conversion that names no function is recorded only when it is a
+	// numeric promotion. The reference translator inserts ToDecimal and
+	// ToQuantity for those, and leaving them unrecorded left `{1, 1.0}` holding
+	// an Integer and a Decimal. The other system conversion, Date to DateTime,
+	// stays unrecorded: a Date compared at the day is read as written, and a
+	// DateTime is moved to an offset (see eval.readAsWritten).
+	if conv.Function == "" && !NumericPromotion(c.types[expr], conv.Target) {
 		return
 	}
 	if _, already := c.conversions[expr]; already {
 		return
 	}
 	c.conversions[expr] = conv
-	c.convByDefine[c.currentDefine] = append(c.convByDefine[c.currentDefine], conv)
+	// ConversionsByDefine is the FHIRHelpers calls a definition needs, which is
+	// what the reference translator's output is compared against; a promotion
+	// calls nothing.
+	if conv.Function != "" {
+		c.convByDefine[c.currentDefine] = append(c.convByDefine[c.currentDefine], conv)
+	}
 }
 
 // narrow records which branch of a choice an expression was read as.

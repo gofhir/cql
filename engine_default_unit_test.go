@@ -64,18 +64,20 @@ func TestEveryOperatorReadsABareNumberAsAQuantityOfUnitOne(t *testing.T) {
 		{"Count({N} intersect {150 '1'})", "1"},
 		{"Count({N} except {150 '1'})", "0"},
 		{"Min({N, 100 '1'})", "100 '1'"},
-		{"Max({N, 100 '1'})", "150"},
+		{"Max({N, 100 '1'})", "150 '1'"},
 		// Arithmetic already had the rule and keeps it.
 		{"N + 100 '1'", "250 '1'"},
 	} {
 		for _, spelling := range bareNumberSpellings {
 			expr := strings.ReplaceAll(tt.expr, "N", spelling)
 			want := tt.want
-			// Max returns the element itself, so the answer is however that element
-			// renders: a Long prints the way an Integer does, a Decimal keeps its
-			// point.
+			// Max returns the element itself, and the list is a List<Quantity>: the
+			// bare number reaches the Quantity its neighbor is, as the reference
+			// engine converts it — `Max({100 '1', 150})` is 150 '1' there. It
+			// renders however the number did: a Long as an Integer, a Decimal with
+			// its point.
 			if strings.Contains(tt.expr, "Max(") {
-				want = strings.TrimSuffix(spelling, "L")
+				want = strings.TrimSuffix(spelling, "L") + " '1'"
 			}
 			if strings.HasPrefix(tt.expr, "N +") && spelling == "150.0" {
 				want = "250.0 '1'"
@@ -313,7 +315,9 @@ func TestMixedBoundIntervalsWork(t *testing.T) {
 	for _, tt := range []struct{ expr, want string }{
 		{"Interval[100, 200 '1'] contains 150", "true"},
 		{"Interval(100, 200 '1') contains 100", "false"},
-		{"start of Interval[100, 200 '1']", "100"},
+		// The bounds reach the point type they have in common, as both reference
+		// engines convert them: the start is a Quantity too.
+		{"start of Interval[100, 200 '1']", "100 '1'"},
 		{"end of Interval[100, 200 '1']", "200 '1'"},
 		{"Interval[100, 200 '1'] = Interval[100 '1', 200 '1']", "true"},
 		{"width of Interval[100, 200 '1']", "100 '1'"},
@@ -1117,8 +1121,11 @@ func TestTheStepOfACollapseFollowsTheArithmeticItIsMadeOf(t *testing.T) {
 			"{Interval[2020-01, 2020-07]}"},
 		{"hours", "collapse {Interval[@2020-01-01T10:00:00, @2020-01-01T11:00:00], Interval[@2020-01-01T13:00:00, @2020-01-01T14:00:00]} per 2 hours",
 			"{Interval[2020-01-01T10:00:00, 2020-01-01T14:00:00]}"},
+		// The list is a List<Interval<Quantity>>, so the bare bounds are
+		// quantities of unit '1', as both reference engines convert them — and a
+		// unit no centimeter reaches.
 		{"bounds of different types", "collapse {Interval[1, 3], Interval[5 'cm', 7 'cm']} per 1",
-			"{Interval[1, 3], Interval[5 'cm', 7 'cm']}"},
+			"{Interval[1 '1', 3 '1'], Interval[5 'cm', 7 'cm']}"},
 	} {
 		if got := evalDefaultUnit(t, tt.expr); got != tt.want {
 			t.Errorf("%s: %s = %s, want %s", tt.what, tt.expr, got, tt.want)
