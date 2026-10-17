@@ -1,6 +1,8 @@
 package sema
 
 import (
+	"strconv"
+
 	"github.com/gofhir/cql/ast"
 )
 
@@ -48,9 +50,22 @@ func (c *checker) inferBinary(e *ast.BinaryExpression) Type {
 	case ast.OpAdd, ast.OpSubtract:
 		return c.inferAdditive(e)
 
-	case ast.OpMultiply, ast.OpPower:
+	case ast.OpMultiply:
 		left, right := c.arithmeticOperand(e.Left), c.arithmeticOperand(e.Right)
 		return c.arithmeticResult(e, Common(left, right, c.model))
+
+	case ast.OpPower:
+		left, right := c.arithmeticOperand(e.Left), c.arithmeticOperand(e.Right)
+		result := Common(left, right, c.model)
+		// A negative power of an Integer is a fraction — 2 ^ -1 is 0.5 — and
+		// the evaluator answers it as a Decimal; a negative exponent written as
+		// one is a Decimal here too, so what is done with the result agrees with
+		// what it is. An exponent whose sign only evaluation knows stays typed as
+		// the reference translator types it.
+		if (Equal(result, Integer) || Equal(result, Long)) && isNegativeLiteral(e.Right) {
+			return Decimal
+		}
+		return c.arithmeticResult(e, result)
 	}
 	c.infer(e.Left)
 	c.infer(e.Right)
@@ -353,4 +368,19 @@ func isTemporal(t Type) bool {
 		return true
 	}
 	return false
+}
+
+// isNegativeLiteral reports whether an expression is a number written with a
+// minus sign, other than zero: -1 is, and -0, which is 0, is not.
+func isNegativeLiteral(e ast.Expression) bool {
+	u, ok := e.(*ast.UnaryExpression)
+	if !ok || u.Operator != ast.OpNegate {
+		return false
+	}
+	lit, isLiteral := u.Operand.(*ast.Literal)
+	if !isLiteral {
+		return false
+	}
+	value, err := strconv.ParseFloat(lit.Value, 64)
+	return err == nil && value != 0
 }

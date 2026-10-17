@@ -58,7 +58,7 @@ func ToDecimal(v fptypes.Value) (fptypes.Value, error) {
 	case fptypes.Integer:
 		return fptypes.NewDecimalFromInt(val.Value()), nil
 	case fptypes.String:
-		d, err := fptypes.NewDecimal(val.Value())
+		d, err := DecimalFromString(val.Value())
 		if err != nil {
 			return nil, nil
 		}

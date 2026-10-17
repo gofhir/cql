@@ -93,8 +93,46 @@ var runtimeReferences = []struct {
 			"ListIntDec": "it cannot tell Integer from Decimal; the type it records is the translator's",
 			// Decimal arithmetic runs in binary floating point there, below the
 			// scale of 8 the specification gives the type.
-			"DecimalDivision": "it divides in binary floating point: 3.3333333333333335",
-			"DecimalSum":      "it adds in binary floating point: 0.30000000000000004",
+			"DecimalDivision":                 "it divides in binary floating point: 3.3333333333333335",
+			"DecimalSum":                      "it adds in binary floating point: 0.30000000000000004",
+			"DecimalLnUnscaled":               "it computes Decimal in binary floating point",
+			"DecimalModScaled":                "it computes Decimal in binary floating point",
+			"ToDecimalScaleKept":              "it computes Decimal in binary floating point",
+			"ToDecimalPrecision":              "it computes Decimal in binary floating point",
+			"ToDecimalTrailingZeros":          "it computes Decimal in binary floating point",
+			"ToDecimalPastTheLargest":         "it computes Decimal in binary floating point",
+			"ToDecimalPastTheSmallest":        "it computes Decimal in binary floating point",
+			"ToDecimalLeadingZero":            "it computes Decimal in binary floating point",
+			"ToDecimalKeepsItsZeros":          "it computes Decimal in binary floating point",
+			"ToDecimalOutOfRange":             "it computes Decimal in binary floating point",
+			"ToDecimalScaled":                 "it computes Decimal in binary floating point",
+			"ToDecimalNegativeScaled":         "it computes Decimal in binary floating point",
+			"LogOfAScaledString":              "it computes Decimal in binary floating point",
+			"DecimalSumOfOne":                 "it computes Decimal in binary floating point",
+			"DecimalProductOfOne":             "it computes Decimal in binary floating point",
+			"DecimalAvgOfOne":                 "it computes Decimal in binary floating point",
+			"DecimalSumOfTwo":                 "it computes Decimal in binary floating point",
+			"DecimalLogNearOne":               "it computes Decimal in binary floating point",
+			"IntegerNegativePower":            "it cannot tell Integer from Decimal; the type it records is the translator's",
+			"DecimalWholePowerExact":          "it computes Decimal in binary floating point",
+			"DecimalMultiplyScaled":           "it computes Decimal in binary floating point",
+			"DecimalMedianEvenScale":          "it computes Decimal in binary floating point",
+			"DecimalLogNearInteger":           "it computes Decimal in binary floating point",
+			"DecimalDivisionNoDoubleRounding": "it computes Decimal in binary floating point",
+			"DecimalPowerShortestFloat":       "it computes Decimal in binary floating point",
+			"DecimalDivisionNegative":         "it computes Decimal in binary floating point",
+			"DecimalDivisionEquals":           "it computes Decimal in binary floating point",
+			"IntegerDivisionScale":            "it computes Decimal in binary floating point",
+			"DecimalProductScale":             "it computes Decimal in binary floating point",
+			"DecimalAvgScale":                 "it computes Decimal in binary floating point",
+			"DecimalAvgNegativeScale":         "it computes Decimal in binary floating point",
+			"DecimalProductAggregateScale":    "it computes Decimal in binary floating point",
+			"DecimalLogScale":                 "it computes Decimal in binary floating point",
+			"DecimalPowerScale":               "it computes Decimal in binary floating point",
+			"DecimalVarianceScale":            "it computes Decimal in binary floating point",
+			"DecimalStdDevScale":              "it computes Decimal in binary floating point",
+			"DecimalPopulationVarianceScale":  "it computes Decimal in binary floating point",
+			"DecimalAbsOfFloored":             "it computes Decimal in binary floating point",
 		},
 	},
 }
@@ -112,9 +150,8 @@ var knownRuntimeDivergences = map[string]struct {
 	got string
 	why string
 }{
-	// The reference and the specification agree; this engine does not.
-	"DecimalDivision": {"Decimal(3.3333333333333333)", "a quotient is not brought to the Decimal scale of 8; " +
-		"the specification gives the type a scale of 8, and both references answer 3.33333333"},
+	// None at present: every definition the references and the specification
+	// agree on, this engine answers as they do.
 }
 
 // decidedRuntimeAnswers are the definitions where this engine answers
@@ -130,6 +167,24 @@ var decidedRuntimeAnswers = map[string]struct {
 		"hour precision, and this engine's comparisons depend on it: without the rule a day-precision value was " +
 		"normalized as if it were an instant, and answered wrong at UTC+14. Both references assume the " +
 		"evaluation offset, as the specification words it"},
+	"DecimalLnUnscaled": {"Decimal(0.6931471805599453)", "Ln is not brought to the Decimal scale: the " +
+		"conformance suite asks Round(Ln(1000), 8) for 6.90775528, and flooring first gives 6.90775527"},
+	"DecimalGeometricMeanUnscaled": {"Decimal(3.63424118566428)", "the geometric mean is the exact root, not " +
+		"Power(Product, 1/n) with 1/n floored, which makes the geometric mean of {1, 2, 4} 1.99999998; the " +
+		"numeric and Quantity aggregates agree on it"},
+	"ConvertsToDecimalOutOfRange": {"Boolean(false)", "ConvertsToDecimal is whether ToDecimal succeeds, and " +
+		"ToDecimal of a string past the largest Decimal is null in both engines; the Java engine answers true here " +
+		"all the same"},
+	"DecimalWholePowerExact": {"Decimal(0.0441)", "a whole-number power is computed in decimal: through a float " +
+		"0.21 ^ 2 is 0.044099999999999993, which floors to 0.04409999 in the Java engine, where 0.21 * 0.21 is 0.0441"},
+	"DecimalLogNearInteger": {"Decimal(3)", "an exact power has a whole-number logarithm, checked in decimal: " +
+		"ln 1000 / ln 10 is the float 2.9999999999999996, which floors to 2.99999999 in the Java engine; the " +
+		"logarithm is 3. A value merely near a power floors as the float says"},
+	"DecimalPowerShortestFloat": {"Decimal(0.3)", "a float result is read as the shortest decimal that " +
+		"prints as it, not its exact binary value: the conformance suite asks Power(10, -7) for 0.0000001, and " +
+		"the float 1e-7 is 0.0000000999…, which floors to 0.00000009"},
+	"QuantityDivisionUnscaled": {"Quantity(3.3333333333333333 'mg')", "the Decimal scale is the Decimal " +
+		"type's, and a Quantity keeps its digits: a dose in a small unit does not become 0 in that unit"},
 	"ListDateDateTime": {"Boolean(false)", "the numeric promotions to a list's common type are applied and Date to " +
 		"DateTime is not: a Date compared at the day is read as written and a DateTime is moved to an offset, so " +
 		"promoting it would change what every comparison it reaches answers"},

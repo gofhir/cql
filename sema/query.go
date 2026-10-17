@@ -221,6 +221,12 @@ func (c *checker) inferFunctionCall(e *ast.FunctionCall) Type {
 				c.promoteRecorded(arg, t)
 			}
 		}
+		// Power with a negative exponent written as one is a Decimal, as the
+		// operator ^ is: see the OpPower case in inferBinary.
+		if strings.EqualFold(e.Name, "Power") && len(exprs) == 2 &&
+			(Equal(t, Integer) || Equal(t, Long)) && isNegativeLiteral(exprs[1]) {
+			return Decimal
+		}
 		return t
 	}
 	// Reported as a warning, not an error: this table covers what the engine

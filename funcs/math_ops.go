@@ -3,6 +3,7 @@ package funcs
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -15,13 +16,7 @@ import (
 // toDecimalVal converts an fptypes.Value to a decimal.Decimal.
 // Returns false if the value is not numeric.
 func toDecimalVal(v fptypes.Value) (decimal.Decimal, bool) {
-	if i, ok := v.(fptypes.Integer); ok {
-		return decimal.NewFromInt(i.Value()), true
-	}
-	if d, ok := v.(fptypes.Decimal); ok {
-		return d.Value(), true
-	}
-	return decimal.Zero, false
+	return NumberOf(v)
 }
 
 // Round rounds a decimal value to the given precision (number of decimal places).
@@ -108,14 +103,16 @@ func Ln(v fptypes.Value) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Ln: expected numeric, got %s", v.Type())
 	}
-	f, _ := d.Float64()
 	if d.IsZero() {
 		return nil, fmt.Errorf("Ln: undefined for zero (results in negative infinity)")
 	}
-	if f < 0 {
+	if d.Sign() < 0 {
 		return nil, nil // CQL: Ln of negative value returns null
 	}
-	result := math.Log(f)
+	result := lnOf(d)
+	// Not brought to the Decimal scale, although the reference engine floors it
+	// there: the conformance suite asks Round(Ln(1000), 8) for 6.90775528, and
+	// ln 1000 is 6.9077552789…, which floors to 6.90775527 first.
 	return decimalToValue(decimal.NewFromFloat(result)), nil
 }
 
@@ -132,13 +129,23 @@ func Log(v, base fptypes.Value) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Log: expected numeric base, got %s", base.Type())
 	}
-	fv, _ := d.Float64()
-	fb, _ := b.Float64()
-	if fv <= 0 || fb <= 0 || fb == 1 {
+	if d.Sign() <= 0 || b.Sign() <= 0 || b.Equal(decimal.NewFromInt(1)) {
 		return nil, nil // CQL: undefined
 	}
-	result := math.Log(fv) / math.Log(fb)
-	return decimalToValue(decimal.NewFromFloat(result)), nil
+	result := lnOf(d) / lnOf(b)
+	// No logarithm the float can give: two values a float rounds to 1 have the
+	// ratio 0/0, and reading a whole number off NaN converts unpredictably.
+	if math.IsNaN(result) || math.IsInf(result, 0) {
+		return nil, nil
+	}
+	if exact, isExact := exactLog(d, b, result); isExact {
+		return decimalToValue(exact), nil
+	}
+	scaled, ok := FloatScaled(result)
+	if !ok {
+		return nil, nil
+	}
+	return decimalToValue(scaled), nil
 }
 
 // Exp returns e raised to the power of the value.
@@ -171,19 +178,45 @@ func Power(v, exp fptypes.Value) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Power: expected numeric exponent, got %s", exp.Type())
 	}
-	fv, _ := d.Float64()
-	fe, _ := e.Float64()
-	result := math.Pow(fv, fe)
-	if math.IsInf(result, 0) || math.IsNaN(result) {
-		return nil, nil
-	}
-	// If both inputs are integers and exponent is non-negative, return integer
+	// An Integer to a non-negative Integer power is an Integer, and one past
+	// int64 is an overflow: 2 ^ 63 is null, not a value the conversion wrapped.
 	_, vIsInt := v.(fptypes.Integer)
 	_, eIsInt := exp.(fptypes.Integer)
-	if vIsInt && eIsInt && fe >= 0 {
-		return fptypes.NewInteger(int64(math.Round(result))), nil
+	integral := vIsInt && eIsInt && e.Sign() >= 0
+	exact, isExact, overflow := ExactPower(d, e)
+	switch {
+	case overflow:
+		return nil, nil
+	case isExact && integral:
+		return IntegerOf(exact), nil
+	case isExact:
+		return decimalToValue(exact), nil
 	}
-	return decimalToValue(decimal.NewFromFloat(result)), nil
+	// An Integer to a whole power the exact path declined is past the largest
+	// Decimal, and so past int64.
+	if integral {
+		return nil, nil
+	}
+	fv, _ := d.Float64()
+	fe, _ := e.Float64()
+	scaled, ok := FloatScaled(math.Pow(fv, fe))
+	// Past the largest Decimal is an overflow, finite float or not. Compared as
+	// a decimal: the float of the largest Decimal rounds up to 1e20 itself.
+	if !ok || scaled.Abs().GreaterThan(maxDecimal) {
+		return nil, nil
+	}
+	return decimalToValue(scaled), nil
+}
+
+// IntegerOf is a whole number as an Integer, or null where it does not fit one:
+// IntPart wraps a value past int64 in silence, and `1e320 div 3.0` answered
+// 6148914691236517205.
+func IntegerOf(d decimal.Decimal) fptypes.Value {
+	whole := d.BigInt()
+	if !whole.IsInt64() {
+		return nil
+	}
+	return fptypes.NewInteger(whole.Int64())
 }
 
 // Precision returns the number of digits of precision in the value's representation.
@@ -540,3 +573,163 @@ func carryDefaultOffset(from, to fptypes.Value) fptypes.Value {
 	}
 	return dst.WithDefaultOffset(time.Duration(minutes) * time.Minute)
 }
+
+// lnOf is the natural logarithm of a positive decimal. A value a float64 holds
+// at full precision is taken through math.Log on it, as it always was and as
+// the reference engine takes it — Log(10, 1.00001) is 230259.66058852 in both;
+// one the float rounds to 1.0 through Log1p on its distance from 1, which the
+// float keeps — Log(10, 1.0000000000000000001) was null. A distance below what
+// a float holds still reads as 0. One
+// a float64 does not hold — a FHIR decimal of 320 digits, or one smaller than
+// the smallest normal float, whose digits a subnormal loses — is read from the
+// decimal's own coefficient and exponent: ln(c·10^e) is ln(c) + e·ln(10).
+// Converting it first made it infinity, zero, or off in the visible digits, and
+// Log(1e320, 10) null where it is 320.
+func lnOf(d decimal.Decimal) float64 {
+	f, _ := d.Float64()
+	if f == 1 && !d.Equal(decimal.NewFromInt(1)) {
+		x, _ := d.Sub(decimal.NewFromInt(1)).Float64()
+		return math.Log1p(x)
+	}
+	if f >= minNormalFloat && !math.IsInf(f, 0) {
+		return math.Log(f)
+	}
+	mantissa := new(big.Float)
+	binaryExp := new(big.Float).SetInt(d.Coefficient()).MantExp(mantissa)
+	m, _ := mantissa.Float64()
+	return math.Log(m) + float64(binaryExp)*math.Ln2 + float64(d.Exponent())*math.Ln10
+}
+
+// minNormalFloat is the smallest normal float64, 2^-1022. Below it a float
+// keeps fewer significant digits than a logarithm needs.
+const minNormalFloat = 2.2250738585072014e-308
+
+// maxExactPower bounds the powers exactLog will compute; a decimal has at
+// most a thousand digits on either side of the point, so no exact power of a
+// base past 1 lies beyond it.
+const maxExactPower = 4000
+
+// maxDecimalDigits bounds the significant digits of any decimal: a thousand
+// on either side of the point.
+const maxDecimalDigits = 2000
+
+// maxLogDenominator is the largest denominator of a logarithm exactLog tries
+// to recognize as an exact fraction.
+const maxLogDenominator = 12
+
+// exactLog is a logarithm that is a fraction k/q with a small denominator,
+// when it is one exactly. The float around it is not to be trusted with that:
+// ln 1000 / ln 10 is 2.9999999999999996, which floors to 2.99999999 — the Java
+// engine's answer — where the logarithm is 3, and log base 100 of 1000 floors
+// to 1.49999999 where it is 1.5. Where the float is within 1e-9 of k/q, v^q is
+// compared with base^k exactly, in decimal, and only an exact match answers
+// k/q, at the Decimal scale. A value merely near a power, like
+// 999.999999999999, floors as the float says.
+func exactLog(v, base decimal.Decimal, result float64) (decimal.Decimal, bool) {
+	for q := int64(1); q <= maxLogDenominator; q++ {
+		k := math.Round(result * float64(q))
+		if math.IsNaN(k) || math.Abs(result*float64(q)-k) >= 1e-9*float64(q) || math.Abs(k) > maxExactPower {
+			continue
+		}
+		if powersEqual(v, q, base, int64(k)) {
+			return DivideScaled(decimal.NewFromInt(int64(k)), decimal.NewFromInt(q)), true
+		}
+	}
+	return decimal.Zero, false
+}
+
+// powersEqual reports whether v^q is exactly base^k, for q ≥ 1.
+//
+// A number of n significant digits to the k has at least |k|·(n-1) of them,
+// so a power past what any decimal holds is refused before it is computed:
+// with a base of a thousand digits that power ran to millions of them, and
+// took a third of a second to compare.
+func powersEqual(v decimal.Decimal, q int64, base decimal.Decimal, k int64) bool {
+	if tooLong(base, k) || tooLong(v, q) {
+		return false
+	}
+	left := v.Pow(decimal.NewFromInt(q))
+	if k >= 0 {
+		return left.Equal(base.Pow(decimal.NewFromInt(k)))
+	}
+	return left.Mul(base.Pow(decimal.NewFromInt(-k))).Equal(decimal.NewFromInt(1))
+}
+
+// tooLong reports whether d to the power k has more significant digits than a
+// decimal holds. Trailing zeros are not digits of the power: 10.0000 is 10.
+func tooLong(d decimal.Decimal, k int64) bool {
+	if k < 0 {
+		k = -k
+	}
+	n := int64(len(strings.TrimRight(d.Coefficient().String(), "0")))
+	return k*(n-1) > maxDecimalDigits
+}
+
+// ExactPower is base to a whole-number exponent, computed in decimal and
+// brought to the Decimal scale. exact is false where the exponent is not a
+// whole number, the power would run past what a decimal holds, or there is none
+// to give — zero to a negative power. overflow is true where the power is past
+// the largest Decimal: that answer is final, and Power gives null rather than
+// asking the float, which can land just under the bound — 0.1 ^ -20 is 1e20,
+// and the float made it 99999999999999790000.
+//
+// Through a float, a power of a decimal lands just off it: 0.21 ^ 2 is the
+// float 0.044099999999999993, which floors to 0.04409999 — the Java engine's
+// answer — where 0.21 * 0.21 is 0.0441, and the two disagreed. A whole-number
+// power is repeated multiplication, and it is computed as one; a negative one
+// is its quotient, so 2 ^ -1 is 0.5.
+func ExactPower(base, exponent decimal.Decimal) (power decimal.Decimal, exact, overflow bool) {
+	if !exponent.IsInteger() {
+		return decimal.Zero, false, false
+	}
+	// Zero, one and minus one answer for any whole exponent, however large,
+	// and from the exponent itself: through a float, an odd exponent past 2^53
+	// rounds to an even one, and (-1) ^ 9007199254740993 was 1.
+	one := decimal.NewFromInt(1)
+	switch {
+	case exponent.IsZero():
+		return one, true, false // 0.0 ^ 0 included, as math.Pow has it
+	case base.IsZero():
+		if exponent.Sign() < 0 {
+			return decimal.Zero, false, false
+		}
+		return decimal.Zero, true, false
+	case base.Equal(one):
+		return one, true, false
+	case base.Equal(one.Neg()):
+		if exponent.Mod(decimal.NewFromInt(2)).IsZero() {
+			return one, true, false
+		}
+		return one.Neg(), true, false
+	}
+	// Bounded before it is read as an int64, which wraps one past it in
+	// silence: 2.0 ^ 18446744073709551616.0 was computed as 2.0 ^ 0.
+	if exponent.Abs().GreaterThan(decimal.NewFromInt(maxExactPower)) {
+		return decimal.Zero, false, false
+	}
+	k := exponent.IntPart()
+	// A power plainly past the largest Decimal is refused before it is
+	// computed, from its magnitude: 1.1 ^ 2000 has 83 digits before the point,
+	// and a tiny value to a large negative power as many.
+	if magnitude, _ := base.Abs().Float64(); float64(k)*math.Log10(magnitude) > maxDecimalDigitsBeforePoint+1 {
+		return decimal.Zero, false, true
+	}
+	if tooLong(base, k) {
+		return decimal.Zero, false, false
+	}
+	if k > 0 {
+		power = ScaleDecimal(base.Pow(decimal.NewFromInt(k)))
+	} else {
+		power = DivideScaled(one, base.Pow(decimal.NewFromInt(-k)))
+	}
+	if power.Abs().GreaterThan(maxDecimal) {
+		return decimal.Zero, false, true
+	}
+	return power, true, false
+}
+
+// maxDecimal is the largest value of the Decimal type, `maximum Decimal`, and
+// maxDecimalDigitsBeforePoint its count of digits before the point.
+var maxDecimal = decimal.RequireFromString("99999999999999999999.99999999")
+
+const maxDecimalDigitsBeforePoint = 20
