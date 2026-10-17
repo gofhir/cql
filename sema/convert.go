@@ -41,7 +41,7 @@ type ModelConversion struct {
 // whichever the map happened to yield first.
 type Conversion struct {
 	Cost     int
-	Function string // set when the model declares a function for it
+	Function string // set when the model declares a function for it; empty for a numeric promotion (see NumericPromotion)
 	Target   Type   // the type arrived at, which may be wider than requested
 
 	// Elementwise says the function converts each element of a list, or each
@@ -300,4 +300,29 @@ func Common(a, b Type, m Model) Type {
 		return a
 	}
 	return NewChoice([]Type{a, b})
+}
+
+// NumericPromotion reports whether reaching to from from promotes a number:
+// an Integer or Long to a Decimal or a Quantity, or a Decimal to a Quantity,
+// directly or inside a list or an interval. Those are the conversions the
+// evaluator applies without a function to call.
+func NumericPromotion(from, to Type) bool {
+	switch t := to.(type) {
+	case *List:
+		if f, ok := from.(*List); ok {
+			return NumericPromotion(f.Element, t.Element)
+		}
+	case *Interval:
+		if f, ok := from.(*Interval); ok {
+			return NumericPromotion(f.Point, t.Point)
+		}
+	case *Named:
+		switch {
+		case Equal(t, Decimal):
+			return Equal(from, Integer) || Equal(from, Long)
+		case Equal(t, Quantity):
+			return Equal(from, Integer) || Equal(from, Long) || Equal(from, Decimal)
+		}
+	}
+	return false
 }

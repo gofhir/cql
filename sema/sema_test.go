@@ -504,3 +504,30 @@ func TestAListConversionKeepsTheFunctionItNeeds(t *testing.T) {
 		t.Errorf("promotion converts the value itself: %+v", promoted)
 	}
 }
+
+// TestANumericPromotionIsRecordedButCallsNothing covers the conversions that
+// name no function. `{1, 2.5}` is a List<Decimal>, and the Integer reaching it
+// is recorded against its node for the evaluator to apply; but
+// ConversionsByDefine is the FHIRHelpers calls a definition needs, compared
+// against the reference translator's, and a promotion calls nothing.
+func TestANumericPromotionIsRecordedButCallsNothing(t *testing.T) {
+	result := check(t, "library T version '1.0'\nusing FHIR version '4.0.1'\ndefine R: {1, 2.5}\ndefine D: Interval[@2020-01-01, @2020-01-02T10:00:00]\n")
+	if got := result.ConversionsByDefine["R"]; len(got) != 0 {
+		t.Errorf("ConversionsByDefine[R] = %+v, want none: a promotion calls no function", got)
+	}
+	promoted := 0
+	for _, conv := range result.Conversions {
+		if conv.Function == "" && sema.Equal(conv.Target, sema.Decimal) {
+			promoted++
+		}
+	}
+	if promoted != 1 {
+		t.Errorf("%d promotions to Decimal recorded, want 1 (the Integer in {1, 2.5})", promoted)
+	}
+	// Date to DateTime is not a promotion this records.
+	for _, conv := range result.Conversions {
+		if conv.Function == "" && sema.Equal(conv.Target, sema.DateTime) {
+			t.Errorf("a Date to DateTime conversion was recorded: %+v", conv)
+		}
+	}
+}

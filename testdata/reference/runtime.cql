@@ -26,7 +26,24 @@ define AggDistinctPairs: from ({'a,b','a'}) X, ({'c','b,c'}) Y aggregate distinc
 define AggDistinctIntDec: ({1, 1.0}) X aggregate distinct A starting 0: A + 1
 define AggDistinctQuantity: ({1 'm', 100 'cm'}) X aggregate distinct A starting 0: A + 1
 define AggDistinctOffsets: ({@2020-01-01T10:00:00Z, @2020-01-01T07:00:00-03:00}) X aggregate distinct A starting 0: A + 1
-define ListIntDec: {1, 1.0}
+define ListIntDec: {1, 1.0} // control
+// The parts of a list, an if or a case reach the type they have in common.
+define ListDecInt: {1.0, 1} // control
+define ListIntDecInt: {1, 2.5, 3} // control
+define ListQuantityInt: {1 'mg', 2} // control
+define IfIntDec: if true then 1 else 2.5 // control
+define CaseIntDec: case when true then 1 else 2.5 end // control
+define CaseQuantityInt: case when false then 1 'mg' else 2 end // control
+define MaxQuantityInt: Max({100 '1', 150}) // control
+define ListOfListsIntDec: {{1}, {2.5}} // control
+define ListOfIntervalsIntDec: start of First({Interval[1, 2], Interval[1.5, 2.5]}) // control
+define IntervalIntDec: start of Interval[1, 2.5] // control
+define CoalesceIntDec: Coalesce(1, 2.5) // control
+define IntervalIntQuantity: start of Interval[100, 200 '1'] // control
+define IfListIntDec: if true then {1} else {2.5} // control
+define ToStringPromoted: ToString(if true then 1 else 2.5) // control
+// A Date among DateTimes is not promoted: see runtime.divergences.md.
+define ListDateDateTime: First({@2020-01-01, @2020-01-01T10:00:00}) is DateTime
 define DistinctQuantity: distinct {1 'm', 100 'cm'} // not a control: see runtime.divergences.md
 define DistinctOffsets: distinct {@2020-01-01T10:00:00Z, @2020-01-01T07:00:00-03:00} // control
 // distinct is defined by equality: these two show which equality the reference uses.

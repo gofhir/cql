@@ -23,7 +23,6 @@ with each other they are two opinions on evaluation, and one on translation.
 
 | Definition | This engine | Java | cql-execution | Specification |
 | --- | --- | --- | --- | --- |
-| `ListIntDec` | `{1, 1.0}`, Integer and Decimal | two Decimals | (not an oracle: the type is the translator's) | the translator converts the list to `List<Decimal>` |
 | `DecimalDivision` | 3.3333333333333333 | 3.33333333 | (not an oracle: 3.3333333333333335, binary floating point) | Decimal: "a precision ... of 28 and a scale (meaning number of possible digits to the right of the decimal) of 8" |
 
 `DecimalDivision` is a quotient left at sixteen places. The conformance corpus
@@ -89,6 +88,21 @@ That is a decision, not an oversight. The engine's comparisons depend on it.
 Without the rule, a day-precision value was normalized as if it were an
 instant, and it answered wrong at UTC+14. `decidedRuntimeAnswers` pins it,
 and changing it means arguing with that reason.
+
+## Decided: a Date among DateTimes stays a Date
+
+```cql
+define ListDateDateTime: First({@2020-01-01, @2020-01-01T10:00:00}) is DateTime
+// Java: true   cql-execution: true   this engine: false
+```
+
+The parts of a list, an if or a case reach the type they have in common:
+`{1, 1.0}` is two Decimals and `{1 'mg', 2}` two Quantities, as the reference
+translator makes them. The other implicit conversion it inserts, Date to
+DateTime, this engine does not apply. A Date compared at the day is read as
+written, and a DateTime at an offset is moved to it (see `readAsWritten`), so
+promoting one would change what every comparison it reaches answers. That is a
+larger question than the list's type, and it is left for its own change.
 
 ## Disputed, and settled by the specification: a null operand of union or except
 

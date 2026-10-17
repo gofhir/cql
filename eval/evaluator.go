@@ -406,19 +406,109 @@ func (e *Evaluator) evalAndConvert(expr ast.Expression) (fptypes.Value, error) {
 // actually cares, than silently emptied here.
 func (e *Evaluator) applyPlannedConversion(conv sema.Conversion, v fptypes.Value) (fptypes.Value, error) {
 	if conv.Function == "" {
-		return v, nil
+		return promoteNumbers(v, conv.Target), nil
 	}
+	// A model conversion may be followed by a numeric promotion, and the target
+	// says so: FHIR.integer reaching a Decimal is FHIRHelpers.ToInteger and
+	// then ToDecimal, as the reference translator writes it. Applying only the
+	// function left `Coalesce(FHIR.integer { value: 1 }, 2.5)` an Integer.
+	var converted fptypes.Value
+	var err error
 	if conv.Elementwise {
-		return e.convertEachElement(conv, v)
+		converted, err = e.convertEachElement(conv, v)
+	} else {
+		converted, err = e.callConversion(conv.Function, v)
 	}
-	converted, err := e.callConversion(conv.Function, v)
 	if err != nil {
 		return nil, err
 	}
 	if converted == nil {
 		return v, nil
 	}
-	return converted, nil
+	if !promotesNumbers(conv.Target) {
+		return converted, nil
+	}
+	return promoteNumbers(converted, conv.Target), nil
+}
+
+// promoteNumbers applies a numeric promotion the semantic phase recorded — the
+// ones it records without a function, see sema.NumericPromotion — following
+// the shape of the type it promotes to: each element of a list, both bounds of
+// an interval, or the value itself. `{1, 1.0}` is a List<Decimal>, `if c then
+// 1 else 2.5` a Decimal and `{1 'mg', 2}` a list of two Quantities, as the
+// reference translator makes them by inserting ToDecimal and ToQuantity.
+//
+// A value that is not the number the phase expected is left as it is, the way
+// a conversion that produces nothing leaves it.
+func promoteNumbers(v fptypes.Value, to sema.Type) fptypes.Value {
+	promoted, _ := promoteNumbersIn(v, to)
+	return promoted
+}
+
+// promoteNumbersIn is promoteNumbers reporting whether anything changed, which
+// is how a list knows whether to copy itself. Comparing the values instead
+// panics on the ones Go cannot compare — a list or a Concept holds a slice.
+func promoteNumbersIn(v fptypes.Value, to sema.Type) (fptypes.Value, bool) {
+	switch t := to.(type) {
+	case *sema.List:
+		list, ok := v.(cqltypes.List)
+		if !ok {
+			return v, false
+		}
+		var out fptypes.Collection
+		for i, el := range list.Values {
+			promoted, changed := promoteNumbersIn(el, t.Element)
+			if changed && out == nil {
+				out = make(fptypes.Collection, len(list.Values))
+				copy(out, list.Values[:i])
+			}
+			if out != nil {
+				out[i] = promoted
+			}
+		}
+		if out == nil {
+			return v, false
+		}
+		return cqltypes.NewList(out), true
+	case *sema.Interval:
+		iv, ok := v.(cqltypes.Interval)
+		if !ok {
+			return v, false
+		}
+		low, lowChanged := promoteNumbersIn(iv.Low, t.Point)
+		high, highChanged := promoteNumbersIn(iv.High, t.Point)
+		if !lowChanged && !highChanged {
+			return v, false
+		}
+		return cqltypes.NewInterval(low, high, iv.LowClosed, iv.HighClosed), true
+	}
+	switch {
+	case v == nil:
+		return nil, false
+	case sema.Equal(to, sema.Decimal):
+		if i, ok := v.(fptypes.Integer); ok {
+			return fptypes.NewDecimalFromInt(i.Value()), true
+		}
+	case sema.Equal(to, sema.Quantity):
+		switch v.(type) {
+		case fptypes.Integer, fptypes.Decimal:
+			return fptypes.NewQuantityFromDecimal(toDecimal(v), "1"), true
+		}
+	}
+	return v, false
+}
+
+// promotesNumbers reports whether a type has a Decimal or a Quantity in it —
+// one a number could be promoted to — so a model conversion to anything else
+// is not walked a second time for nothing.
+func promotesNumbers(t sema.Type) bool {
+	switch t := t.(type) {
+	case *sema.List:
+		return promotesNumbers(t.Element)
+	case *sema.Interval:
+		return promotesNumbers(t.Point)
+	}
+	return sema.Equal(t, sema.Decimal) || sema.Equal(t, sema.Quantity)
 }
 
 // convertEachElement applies a conversion to every element of a collection,
@@ -455,7 +545,11 @@ func (e *Evaluator) convertEachElement(conv sema.Conversion, v fptypes.Value) (f
 		// Inferred as a list and evaluated as a single value: convert it as
 		// one rather than refusing, since a one-element list and its element
 		// are the same thing to CQL.
-		return e.applyPlannedConversion(sema.Conversion{Function: conv.Function}, v)
+		single := sema.Conversion{Function: conv.Function}
+		if list, isList := conv.Target.(*sema.List); isList {
+			single.Target = list.Element
+		}
+		return e.applyPlannedConversion(single, v)
 	}
 	out := make(fptypes.Collection, 0, len(list.Values))
 	for _, item := range list.Values {

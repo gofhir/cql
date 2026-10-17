@@ -539,6 +539,12 @@ func (c *checker) inferIntervalConstructor(e *ast.IntervalExpression) Type {
 		// interval over something this phase could not type.
 		return &Interval{Point: Unknown}
 	}
+	// Both bounds reach the point type, as a list's elements reach theirs:
+	// Interval[1, 2.5] is an Interval<Decimal> with a Decimal start. Only a
+	// numeric promotion is recorded here; a bound read from FHIR is converted
+	// where it is used, as it was.
+	c.promoteRecorded(e.Low, point)
+	c.promoteRecorded(e.High, point)
 	return &Interval{Point: point}
 }
 
@@ -953,6 +959,17 @@ func (c *checker) coerceRecorded(expr ast.Expression, want Type) {
 	}
 	if conv, ok := Convertible(got, want, c.model); ok {
 		c.convert(expr, conv)
+	}
+}
+
+// promoteRecorded is coerceRecorded for the places that only promote numbers:
+// it records the conversion when it is a numeric promotion and nothing else.
+func (c *checker) promoteRecorded(expr ast.Expression, want Type) {
+	if expr == nil || IsUnknown(want) {
+		return
+	}
+	if got, ok := c.types[expr]; ok && NumericPromotion(got, want) {
+		c.coerceRecorded(expr, want)
 	}
 }
 

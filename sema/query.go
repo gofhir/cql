@@ -212,6 +212,15 @@ func (c *checker) inferFunctionCall(e *ast.FunctionCall) Type {
 		}
 	}
 	if t, ok := systemFunctionType(e.Name, args, c.model); ok {
+		// Coalesce answers one of its arguments, and each has to reach the type
+		// they have in common, as the parts of a list do: Coalesce(1, 2.5) is a
+		// Decimal whichever argument it answers. Only the numeric promotion is
+		// recorded; a FHIR argument is answered as it was.
+		if strings.EqualFold(e.Name, "Coalesce") && len(exprs) > 1 {
+			for _, arg := range exprs {
+				c.promoteRecorded(arg, t)
+			}
+		}
 		return t
 	}
 	// Reported as a warning, not an error: this table covers what the engine
