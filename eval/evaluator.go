@@ -8163,7 +8163,7 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 		case fptypes.Integer:
 			return fptypes.NewDecimalFromInt(val.Value()), nil
 		case fptypes.String:
-			return fptypes.NewDecimal(val.Value())
+			return funcs.DecimalFromString(val.Value())
 		}
 	case "boolean":
 		switch val := v.(type) {

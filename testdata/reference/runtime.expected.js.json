@@ -1,6 +1,6 @@
 {
   "library": "RuntimeProbe",
-  "sourceSha256": "ef27c8f997e47691ef2364e4f9960ddb8caba024bdff0a9b4161a1166c512474",
+  "sourceSha256": "cb01e0d19edbd3c6a96e323d375bdf24770d99a61fc4ebda8c937bb19cd28adf",
   "engine": "cql-execution 3.3.2",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -648,6 +648,51 @@
     "DecimalLogNearOne": {
       "type": "Decimal",
       "value": "230259.6605885238"
+    },
+    "ToDecimalScaled": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "ToDecimalNegativeScaled": {
+      "type": "Decimal",
+      "value": "-1"
+    },
+    "LogOfAScaledString": null,
+    "ToDecimalScaleKept": {
+      "type": "String",
+      "value": "1"
+    },
+    "ToDecimalPrecision": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tUnimplemented Expression: Precision\n\tCQL Library:\tRuntimeProbe|1.0\n\tExpression:\tPrecision\n\tELM Local ID:\t3480\n\tCQL Locator:\t167:28-167:62\n"
+    },
+    "ToDecimalTrailingZeros": {
+      "type": "String",
+      "value": "2.5"
+    },
+    "ToDecimalPastTheLargest": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "ToDecimalPastTheSmallest": {
+      "type": "Decimal",
+      "value": "-100000000000000000000"
+    },
+    "ToDecimalLeadingZero": {
+      "type": "String",
+      "value": "1.5"
+    },
+    "ToDecimalKeepsItsZeros": {
+      "type": "String",
+      "value": "2.5"
+    },
+    "ToDecimalOutOfRange": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "ConvertsToDecimalOutOfRange": {
+      "type": "Boolean",
+      "value": true
     },
     "DecimalLnUnscaled": {
       "type": "Decimal",

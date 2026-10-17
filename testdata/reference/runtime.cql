@@ -159,6 +159,19 @@ define DecimalProductOfOne: Product({Exp(1.0)}) > 2.71828182 // control
 define DecimalAvgOfOne: Avg({Exp(1.0)}) > 2.71828182 // control
 define DecimalSumOfTwo: Sum({Exp(1.0), 0.0}) > 2.71828182 // control
 define DecimalLogNearOne: Log(10, 1.00001) // control
+// A string read as a Decimal is brought to the scale, toward negative infinity.
+define ToDecimalScaled: ToDecimal('1.000000005') // control
+define ToDecimalNegativeScaled: ToDecimal('-1.000000005') // control
+define LogOfAScaledString: Log(10, ToDecimal('0.999999999999999999999')) // control
+define ToDecimalScaleKept: ToString(ToDecimal('1.000000005')) // control
+define ToDecimalPrecision: Precision(ToDecimal('1.000000005')) // control
+define ToDecimalTrailingZeros: ToString(ToDecimal('2.50000000000')) // control
+define ToDecimalPastTheLargest: ToDecimal('99999999999999999999.999999999') // control
+define ToDecimalPastTheSmallest: ToDecimal('-99999999999999999999.999999999') // control
+define ToDecimalLeadingZero: ToString(ToDecimal('01.5')) // control
+define ToDecimalKeepsItsZeros: ToString(ToDecimal('2.50')) // control
+define ToDecimalOutOfRange: ToDecimal('100000000000000000000') // control
+define ConvertsToDecimalOutOfRange: ConvertsToDecimal('100000000000000000000')
 // Where this engine does not scale, on purpose: see runtime.divergences.md.
 define DecimalLnUnscaled: Ln(2.0)
 define DecimalGeometricMeanUnscaled: GeometricMean({2.0, 8.0, 3.0})

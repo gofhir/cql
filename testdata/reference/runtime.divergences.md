@@ -94,6 +94,7 @@ define QuantityDivisionUnscaled: 10.0 'mg' / 3.0                    // Java: 3.3
 define DecimalPowerShortestFloat: 0.09 ^ 0.5                         // Java: 0.29999999
 define DecimalLogNearInteger: Log(1000.0, 10.0)                      // Java: 2.99999999
 define DecimalWholePowerExact: 0.21 ^ 2                              // Java: 0.04409999
+define ConvertsToDecimalOutOfRange: ConvertsToDecimal('100000000000000000000') // Java: true
 ```
 
 The Java engine floors these to 8 places as well, and this engine does not:
@@ -111,6 +112,9 @@ The Java engine floors these to 8 places as well, and this engine does not:
   binary value. The float written 0.3 is 0.29999999999999998…, so `0.09 ^ 0.5` is
   0.29999999 there. The conformance suite asks `Power(10, -7)` for 0.0000001, and
   the float 1e-7 is 0.0000000999…, which the exact reading floors to 0.00000009.
+- `ConvertsToDecimal` of a string past the largest Decimal: it is whether
+  ToDecimal succeeds, and ToDecimal of it is null in both engines. The Java
+  engine answers true all the same.
 - A power with a whole-number exponent: it is computed in decimal, as the
   repeated multiplication it is, and then floored. Through a float, `0.21 ^ 2`
   is 0.044099999999999993, which floors to 0.04409999 in the Java engine, where

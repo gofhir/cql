@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofhir/cql/eval"
 )
@@ -221,6 +222,60 @@ func TestAnUncertainResultWithAnUnansweredBoundIsNull(t *testing.T) {
 		v, err := NewEngine().EvaluateExpression(context.Background(), "library T version '1.0'\ndefine R: "+expr+"\n", "R", nil, nil)
 		if err != nil || v != nil {
 			t.Errorf("%s = %v, %v; want null", expr, v, err)
+		}
+	}
+}
+
+// TestAStringIsReadAsADecimalAtTheScale covers ToDecimal of a string carrying
+// more places than the type keeps. A literal cannot, and the string's extra
+// digits reached the arithmetic as no Decimal written in CQL can: the reference
+// engine floors it to eight places, as its arithmetic floors.
+func TestAStringIsReadAsADecimalAtTheScale(t *testing.T) {
+	for expr, want := range map[string]string{
+		"ToDecimal('1.000000005')":                      "1.00000000",
+		"ToDecimal('-1.000000005')":                     "-1.00000001",
+		"ToDecimal('1.12345678')":                       "1.12345678",
+		"Log(10, ToDecimal('0.999999999999999999999'))": "-230258506.99111846",
+		"Log(10, ToDecimal('1.000000001'))":             "null",
+		"ToDecimal('99999999999999999999.999999999')":   "null",
+		"ToDecimal('-99999999999999999999.999999999')":  "null",
+		"ToString(ToDecimal('2.50000000000'))":          "2.50000000",
+	} {
+		v, err := NewEngine().EvaluateExpression(context.Background(), "library T version '1.0'\ndefine R: "+expr+"\n", "R", nil, nil)
+		got := "null"
+		if v != nil {
+			got = valueString(v)
+		}
+		if err != nil || got != want {
+			t.Errorf("%s = %s, %v; want %s", expr, got, err, want)
+		}
+	}
+}
+
+// TestAStringWithAHugeExponentIsAnsweredAtOnce covers exponents no Decimal
+// reaches. Comparing or flooring one rescaled it to a number of a billion
+// digits, and the evaluation never returned; the reference engine answers each
+// at once.
+func TestAStringWithAHugeExponentIsAnsweredAtOnce(t *testing.T) {
+	for expr, want := range map[string]string{
+		"ToDecimal('1e999999999')":         "null",
+		"ToDecimal('0e999999999')":         "0",
+		"ToDecimal('1e-999999999')":        "0.00000000",
+		"ToDecimal('-1e-999999999')":       "-0.00000001",
+		"ConvertsToDecimal('1e999999999')": "false",
+		"ToDecimal('1.5E2')":               "150",
+	} {
+		start := time.Now()
+		v, err := NewEngine().EvaluateExpression(context.Background(), "library T version '1.0'\ndefine R: "+expr+"\n", "R", nil, nil)
+		got := "null"
+		if v != nil {
+			got = valueString(v)
+		}
+		if err != nil || got != want {
+			t.Errorf("%s = %s, %v; want %s", expr, got, err, want)
+		}
+		if elapsed := time.Since(start); elapsed > 2*time.Second {
+			t.Errorf("%s took %s", expr, elapsed)
 		}
 	}
 }

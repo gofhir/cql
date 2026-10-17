@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "ef27c8f997e47691ef2364e4f9960ddb8caba024bdff0a9b4161a1166c512474",
+  "sourceSha256" : "cb01e0d19edbd3c6a96e323d375bdf24770d99a61fc4ebda8c937bb19cd28adf",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -605,6 +605,45 @@
     "DecimalLogNearOne" : {
       "type" : "Decimal",
       "value" : "230259.66058852"
+    },
+    "ToDecimalScaled" : {
+      "type" : "Decimal",
+      "value" : "1.00000000"
+    },
+    "ToDecimalNegativeScaled" : {
+      "type" : "Decimal",
+      "value" : "-1.00000001"
+    },
+    "LogOfAScaledString" : {
+      "type" : "Decimal",
+      "value" : "-230258506.99111846"
+    },
+    "ToDecimalScaleKept" : {
+      "type" : "String",
+      "value" : "1.00000000"
+    },
+    "ToDecimalPrecision" : {
+      "type" : "Integer",
+      "value" : "8"
+    },
+    "ToDecimalTrailingZeros" : {
+      "type" : "String",
+      "value" : "2.50000000"
+    },
+    "ToDecimalPastTheLargest" : null,
+    "ToDecimalPastTheSmallest" : null,
+    "ToDecimalLeadingZero" : {
+      "type" : "String",
+      "value" : "1.5"
+    },
+    "ToDecimalKeepsItsZeros" : {
+      "type" : "String",
+      "value" : "2.50"
+    },
+    "ToDecimalOutOfRange" : null,
+    "ConvertsToDecimalOutOfRange" : {
+      "type" : "Boolean",
+      "value" : true
     },
     "DecimalLnUnscaled" : {
       "type" : "Decimal",

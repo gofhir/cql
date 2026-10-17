@@ -1,9 +1,12 @@
 package funcs
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/shopspring/decimal"
+
+	fptypes "github.com/gofhir/fhirpath/types"
 )
 
 // DecimalScale is the number of digits a CQL Decimal keeps to the right of the
@@ -70,4 +73,52 @@ func FloatScaled(f float64) (d decimal.Decimal, ok bool) {
 		return decimal.Zero, false
 	}
 	return ScaleDecimal(decimal.NewFromFloat(f)), true
+}
+
+// DecimalFromString is a string read as a Decimal, at the Decimal scale and
+// within its range, written as the reference engine writes it.
+//
+// The type keeps eight places, and a string can carry more, as a literal
+// cannot: ToDecimal('1.000000005') is 1.00000000 in the reference engine —
+// eight places, floored as its arithmetic is — and -1.000000005 is
+// -1.00000001. Kept whole, the extra digits reached the arithmetic as no
+// Decimal written in CQL can, and a logarithm of a base a hair from 1 ran past
+// the largest Decimal. A string past the largest Decimal is no Decimal at all,
+// and null.
+//
+// The string is read as a number first and written back from it, so '01.5' is
+// 1.5 and '1e3' 1000, as there, and a string of a thousand places is floored
+// rather than refused by the reader that would have carried it whole.
+func DecimalFromString(s string) (fptypes.Value, error) {
+	d, err := decimal.NewFromString(s)
+	if err != nil {
+		return nil, fmt.Errorf("invalid decimal: %s", s)
+	}
+	// The magnitude first, from the exponent and the digits, before any
+	// arithmetic: comparing or flooring a string like '1e999999999' rescales
+	// it to a number of a billion digits, and the evaluation never returned.
+	digits := int64(len(d.Coefficient().String()))
+	if d.Sign() < 0 {
+		digits-- // the minus sign
+	}
+	before := digits + int64(d.Exponent()) // digits before the point
+	switch {
+	case d.IsZero():
+		return fptypes.NewDecimal("0")
+	case before > maxDecimalDigitsBeforePoint:
+		return nil, nil
+	case before < -DecimalScale:
+		// Below the scale altogether: zero floored, or the step below it.
+		if d.Sign() < 0 {
+			return fptypes.NewDecimal(decimal.New(-1, -DecimalScale).StringFixed(DecimalScale))
+		}
+		return fptypes.NewDecimal(decimal.Zero.StringFixed(DecimalScale))
+	}
+	if d.Abs().GreaterThan(maxDecimal) {
+		return nil, nil
+	}
+	// At most eight places: the floor leaves a value it does not change at the
+	// places it was written with, 2.50000000000 included.
+	d = ScaleDecimal(d)
+	return fptypes.NewDecimal(d.StringFixed(min(DecimalScale, max(0, -d.Exponent()))))
 }

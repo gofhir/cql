@@ -97,6 +97,17 @@ var runtimeReferences = []struct {
 			"DecimalSum":                      "it adds in binary floating point: 0.30000000000000004",
 			"DecimalLnUnscaled":               "it computes Decimal in binary floating point",
 			"DecimalModScaled":                "it computes Decimal in binary floating point",
+			"ToDecimalScaleKept":              "it computes Decimal in binary floating point",
+			"ToDecimalPrecision":              "it computes Decimal in binary floating point",
+			"ToDecimalTrailingZeros":          "it computes Decimal in binary floating point",
+			"ToDecimalPastTheLargest":         "it computes Decimal in binary floating point",
+			"ToDecimalPastTheSmallest":        "it computes Decimal in binary floating point",
+			"ToDecimalLeadingZero":            "it computes Decimal in binary floating point",
+			"ToDecimalKeepsItsZeros":          "it computes Decimal in binary floating point",
+			"ToDecimalOutOfRange":             "it computes Decimal in binary floating point",
+			"ToDecimalScaled":                 "it computes Decimal in binary floating point",
+			"ToDecimalNegativeScaled":         "it computes Decimal in binary floating point",
+			"LogOfAScaledString":              "it computes Decimal in binary floating point",
 			"DecimalSumOfOne":                 "it computes Decimal in binary floating point",
 			"DecimalProductOfOne":             "it computes Decimal in binary floating point",
 			"DecimalAvgOfOne":                 "it computes Decimal in binary floating point",
@@ -161,6 +172,9 @@ var decidedRuntimeAnswers = map[string]struct {
 	"DecimalGeometricMeanUnscaled": {"Decimal(3.63424118566428)", "the geometric mean is the exact root, not " +
 		"Power(Product, 1/n) with 1/n floored, which makes the geometric mean of {1, 2, 4} 1.99999998; the " +
 		"numeric and Quantity aggregates agree on it"},
+	"ConvertsToDecimalOutOfRange": {"Boolean(false)", "ConvertsToDecimal is whether ToDecimal succeeds, and " +
+		"ToDecimal of a string past the largest Decimal is null in both engines; the Java engine answers true here " +
+		"all the same"},
 	"DecimalWholePowerExact": {"Decimal(0.0441)", "a whole-number power is computed in decimal: through a float " +
 		"0.21 ^ 2 is 0.044099999999999993, which floors to 0.04409999 in the Java engine, where 0.21 * 0.21 is 0.0441"},
 	"DecimalLogNearInteger": {"Decimal(3)", "an exact power has a whole-number logarithm, checked in decimal: " +
