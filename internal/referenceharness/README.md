@@ -162,6 +162,66 @@ compares with its own code, not with this engine's `String` or `Equal`.
 
 `testdata/reference/runtime.divergences.md` explains each case.
 
+## Differential testing
+
+The probe and runtime rows are written by hand, and they pin what was decided.
+They do not find what nobody thought to write. A change to how expressions
+evaluate is checked against the reference engine over generated expressions,
+before it is reviewed and again after every fix:
+
+1. **Baseline.** Before changing anything, generate a library for the area the
+   change touches and record what the two engines disagree on.
+2. **Change, and compare.** Run the same library again, against the baseline.
+   Every new difference is read and sorted into one of three:
+   - a decision this engine makes against the reference, which goes into
+     `decidedRuntimeAnswers` and `runtime.divergences.md`;
+   - a failure of the reference, settled by the specification or the
+     conformance suite;
+   - a defect, which is fixed.
+3. **Review** what this cannot see: quantities, nulls, FHIR data past the range
+   of a literal, static types, uncertainty and performance.
+4. **After each fix**, compare again. Nothing new should appear.
+
+This came out of a change to the Decimal scale that went through ten rounds of
+case-by-case review, each one finding defects the last had not looked at. A run
+of 2,600 generated expressions found the rest in one pass, and showed after
+each fix that nothing else had moved.
+
+```sh
+go run ./internal/referenceharness/differential/gen -area arithmetic -seed 7 -n 600 > /tmp/diff/fuzz.cql
+cd internal/referenceharness
+docker run --rm -v "$PWD":/w -v /tmp/diff:/cql -w /w maven:3-eclipse-temurin-21 \
+  java -cp "out:lib/*" Evaluate /cql/fuzz.cql /cql > /tmp/diff/java.json
+cd ../..
+go run ./internal/referenceharness/differential/compare \
+  -cql /tmp/diff/fuzz.cql -reference /tmp/diff/java.json -report /tmp/diff/before.json
+# … change the engine …
+go run ./internal/referenceharness/differential/compare \
+  -cql /tmp/diff/fuzz.cql -reference /tmp/diff/java.json -baseline /tmp/diff/before.json
+```
+
+`gen` is reproducible from its seed, so a definition's name is the same
+expression in every run, and `-baseline` reports by name what is new and what
+is gone. The reference engine's answers only need computing once per library:
+they do not change with this engine.
+
+`compare` evaluates at the fixed evaluation time `Evaluate.java` uses. It
+compares numbers by value and sorts each difference into one of three:
+
+- `engine-panic`: always a defect, and reported even where the reference
+  failed too.
+- `reference-error`: the reference threw and this engine answered.
+- `different`: the two engines gave different answers.
+
+Two runs of different areas, or of two seeds, cover more than one large run of
+one.
+
+An area is a function in `gen`. `arithmetic` covers the operators, the
+arithmetic functions and the aggregates over literals, typed nulls and
+divisions by zero. A change elsewhere — intervals, temporal arithmetic, lists,
+strings — adds the area it needs, with literals chosen for that area's edges, as
+`arithmetic` chooses the Decimal scale's.
+
 ## Two things worth knowing
 
 `cql-to-elm-cli`'s published POM is invalid — it declares
