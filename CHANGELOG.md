@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.23.2](https://github.com/gofhir/cql/compare/v1.23.1...v1.23.2) (2026-10-17)
+
+
+### Bug Fixes
+
+* **eval:** a comparison coarser than the hour reads the days as written ([#130](https://github.com/gofhir/cql/issues/130)) ([b76f3f0](https://github.com/gofhir/cql/commit/b76f3f09d7c62a3f3285ee806f6955bfd6bdd810))
+* **eval:** a Decimal result is brought to the scale of 8, as the reference engine brings it ([#134](https://github.com/gofhir/cql/issues/134)) ([995ba35](https://github.com/gofhir/cql/commit/995ba3539b6c6726a3a0df871e5d7abad7412192))
+* **eval:** a name applied to a list is read off each entry ([#129](https://github.com/gofhir/cql/issues/129)) ([342fa48](https://github.com/gofhir/cql/commit/342fa48796ed4e3b3d860ca483f435ef4d7c5f39))
+* **eval:** a return clause is distinct unless it says all ([#123](https://github.com/gofhir/cql/issues/123)) ([448033c](https://github.com/gofhir/cql/commit/448033c4544dd0e9e0c4993e0a2240d4de2907fe))
+* **eval:** a set operation is the list one or the interval one by its static type ([#128](https://github.com/gofhir/cql/issues/128)) ([499a919](https://github.com/gofhir/cql/commit/499a9194c8558cccdbcb377dab9b216df99e2ffd))
+* **eval:** an aggregate reduces the rows the query kept, distinct by equality ([#125](https://github.com/gofhir/cql/issues/125)) ([49daf79](https://github.com/gofhir/cql/commit/49daf79fa14fb5df5f7b767cbb1a55f4947506e4))
+* **eval:** an expand past its size fails instead of stopping short ([#124](https://github.com/gofhir/cql/issues/124)) ([f6235b0](https://github.com/gofhir/cql/commit/f6235b0c7dd9be7f6434af914e32a7adf44cb074))
+* **eval:** interval phrases at a precision compare their endpoints at it ([#131](https://github.com/gofhir/cql/issues/131)) ([5aea7e7](https://github.com/gofhir/cql/commit/5aea7e7380441dcf2b1f28a9297ebd29540f4097))
+* **eval:** the parts of a list, an if or a case reach their common numeric type ([#132](https://github.com/gofhir/cql/issues/132)) ([64f7dd9](https://github.com/gofhir/cql/commit/64f7dd97f076d0ffaccb80a00a302fb1972e1cc4))
+* **eval:** union and except have set semantics, and a null list operand is an empty list ([#127](https://github.com/gofhir/cql/issues/127)) ([ecae3e4](https://github.com/gofhir/cql/commit/ecae3e4d1d7f731079edc6f6418aac76bd65ca3f))
+* update fhirpath to v1.14.1, and state the minimum and maximum DateTime at UTC ([#121](https://github.com/gofhir/cql/issues/121)) ([07fc774](https://github.com/gofhir/cql/commit/07fc774c391c70e7e746ef800179d6d74cbca795))
+
+
+### Performance Improvements
+
+* **engine:** parse the built-in FHIRHelpers once per process, not per Engine ([#118](https://github.com/gofhir/cql/issues/118)) ([582030b](https://github.com/gofhir/cql/commit/582030b3f48b3d7a72e10fabfa26d7c265c08476))
+
 ## [1.23.1](https://github.com/gofhir/cql/compare/v1.23.0...v1.23.1) (2026-09-15)
 
 
