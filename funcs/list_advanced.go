@@ -93,8 +93,10 @@ func Median(c fptypes.Collection) fptypes.Value {
 		if item == nil {
 			continue
 		}
-		n := numericVal(item)
-		if !n.IsZero() || item.String() == "0" {
+		// A number, whatever it is written as. Asking whether it read as zero
+		// or printed as "0" dropped a zero written 0.0 — a lab result of 0.0 —
+		// and Median({0.0, 1.0, 2.0, 3.0}) was 2.
+		if n, ok := NumberOf(item); ok {
 			nums = append(nums, n)
 		}
 	}
@@ -106,7 +108,9 @@ func Median(c fptypes.Collection) fptypes.Value {
 	})
 	mid := len(nums) / 2
 	if len(nums)%2 == 0 {
-		avg := nums[mid-1].Add(nums[mid]).Div(decimal.NewFromInt(2))
+		// The mean of the middle pair, as the reference engine takes it: a sum
+		// and a quotient, each at the Decimal scale.
+		avg := DivideScaled(ScaleDecimal(nums[mid-1].Add(nums[mid])), decimal.NewFromInt(2))
 		return decimalToValue(avg)
 	}
 	return decimalToValue(nums[mid])

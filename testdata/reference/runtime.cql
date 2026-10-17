@@ -131,6 +131,41 @@ define PhraseSameDayOrBefore: Interval[@2020-01-01T00:00:00Z, @2020-01-01T10:00:
 // exactly, and a Time, which one runtime represents as a DateTime with no date.
 define DecimalDivision: 10.0 / 3.0 // control
 define DecimalSum: 0.1 + 0.2 // control
+// A Decimal result is brought to the scale of 8 toward negative infinity, as
+// the Java engine does it, where it does it.
+define DecimalDivisionNegative: -2.0 / 3.0 // control
+define DecimalDivisionEquals: 10.0 / 3.0 = 3.33333333 // control
+define IntegerDivisionScale: 10 / 3 // control
+define DecimalProductScale: 0.12345678 * 0.5 // control
+define DecimalAvgScale: Avg({1.0, 2.0, 2.0}) // control
+define DecimalAvgNegativeScale: Avg({-1.0, -2.0, -2.0}) // control
+define DecimalProductAggregateScale: Product({0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5}) // control
+define DecimalLogScale: Log(10.0, 3.0) // control
+define DecimalPowerScale: 2.0 ^ 0.5 // control
+define DecimalVarianceScale: Variance({1.0, 2.0, 4.0}) // control
+define DecimalStdDevScale: StdDev({1.0, 2.0, 4.0}) // control
+define DecimalPopulationVarianceScale: PopulationVariance({1.0, 2.0, 4.0}) // control
+define DecimalAbsOfFloored: Abs(-1.0 / 3.0) // control
+define DecimalMedianEvenScale: Median({1.00000001, 1.00000002}) // control
+define DecimalDivisionNoDoubleRounding: 0.00000002 / 2.00000001 // control
+define DecimalExpUnscaled: Exp(1.0) > 2.71828182 // control
+define DecimalSubtractUnscaled: (Exp(1.0) - 0.0) > 2.71828182 // control
+define DecimalMultiplyScaled: (Exp(1.0) * 1.0) > 2.71828182 // control
+define DecimalModScaled: Exp(1.0) mod 1.0 // control
+define IntegerNegativePower: 2 ^ -1 // control
+// Sum and Product start from the first value; each further step is scaled.
+define DecimalSumOfOne: Sum({Exp(1.0)}) > 2.71828182 // control
+define DecimalProductOfOne: Product({Exp(1.0)}) > 2.71828182 // control
+define DecimalAvgOfOne: Avg({Exp(1.0)}) > 2.71828182 // control
+define DecimalSumOfTwo: Sum({Exp(1.0), 0.0}) > 2.71828182 // control
+define DecimalLogNearOne: Log(10, 1.00001) // control
+// Where this engine does not scale, on purpose: see runtime.divergences.md.
+define DecimalLnUnscaled: Ln(2.0)
+define DecimalGeometricMeanUnscaled: GeometricMean({2.0, 8.0, 3.0})
+define QuantityDivisionUnscaled: 10.0 'mg' / 3.0
+define DecimalPowerShortestFloat: 0.09 ^ 0.5
+define DecimalLogNearInteger: Log(1000.0, 10.0)
+define DecimalWholePowerExact: 0.21 ^ 2
 define TimeLiteral: @T10:30 // control
 
 // return is distinct unless it says all, wherever the return clause is.

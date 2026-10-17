@@ -166,11 +166,18 @@ func stdDevOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Val
 	if !ok {
 		return nil, nil
 	}
-	// Through float64 and rounded to 8 places, the same way funcs.StdDev takes
-	// its root, so a quantity and a plain number do not disagree in the last
-	// digits over the same figures.
+	// Through float64 and rounded to 8 places. A plain number's StdDev is
+	// floored at the Decimal scale at every step, as the reference engine takes
+	// it, and a Quantity keeps its digits (see funcs.ScaleDecimal), so the two
+	// can differ in the eighth digit over the same figures.
 	f, _ := v.Value().Float64()
-	root := trimTrailingZeros(decimal.NewFromFloat(math.Sqrt(f)).Round(8))
+	sqrt := math.Sqrt(f)
+	// A variance past a float64 has no root to give, and building a Decimal from
+	// the infinity it becomes panics.
+	if math.IsInf(sqrt, 0) || math.IsNaN(sqrt) {
+		return nil, nil
+	}
+	root := trimTrailingZeros(decimal.NewFromFloat(sqrt).Round(8))
 	return fptypes.NewQuantityFromDecimal(root, quantities[0].Unit()), nil
 }
 

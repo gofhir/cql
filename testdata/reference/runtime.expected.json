@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "4c610622462f7d4b9bdf9a4542a479676654f14b71660d899d58d62bae1869fa",
+  "sourceSha256" : "ef27c8f997e47691ef2364e4f9960ddb8caba024bdff0a9b4161a1166c512474",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -505,6 +505,131 @@
     "DecimalSum" : {
       "type" : "Decimal",
       "value" : "0.3"
+    },
+    "DecimalDivisionNegative" : {
+      "type" : "Decimal",
+      "value" : "-0.66666667"
+    },
+    "DecimalDivisionEquals" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "IntegerDivisionScale" : {
+      "type" : "Decimal",
+      "value" : "3.33333333"
+    },
+    "DecimalProductScale" : {
+      "type" : "Decimal",
+      "value" : "0.06172839"
+    },
+    "DecimalAvgScale" : {
+      "type" : "Decimal",
+      "value" : "1.66666666"
+    },
+    "DecimalAvgNegativeScale" : {
+      "type" : "Decimal",
+      "value" : "-1.66666667"
+    },
+    "DecimalProductAggregateScale" : {
+      "type" : "Decimal",
+      "value" : "0.00097656"
+    },
+    "DecimalLogScale" : {
+      "type" : "Decimal",
+      "value" : "2.09590327"
+    },
+    "DecimalPowerScale" : {
+      "type" : "Decimal",
+      "value" : "1.41421356"
+    },
+    "DecimalVarianceScale" : {
+      "type" : "Decimal",
+      "value" : "2.33333332"
+    },
+    "DecimalStdDevScale" : {
+      "type" : "Decimal",
+      "value" : "1.52752522"
+    },
+    "DecimalPopulationVarianceScale" : {
+      "type" : "Decimal",
+      "value" : "1.55555554"
+    },
+    "DecimalAbsOfFloored" : {
+      "type" : "Decimal",
+      "value" : "0.33333334"
+    },
+    "DecimalMedianEvenScale" : {
+      "type" : "Decimal",
+      "value" : "1.00000001"
+    },
+    "DecimalDivisionNoDoubleRounding" : {
+      "type" : "Decimal",
+      "value" : "0.00000000"
+    },
+    "DecimalExpUnscaled" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "DecimalSubtractUnscaled" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "DecimalMultiplyScaled" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "DecimalModScaled" : {
+      "type" : "Decimal",
+      "value" : "0.71828182"
+    },
+    "IntegerNegativePower" : {
+      "type" : "Decimal",
+      "value" : "0.5"
+    },
+    "DecimalSumOfOne" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "DecimalProductOfOne" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "DecimalAvgOfOne" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "DecimalSumOfTwo" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "DecimalLogNearOne" : {
+      "type" : "Decimal",
+      "value" : "230259.66058852"
+    },
+    "DecimalLnUnscaled" : {
+      "type" : "Decimal",
+      "value" : "0.69314718"
+    },
+    "DecimalGeometricMeanUnscaled" : {
+      "type" : "Decimal",
+      "value" : "3.63424113"
+    },
+    "QuantityDivisionUnscaled" : {
+      "type" : "Quantity",
+      "value" : "3.33333333",
+      "unit" : "mg"
+    },
+    "DecimalPowerShortestFloat" : {
+      "type" : "Decimal",
+      "value" : "0.29999999"
+    },
+    "DecimalLogNearInteger" : {
+      "type" : "Decimal",
+      "value" : "2.99999999"
+    },
+    "DecimalWholePowerExact" : {
+      "type" : "Decimal",
+      "value" : "0.04409999"
     },
     "TimeLiteral" : {
       "type" : "Time",

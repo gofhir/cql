@@ -1508,7 +1508,7 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 			if rv == 0 {
 				return nil, nil // CQL: divide by zero returns null
 			}
-			return newDecimalFromD(decimal.NewFromInt(lv).Div(decimal.NewFromInt(rv))), nil
+			return newDecimalFromD(funcs.DivideScaled(decimal.NewFromInt(lv), decimal.NewFromInt(rv))), nil
 		case ast.OpDiv:
 			if rv == 0 {
 				return nil, nil
@@ -1520,7 +1520,11 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 			}
 			return fptypes.NewInteger(lv % rv), nil
 		case ast.OpPower:
-			return fptypes.NewInteger(int64(math.Pow(float64(lv), float64(rv)))), nil
+			// The operator is the function: one implementation, so `^` and
+			// Power agree. A negative power of an Integer is a fraction — 2 ^ -1
+			// is the Decimal 0.5, where truncating made it 0 — and one past int64
+			// is null, where converting the float wrapped it.
+			return funcs.Power(left, right)
 		}
 	}
 
@@ -1624,8 +1628,10 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 			// A first attempt here asked divideUnits for a dimensionless '1', on
 			// the reasoning above, and the corpus said no. What was wrong was the
 			// magnitude, not the label.
-			result := lq.Value().Div(rhs.Value()).IntPart()
-			return fptypes.NewQuantityFromDecimal(decimal.NewFromInt(result), lq.Unit()), nil
+			// QuoRem truncates exactly; Div rounded to 16 places first, so a
+			// quotient just below a whole number became it.
+			quotient, _ := lq.Value().QuoRem(rhs.Value(), 0)
+			return fptypes.NewQuantityFromDecimal(quotient, lq.Unit()), nil
 		default:
 			return nil, fmt.Errorf("unsupported operator for quantity arithmetic")
 		}
@@ -1669,32 +1675,39 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 		return nil, fmt.Errorf("cannot perform arithmetic on %s", right.Type())
 	}
 
+	// A Decimal result is brought to the Decimal scale where the reference
+	// engine brings it — not after a subtraction. See funcs.ScaleDecimal.
 	switch op {
 	case ast.OpAdd:
-		return newDecimalFromD(ld.Add(rd)), nil
+		return newDecimalFromD(funcs.ScaleDecimal(ld.Add(rd))), nil
 	case ast.OpSubtract:
 		return newDecimalFromD(ld.Sub(rd)), nil
 	case ast.OpMultiply:
-		return newDecimalFromD(ld.Mul(rd)), nil
+		return newDecimalFromD(funcs.ScaleDecimal(ld.Mul(rd))), nil
 	case ast.OpDivide:
 		if rd.IsZero() {
 			return nil, nil
 		}
-		return newDecimalFromD(ld.Div(rd)), nil
+		return newDecimalFromD(funcs.DivideScaled(ld, rd)), nil
 	case ast.OpDiv:
 		if rd.IsZero() {
 			return nil, nil
 		}
-		return fptypes.NewInteger(ld.Div(rd).IntPart()), nil
+		// QuoRem truncates exactly. Div rounded to 16 places first, so a
+		// quotient just below a whole number became it before IntPart saw it.
+		quotient, _ := ld.QuoRem(rd, 0)
+		return funcs.IntegerOf(quotient), nil
 	case ast.OpMod:
 		if rd.IsZero() {
 			return nil, nil
 		}
-		return newDecimalFromD(ld.Mod(rd)), nil
+		// Scaled, as the reference engine scales a remainder: Exp(1.0) mod 1.0
+		// is 0.71828182 there.
+		return newDecimalFromD(funcs.ScaleDecimal(ld.Mod(rd))), nil
 	case ast.OpPower:
-		f, _ := ld.Float64()
-		p, _ := rd.Float64()
-		return fptypes.NewDecimalFromFloat(math.Pow(f, p)), nil
+		// See funcs.Power, which this is: a whole-number power computed exactly,
+		// any other through the float, and null where there is no number.
+		return funcs.Power(left, right)
 	}
 	return nil, nil
 }
@@ -3837,9 +3850,9 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		c := toCollection(src)
-		// funcs.Median reads a Quantity as the number zero and then drops it
-		// for being zero, so a list of doses had no values left and the median
-		// of any of them was null.
+		// funcs.Median takes numbers only, and a list of doses has none, so the
+		// median of any of them was null. Quantities are ordered and averaged
+		// here, through Quantity, which keeps their units.
 		if quantities, found, err := quantityOperands(c); found {
 			if err != nil {
 				return nil, err
@@ -7677,17 +7690,28 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 	}
 	sum := decimal.Zero
 	allInt := true
+	// A sum of nothing is null, not zero: "if the source contains no non-null
+	// elements, null is returned", and Sum({null as Integer}) answered 0.
+	present := 0
 	for _, item := range c {
 		if item == nil {
 			continue
 		}
-		if i, ok := item.(fptypes.Integer); ok {
-			sum = sum.Add(decimal.NewFromInt(i.Value()))
-		} else {
+		present++
+		value := toDecimal(item)
+		if _, isInt := item.(fptypes.Integer); !isInt {
 			allInt = false
-			d := toDecimal(item)
-			sum = sum.Add(d)
 		}
+		// Each addition is scaled, as + is; the first value is the start, not
+		// an addition to zero, so Sum({x}) is x as the reference engine has it.
+		if present == 1 {
+			sum = value
+		} else {
+			sum = funcs.ScaleDecimal(sum.Add(value))
+		}
+	}
+	if present == 0 {
+		return nil, nil
 	}
 	if allInt {
 		return fptypes.NewInteger(sum.IntPart()), nil
@@ -7711,20 +7735,9 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 	if values, found := uncertainOperands(c); found {
 		return e.avgUncertainties(values)
 	}
-	sum := decimal.Zero
-	count := int64(0)
-	for _, item := range c {
-		if item == nil {
-			continue
-		}
-		d := toDecimal(item)
-		sum = sum.Add(d)
-		count++
-	}
-	if count == 0 {
-		return nil, nil
-	}
-	return newDecimalFromD(sum.Div(decimal.NewFromInt(count))), nil
+	// The numeric mean is funcs.Avg's, the one Variance takes its mean from, so
+	// the two scale it alike.
+	return funcs.Avg(c), nil
 }
 
 // minMaxName names the operator in an error, since the two share an implementation.
@@ -7812,17 +7825,26 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 	}
 	allInt := true
 	product := decimal.NewFromInt(1)
+	// As for Sum: a product of no values is null, where it answered 1.
+	present := 0
 	for _, item := range c {
 		if item == nil {
 			continue
 		}
-		if i, ok := item.(fptypes.Integer); ok {
-			product = product.Mul(decimal.NewFromInt(i.Value()))
-		} else {
+		present++
+		value := toDecimal(item)
+		if _, isInt := item.(fptypes.Integer); !isInt {
 			allInt = false
-			d := toDecimal(item)
-			product = product.Mul(d)
 		}
+		// Each multiplication is scaled, as * is, from the first value.
+		if present == 1 {
+			product = value
+		} else {
+			product = funcs.ScaleDecimal(product.Mul(value))
+		}
+	}
+	if present == 0 {
+		return nil, nil
 	}
 	if allInt {
 		return fptypes.NewInteger(product.IntPart()), nil
@@ -7912,20 +7934,8 @@ func toCollection(v fptypes.Value) fptypes.Collection {
 }
 
 func toDecimal(v fptypes.Value) decimal.Decimal {
-	if v == nil {
-		return decimal.Zero
-	}
-	if i, ok := v.(fptypes.Integer); ok {
-		return decimal.NewFromInt(i.Value())
-	}
-	if d, ok := v.(fptypes.Decimal); ok {
-		return d.Value()
-	}
-	if n, ok := v.(fptypes.Numeric); ok {
-		d := n.ToDecimal()
-		return d.Value()
-	}
-	return decimal.Zero
+	d, _ := funcs.NumberOf(v)
+	return d
 }
 
 // multiplyUnits computes the UCUM product of two units (simplified).
@@ -7998,6 +8008,14 @@ func intervalArithmetic(
 			}
 			if err != nil {
 				return nil, err
+			}
+			// A combination of two present bounds with no answer — a division
+			// by a bound that is zero, a power with none — leaves the whole
+			// uncertain result unknown. Dropping it made the bounds that
+			// remained a definite answer: (months between @2020 and @2021) ^ -1
+			// was 0.04347826, as if the zero months it could be were not there.
+			if r == nil && lb != nil && rb != nil {
+				return nil, nil
 			}
 			if r != nil {
 				results = append(results, r)

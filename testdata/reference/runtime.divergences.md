@@ -21,16 +21,12 @@ with each other they are two opinions on evaluation, and one on translation.
 
 ## The references and the specification agree; this engine does not
 
-| Definition | This engine | Java | cql-execution | Specification |
-| --- | --- | --- | --- | --- |
-| `DecimalDivision` | 3.3333333333333333 | 3.33333333 | (not an oracle: 3.3333333333333335, binary floating point) | Decimal: "a precision ... of 28 and a scale (meaning number of possible digits to the right of the decimal) of 8" |
-
-`DecimalDivision` is a quotient left at sixteen places. The conformance corpus
-does not catch it, because its division cases are wrapped in `Round(…, 8)`. It
-matters beyond printing: `10.0 / 3.0 = 3.33333333` is true in the Java engine
-and false here. It is false in cql-execution too, which divides in binary
-floating point. That runtime is not an oracle for decimal arithmetic, and its
-row is the Java engine and the specification alone.
+None at present. The last, `DecimalDivision`, was a quotient left at sixteen
+places: `10.0 / 3.0 = 3.33333333` was false here and true in the Java engine.
+A Decimal result is now brought to the scale of 8 the specification gives the
+type, toward negative infinity, as the Java engine does (`funcs.ScaleDecimal`).
+cql-execution computes Decimal in binary floating point and is not an oracle for
+those rows.
 
 ## Where the Java engine is not an oracle: quantities with different units
 
@@ -88,6 +84,50 @@ That is a decision, not an oversight. The engine's comparisons depend on it.
 Without the rule, a day-precision value was normalized as if it were an
 instant, and it answered wrong at UTC+14. `decidedRuntimeAnswers` pins it,
 and changing it means arguing with that reason.
+
+## Decided: where the Decimal scale is not applied
+
+```cql
+define DecimalLnUnscaled: Ln(2.0)                                   // Java: 0.69314718
+define DecimalGeometricMeanUnscaled: GeometricMean({2.0, 8.0, 3.0}) // Java: 3.63424113
+define QuantityDivisionUnscaled: 10.0 'mg' / 3.0                    // Java: 3.33333333 'mg'
+define DecimalPowerShortestFloat: 0.09 ^ 0.5                         // Java: 0.29999999
+define DecimalLogNearInteger: Log(1000.0, 10.0)                      // Java: 2.99999999
+define DecimalWholePowerExact: 0.21 ^ 2                              // Java: 0.04409999
+```
+
+The Java engine floors these to 8 places as well, and this engine does not:
+
+- `Ln`: the conformance suite asks `Round(Ln(1000), 8)` for 6.90775528. ln 1000
+  is 6.9077552789…, which floors to 6.90775527 before the rounding sees it.
+- `GeometricMean`: the Java engine computes `Power(Product(X), 1.0 / Count(X))`
+  with the exponent floored, so the geometric mean of `{1, 2, 4}` is 1.99999998
+  there. This engine keeps the exact root, and the numeric and Quantity
+  aggregates agree on it.
+- A Quantity's value: the scale is the Decimal type's. A dose in a small unit
+  keeps its digits rather than becoming 0 in that unit.
+- A float result (a power, a logarithm, a root): this engine floors the shortest
+  decimal that prints as the float, and the Java engine floors the float's exact
+  binary value. The float written 0.3 is 0.29999999999999998…, so `0.09 ^ 0.5` is
+  0.29999999 there. The conformance suite asks `Power(10, -7)` for 0.0000001, and
+  the float 1e-7 is 0.0000000999…, which the exact reading floors to 0.00000009.
+- A power with a whole-number exponent: it is computed in decimal, as the
+  repeated multiplication it is, and then floored. Through a float, `0.21 ^ 2`
+  is 0.044099999999999993, which floors to 0.04409999 in the Java engine, where
+  `0.21 * 0.21` is 0.0441. A fractional exponent still goes through the float.
+- An Integer to a negative Integer power is the Decimal it is: `2 ^ -1` is 0.5,
+  where this engine answered 0. The semantic phase types it as a Decimal when
+  the exponent is a negative literal, `2 ^ -1` or `Power(2, -1)`. An exponent
+  whose sign only evaluation knows, `2 ^ (0 - 1)`, stays typed as the reference
+  translator types it, an Integer, and what consumes it as one — `expand`,
+  `ToInteger`, an index — sees the Decimal it evaluates to.
+- `Log` of an exact power: log10 1000 computed as ln 1000 / ln 10 is the float
+  2.9999999999999996, which floors to 2.99999999 in the Java engine. The
+  specification asks for the logarithm, which is 3, as `Log(1000, 100)` is 1.5
+  where the Java engine answers 1.49999999. Where the float is within 1e-9 of a
+  fraction k/q with q up to 12, and the value to the q is exactly the base to
+  the k — checked in decimal — the answer is k/q; anything else floors as the
+  Java engine floors it, so `Log(999.999999999999, 10)` is 2.99999999 in both.
 
 ## Decided: a Date among DateTimes stays a Date
 
