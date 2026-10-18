@@ -21,7 +21,11 @@ func wrapExpression(expr string) string {
 	return fmt.Sprintf("library ConformanceTest version '1.0'\ndefine \"result\": %s", expr)
 }
 
-// valuesEqual compares two fptypes.Value instances for equality.
+// valuesEqual compares two fptypes.Value instances for equality, and their
+// numbers for their type too: CQL's equality says the Integer 3 equals the
+// Decimal 3.0, and through it `10.1 div 3.1` answering an Integer passed a
+// suite that expects 3.0. A Long of the expected output is read as an Integer
+// (see outputParser), so the two are not told apart.
 func valuesEqual(got, want fptypes.Value) bool {
 	if got == nil && want == nil {
 		return true
@@ -29,7 +33,52 @@ func valuesEqual(got, want fptypes.Value) bool {
 	if got == nil || want == nil {
 		return false
 	}
-	return got.Equal(want)
+	return got.Equal(want) && sameNumberTypes(got, want)
+}
+
+// sameNumberTypes reports whether every number in want is answered by a number
+// of its type in got, inside lists, intervals and tuples. Where the two differ
+// in shape it says yes, and leaves the difference to Equal.
+func sameNumberTypes(got, want fptypes.Value) bool {
+	switch w := want.(type) {
+	case fptypes.Integer:
+		_, ok := got.(fptypes.Integer)
+		return ok
+	case fptypes.Decimal:
+		_, ok := got.(fptypes.Decimal)
+		return ok
+	case cqltypes.List:
+		g, ok := got.(cqltypes.List)
+		if !ok || len(g.Values) != len(w.Values) {
+			return true
+		}
+		for i := range w.Values {
+			if w.Values[i] != nil && g.Values[i] != nil && !sameNumberTypes(g.Values[i], w.Values[i]) {
+				return false
+			}
+		}
+	case cqltypes.Interval:
+		g, ok := got.(cqltypes.Interval)
+		if !ok {
+			return true
+		}
+		for _, pair := range [][2]fptypes.Value{{g.Low, w.Low}, {g.High, w.High}} {
+			if pair[0] != nil && pair[1] != nil && !sameNumberTypes(pair[0], pair[1]) {
+				return false
+			}
+		}
+	case cqltypes.Tuple:
+		g, ok := got.(cqltypes.Tuple)
+		if !ok {
+			return true
+		}
+		for name, wv := range w.Elements {
+			if gv := g.Elements[name]; wv != nil && gv != nil && !sameNumberTypes(gv, wv) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func TestConformance(t *testing.T) {
@@ -116,6 +165,51 @@ var upstreamContradictions = map[string]string{
 	"FloorIntegerLessThanMinInteger": "expects null for Floor(-2147483649); see FloorIntegerGreaterThanMaxInteger.",
 }
 
+// untypedOutputs are the cases whose expected output is written without the
+// type of its numbers. The Java engine 3.26.0 answers each of them with Decimal
+// points, as this engine does, and as the specification has it: the points of
+// a Decimal interval are Decimals. The output text writes them as whole
+// numbers, which reads as Integers, so their numbers are read as the Decimals
+// Java answers, and compared with their type all the same: compared by value
+// alone, { 10.0, 11, 12 } would pass.
+var untypedOutputs = map[string]string{
+	"ExpandPer1":                     "expand { Interval[10.0, 12.5] } per 1: Java answers Interval[10.0, 10.0] and on, Decimal points",
+	"ExpandPer1Open":                 "expand { Interval[10.0, 12.5) } per 1: Java answers Decimal points",
+	"ExpandPer1IntervalOverload":     "expand Interval[10.0, 12.5] per 1: Java answers { 10.0, 11.0, 12.0 }, Decimals",
+	"ExpandPer1OpenIntervalOverload": "expand Interval[10.0, 12.5) per 1: Java answers Decimals",
+}
+
+// equalFor is the comparison a case is held to: by value and by the type of
+// its numbers, with the numbers of one in untypedOutputs read as Decimals.
+func equalFor(tc TestCase) func(got, want fptypes.Value) bool {
+	if _, untyped := untypedOutputs[tc.Name]; untyped {
+		return func(got, want fptypes.Value) bool { return valuesEqual(got, asDecimals(want)) }
+	}
+	return valuesEqual
+}
+
+// asDecimals is v with every Integer in it, inside lists and intervals, made the
+// Decimal of its value.
+func asDecimals(v fptypes.Value) fptypes.Value {
+	switch w := v.(type) {
+	case fptypes.Integer:
+		d, err := fptypes.NewDecimal(w.String())
+		if err != nil {
+			return v
+		}
+		return d
+	case cqltypes.List:
+		values := make(fptypes.Collection, len(w.Values))
+		for i, e := range w.Values {
+			values[i] = asDecimals(e)
+		}
+		return cqltypes.NewList(values)
+	case cqltypes.Interval:
+		return cqltypes.Interval{Low: asDecimals(w.Low), High: asDecimals(w.High), LowClosed: w.LowClosed, HighClosed: w.HighClosed}
+	}
+	return v
+}
+
 func runTestCase(t *testing.T, engine *cql.Engine, parser outputParser, tc TestCase) {
 	t.Helper()
 
@@ -146,6 +240,7 @@ func runTestCase(t *testing.T, engine *cql.Engine, parser outputParser, tc TestC
 	}
 
 	// Normal test: evaluate and compare.
+	equal := equalFor(tc)
 	cqlSource := wrapExpression(expr)
 	got, err := engine.EvaluateExpression(context.Background(), cqlSource, "result", nil, nil)
 	if err != nil {
@@ -162,8 +257,11 @@ func runTestCase(t *testing.T, engine *cql.Engine, parser outputParser, tc TestC
 		if err != nil {
 			t.Fatalf("parse expected output %q: %v", outputStr, err)
 		}
-		if !valuesEqual(got, want) {
+		if !equal(got, want) {
 			t.Errorf("expression: %s\ngot:  %v (%T)\nwant: %v (%T)", expr, got, got, want, want)
+		}
+		if _, untyped := untypedOutputs[tc.Name]; untyped && valuesEqual(got, want) {
+			t.Errorf("%s passes with the types of its numbers compared; remove it from untypedOutputs", tc.Name)
 		}
 		return
 	}
@@ -181,7 +279,7 @@ func runTestCase(t *testing.T, engine *cql.Engine, parser outputParser, tc TestC
 	}
 
 	want := cqltypes.NewList(wantValues)
-	if !valuesEqual(got, want) {
+	if !equal(got, want) {
 		t.Errorf("expression: %s\ngot:  %v (%T)\nwant: %v (%T)", expr, got, got, want, want)
 	}
 }
@@ -205,7 +303,7 @@ func runsClean(engine *cql.Engine, parser outputParser, tc TestCase) bool {
 	}
 	if len(tc.Outputs) == 1 {
 		want, perr := parser.parse(strings.TrimSpace(tc.Outputs[0].Value))
-		return perr == nil && valuesEqual(got, want)
+		return perr == nil && equalFor(tc)(got, want)
 	}
 
 	wantValues := make(fptypes.Collection, 0, len(tc.Outputs))
@@ -216,5 +314,5 @@ func runsClean(engine *cql.Engine, parser outputParser, tc TestCase) bool {
 		}
 		wantValues = append(wantValues, w)
 	}
-	return valuesEqual(got, cqltypes.NewList(wantValues))
+	return equalFor(tc)(got, cqltypes.NewList(wantValues))
 }

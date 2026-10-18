@@ -1,0 +1,29 @@
+D0	Decimal 3
+D1	Decimal 3
+D10	Decimal -99999999999999999999
+D11	null
+D12	Decimal 0
+D13	Decimal 0
+D14	Decimal 2
+D15	Decimal -1.5
+D16	Decimal 1.5
+D17	Decimal -1.5
+D18	Decimal -7.5
+D19	Decimal 7.5
+D2	Decimal 3
+D20	Integer 3
+D21	Integer -3
+D22	List[Decimal 3, Decimal 3]
+D23	Interval[Decimal 3, Decimal 4]
+D24	Decimal 3
+D25	Decimal 1
+D26	Decimal 30
+D27	Decimal 50000000
+D28	Decimal -1
+D3	Decimal -3
+D4	Decimal 0
+D5	Decimal 3
+D6	null
+D7	Decimal 10000000000000000000
+D8	Decimal -10000000000000000000
+D9	Decimal 99999999999999999999

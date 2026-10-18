@@ -1,0 +1,136 @@
+{
+  "library" : "corpus division.cql",
+  "sourceSha256" : "82f6b32fdf42a676163191d967256077fa41c469398c76dcaca9d8d387e4a83f",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Decimal",
+      "value" : "3.0"
+    },
+    "D1" : {
+      "type" : "Decimal",
+      "value" : "3"
+    },
+    "D2" : {
+      "type" : "Decimal",
+      "value" : "3"
+    },
+    "D3" : {
+      "type" : "Decimal",
+      "value" : "-3.0"
+    },
+    "D4" : {
+      "type" : "Decimal",
+      "value" : "0.0"
+    },
+    "D5" : {
+      "type" : "Decimal",
+      "value" : "3"
+    },
+    "D6" : null,
+    "D7" : {
+      "type" : "Decimal",
+      "value" : "10000000000000000000"
+    },
+    "D8" : {
+      "type" : "Decimal",
+      "value" : "-10000000000000000000"
+    },
+    "D9" : {
+      "type" : "Decimal",
+      "value" : "99999999999999999999.00000000"
+    },
+    "D10" : {
+      "type" : "Decimal",
+      "value" : "-99999999999999999999.00000000"
+    },
+    "D11" : {
+      "type" : "Decimal",
+      "value" : "9999999999999999999999999999"
+    },
+    "D12" : {
+      "type" : "Decimal",
+      "value" : "0.00000000"
+    },
+    "D13" : {
+      "type" : "Decimal",
+      "value" : "0.00000000"
+    },
+    "D14" : {
+      "type" : "Decimal",
+      "value" : "2.0000000"
+    },
+    "D15" : {
+      "type" : "Decimal",
+      "value" : "-1.50000000"
+    },
+    "D16" : {
+      "type" : "Decimal",
+      "value" : "1.50000000"
+    },
+    "D17" : {
+      "type" : "Decimal",
+      "value" : "-1.50000000"
+    },
+    "D18" : {
+      "type" : "Decimal",
+      "value" : "-7.50000000"
+    },
+    "D19" : {
+      "type" : "Decimal",
+      "value" : "7.50000000"
+    },
+    "D20" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D21" : {
+      "type" : "Integer",
+      "value" : "-3"
+    },
+    "D22" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Decimal",
+        "value" : "3.0"
+      }, {
+        "type" : "Decimal",
+        "value" : "3"
+      } ]
+    },
+    "D23" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Decimal",
+        "value" : "3.0"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Decimal",
+        "value" : "4.0"
+      },
+      "highClosed" : true
+    },
+    "D24" : {
+      "type" : "Decimal",
+      "value" : "3"
+    },
+    "D25" : {
+      "type" : "Decimal",
+      "value" : "1.0"
+    },
+    "D26" : {
+      "type" : "Decimal",
+      "value" : "30"
+    },
+    "D27" : {
+      "type" : "Decimal",
+      "value" : "50000000"
+    },
+    "D28" : {
+      "type" : "Decimal",
+      "value" : "-1"
+    }
+  }
+}

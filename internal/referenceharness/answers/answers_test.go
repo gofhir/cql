@@ -31,17 +31,62 @@ func TestReferenceAnswersAreReadAsEvaluateWritesThem(t *testing.T) {
 	}
 }
 
-// TestNumbersAreComparedByValue covers 1.0 = 1: the two engines write a number
-// at different scales, and that is not a difference.
-func TestNumbersAreComparedByValue(t *testing.T) {
-	ref := Reference(json.RawMessage(`{"type":"Decimal","value":"1.0"}`))
-	engine := evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: 1\n", "R")
-	if !Same(ref, engine) {
-		t.Errorf("1.0 and 1 were reported different: %+v %+v", ref, engine)
+// TestNumbersAreComparedByValueWithinTheirType covers 1.0 = 1 between two
+// Decimals, which the two engines write at different scales, and Integer 3
+// against Decimal 3.0, which are not the same answer: compared by value alone,
+// `7.0 div 2` answering an Integer went unseen by every oracle.
+//
+// An Integer and a Long are the same here, a known loss: this engine has no Long
+// at run time (D4c in docs/arquitectura-verificacion-2026-10-18.md), so a Long
+// it computes reads as an Integer, and telling them apart would report every
+// Long answer of the integer area.
+func TestNumbersAreComparedByValueWithinTheirType(t *testing.T) {
+	number := func(raw string) Answer { return Reference(json.RawMessage(raw)) }
+	engine := evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: 1.0\n", "R")
+	for _, tt := range []struct {
+		name string
+		a, b Answer
+		same bool
+	}{
+		{"Decimals at two scales", number(`{"type":"Decimal","value":"1"}`), engine, true},
+		{"Decimals that differ", number(`{"type":"Decimal","value":"1.00000001"}`), engine, false},
+		{"an Integer and a Decimal", number(`{"type":"Integer","value":"1"}`), engine, false},
+		// The defect's own shape: the reference answers a Decimal, this engine an
+		// Integer, in the order the oracle calls Same.
+		{"a Decimal and an Integer", number(`{"type":"Decimal","value":"1"}`),
+			evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: 1\n", "R"), false},
+		{"an Integer and a Long, the known loss", number(`{"type":"Long","value":"3"}`),
+			number(`{"type":"Integer","value":"3"}`), true},
+	} {
+		if got := Same(tt.a, tt.b); got != tt.same {
+			t.Errorf("%s: Same(%+v, %+v) = %t; want %t", tt.name, tt.a, tt.b, got, tt.same)
+		}
 	}
-	other := Reference(json.RawMessage(`{"type":"Decimal","value":"1.00000001"}`))
-	if Same(other, engine) {
-		t.Error("1.00000001 and 1 were reported the same")
+}
+
+// TestAContainersNumbersKeepTheirType covers a number inside a list or an
+// interval, compared by its text there: an Integer element stood for a Decimal
+// one, so {7.0 div 2} answering {3} was the same as {3.0}.
+func TestAContainersNumbersKeepTheirType(t *testing.T) {
+	ref := func(raw string) Answer { return Reference(json.RawMessage(raw)) }
+	for _, tt := range []struct {
+		name string
+		a, b Answer
+	}{
+		{"a list", ref(`{"type":"List","elements":[{"type":"Integer","value":"3"}]}`),
+			ref(`{"type":"List","elements":[{"type":"Decimal","value":"3.0"}]}`)},
+		{"a nested list", ref(`{"type":"List","elements":[{"type":"List","elements":[{"type":"Integer","value":"3"}]}]}`),
+			ref(`{"type":"List","elements":[{"type":"List","elements":[{"type":"Decimal","value":"3"}]}]}`)},
+		{"an interval", ref(`{"type":"Interval","low":{"type":"Integer","value":"3"},"high":{"type":"Integer","value":"4"},"lowClosed":true,"highClosed":true}`),
+			ref(`{"type":"Interval","low":{"type":"Decimal","value":"3"},"high":{"type":"Decimal","value":"4"},"lowClosed":true,"highClosed":true}`)},
+	} {
+		if Same(tt.a, tt.b) {
+			t.Errorf("%s: an Integer and a Decimal were reported the same: %+v %+v", tt.name, tt.a, tt.b)
+		}
+	}
+	same := ref(`{"type":"List","elements":[{"type":"Decimal","value":"3"}]}`)
+	if !Same(same, ref(`{"type":"List","elements":[{"type":"Decimal","value":"3.00"}]}`)) {
+		t.Error("two Decimal elements at two scales were reported different")
 	}
 }
 
@@ -60,7 +105,9 @@ func TestAnEnginePanicIsCaughtAndMarked(t *testing.T) {
 // was reported different before, equal or not.
 func TestListsAreComparedByTheirElements(t *testing.T) {
 	src := "library T version '1.0'\ndefine R: { 1, 2.0, null }\ndefine N: { { 1 }, {} }\n"
-	ref := Reference(json.RawMessage(`{"type":"List","elements":[{"type":"Integer","value":"1"},` +
+	// Promoted to a list of Decimals, as the Java engine answers a list literal
+	// that mixes the two (D22 of testdata/snapshots/division.java.json).
+	ref := Reference(json.RawMessage(`{"type":"List","elements":[{"type":"Decimal","value":"1"},` +
 		`{"type":"Decimal","value":"2"},null]}`))
 	if engine := evaluate(cql.NewEngine(), src, "R"); !Same(ref, engine) {
 		t.Errorf("equal lists were reported different: %+v %+v", ref, engine)
@@ -124,6 +171,29 @@ func evaluate(engine *cql.Engine, src, name string) (a Answer) {
 	return Value(v)
 }
 
+// TestACorpusWithoutFloatsIsComparedExactly covers what the tolerance cannot
+// see: two whole numbers padded with zeros, a quotient off by a hundred
+// thousand, are within it, and SameExactly tells them apart.
+func TestACorpusWithoutFloatsIsComparedExactly(t *testing.T) {
+	number := func(s string) Answer {
+		return Answer{Kind: "number", Text: "Decimal " + s, Num: decimal.RequireFromString(s)}
+	}
+	a, b := number("10000000000000000000"), number("10000000000000100000")
+	if !Same(a, b) {
+		t.Error("the tolerance no longer covers this pair; the comment on SameExactly is out of date")
+	}
+	if SameExactly(a, b) {
+		t.Errorf("SameExactly(%s, %s) = true; want false", a.Text, b.Text)
+	}
+	if !SameExactly(number("3.0"), number("3")) {
+		t.Error("SameExactly told two scales of one Decimal apart")
+	}
+	integer := Answer{Kind: "number", Text: "Integer 3", Num: decimal.NewFromInt(3)}
+	if SameExactly(integer, number("3")) {
+		t.Error("SameExactly took an Integer for a Decimal")
+	}
+}
+
 // TestAFloat64sNumbersAreTheSameAcrossPlatforms covers the numbers a float64
 // computed, which differ in their last digit between amd64 and arm64: the four
 // CI and a developer's machine wrote apart are the same; a number of fewer
@@ -144,6 +214,11 @@ func TestAFloat64sNumbersAreTheSameAcrossPlatforms(t *testing.T) {
 		{"3.33333333", "3.33333334", false},
 		{"4.4816890703380645", "4.5816890703380645", false},
 		{"10.0", "10", true},
+		// A whole number of more digits than a float64 writes is no float's,
+		// but an exact quotient's: one a unit away is a wrong answer. Whole
+		// numbers of 16 and 17 digits stay within the tolerance, a known gap.
+		{"99999999999999999999", "99999999999999999998", false},
+		{"10000000000000000000", "10000000000000000001", false},
 	} {
 		if got := Same(number(tt.a), number(tt.b)); got != tt.same {
 			t.Errorf("Same(%s, %s) = %t; want %t", tt.a, tt.b, got, tt.same)
