@@ -184,8 +184,8 @@ func TestBucketedDistinctAnswersAsTheQuadraticOne(t *testing.T) {
 				}
 			}
 			for name, got := range map[string]fptypes.Collection{
-				"indexed":   indexedKeepFirst(lc, rc, inRC),
-				"keepFirst": keepFirst(lc, rc, inRC),
+				"indexed":   indexedKeepFirst(lc, rc, inRC, nil),
+				"keepFirst": keepFirst(lc, rc, inRC, nil),
 			} {
 				if !reflect.DeepEqual(got, want) {
 					t.Fatalf("keep of %s against %s (in=%t)\n  %s: %s\n  pairwise: %s",
@@ -200,8 +200,8 @@ func TestBucketedDistinctAnswersAsTheQuadraticOne(t *testing.T) {
 			}
 		}
 		for name, got := range map[string]fptypes.Collection{
-			"indexed":       indexedUnion(lc, rc, make(fptypes.Collection, 0, len(lc)+len(rc))),
-			"nullSafeUnion": nullSafeUnion(lc, rc),
+			"indexed":       indexedUnion(lc, rc, make(fptypes.Collection, 0, len(lc)+len(rc)), nil),
+			"nullSafeUnion": nullSafeUnion(lc, rc, nil),
 		} {
 			if !reflect.DeepEqual(got, union) {
 				t.Fatalf("union of %s and %s\n  %s: %s\n  pairwise: %s", show(lc), show(rc), name, show(got), show(union))
@@ -219,8 +219,8 @@ func TestBucketedDistinctAnswersAsTheQuadraticOne(t *testing.T) {
 		// compares a list this short pairwise. They have to keep the same
 		// values, and the same first occurrence of each.
 		for name, positions := range map[string][]int{
-			"indexed":           indexedDistinctPositions(c),
-			"distinctPositions": distinctPositions(c),
+			"indexed":           indexedDistinctPositions(c, nil),
+			"distinctPositions": distinctPositions(c, nil),
 		} {
 			got := make(fptypes.Collection, 0, len(c))
 			for _, at := range positions {
