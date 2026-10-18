@@ -129,7 +129,8 @@ public class Evaluate {
      *
      *  Con datos.json, las definiciones se evalúan sobre recursos FHIR: el mismo
      *  fichero que sirve el snapshot de go-cql, un Patient de contexto y listas de
-     *  recursos por tipo. Con elm-salida.json, escribe además el ELM de cada una,
+     *  recursos por tipo, o "-" para evaluar sin datos. Con elm-salida.json,
+     *  escribe además el ELM de cada una,
      *  para que cql-execution evalúe exactamente la misma traducción. */
     static void each(String[] args) throws Exception {
         if (args.length < 2) {
@@ -162,7 +163,9 @@ public class Evaluate {
 
         Map<String, DataProvider> data = new HashMap<>();
         Pair<String, Object> context = null;
-        if (args.length > 2) {
+        // "-" for datos.json evaluates without data, so that elm-salida.json can
+        // still be asked for.
+        if (args.length > 2 && !args[2].equals("-")) {
             FhirBundle bundle = FhirBundle.read(Paths.get(args[2]));
             data.put("http://hl7.org/fhir", new CompositeDataProvider(new R4FhirModelResolver(), bundle));
             context = Pair.of("Patient", bundle.patientId);

@@ -1,0 +1,594 @@
+# name	reference	note — see TestAnswersMatchTheReferences
+D0	java	the Java translator refuses it; this engine accepts it
+D100	java	the Java translator refuses it; this engine accepts it
+D102	java	the Java translator refuses it; this engine accepts it
+D104	java	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D104	js	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D106	java	the Java translator refuses it; this engine accepts it
+D107	java	the Java translator refuses it; this engine accepts it
+D109	java	the Java translator refuses it; this engine accepts it
+D110	java	the Java translator refuses it; this engine accepts it
+D111	java	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D111	js	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D112	java	the Java translator refuses it; this engine accepts it
+D113	java	the Java translator refuses it; this engine accepts it
+D114	java	a type name is read without its model; open (fhir.divergences.md)
+D114	js	a type name is read without its model; open (fhir.divergences.md)
+D115	java	the Java translator refuses it; this engine accepts it
+D116	java	the Java translator refuses it; this engine accepts it
+D117	java	unclassified: null vs false
+D12	java	the Java translator refuses it; this engine accepts it
+D120	java	the Java translator refuses it; this engine accepts it
+D122	java	the Java translator refuses it; this engine accepts it
+D123	java	the Java translator refuses it; this engine accepts it
+D124	java	the Java translator refuses it; this engine accepts it
+D125	js	unclassified: null vs false
+D126	java	the Java translator refuses it; this engine accepts it
+D127	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D129	java	the Java translator refuses it; this engine accepts it
+D132	java	unclassified: 6 'mg' vs null
+D133	java	unclassified: error: Error evaluating expression D133: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs DateTime 2020-02-02
+D133	js	unclassified: 2020-02-02 vs DateTime 2020-02-02
+D134	java	unclassified: null vs false
+D136	js	unclassified: null vs false
+D137	java	the Java translator refuses it; this engine accepts it
+D138	java	the Java translator refuses it; this engine accepts it
+D143	java	the Java translator refuses it; this engine accepts it
+D145	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D145	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D147	java	the Java translator refuses it; this engine accepts it
+D149	java	unclassified: error: Error evaluating expression D149: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D15	java	the Java translator refuses it; this engine accepts it
+D152	java	the Java translator refuses it; this engine accepts it
+D153	java	the Java translator refuses it; this engine accepts it
+D156	java	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D156	js	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D158	java	the Java translator refuses it; this engine accepts it
+D16	java	disputed or representation (fhir.divergences.md)
+D16	js	disputed or representation (fhir.divergences.md)
+D162	java	the Java translator refuses it; this engine accepts it
+D163	java	the Java translator refuses it; this engine accepts it
+D164	java	the Java translator refuses it; this engine accepts it
+D166	java	the Java translator refuses it; this engine accepts it
+D167	java	the Java translator refuses it; this engine accepts it
+D17	java	the Java translator refuses it; this engine accepts it
+D171	js	unclassified: null vs false
+D173	java	the Java translator refuses it; this engine accepts it
+D175	java	the Java translator refuses it; this engine accepts it
+D176	java	the Java translator refuses it; this engine accepts it
+D177	java	the Java translator refuses it; this engine accepts it
+D178	java	the Java translator refuses it; this engine accepts it
+D180	java	the Java translator refuses it; this engine accepts it
+D181	java	the Java translator refuses it; this engine accepts it
+D183	java	the Java translator refuses it; this engine accepts it
+D184	java	the Java translator refuses it; this engine accepts it
+D186	java	unclassified: error: Error evaluating expression D186: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs Code Code '' from
+D186	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs Code Code '' from
+D187	java	the Java translator refuses it; this engine accepts it
+D190	java	unclassified: error: Error evaluating expression D190: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D192	java	the Java translator refuses it; this engine accepts it
+D193	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D194	java	disputed or representation (fhir.divergences.md)
+D194	js	disputed or representation (fhir.divergences.md)
+D195	java	the Java translator refuses it; this engine accepts it
+D198	java	the Java translator refuses it; this engine accepts it
+D199	java	the Java translator refuses it; this engine accepts it
+D2	java	unclassified: error: Error evaluating expression D2: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs 5 'mg'
+D20	java	the Java translator refuses it; this engine accepts it
+D200	java	the Java translator refuses it; this engine accepts it
+D203	java	the Java translator refuses it; this engine accepts it
+D205	java	the Java translator refuses it; this engine accepts it
+D206	java	the Java translator refuses it; this engine accepts it
+D207	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D207	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D210	java	the Java translator refuses it; this engine accepts it
+D211	java	the Java translator refuses it; this engine accepts it
+D212	java	the Java translator refuses it; this engine accepts it
+D214	js	unclassified: null vs false
+D216	java	unclassified: Patient/p vs null
+D216	js	unclassified: p vs null
+D217	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D218	java	the Java translator refuses it; this engine accepts it
+D219	java	the Java translator refuses it; this engine accepts it
+D220	java	the Java translator refuses it; this engine accepts it
+D222	java	the Java translator refuses it; this engine accepts it
+D223	java	unclassified: error: Error evaluating expression D223: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D226	java	the Java translator refuses it; this engine accepts it
+D228	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D228	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D229	java	the Java translator refuses it; this engine accepts it
+D23	java	the Java translator refuses it; this engine accepts it
+D232	java	the Java translator refuses it; this engine accepts it
+D235	java	the Java translator refuses it; this engine accepts it
+D238	java	the Java translator refuses it; this engine accepts it
+D239	java	the Java translator refuses it; this engine accepts it
+D24	java	the Java translator refuses it; this engine accepts it
+D240	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D240	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D242	java	the Java translator refuses it; this engine accepts it
+D243	java	the Java translator refuses it; this engine accepts it
+D244	java	unclassified: null vs false
+D245	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D246	java	the Java translator refuses it; this engine accepts it
+D247	java	the Java translator refuses it; this engine accepts it
+D248	java	the Java translator refuses it; this engine accepts it
+D25	java	the Java translator refuses it; this engine accepts it
+D250	java	disputed or representation (fhir.divergences.md)
+D250	js	disputed or representation (fhir.divergences.md)
+D251	java	the Java translator refuses it; this engine accepts it
+D256	java	the Java translator refuses it; this engine accepts it
+D257	java	the Java translator refuses it; this engine accepts it
+D26	java	the Java translator refuses it; this engine accepts it
+D260	java	the Java translator refuses it; this engine accepts it
+D261	js	unclassified: null vs false
+D262	java	the Java translator refuses it; this engine accepts it
+D263	java	the Java translator refuses it; this engine accepts it
+D267	java	the Java translator refuses it; this engine accepts it
+D269	java	the Java translator refuses it; this engine accepts it
+D271	java	the Java translator refuses it; this engine accepts it
+D272	java	the Java translator refuses it; this engine accepts it
+D274	java	the Java translator refuses it; this engine accepts it
+D275	java	the Java translator refuses it; this engine accepts it
+D277	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D278	java	the Java translator refuses it; this engine accepts it
+D279	java	the Java translator refuses it; this engine accepts it
+D28	java	unclassified: error: Error evaluating expression D28: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs male
+D280	java	the Java translator refuses it; this engine accepts it
+D281	java	the Java translator refuses it; this engine accepts it
+D282	java	the Java translator refuses it; this engine accepts it
+D287	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D287	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D290	java	the Java translator refuses it; this engine accepts it
+D291	java	the Java translator refuses it; this engine accepts it
+D292	java	the Java translator refuses it; this engine accepts it
+D294	java	the Java translator refuses it; this engine accepts it
+D295	java	the Java translator refuses it; this engine accepts it
+D296	java	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D296	js	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D298	java	the Java translator refuses it; this engine accepts it
+D299	java	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D299	js	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D30	js	unclassified: null vs false
+D301	java	the Java translator refuses it; this engine accepts it
+D302	js	unclassified: null vs false
+D307	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D310	java	the Java translator refuses it; this engine accepts it
+D311	js	unclassified: null vs false
+D312	js	unclassified: null vs false
+D313	java	the Java translator refuses it; this engine accepts it
+D316	java	unclassified: Patient/p vs null
+D316	js	unclassified: p vs null
+D317	java	unclassified: x vs Code Code '' from
+D317	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs Code Code '' from
+D321	java	the Java translator refuses it; this engine accepts it
+D322	java	an element is answered as its JSON text; open (fhir.divergences.md)
+D322	js	an element is answered as its JSON text; open (fhir.divergences.md)
+D324	java	unclassified: error: Error evaluating expression D324: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D324	js	unclassified: false vs true
+D325	java	the Java translator refuses it; this engine accepts it
+D326	java	unclassified: null vs false
+D327	js	unclassified: null vs false
+D328	java	the Java translator refuses it; this engine accepts it
+D329	java	the Java translator refuses it; this engine accepts it
+D33	java	the Java translator refuses it; this engine accepts it
+D330	java	the Java translator refuses it; this engine accepts it
+D332	java	the Java translator refuses it; this engine accepts it
+D334	java	the Java translator refuses it; this engine accepts it
+D335	java	unclassified: error: Error evaluating expression D335: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs Coding Tuple{code: Code '' from }
+D335	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs Coding Tuple{code: Code '' from }
+D337	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D339	java	the Java translator refuses it; this engine accepts it
+D34	java	the Java translator refuses it; this engine accepts it
+D342	java	the Java translator refuses it; this engine accepts it
+D344	java	the Java translator refuses it; this engine accepts it
+D345	java	unclassified: error: Error evaluating expression D345: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs ValueSet Tuple{id: x}
+D345	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs ValueSet Tuple{id: x}
+D346	java	the Java translator refuses it; this engine accepts it
+D347	java	the Java translator refuses it; this engine accepts it
+D348	java	the Java translator refuses it; this engine accepts it
+D349	java	the Java translator refuses it; this engine accepts it
+D351	java	the Java translator refuses it; this engine accepts it
+D353	java	the Java translator refuses it; this engine accepts it
+D354	java	the Java translator refuses it; this engine accepts it
+D357	java	the Java translator refuses it; this engine accepts it
+D358	java	unclassified: x vs null
+D358	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs null
+D360	java	the Java translator refuses it; this engine accepts it
+D361	java	the Java translator refuses it; this engine accepts it
+D363	java	the Java translator refuses it; this engine accepts it
+D369	java	an element is answered as its JSON text; open (fhir.divergences.md)
+D369	js	an element is answered as its JSON text; open (fhir.divergences.md)
+D371	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D371	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D372	java	the Java translator refuses it; this engine accepts it
+D375	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D376	java	the Java translator refuses it; this engine accepts it
+D38	java	the Java translator refuses it; this engine accepts it
+D383	java	the Java translator refuses it; this engine accepts it
+D387	java	the Java translator refuses it; this engine accepts it
+D389	java	disputed or representation (fhir.divergences.md)
+D389	js	disputed or representation (fhir.divergences.md)
+D39	java	the Java translator refuses it; this engine accepts it
+D390	java	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D390	js	arithmetic on a choice is refused by the semantic check; open (fhir.divergences.md)
+D391	java	the Java translator refuses it; this engine accepts it
+D396	java	the Java translator refuses it; this engine accepts it
+D400	java	the Java translator refuses it; this engine accepts it
+D403	java	the Java translator refuses it; this engine accepts it
+D407	java	the Java translator refuses it; this engine accepts it
+D408	java	the Java translator refuses it; this engine accepts it
+D409	java	the Java translator refuses it; this engine accepts it
+D413	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D415	java	the Java translator refuses it; this engine accepts it
+D417	java	the Java translator refuses it; this engine accepts it
+D418	java	the Java translator refuses it; this engine accepts it
+D419	java	the Java translator refuses it; this engine accepts it
+D421	java	the Java translator refuses it; this engine accepts it
+D424	java	the Java translator refuses it; this engine accepts it
+D426	java	the Java translator refuses it; this engine accepts it
+D429	java	the Java translator refuses it; this engine accepts it
+D43	java	the Java translator refuses it; this engine accepts it
+D430	js	unclassified: null vs false
+D431	java	the Java translator refuses it; this engine accepts it
+D432	js	unclassified: null vs false
+D433	java	the Java translator refuses it; this engine accepts it
+D435	java	the Java translator refuses it; this engine accepts it
+D436	java	the Java translator refuses it; this engine accepts it
+D438	java	unclassified: error: Error evaluating expression D438: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D439	js	unclassified: null vs false
+D44	java	the Java translator refuses it; this engine accepts it
+D443	java	unclassified: error: Error evaluating expression D443: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D447	java	the Java translator refuses it; this engine accepts it
+D449	java	the Java translator refuses it; this engine accepts it
+D45	js	unclassified: null vs false
+D450	java	the Java translator refuses it; this engine accepts it
+D452	java	the Java translator refuses it; this engine accepts it
+D453	java	the Java translator refuses it; this engine accepts it
+D455	java	the Java translator refuses it; this engine accepts it
+D457	java	the Java translator refuses it; this engine accepts it
+D458	java	the Java translator refuses it; this engine accepts it
+D459	java	the Java translator refuses it; this engine accepts it
+D46	java	unclassified: {"code":"x"} vs Coding Tuple{code: Code '' from }
+D46	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs Coding Tuple{code: Code '' from }
+D460	java	the Java translator refuses it; this engine accepts it
+D463	java	the Java translator refuses it; this engine accepts it
+D465	java	the Java translator refuses it; this engine accepts it
+D469	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D470	java	the Java translator refuses it; this engine accepts it
+D471	java	unclassified: error: Error evaluating expression D471: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs DateTime 2020-01-01
+D471	js	unclassified: 2020-01-01 vs DateTime 2020-01-01
+D472	java	the Java translator refuses it; this engine accepts it
+D474	java	the Java translator refuses it; this engine accepts it
+D476	java	the Java translator refuses it; this engine accepts it
+D477	java	the Java translator refuses it; this engine accepts it
+D478	java	the Java translator refuses it; this engine accepts it
+D480	js	unclassified: null vs false
+D481	java	the Java translator refuses it; this engine accepts it
+D484	java	the Java translator refuses it; this engine accepts it
+D485	java	the Java translator refuses it; this engine accepts it
+D486	java	the Java translator refuses it; this engine accepts it
+D489	java	the Java translator refuses it; this engine accepts it
+D49	java	unclassified: error: Error evaluating expression D49: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D490	java	the Java translator refuses it; this engine accepts it
+D491	java	the Java translator refuses it; this engine accepts it
+D492	js	unclassified: null vs false
+D494	java	unclassified: error: Error evaluating expression D494: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs null
+D496	java	the Java translator refuses it; this engine accepts it
+D497	java	the Java translator refuses it; this engine accepts it
+D498	java	the Java translator refuses it; this engine accepts it
+D5	java	the Java translator refuses it; this engine accepts it
+D500	java	the Java translator refuses it; this engine accepts it
+D501	java	the Java translator refuses it; this engine accepts it
+D502	java	the Java translator refuses it; this engine accepts it
+D503	java	the Java translator refuses it; this engine accepts it
+D505	java	the Java translator refuses it; this engine accepts it
+D506	java	the Java translator refuses it; this engine accepts it
+D507	java	the Java translator refuses it; this engine accepts it
+D508	java	the Java translator refuses it; this engine accepts it
+D509	java	disputed or representation (fhir.divergences.md)
+D509	js	disputed or representation (fhir.divergences.md)
+D51	java	the Java translator refuses it; this engine accepts it
+D512	java	the Java translator refuses it; this engine accepts it
+D513	js	unclassified: null vs false
+D514	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D516	java	unclassified: error: Error evaluating expression D516: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D517	java	the Java translator refuses it; this engine accepts it
+D518	java	the Java translator refuses it; this engine accepts it
+D52	java	the Java translator refuses it; this engine accepts it
+D520	java	the Java translator refuses it; this engine accepts it
+D521	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D523	java	the Java translator refuses it; this engine accepts it
+D524	java	the Java translator refuses it; this engine accepts it
+D525	java	the Java translator refuses it; this engine accepts it
+D526	java	the Java translator refuses it; this engine accepts it
+D527	java	the Java translator refuses it; this engine accepts it
+D53	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D53	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D530	java	unclassified: error: Error evaluating expression D530: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D531	java	the Java translator refuses it; this engine accepts it
+D532	java	the Java translator refuses it; this engine accepts it
+D533	java	the Java translator refuses it; this engine accepts it
+D538	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D539	java	the Java translator refuses it; this engine accepts it
+D540	java	the Java translator refuses it; this engine accepts it
+D541	java	the Java translator refuses it; this engine accepts it
+D543	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D543	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D545	java	the Java translator refuses it; this engine accepts it
+D547	java	the Java translator refuses it; this engine accepts it
+D548	java	the Java translator refuses it; this engine accepts it
+D55	java	the Java translator refuses it; this engine accepts it
+D550	java	the Java translator refuses it; this engine accepts it
+D551	java	the Java translator refuses it; this engine accepts it
+D552	java	the Java translator refuses it; this engine accepts it
+D553	java	the Java translator refuses it; this engine accepts it
+D554	java	the Java translator refuses it; this engine accepts it
+D555	java	the Java translator refuses it; this engine accepts it
+D556	java	the Java translator refuses it; this engine accepts it
+D557	java	the Java translator refuses it; this engine accepts it
+D558	java	the Java translator refuses it; this engine accepts it
+D559	java	the Java translator refuses it; this engine accepts it
+D560	java	the Java translator refuses it; this engine accepts it
+D561	js	unclassified: null vs false
+D568	js	unclassified: null vs false
+D569	java	the Java translator refuses it; this engine accepts it
+D573	java	the Java translator refuses it; this engine accepts it
+D574	java	the Java translator refuses it; this engine accepts it
+D576	java	the Java translator refuses it; this engine accepts it
+D577	java	unclassified: null vs false
+D578	js	unclassified: null vs false
+D579	java	disputed or representation (fhir.divergences.md)
+D579	js	disputed or representation (fhir.divergences.md)
+D58	java	the Java translator refuses it; this engine accepts it
+D580	java	the Java translator refuses it; this engine accepts it
+D581	java	the Java translator refuses it; this engine accepts it
+D583	java	unclassified: error: Error evaluating expression D583: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D584	java	the Java translator refuses it; this engine accepts it
+D586	java	the Java translator refuses it; this engine accepts it
+D587	java	the Java translator refuses it; this engine accepts it
+D588	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D589	java	the Java translator refuses it; this engine accepts it
+D59	java	the Java translator refuses it; this engine accepts it
+D590	java	the Java translator refuses it; this engine accepts it
+D591	java	the Java translator refuses it; this engine accepts it
+D592	java	the Java translator refuses it; this engine accepts it
+D593	java	unclassified: error: Error evaluating expression D593: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D595	java	the Java translator refuses it; this engine accepts it
+D596	java	the Java translator refuses it; this engine accepts it
+D598	java	the Java translator refuses it; this engine accepts it
+D599	java	the Java translator refuses it; this engine accepts it
+D6	java	the Java translator refuses it; this engine accepts it
+D60	java	the Java translator refuses it; this engine accepts it
+D600	java	a type name is read without its model; open (fhir.divergences.md)
+D600	js	a type name is read without its model; open (fhir.divergences.md)
+D601	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D602	java	the Java translator refuses it; this engine accepts it
+D603	java	the Java translator refuses it; this engine accepts it
+D604	java	the Java translator refuses it; this engine accepts it
+D605	java	the Java translator refuses it; this engine accepts it
+D606	java	the Java translator refuses it; this engine accepts it
+D610	java	the Java translator refuses it; this engine accepts it
+D611	java	the Java translator refuses it; this engine accepts it
+D614	java	the Java translator refuses it; this engine accepts it
+D617	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D617	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D619	java	unclassified: error: Error evaluating expression D619: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D620	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D621	java	the Java translator refuses it; this engine accepts it
+D622	java	the Java translator refuses it; this engine accepts it
+D623	java	the Java translator refuses it; this engine accepts it
+D625	java	the Java translator refuses it; this engine accepts it
+D627	java	the Java translator refuses it; this engine accepts it
+D630	java	the Java translator refuses it; this engine accepts it
+D631	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D633	java	the Java translator refuses it; this engine accepts it
+D634	java	unclassified: false vs true
+D634	js	unclassified: null vs true
+D635	java	the Java translator refuses it; this engine accepts it
+D636	js	unclassified: null vs false
+D637	java	the Java translator refuses it; this engine accepts it
+D639	java	the Java translator refuses it; this engine accepts it
+D64	java	the Java translator refuses it; this engine accepts it
+D641	java	the Java translator refuses it; this engine accepts it
+D642	java	the Java translator refuses it; this engine accepts it
+D644	java	the Java translator refuses it; this engine accepts it
+D646	java	the Java translator refuses it; this engine accepts it
+D647	java	the Java translator refuses it; this engine accepts it
+D649	java	the Java translator refuses it; this engine accepts it
+D65	java	the Java translator refuses it; this engine accepts it
+D650	java	the Java translator refuses it; this engine accepts it
+D651	java	the Java translator refuses it; this engine accepts it
+D653	java	the Java translator refuses it; this engine accepts it
+D655	java	the Java translator refuses it; this engine accepts it
+D656	java	the Java translator refuses it; this engine accepts it
+D66	java	the Java translator refuses it; this engine accepts it
+D660	java	the Java translator refuses it; this engine accepts it
+D663	java	unclassified: error: Error evaluating expression D663: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs {"end":"2020-01-03T10:00:00Z","start":"2020-01-01"}
+D664	java	the Java translator refuses it; this engine accepts it
+D665	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D667	java	the Java translator refuses it; this engine accepts it
+D669	java	the Java translator refuses it; this engine accepts it
+D671	js	unclassified: null vs false
+D672	java	the Java translator refuses it; this engine accepts it
+D673	java	the Java translator refuses it; this engine accepts it
+D676	js	unclassified: null vs false
+D677	java	the Java translator refuses it; this engine accepts it
+D679	java	unclassified: error: Error evaluating expression D679: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D680	java	unclassified: error: Error evaluating expression D680: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs DateTime 2020-01-01
+D680	js	unclassified: 2020-01-01 vs DateTime 2020-01-01
+D682	java	the Java translator refuses it; this engine accepts it
+D683	java	unclassified: error: Error evaluating expression D683: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs true
+D684	java	the Java translator refuses it; this engine accepts it
+D686	java	the Java translator refuses it; this engine accepts it
+D688	java	unclassified: error: Error evaluating expression D688: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D69	java	the Java translator refuses it; this engine accepts it
+D690	java	the Java translator refuses it; this engine accepts it
+D691	java	the Java translator refuses it; this engine accepts it
+D692	java	the Java translator refuses it; this engine accepts it
+D694	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D696	java	the Java translator refuses it; this engine accepts it
+D697	js	unclassified: null vs false
+D699	java	the Java translator refuses it; this engine accepts it
+D7	js	unclassified: null vs false
+D70	java	unclassified: error: Error evaluating expression D70: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs 7
+D701	java	the Java translator refuses it; this engine accepts it
+D702	java	the Java translator refuses it; this engine accepts it
+D703	js	unclassified: null vs false
+D705	java	unclassified: error: Error evaluating expression D705: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs DateTime 2020-02-02
+D705	js	unclassified: 2020-02-02 vs DateTime 2020-02-02
+D708	js	unclassified: null vs false
+D709	java	the Java translator refuses it; this engine accepts it
+D711	java	the Java translator refuses it; this engine accepts it
+D713	java	the Java translator refuses it; this engine accepts it
+D715	java	the Java translator refuses it; this engine accepts it
+D717	java	the Java translator refuses it; this engine accepts it
+D719	java	the Java translator refuses it; this engine accepts it
+D72	java	the Java translator refuses it; this engine accepts it
+D722	java	the Java translator refuses it; this engine accepts it
+D723	java	the Java translator refuses it; this engine accepts it
+D725	java	the Java translator refuses it; this engine accepts it
+D729	java	the Java translator refuses it; this engine accepts it
+D730	java	the Java translator refuses it; this engine accepts it
+D732	java	the Java translator refuses it; this engine accepts it
+D734	java	the Java translator refuses it; this engine accepts it
+D736	js	unclassified: null vs false
+D738	java	the Java translator refuses it; this engine accepts it
+D739	java	unclassified: null vs false
+D741	java	the Java translator refuses it; this engine accepts it
+D742	java	the Java translator refuses it; this engine accepts it
+D743	java	the Java translator refuses it; this engine accepts it
+D744	java	the Java translator refuses it; this engine accepts it
+D745	java	the Java translator refuses it; this engine accepts it
+D747	java	the Java translator refuses it; this engine accepts it
+D749	java	the Java translator refuses it; this engine accepts it
+D75	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D752	java	the Java translator refuses it; this engine accepts it
+D755	java	unclassified: {"code":"x"} vs Coding Tuple{code: Code '' from }
+D755	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs Coding Tuple{code: Code '' from }
+D757	java	the Java translator refuses it; this engine accepts it
+D758	java	the Java translator refuses it; this engine accepts it
+D759	java	the Java translator refuses it; this engine accepts it
+D760	js	unclassified: null vs false
+D762	java	the Java translator refuses it; this engine accepts it
+D764	js	unclassified: null vs false
+D765	java	the Java translator refuses it; this engine accepts it
+D766	java	the Java translator refuses it; this engine accepts it
+D767	java	the Java translator refuses it; this engine accepts it
+D768	java	the Java translator refuses it; this engine accepts it
+D771	js	unclassified: null vs false
+D772	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D772	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D773	java	unclassified: error: Error evaluating expression D773: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs false
+D774	java	the Java translator refuses it; this engine accepts it
+D775	java	the Java translator refuses it; this engine accepts it
+D776	java	the Java translator refuses it; this engine accepts it
+D777	java	unclassified: error: Error evaluating expression D777: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs 5 'mg'
+D778	java	unclassified: {"code":"x"} vs Coding Tuple{code: Code '' from }
+D778	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs Coding Tuple{code: Code '' from }
+D779	java	the Java translator refuses it; this engine accepts it
+D782	java	disputed or representation (fhir.divergences.md)
+D782	js	disputed or representation (fhir.divergences.md)
+D783	java	the Java translator refuses it; this engine accepts it
+D784	java	the Java translator refuses it; this engine accepts it
+D785	java	the Java translator refuses it; this engine accepts it
+D787	java	unclassified: error: Error evaluating expression D787: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs p
+D788	java	unclassified: error: Error evaluating expression D788: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs ValueSet Tuple{id: x}
+D788	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs ValueSet Tuple{id: x}
+D789	java	the Java translator refuses it; this engine accepts it
+D79	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D79	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D790	java	the Java translator refuses it; this engine accepts it
+D791	java	the Java translator refuses it; this engine accepts it
+D793	java	unclassified: false vs true
+D793	js	unclassified: null vs true
+D796	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D797	java	disputed or representation (fhir.divergences.md)
+D797	js	disputed or representation (fhir.divergences.md)
+D798	java	unclassified: x vs null
+D798	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs null
+D8	java	the Java translator refuses it; this engine accepts it
+D80	java	the Java translator refuses it; this engine accepts it
+D800	java	the Java translator refuses it; this engine accepts it
+D801	java	the Java translator refuses it; this engine accepts it
+D803	java	the Java translator refuses it; this engine accepts it
+D804	java	the Java translator refuses it; this engine accepts it
+D807	java	unclassified: false vs true
+D807	js	unclassified: null vs true
+D808	java	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D808	js	a FHIR primitive is a FHIR.Element to both references; open (fhir.divergences.md)
+D809	java	the Java translator refuses it; this engine accepts it
+D812	java	the Java translator refuses it; this engine accepts it
+D813	java	the Java translator refuses it; this engine accepts it
+D814	java	the Java translator refuses it; this engine accepts it
+D819	java	unclassified: Patient/p vs error: CQL evaluation error: 5:15: cast failed: cannot convert String to Element
+D819	js	unclassified: p vs error: CQL evaluation error: 5:15: cast failed: cannot convert String to Element
+D82	java	the Java translator refuses it; this engine accepts it
+D820	java	the Java translator refuses it; this engine accepts it
+D821	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D822	java	the Java translator refuses it; this engine accepts it
+D824	java	the Java translator refuses it; this engine accepts it
+D825	java	the Java translator refuses it; this engine accepts it
+D827	js	unclassified: null vs false
+D828	java	the Java translator refuses it; this engine accepts it
+D829	java	the Java translator refuses it; this engine accepts it
+D83	java	the Java translator refuses it; this engine accepts it
+D831	java	the Java translator refuses it; this engine accepts it
+D833	java	the Java translator refuses it; this engine accepts it
+D835	java	the Java translator refuses it; this engine accepts it
+D836	java	the Java translator refuses it; this engine accepts it
+D839	java	unclassified: {"code":"x"} vs Coding Tuple{code: Code '' from }
+D839	js	unclassified: { "type": "Unencoded:Object", "value": "[object Object]" } vs Coding Tuple{code: Code '' from }
+D84	java	unclassified: null vs false
+D840	java	the Java translator refuses it; this engine accepts it
+D841	java	the Java translator refuses it; this engine accepts it
+D843	java	the Java translator refuses it; this engine accepts it
+D844	java	unclassified: false vs true
+D844	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs true
+D848	java	the Java translator refuses it; this engine accepts it
+D849	java	the Java translator refuses it; this engine accepts it
+D850	java	the Java translator refuses it; this engine accepts it
+D851	java	the Java translator refuses it; this engine accepts it
+D852	java	unclassified: false vs true
+D856	js	unclassified: null vs false
+D857	js	unclassified: null vs false
+D858	java	the Java translator refuses it; this engine accepts it
+D859	java	unclassified: error: Error evaluating expression D859: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any. vs {"start":"2020-01-01"}
+D86	java	the Java translator refuses it; this engine accepts it
+D860	java	the Java translator refuses it; this engine accepts it
+D864	java	the Java translator refuses it; this engine accepts it
+D865	java	the Java translator refuses it; this engine accepts it
+D866	java	the Java translator refuses it; this engine accepts it
+D867	java	the Java translator refuses it; this engine accepts it
+D868	js	unclassified: null vs false
+D869	java	the Java translator refuses it; this engine accepts it
+D87	java	the Java translator refuses it; this engine accepts it
+D870	java	the Java translator refuses it; this engine accepts it
+D871	java	the Java translator refuses it; this engine accepts it
+D874	java	the Java translator refuses it; this engine accepts it
+D875	java	the Java translator refuses it; this engine accepts it
+D877	js	unclassified: null vs false
+D878	java	the Java translator refuses it; this engine accepts it
+D879	java	the Java translator refuses it; this engine accepts it
+D88	java	unclassified: male vs error: CQL evaluation error: 5:14: cast failed: cannot convert String to Element
+D88	js	unclassified: male vs error: CQL evaluation error: 5:14: cast failed: cannot convert String to Element
+D881	java	the Java translator refuses it; this engine accepts it
+D882	java	the Java translator refuses it; this engine accepts it
+D883	java	the Java translator refuses it; this engine accepts it
+D884	java	the Java translator refuses it; this engine accepts it
+D885	java	the Java translator refuses it; this engine accepts it
+D886	js	unclassified: null vs false
+D887	java	the Java translator refuses it; this engine accepts it
+D889	java	the Java translator refuses it; this engine accepts it
+D89	java	the Java translator refuses it; this engine accepts it
+D891	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D892	java	the Java translator refuses it; this engine accepts it
+D893	java	the Java translator refuses it; this engine accepts it
+D894	java	the Java translator refuses it; this engine accepts it
+D895	java	the Java translator refuses it; this engine accepts it
+D896	js	unclassified: error: Encountered unexpected error during execution. Error Message: Patient Source does not support Is operation for lo… vs false
+D897	js	unclassified: null vs false
+D898	java	the Java translator refuses it; this engine accepts it
+D90	js	unclassified: null vs false
+D92	java	the Java translator refuses it; this engine accepts it
+D94	java	the Java translator refuses it; this engine accepts it
+D95	java	the Java translator refuses it; this engine accepts it

@@ -38,16 +38,11 @@ import (
 	"os"
 	"regexp"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
-
-	"github.com/shopspring/decimal"
 
 	cql "github.com/gofhir/cql"
 	"github.com/gofhir/cql/eval"
-	cqltypes "github.com/gofhir/cql/types"
-	fptypes "github.com/gofhir/fhirpath/types"
+	"github.com/gofhir/cql/internal/referenceharness/answers"
 )
 
 // difference is one definition the engines answered differently.
@@ -132,7 +127,7 @@ func main() {
 			continue
 		}
 		r.Expressions++
-		reference := referenceAnswer(raw)
+		reference := answers.Reference(raw)
 		library := string(src)
 		if *each {
 			library = header + m[0] + "\n"
@@ -141,14 +136,14 @@ func main() {
 		answer := engineAnswer(engine, library, name, patient)
 		category := "different"
 		switch {
-		case answer.panicked:
+		case answer.Panicked:
 			category = "engine-panic"
-		case same(reference, answer):
+		case answers.Same(reference, answer):
 			continue
-		case reference.kind == "error":
+		case reference.Kind == "error":
 			category = "reference-error"
 		}
-		r.Differences = append(r.Differences, difference{name, expr, category, reference.text, answer.text})
+		r.Differences = append(r.Differences, difference{name, expr, category, reference.Text, answer.Text})
 	}
 
 	finish(r, unanswered, *baselinePath, *reportPath, *verbose)
@@ -244,191 +239,6 @@ func printDifference(prefix string, d difference) {
 	fmt.Printf("%s%s [%s]: %s\n    reference: %s\n    engine:    %s\n", prefix, d.Name, d.Category, d.Expression, d.Reference, d.Engine)
 }
 
-// answer is one engine's answer to a definition: a number, a boolean, a
-// string, null, an error, a FHIR value, a list of those, or anything else as
-// its text.
-type answer struct {
-	kind     string // "number", "boolean", "string", "null", "error", "fhir", "list", "other"
-	text     string
-	num      decimal.Decimal
-	panicked bool
-}
-
-// referenceValue is one value as the reference engines encode it.
-type referenceValue struct {
-	Type       string            `json:"type"`
-	Value      json.RawMessage   `json:"value"`
-	Unit       string            `json:"unit"`
-	Elements   []json.RawMessage `json:"elements"`
-	Low        json.RawMessage   `json:"low"`
-	High       json.RawMessage   `json:"high"`
-	LowClosed  bool              `json:"lowClosed"`
-	HighClosed bool              `json:"highClosed"`
-	Error      string            `json:"error"`
-	Message    string            `json:"message"`
-}
-
-func referenceAnswer(raw json.RawMessage) answer {
-	if len(raw) == 0 || string(raw) == "null" {
-		return answer{kind: "null", text: "null"}
-	}
-	var v referenceValue
-	if err := json.Unmarshal(raw, &v); err != nil {
-		return answer{kind: "other", text: string(raw)}
-	}
-	if v.Error != "" {
-		return answer{kind: "error", text: "error: " + v.Message}
-	}
-	// A FHIR value: a primitive as its value, a resource or an element as its
-	// JSON, read back so that key order and spacing do not matter.
-	if fhirType, ok := strings.CutPrefix(v.Type, "FHIR."); ok {
-		var s string
-		if json.Unmarshal(v.Value, &s) == nil {
-			if strings.HasPrefix(strings.TrimSpace(s), "{") {
-				return answer{kind: "fhir", text: canonicalJSON([]byte(s))}
-			}
-			return answer{kind: "fhir", text: s}
-		}
-		return answer{kind: "other", text: fhirType + " " + string(v.Value)}
-	}
-	if v.Type == "List" {
-		items := make([]answer, len(v.Elements))
-		for i, e := range v.Elements {
-			items[i] = referenceAnswer(e)
-		}
-		return listAnswer(items)
-	}
-	if a, ok := referenceScalar(v); ok {
-		return a
-	}
-	return answer{kind: "other", text: string(raw)}
-}
-
-// referenceScalar is a reference value that is one of CQL's System scalars, or
-// an interval of them.
-func referenceScalar(v referenceValue) (answer, bool) {
-	var s string
-	switch v.Type {
-	case "Quantity":
-		if json.Unmarshal(v.Value, &s) == nil {
-			if d, err := decimal.NewFromString(s); err == nil {
-				return quantityAnswer(d, v.Unit), true
-			}
-		}
-	case "Date", "DateTime", "Time":
-		if json.Unmarshal(v.Value, &s) == nil {
-			return answer{kind: "temporal", text: v.Type + " " + s}, true
-		}
-	case "Interval":
-		return intervalAnswer(referenceAnswer(v.Low), referenceAnswer(v.High), v.LowClosed, v.HighClosed), true
-	case "Integer", "Long", "Decimal":
-		if json.Unmarshal(v.Value, &s) == nil {
-			if d, err := decimal.NewFromString(s); err == nil {
-				return answer{kind: "number", text: v.Type + " " + s, num: d}, true
-			}
-		}
-	case "Boolean":
-		var b bool
-		if json.Unmarshal(v.Value, &b) == nil {
-			return answer{kind: "boolean", text: fmt.Sprint(b)}, true
-		}
-	case "String":
-		if json.Unmarshal(v.Value, &s) == nil {
-			return answer{kind: "string", text: strconv.Quote(s)}, true
-		}
-	}
-	return answer{}, false
-}
-
-func engineAnswer(engine *cql.Engine, src, name string, patient json.RawMessage) (a answer) {
-	defer func() {
-		if p := recover(); p != nil {
-			a = answer{kind: "error", text: fmt.Sprintf("PANIC: %v", p), panicked: true}
-		}
-	}()
-	v, err := engine.EvaluateExpression(context.Background(), src, name, patient, nil)
-	if err != nil {
-		return answer{kind: "error", text: "error: " + err.Error()}
-	}
-	return valueAnswer(v)
-}
-
-// valueAnswer is engineAnswer for a value already evaluated: an element of a
-// list.
-func valueAnswer(v fptypes.Value) answer {
-	if o, ok := v.(*fptypes.ObjectValue); ok {
-		return answer{kind: "fhir", text: canonicalJSON(o.Data())}
-	}
-	if fptypes.IsFHIRPrimitive(v) {
-		return answer{kind: "fhir", text: v.String()}
-	}
-	switch n := v.(type) {
-	case fptypes.Quantity:
-		return quantityAnswer(n.Value(), n.Unit())
-	case fptypes.Date:
-		return answer{kind: "temporal", text: "Date " + n.String()}
-	case fptypes.DateTime:
-		return answer{kind: "temporal", text: "DateTime " + n.String()}
-	case fptypes.Time:
-		return answer{kind: "temporal", text: "Time " + n.String()}
-	case cqltypes.Interval:
-		return intervalAnswer(valueAnswer(n.Low), valueAnswer(n.High), n.LowClosed, n.HighClosed)
-	case nil:
-		return answer{kind: "null", text: "null"}
-	case fptypes.Integer:
-		return answer{kind: "number", text: "Integer " + n.String(), num: decimal.NewFromInt(n.Value())}
-	case fptypes.Decimal:
-		return answer{kind: "number", text: "Decimal " + n.String(), num: n.Value()}
-	case fptypes.Boolean:
-		return answer{kind: "boolean", text: fmt.Sprint(n.Bool())}
-	case fptypes.String:
-		return answer{kind: "string", text: strconv.Quote(n.Value())}
-	case cqltypes.List:
-		items := make([]answer, len(n.Values))
-		for i, e := range n.Values {
-			items[i] = valueAnswer(e)
-		}
-		return listAnswer(items)
-	}
-	return answer{kind: "other", text: v.Type() + " " + v.String()}
-}
-
-// listAnswer is a list of answers, as one text both engines' lists come to:
-// numbers by value, so {1.0} is {1}, strings quoted, and nested lists alike.
-// An element of another type — a tuple, an interval, a date — has a text of
-// each engine's own, so it keeps the list "other": reported, never matched.
-func listAnswer(items []answer) answer {
-	parts := make([]string, len(items))
-	kind := "list"
-	for i, it := range items {
-		switch it.kind {
-		case "number":
-			parts[i] = it.num.String()
-		case "null", "boolean", "string", "fhir", "list", "quantity", "temporal", "interval":
-			parts[i] = it.text
-		default:
-			kind = "other"
-			parts[i] = it.text
-		}
-	}
-	return answer{kind: kind, text: "{" + strings.Join(parts, ", ") + "}"}
-}
-
-// same compares numbers by value, since 1.0 = 1 in CQL, and everything else by
-// kind and text, exactly: 'abc' and 'ABC' are two strings. Two errors are the
-// same whatever their messages say.
-func same(a, b answer) bool {
-	switch {
-	case a.kind != b.kind:
-		return false
-	case a.kind == "number":
-		return a.num.Equal(b.num)
-	case a.kind == "error", a.kind == "null":
-		return true
-	}
-	return a.text == b.text
-}
-
 func check(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "compare:", err)
@@ -436,50 +246,17 @@ func check(err error) {
 	}
 }
 
-// canonicalJSON is a JSON document read and written back, with its keys
-// sorted, so that two engines' encodings of one resource compare equal.
-func canonicalJSON(raw []byte) string {
-	var v any
-	if err := json.Unmarshal(raw, &v); err != nil {
-		return string(raw)
-	}
-	out, err := json.Marshal(v)
+// engineAnswer is this engine's answer to a definition, a panic caught and
+// marked: always a defect, and reported even where the reference failed too.
+func engineAnswer(engine *cql.Engine, src, name string, patient json.RawMessage) (a answers.Answer) {
+	defer func() {
+		if p := recover(); p != nil {
+			a = answers.Failed(fmt.Errorf("%v", p), true)
+		}
+	}()
+	v, err := engine.EvaluateExpression(context.Background(), src, name, patient, nil)
 	if err != nil {
-		return string(raw)
+		return answers.Failed(err, false)
 	}
-	return string(out)
-}
-
-// quantityAnswer is a quantity by its value as a number and its unit, as
-// both engines write it.
-func quantityAnswer(value decimal.Decimal, unit string) answer {
-	return answer{kind: "quantity", text: value.String() + " '" + unit + "'"}
-}
-
-// intervalAnswer is an interval of two answers, with its closed and open
-// bounds, which a reader of either engine would be misled to drop. An
-// interval of points neither engine can say more about stays "other".
-func intervalAnswer(low, high answer, lowClosed, highClosed bool) answer {
-	open, closeBracket := "(", ")"
-	if lowClosed {
-		open = "["
-	}
-	if highClosed {
-		closeBracket = "]"
-	}
-	kind := "interval"
-	for _, b := range []answer{low, high} {
-		switch b.kind {
-		case "number", "null", "temporal", "quantity":
-		default:
-			kind = "other"
-		}
-	}
-	text := func(b answer) string {
-		if b.kind == "number" {
-			return b.num.String()
-		}
-		return b.text
-	}
-	return answer{kind: kind, text: "Interval" + open + text(low) + ", " + text(high) + closeBracket}
+	return answers.Value(v)
 }
