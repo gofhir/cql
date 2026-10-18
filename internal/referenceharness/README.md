@@ -244,6 +244,38 @@ translator refuses a cast between unrelated static types. The Java engine
 fails at run time on Any as a target, so those rows are read against the
 specification: every value is of type Any.
 
+`fhir` covers FHIR data: `is`, `as` and `cast` of resources, their primitives
+and choices, and of FHIR instances built in CQL, against System and FHIR
+types, and the operators that read them. Its values come from resources a test
+serves by fixed ids (`testdata/snapshots/fhir-data.json`). The reference
+engines cannot run it yet, since the harness gives them no data; until they
+can, it is held to the snapshot below.
+
+## Answer snapshots
+
+The differential says which answers are right; it needs a reference that can
+answer, and over FHIR data none can yet. A snapshot says which answers moved,
+and needs none. Each area's corpus is kept in `testdata/snapshots/<area>.cql`,
+written once by `gen` with the seed noted in the manifest of
+`engine_snapshot_test.go`, and beside it what this engine answers to every
+definition, `<area>.answers.tsv`. `TestAnswersMatchTheSnapshots`, part of
+`go test ./...`, fails on any answer that moved and lists them all.
+
+A change that moves answers on purpose regenerates them:
+
+```sh
+go test -run TestAnswersMatchTheSnapshots -update-snapshots .
+```
+
+and the diff of the pull request is then the list of what it changed, each to
+be accounted for before review. A move nobody can account for is a regression,
+whatever the review of the code says.
+
+The corpora are not regenerated when `gen` changes; a new or wider corpus is a
+change of its own, with its answers as written by the engine it lands on.
+Each definition is evaluated in a library of its own, with its area's header,
+so that an invalid expression — the corpora hold them on purpose — fails alone.
+
 ## Two things worth knowing
 
 `cql-to-elm-cli`'s published POM is invalid — it declares

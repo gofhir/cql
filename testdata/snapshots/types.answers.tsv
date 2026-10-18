@@ -1,0 +1,900 @@
+D0	error: CQL evaluation error: cast failed: cannot convert Time to Date
+D1	Boolean false
+D10	error: CQL evaluation error: cast failed: cannot convert Interval to Concept
+D100	null
+D101	null
+D102	Boolean false
+D103	Boolean true
+D104	List[]
+D105	Boolean true
+D106	Boolean true
+D107	Boolean true
+D108	Boolean true
+D109	String "{}"
+D11	null
+D110	Interval[Integer 1, null]
+D111	Boolean true
+D112	Integer 5
+D113	Boolean true
+D114	Boolean true
+D115	Boolean false
+D116	null
+D117	error: CQL evaluation error: cast failed: cannot convert Integer to Time
+D118	error: CQL evaluation error: cast failed: cannot convert Time to Code
+D119	Boolean false
+D12	Interval[String "a", String "b"]
+D120	Boolean false
+D121	Boolean true
+D122	Boolean true
+D123	Boolean true
+D124	Boolean false
+D125	Integer 5
+D126	Boolean false
+D127	null
+D128	Boolean true
+D129	Boolean false
+D13	Interval[Integer 1, null]
+D130	Boolean true
+D131	Boolean false
+D132	Boolean false
+D133	error: CQL evaluation error: cast failed: cannot convert Interval to Code
+D134	Integer 5
+D135	Boolean false
+D136	Boolean true
+D137	Boolean false
+D138	Boolean true
+D139	Time 10:00:00
+D14	Boolean false
+D140	Boolean true
+D141	Boolean true
+D142	Boolean false
+D143	null
+D144	Boolean true
+D145	Boolean true
+D146	Boolean true
+D147	Code{system: "", code: "x", display: "", version: ""}
+D148	null
+D149	error: CQL evaluation error: cast failed: cannot convert Interval to Integer
+D15	Boolean true
+D150	Boolean false
+D151	Interval[Integer 1, null]
+D152	Boolean false
+D153	null
+D154	Boolean true
+D155	error: CQL evaluation error: cast failed: cannot convert DateTime to Decimal
+D156	Decimal 2.5
+D157	Boolean true
+D158	Boolean true
+D159	null
+D16	Boolean true
+D160	Boolean false
+D161	Boolean true
+D162	error: CQL evaluation error: cast failed: cannot convert List to Long
+D163	null
+D164	null
+D165	null
+D166	null
+D167	Boolean false
+D168	String "a"
+D169	error: CQL evaluation error: cast failed: cannot convert Interval to Time
+D17	Boolean true
+D170	null
+D171	Time 10:00:00
+D172	Boolean false
+D173	Boolean false
+D174	null
+D175	error: CQL evaluation error: cast failed: cannot convert Interval to Date
+D176	null
+D177	Boolean false
+D178	Boolean false
+D179	Boolean true
+D18	Boolean false
+D180	Boolean true
+D181	Boolean true
+D182	Boolean true
+D183	Code{system: "", code: "x", display: "", version: ""}
+D184	null
+D185	Boolean false
+D186	Time 10:00:00
+D187	null
+D188	Boolean false
+D189	Boolean true
+D19	null
+D190	Boolean false
+D191	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D192	null
+D193	DateTime 2020-01-01T10:00:00.000Z
+D194	Boolean false
+D195	Boolean false
+D196	error: CQL evaluation error: cast failed: cannot convert String to Vocabulary
+D197	String "a"
+D198	Boolean true
+D199	null
+D2	error: CQL evaluation error: cast failed: cannot convert Integer to Quantity
+D20	error: CQL evaluation error: cast failed: cannot convert Interval to Quantity
+D200	Integer 5
+D201	Boolean false
+D202	error: CQL evaluation error: cast failed: cannot convert Decimal to Date
+D203	null
+D204	Boolean true
+D205	Date 2020-01-01
+D206	Boolean false
+D207	Boolean false
+D208	error: CQL evaluation error: cast failed: cannot convert String to Long
+D209	Boolean false
+D21	Boolean false
+D210	Boolean false
+D211	Boolean true
+D212	Boolean true
+D213	null
+D214	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D215	Boolean true
+D216	Boolean false
+D217	Boolean true
+D218	Boolean true
+D219	Boolean true
+D22	error: CQL evaluation error: cast failed: cannot convert Time to Integer
+D220	null
+D221	Interval[String "a", String "b"]
+D222	Interval[Integer 1, null]
+D223	Decimal 2.5
+D224	null
+D225	Boolean false
+D226	error: CQL evaluation error: cast failed: cannot convert List to Date
+D227	null
+D228	Boolean true
+D229	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D23	Boolean true
+D230	Boolean false
+D231	Boolean false
+D232	null
+D233	Boolean false
+D234	Boolean true
+D235	Boolean true
+D236	Boolean true
+D237	Time 10:00:00
+D238	Boolean true
+D239	null
+D24	null
+D240	Boolean false
+D241	Boolean false
+D242	error: CQL evaluation error: cast failed: cannot convert Date to Code
+D243	Interval[String "a", String "b"]
+D244	Boolean false
+D245	error: CQL evaluation error: cast failed: cannot convert DateTime to Boolean
+D246	Boolean true
+D247	error: CQL evaluation error: cast failed: cannot convert Code to Vocabulary
+D248	Boolean true
+D249	Boolean true
+D25	null
+D250	null
+D251	null
+D252	null
+D253	null
+D254	Boolean true
+D255	Boolean false
+D256	Boolean false
+D257	Boolean false
+D258	Boolean true
+D259	Decimal 2.5
+D26	null
+D260	Boolean true
+D261	null
+D262	Boolean false
+D263	Boolean true
+D264	Boolean true
+D265	Boolean false
+D266	Boolean false
+D267	Boolean true
+D268	Boolean true
+D269	null
+D27	null
+D270	Boolean false
+D271	null
+D272	Boolean true
+D273	Boolean false
+D274	Boolean true
+D275	Boolean true
+D276	Boolean true
+D277	error: CQL evaluation error: cast failed: cannot convert Boolean to DateTime
+D278	null
+D279	Boolean false
+D28	Boolean false
+D280	Boolean false
+D281	null
+D282	null
+D283	Boolean true
+D284	Boolean false
+D285	Boolean false
+D286	null
+D287	Boolean false
+D288	error: CQL evaluation error: cast failed: cannot convert Decimal to Concept
+D289	Boolean false
+D29	Decimal 2.5
+D290	error: CQL evaluation error: cast failed: cannot convert Integer to Concept
+D291	null
+D292	Boolean false
+D293	Boolean false
+D294	null
+D295	Boolean false
+D296	String "a"
+D297	Boolean false
+D298	Boolean true
+D299	Boolean true
+D3	Boolean false
+D30	Boolean false
+D300	Boolean true
+D301	null
+D302	null
+D303	Boolean false
+D304	Boolean false
+D305	Boolean true
+D306	null
+D307	String "2020-01-01T10:00:00.000Z"
+D308	error: CQL evaluation error: cast failed: cannot convert Integer to Code
+D309	error: CQL evaluation error: cast failed: cannot convert Tuple to Decimal
+D31	Integer 5
+D310	Boolean false
+D311	null
+D312	null
+D313	Boolean true
+D314	Boolean false
+D315	Boolean true
+D316	Boolean false
+D317	Boolean false
+D318	Boolean false
+D319	null
+D32	null
+D320	null
+D321	Tuple{a: Integer 1}
+D322	Boolean true
+D323	Boolean false
+D324	null
+D325	Date 2020-01-01
+D326	Interval[Integer 1, null]
+D327	Boolean true
+D328	Boolean true
+D329	Boolean false
+D33	error: CQL evaluation error: cast failed: cannot convert Interval to Integer
+D330	error: CQL evaluation error: cast failed: cannot convert Interval to Vocabulary
+D331	Boolean true
+D332	null
+D333	Boolean true
+D334	Boolean true
+D335	null
+D336	null
+D337	null
+D338	null
+D339	DateTime 2020-01-01T10:00:00.000Z
+D34	Boolean true
+D340	null
+D341	Boolean false
+D342	Time 10:00:00
+D343	Boolean false
+D344	Tuple{a: Integer 1}
+D345	null
+D346	Boolean true
+D347	null
+D348	Boolean false
+D349	error: CQL evaluation error: cast failed: cannot convert List to Integer
+D35	Boolean true
+D350	null
+D351	Boolean false
+D352	Boolean false
+D353	error: CQL evaluation error: cast failed: cannot convert List to Code
+D354	Boolean true
+D355	error: CQL evaluation error: cast failed: cannot convert List to Integer
+D356	null
+D357	null
+D358	Boolean false
+D359	error: CQL evaluation error: cast failed: cannot convert List to Vocabulary
+D36	error: CQL evaluation error: cast failed: cannot convert List to Long
+D360	Boolean true
+D361	Boolean false
+D362	Boolean false
+D363	String "Concept{Code 'x' from }"
+D364	Boolean false
+D365	Boolean true
+D366	null
+D367	null
+D368	Boolean true
+D369	null
+D37	Integer 1
+D370	Boolean false
+D371	Interval[Integer 1, null]
+D372	null
+D373	null
+D374	String "Tuple{a: 1}"
+D375	null
+D376	Boolean true
+D377	Boolean false
+D378	null
+D379	error: CQL evaluation error: cast failed: cannot convert Date to Long
+D38	Boolean true
+D380	Boolean false
+D381	Code{system: "", code: "x", display: "", version: ""}
+D382	Boolean false
+D383	error: CQL evaluation error: cast failed: cannot convert Time to Decimal
+D384	Boolean false
+D385	Boolean false
+D386	error: CQL evaluation error: cast failed: cannot convert Concept to Vocabulary
+D387	List[String "a"]
+D388	Boolean false
+D389	Boolean true
+D39	Boolean false
+D390	Boolean true
+D391	Boolean true
+D392	Boolean false
+D393	Tuple{a: Integer 1}
+D394	null
+D395	null
+D396	null
+D397	Boolean false
+D398	null
+D399	error: CQL evaluation error: cast failed: cannot convert Interval to Code
+D4	Boolean true
+D40	Boolean true
+D400	Boolean false
+D401	Interval[Integer 1, Integer 2]
+D402	DateTime 2020-01-01T10:00:00.000Z
+D403	Boolean false
+D404	Boolean true
+D405	Boolean true
+D406	Boolean false
+D407	Boolean false
+D408	Boolean false
+D409	error: CQL evaluation error: cast failed: cannot convert Date to Concept
+D41	Boolean true
+D410	Boolean false
+D411	null
+D412	Boolean true
+D413	Boolean false
+D414	null
+D415	Boolean false
+D416	null
+D417	Boolean false
+D418	error: CQL evaluation error: cast failed: cannot convert Integer to Time
+D419	Boolean false
+D42	Boolean true
+D420	Boolean true
+D421	Boolean true
+D422	Boolean true
+D423	Boolean false
+D424	error: CQL evaluation error: cast failed: cannot convert Integer to DateTime
+D425	Boolean false
+D426	error: CQL evaluation error: cast failed: cannot convert Boolean to Decimal
+D427	null
+D428	error: CQL evaluation error: cast failed: cannot convert Decimal to Quantity
+D429	Boolean false
+D43	List[Integer 1, String "a"]
+D430	Boolean true
+D431	Interval[String "a", String "b"]
+D432	List[]
+D433	null
+D434	Boolean false
+D435	Boolean false
+D436	Boolean true
+D437	Boolean true
+D438	Boolean true
+D439	Boolean true
+D44	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D440	Boolean true
+D441	Decimal 5
+D442	null
+D443	null
+D444	Boolean true
+D445	Boolean false
+D446	null
+D447	error: CQL evaluation error: cast failed: cannot convert Code to Integer
+D448	Integer 5
+D449	null
+D45	Boolean false
+D450	null
+D451	null
+D452	null
+D453	null
+D454	Quantity 5 'mg'
+D455	List[Integer 1, Integer 2]
+D456	Boolean false
+D457	Boolean true
+D458	null
+D459	Boolean false
+D46	Boolean true
+D460	null
+D461	Boolean true
+D462	error: CQL evaluation error: cast failed: cannot convert Interval to Long
+D463	List[Integer 1, String "a"]
+D464	error: CQL evaluation error: cast failed: cannot convert Time to Boolean
+D465	Boolean false
+D466	Boolean true
+D467	Boolean true
+D468	Boolean true
+D469	Boolean true
+D47	Boolean false
+D470	Integer 5
+D471	Boolean false
+D472	null
+D473	Boolean false
+D474	null
+D475	Boolean false
+D476	Boolean false
+D477	null
+D478	null
+D479	null
+D48	Boolean false
+D480	Interval[Integer 1, null]
+D481	null
+D482	Code{system: "", code: "x", display: "", version: ""}
+D483	Boolean false
+D484	Boolean false
+D485	Boolean true
+D486	List[Integer 1, Integer 2]
+D487	Quantity 5 'mg'
+D488	Boolean false
+D489	Boolean true
+D49	null
+D490	null
+D491	Boolean true
+D492	Boolean true
+D493	error: CQL evaluation error: cast failed: cannot convert Quantity to Integer
+D494	Boolean false
+D495	Boolean false
+D496	Boolean true
+D497	Boolean true
+D498	Boolean false
+D499	Boolean false
+D5	Boolean true
+D50	Boolean false
+D500	Boolean true
+D501	Boolean true
+D502	Boolean true
+D503	Boolean false
+D504	null
+D505	Boolean true
+D506	Boolean false
+D507	Boolean false
+D508	Boolean true
+D509	null
+D51	Code{system: "", code: "x", display: "", version: ""}
+D510	List[String "a"]
+D511	DateTime 2020-01-01T10:00:00.000Z
+D512	Boolean true
+D513	null
+D514	Boolean true
+D515	Boolean true
+D516	Interval[Integer 1, null]
+D517	Boolean false
+D518	Boolean true
+D519	null
+D52	Boolean false
+D520	List[String "a"]
+D521	List[]
+D522	null
+D523	error: CQL evaluation error: cast failed: cannot convert List to Concept
+D524	Boolean false
+D525	Boolean true
+D526	null
+D527	Boolean false
+D528	Boolean true
+D529	Boolean true
+D53	Boolean false
+D530	null
+D531	Time 10:00:00
+D532	List[]
+D533	error: CQL evaluation error: cast failed: invalid decimal: a
+D534	null
+D535	Boolean true
+D536	Boolean false
+D537	error: CQL evaluation error: cast failed: cannot convert Decimal to DateTime
+D538	Boolean true
+D539	Boolean true
+D54	error: CQL evaluation error: cast failed: cannot convert Integer to Vocabulary
+D540	Boolean true
+D541	Boolean true
+D542	error: CQL evaluation error: cast failed: cannot convert Tuple to Vocabulary
+D543	Boolean false
+D544	null
+D545	Boolean false
+D546	List[String "a"]
+D547	Interval[Integer 1, Integer 2]
+D548	error: CQL evaluation error: cast failed: cannot convert String to Code
+D549	DateTime 2020-01-01T10:00:00.000Z
+D55	Boolean false
+D550	Boolean true
+D551	null
+D552	Boolean false
+D553	Boolean false
+D554	Boolean true
+D555	Boolean true
+D556	error: CQL evaluation error: cast failed: cannot convert Integer to Code
+D557	Boolean true
+D558	Boolean false
+D559	Boolean false
+D56	Boolean false
+D560	null
+D561	Boolean true
+D562	Boolean false
+D563	Boolean true
+D564	Boolean false
+D565	null
+D566	Boolean true
+D567	null
+D568	null
+D569	error: CQL evaluation error: cast failed: cannot convert Decimal to Integer
+D57	Boolean false
+D570	null
+D571	Boolean false
+D572	null
+D573	Boolean true
+D574	null
+D575	Boolean true
+D576	Boolean false
+D577	Boolean true
+D578	Boolean false
+D579	null
+D58	Boolean false
+D580	Boolean true
+D581	error: CQL evaluation error: cast failed: cannot convert String to Quantity
+D582	null
+D583	Boolean false
+D584	null
+D585	Boolean false
+D586	Boolean false
+D587	Boolean false
+D588	error: CQL evaluation error: cast failed: cannot convert List to Code
+D589	Boolean true
+D59	null
+D590	null
+D591	Interval[String "a", String "b"]
+D592	List[String "a"]
+D593	null
+D594	Boolean true
+D595	null
+D596	null
+D597	null
+D598	Quantity 5 'mg'
+D599	Boolean false
+D6	Boolean true
+D60	null
+D600	Boolean false
+D601	null
+D602	Boolean true
+D603	null
+D604	null
+D605	Boolean false
+D606	Boolean true
+D607	Boolean true
+D608	error: CQL evaluation error: cast failed: cannot convert List to Integer
+D609	null
+D61	Boolean true
+D610	Boolean true
+D611	Boolean true
+D612	null
+D613	error: CQL evaluation error: cast failed: cannot convert Concept to Time
+D614	Interval[Integer 1, Integer 2]
+D615	error: CQL evaluation error: cast failed: cannot convert DateTime to Time
+D616	List[String "a"]
+D617	Boolean true
+D618	Boolean false
+D619	Boolean true
+D62	Boolean false
+D620	Boolean false
+D621	DateTime 2020-01-01T10:00:00.000Z
+D622	Boolean true
+D623	error: CQL evaluation error: cast failed: cannot convert Boolean to Concept
+D624	null
+D625	Boolean true
+D626	error: CQL evaluation error: cast failed: cannot convert DateTime to Long
+D627	String "{a}"
+D628	Boolean true
+D629	error: CQL evaluation error: cast failed: cannot convert List to Code
+D63	error: CQL evaluation error: cast failed: cannot convert Concept to Integer
+D630	Boolean true
+D631	Boolean false
+D632	Boolean true
+D633	Boolean true
+D634	Boolean false
+D635	null
+D636	Boolean false
+D637	List[Integer 1, Integer 2]
+D638	Boolean false
+D639	Boolean false
+D64	null
+D640	Boolean true
+D641	Boolean false
+D642	Boolean false
+D643	Date 2020-01-01
+D644	error: CQL evaluation error: cast failed: cannot convert Code to Decimal
+D645	Interval[String "a", String "b"]
+D646	null
+D647	Boolean false
+D648	Boolean false
+D649	null
+D65	Boolean false
+D650	Quantity 5 'mg'
+D651	error: CQL evaluation error: cast failed: cannot convert Interval to Concept
+D652	Boolean false
+D653	Boolean false
+D654	Boolean true
+D655	Boolean true
+D656	null
+D657	List[String "a"]
+D658	Boolean false
+D659	error: CQL evaluation error: cast failed: cannot convert Boolean to Long
+D66	null
+D660	Boolean false
+D661	Boolean true
+D662	Boolean true
+D663	null
+D664	Boolean false
+D665	Boolean true
+D666	List[String "a"]
+D667	error: CQL evaluation error: cast failed: cannot convert List to Time
+D668	null
+D669	Boolean false
+D67	Boolean false
+D670	Boolean true
+D671	Boolean false
+D672	null
+D673	Boolean true
+D674	Boolean true
+D675	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D676	Boolean true
+D677	Boolean true
+D678	Boolean false
+D679	error: CQL evaluation error: cast failed: cannot convert Concept to Quantity
+D68	error: CQL evaluation error: cast failed: cannot convert Integer to DateTime
+D680	null
+D681	Time 10:00:00
+D682	Boolean false
+D683	Date 2020-01-01
+D684	null
+D685	error: CQL evaluation error: cast failed: cannot convert Interval to Code
+D686	null
+D687	Boolean false
+D688	Boolean false
+D689	null
+D69	Boolean true
+D690	Code{system: "", code: "x", display: "", version: ""}
+D691	null
+D692	null
+D693	null
+D694	Boolean false
+D695	Interval[Integer 1, Integer 2]
+D696	null
+D697	Boolean false
+D698	List[]
+D699	error: CQL evaluation error: cast failed: cannot convert Interval to Integer
+D7	Boolean false
+D70	Code{system: "", code: "x", display: "", version: ""}
+D700	null
+D701	null
+D702	Boolean true
+D703	Boolean true
+D704	error: CQL evaluation error: cast failed: cannot convert Quantity to Boolean
+D705	error: CQL evaluation error: cast failed: cannot convert DateTime to Quantity
+D706	null
+D707	Boolean true
+D708	null
+D709	null
+D71	List[Integer 1, String "a"]
+D710	error: CQL evaluation error: cast failed: cannot convert String to Concept
+D711	Boolean false
+D712	null
+D713	Boolean true
+D714	Boolean true
+D715	Boolean true
+D716	error: CQL evaluation error: cast failed: cannot convert Time to Integer
+D717	Boolean false
+D718	String "{1, a}"
+D719	Boolean true
+D72	DateTime 2020-01-01T10:00:00.000Z
+D720	Boolean true
+D721	error: CQL evaluation error: cast failed: cannot convert List to Date
+D722	List[Integer 1, Integer 2]
+D723	Integer 5
+D724	null
+D725	Boolean true
+D726	null
+D727	Decimal 2.5
+D728	Boolean true
+D729	Boolean false
+D73	null
+D730	null
+D731	null
+D732	Boolean false
+D733	Time 10:00:00
+D734	Integer 5
+D735	Boolean true
+D736	Boolean false
+D737	Date 2020-01-01
+D738	Boolean false
+D739	Boolean true
+D74	Boolean true
+D740	Time 10:00:00
+D741	Boolean false
+D742	null
+D743	Boolean true
+D744	Boolean false
+D745	Boolean true
+D746	null
+D747	Boolean false
+D748	Boolean true
+D749	Boolean false
+D75	error: CQL evaluation error: cast failed: cannot convert List to Decimal
+D750	Interval[String "a", String "b"]
+D751	Boolean false
+D752	error: CQL evaluation error: cast failed: cannot convert Quantity to Long
+D753	Boolean false
+D754	null
+D755	Integer 5
+D756	null
+D757	Boolean true
+D758	error: CQL evaluation error: cast failed: cannot convert Interval to Decimal
+D759	Boolean false
+D76	Boolean true
+D760	error: CQL evaluation error: cast failed: cannot convert Time to Vocabulary
+D761	Boolean true
+D762	null
+D763	Boolean false
+D764	Interval[Integer 1, Integer 2]
+D765	Boolean false
+D766	null
+D767	Boolean true
+D768	error: CQL evaluation error: cast failed: cannot convert List to Integer
+D769	Boolean true
+D77	null
+D770	Boolean false
+D771	Boolean false
+D772	Boolean false
+D773	Boolean true
+D774	Boolean false
+D775	error: CQL evaluation error: cast failed: cannot convert Concept to Integer
+D776	Boolean true
+D777	error: CQL evaluation error: cast failed: cannot convert Decimal to Integer
+D778	Boolean false
+D779	Boolean true
+D78	Boolean true
+D780	error: CQL evaluation error: cast failed: cannot convert Integer to Long
+D781	null
+D782	Boolean false
+D783	error: CQL evaluation error: cast failed: cannot convert List to Time
+D784	Boolean false
+D785	Boolean false
+D786	Boolean true
+D787	Boolean true
+D788	Boolean true
+D789	List[]
+D79	Code{system: "", code: "x", display: "", version: ""}
+D790	Boolean true
+D791	Boolean false
+D792	Boolean true
+D793	Tuple{a: Integer 1}
+D794	Boolean true
+D795	null
+D796	null
+D797	null
+D798	Boolean false
+D799	null
+D8	Boolean false
+D80	Boolean true
+D800	List[Integer 1, Integer 2]
+D801	Tuple{a: Integer 1}
+D802	Quantity 5 'mg'
+D803	Boolean false
+D804	Boolean false
+D805	error: CQL evaluation error: cast failed: cannot convert Quantity to Date
+D806	List[String "a"]
+D807	Boolean true
+D808	Boolean true
+D809	Boolean true
+D81	Boolean false
+D810	Boolean true
+D811	Boolean false
+D812	Boolean true
+D813	error: CQL evaluation error: cast failed: cannot convert List to Vocabulary
+D814	Boolean true
+D815	Boolean false
+D816	List[Integer 1, String "a"]
+D817	error: CQL evaluation error: cast failed: cannot convert Interval to Vocabulary
+D818	null
+D819	null
+D82	Boolean true
+D820	null
+D821	Boolean true
+D822	Boolean false
+D823	List[]
+D824	null
+D825	null
+D826	null
+D827	Boolean true
+D828	Boolean true
+D829	Interval[Integer 1, Integer 2]
+D83	Boolean true
+D830	null
+D831	null
+D832	error: CQL evaluation error: cast failed: cannot convert Tuple to Code
+D833	error: CQL evaluation error: cast failed: cannot convert Code to DateTime
+D834	Boolean false
+D835	Boolean true
+D836	Tuple{a: Integer 1}
+D837	Boolean false
+D838	null
+D839	Boolean false
+D84	Boolean false
+D840	Boolean true
+D841	Boolean true
+D842	Decimal 2.5
+D843	Boolean false
+D844	Boolean false
+D845	Boolean true
+D846	Boolean true
+D847	error: CQL evaluation error: cast failed: cannot convert Concept to Long
+D848	Boolean false
+D849	null
+D85	error: CQL evaluation error: cast failed: cannot convert DateTime to Code
+D850	Boolean false
+D851	null
+D852	null
+D853	error: CQL evaluation error: cast failed: cannot convert DateTime to Concept
+D854	Boolean true
+D855	Interval[Integer 1, Integer 2]
+D856	Boolean true
+D857	Boolean false
+D858	null
+D859	null
+D86	null
+D860	Boolean true
+D861	DateTime 2020-01-01T10:00:00.000Z
+D862	Boolean true
+D863	Boolean true
+D864	Boolean false
+D865	error: CQL evaluation error: cast failed: cannot convert Concept to Decimal
+D866	null
+D867	Boolean true
+D868	Boolean false
+D869	Boolean true
+D87	Boolean false
+D870	error: CQL evaluation error: cast failed: cannot convert Decimal to Boolean
+D871	Boolean true
+D872	Quantity 5 'mg'
+D873	Interval[Integer 1, Integer 2]
+D874	Boolean false
+D875	Boolean true
+D876	Integer 5
+D877	null
+D878	Date 2020-01-01
+D879	Boolean true
+D88	Boolean true
+D880	error: CQL evaluation error: cast failed: cannot convert Code to Time
+D881	Boolean false
+D882	null
+D883	null
+D884	Boolean false
+D885	error: CQL evaluation error: cast failed: cannot convert Date to Integer
+D886	null
+D887	error: CQL evaluation error: cast failed: cannot convert Integer to Long
+D888	List[String "a"]
+D889	error: CQL evaluation error: cast failed: cannot convert Concept to Date
+D89	Boolean true
+D890	List[Integer 1, String "a"]
+D891	String "5 'mg'"
+D892	Boolean false
+D893	error: CQL evaluation error: cast failed: cannot convert Decimal to Vocabulary
+D894	Boolean false
+D895	null
+D896	Boolean false
+D897	error: CQL evaluation error: cast failed: cannot convert List to Quantity
+D898	List[Integer 1, Integer 2]
+D899	Boolean false
+D9	Boolean true
+D90	Boolean false
+D91	null
+D92	Boolean false
+D93	Boolean true
+D94	null
+D95	null
+D96	Boolean true
+D97	Boolean false
+D98	null
+D99	Boolean false
