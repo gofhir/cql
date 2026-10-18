@@ -1,6 +1,6 @@
 module github.com/gofhir/cql
 
-go 1.24.1
+go 1.27
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1

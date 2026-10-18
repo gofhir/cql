@@ -10,7 +10,7 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: "1.24"
+  GO_VERSION: "1.27"
 
 jobs:
   lint:
@@ -30,7 +30,7 @@ jobs:
         with:
           # Pinned: 'latest' makes an upstream release able to fail a build that
           # touched nothing, and makes CI disagree with whatever developers run.
-          version: v2.11.4
+          version: v2.15.0
           args: --timeout=5m
           # The action runs `golangci-lint config verify` before linting, and that
           # fetches a JSON schema from golangci-lint.run. It has failed the Lint
