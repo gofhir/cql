@@ -1,0 +1,1107 @@
+{
+  "library": "corpus fhir.cql",
+  "sourceSha256": "a8d7b5174b1135a0db8803e9173b133f16c5967476284e5541a71942fe3b2c1d",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.1.6",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D1": null,
+    "D2": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D7": null,
+    "D10": null,
+    "D11": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D13": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D16": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}string as {http://hl7.org/fhir}integer\n\tCQL Library:\tD16|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:13-5:84\n"
+    },
+    "D19": {
+      "type": "FHIR.date",
+      "value": "1980-01-01"
+    },
+    "D27": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D28": {
+      "type": "FHIR.AdministrativeGender",
+      "value": "male"
+    },
+    "D30": null,
+    "D42": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D45": null,
+    "D46": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D47": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D48": null,
+    "D49": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D50": {
+      "type": "Quantity",
+      "value": "6",
+      "unit": "mg"
+    },
+    "D53": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D54": {
+      "type": "FHIR.date",
+      "value": "1980-01-01"
+    },
+    "D61": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D62": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D67": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D68": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D70": {
+      "type": "FHIR.integer",
+      "value": "7"
+    },
+    "D75": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD75|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:13-5:79\n"
+    },
+    "D78": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D79": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D84": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D88": {
+      "type": "FHIR.AdministrativeGender",
+      "value": "male"
+    },
+    "D90": null,
+    "D96": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D97": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D98": null,
+    "D101": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D104": null,
+    "D105": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D111": {
+      "type": "DateTime",
+      "value": "2020-02-03",
+      "precision": "day",
+      "instant": "2020-02-03T00:00:00Z"
+    },
+    "D114": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D117": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D125": null,
+    "D127": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD127|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:38\n"
+    },
+    "D128": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D130": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D131": null,
+    "D132": null,
+    "D133": {
+      "type": "FHIR.dateTime",
+      "value": "2020-02-02"
+    },
+    "D134": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D136": null,
+    "D139": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D141": null,
+    "D144": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D145": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D149": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D150": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D151": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D154": {
+      "type": "Quantity",
+      "value": "-5",
+      "unit": "mg"
+    },
+    "D156": null,
+    "D157": null,
+    "D159": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D160": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D171": null,
+    "D172": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D179": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D185": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D186": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D190": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D193": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD193|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:56\n"
+    },
+    "D194": null,
+    "D196": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D197": {
+      "type": "String",
+      "value": "5 'mg'"
+    },
+    "D201": {
+      "type": "FHIR.Patient",
+      "value": "{\"resourceType\":\"Patient\",\"id\":\"p\",\"gender\":\"male\",\"birthDate\":\"1980-01-01\",\"deceasedDateTime\":\"2020-02-02\"}"
+    },
+    "D202": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D207": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D209": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D214": null,
+    "D216": {
+      "type": "FHIR.id",
+      "value": "p"
+    },
+    "D217": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD217|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:60\n"
+    },
+    "D223": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D224": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D227": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D228": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D230": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D233": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D236": {
+      "type": "FHIR.Period",
+      "value": "{\"start\":\"2020-01-01\"}"
+    },
+    "D237": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D240": {
+      "type": "FHIR.AdministrativeGender",
+      "value": "male"
+    },
+    "D241": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D244": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D245": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD245|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:86\n"
+    },
+    "D249": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D250": {
+      "type": "FHIR.dateTime",
+      "value": "2020-02-02"
+    },
+    "D258": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tInvalid unit mg\n\tCQL Library:\tD258|1.0\n\tExpression:\tAdd\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:42\n"
+    },
+    "D261": null,
+    "D268": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D273": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D276": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D277": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD277|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:57\n"
+    },
+    "D284": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D286": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D287": {
+      "type": "FHIR.dateTime",
+      "value": "2020-01-01"
+    },
+    "D288": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D289": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D296": null,
+    "D299": {
+      "type": "DateTime",
+      "value": "2020-01-02",
+      "precision": "day",
+      "instant": "2020-01-02T00:00:00Z"
+    },
+    "D302": null,
+    "D305": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D306": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D307": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD307|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:55\n"
+    },
+    "D311": null,
+    "D312": null,
+    "D316": {
+      "type": "FHIR.id",
+      "value": "p"
+    },
+    "D317": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D318": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D320": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D322": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}Quantity as {http://hl7.org/fhir}string\n\tCQL Library:\tD322|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:84\n"
+    },
+    "D324": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D326": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D327": null,
+    "D335": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D336": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D337": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD337|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:36\n"
+    },
+    "D338": null,
+    "D340": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D343": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D345": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D350": null,
+    "D355": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D356": {
+      "type": "FHIR.Quantity",
+      "value": "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+    },
+    "D358": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D359": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D362": {
+      "type": "FHIR.Period",
+      "value": "{\"start\":\"2020-01-01\",\"end\":\"2020-01-03T10:00:00Z\"}"
+    },
+    "D367": null,
+    "D368": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D369": null,
+    "D370": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D371": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D373": {
+      "type": "String",
+      "value": "2020-01-01"
+    },
+    "D374": null,
+    "D375": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD375|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:74\n"
+    },
+    "D378": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D379": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D381": null,
+    "D384": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D388": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D389": {
+      "type": "FHIR.dateTime",
+      "value": "2020-01-01"
+    },
+    "D390": null,
+    "D392": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D393": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D404": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D406": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}Quantity as {http://hl7.org/fhir}CodeableConcept\n\tCQL Library:\tD406|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:88\n"
+    },
+    "D412": null,
+    "D413": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD413|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:75\n"
+    },
+    "D416": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D422": null,
+    "D423": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D425": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D430": null,
+    "D432": null,
+    "D434": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D437": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D438": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D439": null,
+    "D442": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D443": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D444": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D445": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D451": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D469": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD469|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:78\n"
+    },
+    "D471": {
+      "type": "FHIR.dateTime",
+      "value": "2020-01-01"
+    },
+    "D473": {
+      "type": "FHIR.Patient",
+      "value": "{\"resourceType\":\"Patient\",\"id\":\"p\",\"gender\":\"male\",\"birthDate\":\"1980-01-01\",\"deceasedDateTime\":\"2020-02-02\"}"
+    },
+    "D479": {
+      "type": "Quantity",
+      "value": "-5",
+      "unit": "mg"
+    },
+    "D480": null,
+    "D482": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D488": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D492": null,
+    "D493": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D494": null,
+    "D504": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D509": null,
+    "D510": {
+      "type": "Date",
+      "value": "1980-01-02",
+      "precision": "day"
+    },
+    "D513": null,
+    "D514": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD514|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:48\n"
+    },
+    "D515": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D516": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D521": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD521|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:36\n"
+    },
+    "D522": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D529": {
+      "type": "DateTime",
+      "value": "2020-01-02",
+      "precision": "day",
+      "instant": "2020-01-02T00:00:00Z"
+    },
+    "D530": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D534": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D536": null,
+    "D537": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D538": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD538|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:37\n"
+    },
+    "D543": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D544": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D546": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D549": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D561": null,
+    "D563": null,
+    "D564": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D566": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D567": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D568": null,
+    "D571": null,
+    "D572": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D575": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D577": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D578": null,
+    "D579": {
+      "type": "FHIR.Quantity",
+      "value": "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+    },
+    "D583": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D585": null,
+    "D588": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD588|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:36\n"
+    },
+    "D593": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D597": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D600": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D601": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD601|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:34\n"
+    },
+    "D607": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D608": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D609": {
+      "type": "FHIR.Period",
+      "value": "{\"start\":\"2020-01-01\",\"end\":\"2020-01-03T10:00:00Z\"}"
+    },
+    "D613": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D615": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D617": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D618": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D619": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D620": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD620|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:64\n"
+    },
+    "D626": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D628": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D631": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD631|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:41\n"
+    },
+    "D634": null,
+    "D636": null,
+    "D645": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D654": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D658": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D661": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D662": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D663": {
+      "type": "FHIR.Period",
+      "value": "{\"start\":\"2020-01-01\",\"end\":\"2020-01-03T10:00:00Z\"}"
+    },
+    "D665": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD665|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:59\n"
+    },
+    "D666": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D671": null,
+    "D674": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D675": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D676": null,
+    "D678": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tInvalid unit mg\n\tCQL Library:\tD678|1.0\n\tExpression:\tAdd\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:57\n"
+    },
+    "D679": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D680": {
+      "type": "FHIR.dateTime",
+      "value": "2020-01-01"
+    },
+    "D683": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D687": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D688": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D693": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D694": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD694|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:80\n"
+    },
+    "D697": null,
+    "D700": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D703": null,
+    "D704": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D705": {
+      "type": "FHIR.dateTime",
+      "value": "2020-02-02"
+    },
+    "D706": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D708": null,
+    "D710": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D712": null,
+    "D714": {
+      "type": "String",
+      "value": "1980-01-01"
+    },
+    "D721": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D724": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D727": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D728": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D731": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D733": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D735": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D736": null,
+    "D737": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}dateTime as {http://hl7.org/fhir}Period\n\tCQL Library:\tD737|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:88\n"
+    },
+    "D739": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D740": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D748": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D753": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D755": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D760": null,
+    "D761": {
+      "type": "FHIR.CodeableConcept",
+      "value": "{\"coding\":[{\"system\":\"s\",\"code\":\"c\"}]}"
+    },
+    "D763": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}integer as {http://hl7.org/fhir}dateTime\n\tCQL Library:\tD763|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:86\n"
+    },
+    "D764": null,
+    "D769": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}string as {http://hl7.org/fhir}Quantity\n\tCQL Library:\tD769|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:81\n"
+    },
+    "D771": null,
+    "D772": {
+      "type": "FHIR.date",
+      "value": "1980-01-01"
+    },
+    "D773": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D777": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D778": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D782": {
+      "type": "Integer",
+      "value": "7"
+    },
+    "D786": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D787": {
+      "type": "FHIR.id",
+      "value": "p"
+    },
+    "D788": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D792": null,
+    "D793": null,
+    "D794": {
+      "type": "FHIR.string",
+      "value": "abc"
+    },
+    "D796": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD796|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:42\n"
+    },
+    "D797": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD797|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:37\n"
+    },
+    "D798": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D802": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D806": null,
+    "D807": null,
+    "D808": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D815": null,
+    "D816": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}string as {http://hl7.org/fhir}CodeableConcept\n\tCQL Library:\tD816|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:88\n"
+    },
+    "D818": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D819": {
+      "type": "FHIR.id",
+      "value": "p"
+    },
+    "D821": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD821|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:80\n"
+    },
+    "D826": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D827": null,
+    "D830": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D839": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D842": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D844": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD844|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:40\n"
+    },
+    "D846": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D852": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D855": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D856": null,
+    "D857": null,
+    "D859": {
+      "type": "FHIR.Period",
+      "value": "{\"start\":\"2020-01-01\"}"
+    },
+    "D862": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D863": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D868": null,
+    "D872": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D877": null,
+    "D880": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D886": null,
+    "D890": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {http://hl7.org/fhir}Quantity as {http://hl7.org/fhir}integer\n\tCQL Library:\tD890|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:85\n"
+    },
+    "D891": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD891|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:38\n"
+    },
+    "D896": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tPatient Source does not support Is operation for localId: 217\n\tCQL Library:\tD896|1.0\n\tExpression:\tIs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:38\n"
+    },
+    "D897": null
+  }
+}

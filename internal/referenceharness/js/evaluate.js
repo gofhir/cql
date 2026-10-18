@@ -10,10 +10,17 @@
 // share has not been checked by either.
 //
 // usage: node evaluate.js <library.elm.json> <library.cql>
+//        node evaluate.js --each <elms.json> <corpus.cql> <FHIRHelpers.elm.json> [data.json]
+//
+// With --each it runs a corpus Evaluate.java -each translated: the ELM of
+// every definition, each a library of its own, over the same FHIR resources
+// through cql-exec-fhir, with FHIRHelpers translated from the same text both
+// other engines use.
 
 const fs = require('fs');
 const crypto = require('crypto');
 const cql = require('cql-execution');
+const cqlfhir = require('cql-exec-fhir');
 
 // The same instant as Evaluate.java, at the same offset, for the same reason:
 // at UTC an engine that defaulted to UTC instead of the evaluation offset would
@@ -23,6 +30,7 @@ const EVALUATION = '2026-01-01T00:00:00.000-03:00';
 const SYSTEM = '{urn:hl7-org:elm-types:r1}';
 
 async function main() {
+  if (process.argv[2] === '--each') return each(process.argv.slice(3));
   const [elmPath, cqlPath] = process.argv.slice(2);
   if (!elmPath || !cqlPath) {
     console.error('usage: node evaluate.js <library.elm.json> <library.cql>');
@@ -59,6 +67,66 @@ async function main() {
   process.stdout.write(JSON.stringify(out, null, 2) + '\n');
 }
 
+// each runs the definitions of a corpus over FHIR data, each in its own library,
+// for the patient of data.json: a Patient and lists of resources by type, the
+// file the snapshot of go-cql serves. A definition the translator refused has no
+// ELM, and Evaluate.java has its error; it is not run here.
+async function each([elmsPath, cqlPath, helpersPath, dataPath]) {
+  if (!elmsPath || !cqlPath || !helpersPath) {
+    console.error('usage: node evaluate.js --each <elms.json> <corpus.cql> <FHIRHelpers.elm.json> [data.json]');
+    process.exit(2);
+  }
+  const elms = JSON.parse(fs.readFileSync(elmsPath, 'utf8'));
+  const helpers = JSON.parse(fs.readFileSync(helpersPath, 'utf8'));
+  const executionDateTime = cql.DateTime.parse(EVALUATION);
+  let bundle = null;
+  let patientId = null;
+  if (dataPath) {
+    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    const entry = [];
+    for (const [kind, v] of Object.entries(data)) {
+      for (const resource of Array.isArray(v) ? v : [v]) {
+        entry.push({ resource });
+        if (kind === 'Patient') patientId = resource.id;
+      }
+    }
+    bundle = { resourceType: 'Bundle', type: 'collection', entry };
+  }
+  const results = {};
+  for (const [name, elm] of Object.entries(elms)) {
+    let entry;
+    try {
+      const library = new cql.Library(elm, new cql.Repository({ FHIRHelpers: helpers }));
+      const def = elm.library.statements.def.find((d) => d.name === name);
+      let value;
+      if (bundle) {
+        // A source per definition: an execution walks the patients of its
+        // source, and the next one would find none left.
+        const source = cqlfhir.PatientSource.FHIRv401();
+        source.loadBundles([bundle]);
+        const out = await new cql.Executor(library).exec(source, executionDateTime);
+        value = out.patientResults[patientId][name];
+      } else {
+        const ctx = new cql.UnfilteredContext(library, new cql.Results(), undefined, {}, executionDateTime);
+        value = await library.expressions[name].exec(ctx);
+      }
+      entry = encode(value, typeOf(def));
+    } catch (e) {
+      entry = { error: e.constructor.name, message: String(e.message) };
+    }
+    results[name] = entry;
+  }
+  const out = {
+    library: 'corpus ' + cqlPath.split('/').pop(),
+    sourceSha256: crypto.createHash('sha256').update(fs.readFileSync(cqlPath)).digest('hex'),
+    engine: 'cql-execution ' + require('cql-execution/package.json').version +
+      ', cql-exec-fhir ' + require('cql-exec-fhir/package.json').version,
+    evaluationDateTime: EVALUATION,
+    results,
+  };
+  process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+}
+
 // typeOf reads the static type the translator annotated a definition with.
 // cql-execution keeps Integer and Decimal as the same JavaScript number, so the
 // runtime value cannot tell them apart and the annotation is the only source.
@@ -80,6 +148,21 @@ function nameOf(spec) {
 
 function encode(v, spec) {
   if (v === null || v === undefined) return null;
+  // A FHIR value from the data: a resource, an element or a primitive, by its
+  // type in the model and its JSON, as Evaluate.java writes one.
+  if (typeof v.getTypeInfo === 'function' && v.getTypeInfo() != null) {
+    const name = 'FHIR.' + v.getTypeInfo().name.replace(/^FHIR\./, '');
+    const json = v._json;
+    // A primitive comes wrapped, { value: 'male' }, beside its id and
+    // extensions; Evaluate.java writes the value itself. It is told by that
+    // shape rather than by its type's name, since a binding names it here —
+    // FHIR.AdministrativeGender where the Java engine says FHIR.code.
+    if (json !== null && typeof json === 'object' && 'value' in json &&
+        Object.keys(json).every((k) => ['value', 'id', 'extension'].includes(k))) {
+      return { type: name, value: String(json.value) };
+    }
+    return { type: name, value: json !== null && typeof json === 'object' ? JSON.stringify(json) : String(json) };
+  }
   if (typeof v === 'boolean') return { type: 'Boolean', value: v };
   // A Long comes back as text or a bigint, not a number, so the static type is
   // read before the JavaScript one.
