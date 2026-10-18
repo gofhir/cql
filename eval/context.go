@@ -609,6 +609,20 @@ func (c *Context) ChildScope() *Context {
 	}
 }
 
+// boundLocally reports whether name is an alias or a let in scope, which a
+// definition of the same name stands behind.
+func (c *Context) boundLocally(name string) bool {
+	for s := c; s != nil; s = s.parent {
+		if _, ok := s.Aliases[name]; ok {
+			return true
+		}
+		if _, ok := s.LetBindings[name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 // ResolveIdentifier looks up a name in order: aliases, let bindings, definitions, parameters.
 func (c *Context) ResolveIdentifier(name string) (fptypes.Value, bool) {
 	if v, ok := c.Aliases[name]; ok {

@@ -91,6 +91,10 @@ var runtimeReferences = []struct {
 			// evaluate.js reads a number's type from the translator's annotation.
 			// On a row about the type itself, that is the translator answering.
 			"ListIntDec": "it cannot tell Integer from Decimal; the type it records is the translator's",
+			// The successor of the largest value is an error in the
+			// specification, and in the Java engine; cql-execution answers null.
+			"IntegerSuccessorOfMaximum": "it answers null where the specification raises an error",
+			"LongSuccessorOfMaximum":    "it answers null where the specification raises an error",
 			// Decimal arithmetic runs in binary floating point there, below the
 			// scale of 8 the specification gives the type.
 			"DecimalDivision":                 "it divides in binary floating point: 3.3333333333333335",
@@ -175,6 +179,12 @@ var decidedRuntimeAnswers = map[string]struct {
 	"ConvertsToDecimalOutOfRange": {"Boolean(false)", "ConvertsToDecimal is whether ToDecimal succeeds, and " +
 		"ToDecimal of a string past the largest Decimal is null in both engines; the Java engine answers true here " +
 		"all the same"},
+	"IntegerNegateMinimum":       {"null", overflowDecided + ": -(minimum Integer) is past the largest one"},
+	"IntegerAbsMinimum":          {"null", overflowDecided + ": the specification names Abs(minimum Integer) as null"},
+	"IntegerSumOverflow":         {"null", overflowDecided + ", for the sum as a whole"},
+	"IntegerProductOverflow":     {"null", overflowDecided + ", for the product as a whole"},
+	"IntegerTruncatePastTheType": {"null", overflowDecided + ", as Floor and Ceiling past it are in the conformance suite"},
+	"LongAddOverflow":            {"null", overflowDecided + "; cql-execution concatenates the digits"},
 	"DecimalWholePowerExact": {"Decimal(0.0441)", "a whole-number power is computed in decimal: through a float " +
 		"0.21 ^ 2 is 0.044099999999999993, which floors to 0.04409999 in the Java engine, where 0.21 * 0.21 is 0.0441"},
 	"DecimalLogNearInteger": {"Decimal(3)", "an exact power has a whole-number logarithm, checked in decimal: " +
@@ -208,6 +218,11 @@ var disputedRuntimeAnswers = map[string]struct {
 	agree []string
 	why   string
 }{
+	"IntegerAddOverflow":      {"null", []string{"cql-execution"}, overflowSettled},
+	"IntegerMultiplyOverflow": {"null", []string{"cql-execution"}, overflowSettled},
+	"IntegerDivOverflow":      {"null", []string{"cql-execution"}, overflowSettled},
+	"IntegerPowerOverflow":    {"null", []string{"cql-execution"}, overflowSettled},
+	"LongMultiplyOverflow":    {"null", []string{"cql-execution"}, overflowSettled},
 	"NoReturn": {"List[Integer(1), Integer(1), Integer(2)]", []string{"the Java engine"},
 		noReturnSettled + ". This row has no sort, which the conformance cases have; it rests on them by " +
 			"analogy, since a sort orders the elements a query keeps and does not decide which"},
@@ -227,6 +242,17 @@ const setOpNullSettled = "a null operand of union, or the second of except, is a
 	"and returns \"all unique elements\"; Except \"the operation is performed as though the second argument " +
 	"was an empty list\" and \"each element will appear in the result at most once\" (CQL 1.5, list " +
 	"operators). The Java engine answers so; cql-execution returns the other operand with its duplicates"
+
+// overflowDecided is why a result past its type is null where neither
+// reference answers so.
+const overflowDecided = "a result past its type, 32 bits for an Integer and 64 for a Long, is null, as the " +
+	"specification has it; the Java engine wraps it, and cql-execution answers it whole"
+
+// overflowSettled is how the overflow rows cql-execution agrees on were
+// settled.
+const overflowSettled = "a result past its type is null: \"if the result of the operation cannot be " +
+	"represented, the result is null\" (CQL 1.5, arithmetic operators), for an Integer of 32 bits and a Long " +
+	"of 64. The Java engine wraps it; cql-execution answers null here, and not for every operator"
 
 // noReturnSettled is how the NoReturn dispute was settled.
 const noReturnSettled = "a single source with no return clause keeps its duplicates: the Java engine keeps them, " +

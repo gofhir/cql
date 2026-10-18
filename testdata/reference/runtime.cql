@@ -229,3 +229,18 @@ define PropertyOfEmptyList: (List<Tuple{a Integer}>{}).a
 define PropertyOfListAllNull: ({Tuple{a: null as Integer}, Tuple{a: null as Integer}}).a
 define PropertyOfListInnerNull: ({Tuple{a: {1, null as Integer}}, Tuple{a: {3}}}).a
 define PropertyOfNullList: (null as List<Tuple{a Integer}>).a
+// An Integer is 32 bits and a Long 64, and a result past its type is null.
+define IntegerAddOverflow: 2147483647 + 1
+define IntegerMultiplyOverflow: 65536 * 65536
+define IntegerNegateMinimum: -(-2147483648)
+define IntegerAbsMinimum: Abs(-2147483648)
+define IntegerDivOverflow: -2147483648 div -1
+define IntegerSumOverflow: Sum({2147483647, 1})
+define IntegerProductOverflow: Product({65536, 65536})
+define IntegerPowerOverflow: 2 ^ 31
+define IntegerTruncatePastTheType: Truncate(3000000000.5)
+define IntegerSumWithinTheType: Sum({2147483647, 1, -1}) // control
+define IntegerSuccessorOfMaximum: successor of 2147483647 // control
+define LongAddOverflow: 9223372036854775807L + 1L
+define LongMultiplyOverflow: 4611686018427387904L * 2L
+define LongSuccessorOfMaximum: successor of 9223372036854775807L // control

@@ -1,7 +1,9 @@
 package types
 
 import (
+	"errors"
 	"fmt"
+	"math"
 
 	"github.com/shopspring/decimal"
 
@@ -36,6 +38,11 @@ func HasSuccessor(v fptypes.Value) bool {
 // Successor returns the next value of an ordered type.
 func Successor(v fptypes.Value) (fptypes.Value, error) { return step(v, 1) }
 
+// ErrPastRange is a successor or predecessor past the range of its type: of
+// the largest Long, or — the evaluator's to tell, from the static type — of
+// the largest Integer. The specification makes it an error, not null.
+var ErrPastRange = errors.New("the result is past the range of its type")
+
 // Predecessor returns the previous value of an ordered type.
 func Predecessor(v fptypes.Value) (fptypes.Value, error) { return step(v, -1) }
 
@@ -50,6 +57,15 @@ func step(v fptypes.Value, delta int) (fptypes.Value, error) {
 	}
 	switch t := v.(type) {
 	case fptypes.Integer:
+		// Past the largest or the least value is an error, as it is for the
+		// other types; the int64 wrapped there. The 32-bit edge of an Integer
+		// is the static type's, and the evaluator's to catch.
+		if delta > 0 && t.Value() == math.MaxInt64 {
+			return nil, fmt.Errorf("successor of %d: %w", t.Value(), ErrPastRange)
+		}
+		if delta < 0 && t.Value() == math.MinInt64 {
+			return nil, fmt.Errorf("predecessor of %d: %w", t.Value(), ErrPastRange)
+		}
 		return fptypes.NewInteger(t.Value() + int64(delta)), nil
 
 	case fptypes.Decimal:

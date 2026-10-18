@@ -1446,7 +1446,8 @@ func (e *Evaluator) evalBinary(n *ast.BinaryExpression) (fptypes.Value, error) {
 		}
 
 	case ast.OpAdd, ast.OpSubtract, ast.OpMultiply, ast.OpDivide, ast.OpDiv, ast.OpMod, ast.OpPower:
-		return e.evalArithmetic(n.Operator, left, right)
+		v, err := e.evalArithmetic(n.Operator, left, right)
+		return e.withinInteger(n, v, err)
 
 	case ast.OpConcatenate:
 		return fptypes.NewString(left.String() + right.String()), nil
@@ -1497,13 +1498,15 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 	ri, riOk := right.(fptypes.Integer)
 	if liOk && riOk {
 		lv, rv := li.Value(), ri.Value()
+		// Past the 64 bits a Long holds is null, where it wrapped; the 32 of
+		// an Integer are the static type's, and withinInteger's.
 		switch op {
 		case ast.OpAdd:
-			return fptypes.NewInteger(lv + rv), nil
+			return exactInteger(li.AddExact(ri))
 		case ast.OpSubtract:
-			return fptypes.NewInteger(lv - rv), nil
+			return exactInteger(li.SubtractExact(ri))
 		case ast.OpMultiply:
-			return fptypes.NewInteger(lv * rv), nil
+			return exactInteger(li.MultiplyExact(ri))
 		case ast.OpDivide:
 			if rv == 0 {
 				return nil, nil // CQL: divide by zero returns null
@@ -1513,7 +1516,7 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 			if rv == 0 {
 				return nil, nil
 			}
-			return fptypes.NewInteger(lv / rv), nil
+			return exactInteger(li.Div(ri))
 		case ast.OpMod:
 			if rv == 0 {
 				return nil, nil
@@ -2653,7 +2656,8 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 			return nil, nil
 		}
 		if i, ok := operand.(fptypes.Integer); ok {
-			return fptypes.NewInteger(-i.Value()), nil
+			v, err := exactInteger(i.NegateExact())
+			return e.withinInteger(n, v, err)
 		}
 		if q, ok := operand.(fptypes.Quantity); ok {
 			return fptypes.NewQuantityFromDecimal(q.Value().Neg(), q.Unit()), nil
@@ -2695,7 +2699,8 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		}
 		return nil, nil
 	case ast.OpSuccessorOf, ast.OpPredecessorOf:
-		return e.evalSuccessorPredecessor(n.Operator, operand)
+		v, err := e.evalSuccessorPredecessor(n.Operator, operand)
+		return e.stepWithinInteger(n, v, err)
 	case ast.OpPointFrom:
 		if operand == nil {
 			return nil, nil
@@ -3160,6 +3165,10 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 		return e.callOverload(overloads, n.Operands, nil)
 	}
 	// Built-in functions handled here
+	if namedIn(n.Name, integerArithmetic) {
+		v, err := e.evalBuiltinFunction(n)
+		return e.withinInteger(n, v, err)
+	}
 	return e.evalBuiltinFunction(n)
 }
 
@@ -7714,7 +7723,7 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 		return nil, nil
 	}
 	if allInt {
-		return fptypes.NewInteger(sum.IntPart()), nil
+		return integerOfExact(sum), nil
 	}
 	return newDecimalFromD(sum), nil
 }
@@ -7847,7 +7856,7 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 		return nil, nil
 	}
 	if allInt {
-		return fptypes.NewInteger(product.IntPart()), nil
+		return integerOfExact(product), nil
 	}
 	return newDecimalFromD(product), nil
 }
@@ -7857,11 +7866,10 @@ func (e *Evaluator) evalAbs(source fptypes.Value) (fptypes.Value, error) {
 		return nil, nil
 	}
 	if i, ok := source.(fptypes.Integer); ok {
-		v := i.Value()
-		if v < 0 {
-			v = -v
+		if i.Value() < 0 {
+			return exactInteger(i.NegateExact())
 		}
-		return fptypes.NewInteger(v), nil
+		return i, nil
 	}
 	if q, ok := source.(fptypes.Quantity); ok {
 		v := q.Value()

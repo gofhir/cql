@@ -222,6 +222,14 @@ divisions by zero. A change elsewhere — intervals, temporal arithmetic, lists,
 strings — adds the area it needs, with literals chosen for that area's edges, as
 `arithmetic` chooses the Decimal scale's.
 
+`integer` covers the operators and functions whose Integer or Long result can
+fall past its type, over the edges of both. There the Java engine is not an
+oracle: it wraps a result past its type, where the specification makes it
+null, so most of the differences in a run are its own. Read them against the
+specification — the result as an exact number, null past 32 bits for an
+Integer or 64 for a Long — and compare runs with `-baseline`, so that what a
+change moves stands apart from what Java always answers.
+
 ## Two things worth knowing
 
 `cql-to-elm-cli`'s published POM is invalid — it declares

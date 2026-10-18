@@ -1,6 +1,6 @@
 {
   "library": "RuntimeProbe",
-  "sourceSha256": "cb01e0d19edbd3c6a96e323d375bdf24770d99a61fc4ebda8c937bb19cd28adf",
+  "sourceSha256": "d11bfa9d5a2388282829841c320a2015087bebb28e56c9ee6fdbc04295736bc6",
   "engine": "cql-execution 3.3.2",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -1067,6 +1067,41 @@
         }
       ]
     },
-    "PropertyOfNullList": null
+    "PropertyOfNullList": null,
+    "IntegerAddOverflow": null,
+    "IntegerMultiplyOverflow": null,
+    "IntegerNegateMinimum": {
+      "type": "Integer",
+      "value": "2147483648"
+    },
+    "IntegerAbsMinimum": {
+      "type": "Integer",
+      "value": "2147483648"
+    },
+    "IntegerDivOverflow": null,
+    "IntegerSumOverflow": {
+      "type": "Integer",
+      "value": "2147483648"
+    },
+    "IntegerProductOverflow": {
+      "type": "Integer",
+      "value": "4294967296"
+    },
+    "IntegerPowerOverflow": null,
+    "IntegerTruncatePastTheType": {
+      "type": "Integer",
+      "value": "3000000000"
+    },
+    "IntegerSumWithinTheType": {
+      "type": "Integer",
+      "value": "2147483647"
+    },
+    "IntegerSuccessorOfMaximum": null,
+    "LongAddOverflow": {
+      "type": "Long",
+      "value": "92233720368547758071"
+    },
+    "LongMultiplyOverflow": null,
+    "LongSuccessorOfMaximum": null
   }
 }
