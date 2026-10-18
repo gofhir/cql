@@ -1,0 +1,2896 @@
+{
+  "library": "corpus types.cql",
+  "sourceSha256": "2260372802166136c6bfaf2c06eb1971d9f15d3eeb0896c3860c81f7df4c3877",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.1.6",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as {urn:hl7-org:elm-types:r1}Date\n\tCQL Library:\tD0|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:12-2:54\n"
+    },
+    "D1": null,
+    "D2": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as {urn:hl7-org:elm-types:r1}Quantity\n\tCQL Library:\tD2|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:12-2:49\n"
+    },
+    "D3": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D4": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D5": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D6": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D7": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D8": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D9": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D10": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD10|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:62\n"
+    },
+    "D11": null,
+    "D12": null,
+    "D13": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD13|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:70\n"
+    },
+    "D14": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D15": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D16": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D17": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D18": null,
+    "D19": null,
+    "D20": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Quantity\n\tCQL Library:\tD20|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:67\n"
+    },
+    "D21": null,
+    "D22": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD22|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:65\n"
+    },
+    "D23": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D24": null,
+    "D25": null,
+    "D26": null,
+    "D27": null,
+    "D28": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D29": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as Interval<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD29|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:57\n"
+    },
+    "D30": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D31": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD31|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:57\n"
+    },
+    "D32": null,
+    "D33": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD33|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:72\n"
+    },
+    "D34": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D35": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D36": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Long\n\tCQL Library:\tD36|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:52\n"
+    },
+    "D37": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Boolean as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD37|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:52\n"
+    },
+    "D38": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D39": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D40": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D41": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D42": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D43": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD43|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:64\n"
+    },
+    "D44": {
+      "type": "Unencoded:Concept",
+      "value": "[object Object]"
+    },
+    "D45": null,
+    "D46": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D47": null,
+    "D48": null,
+    "D49": null,
+    "D50": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D51": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD51|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:67\n"
+    },
+    "D52": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D53": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D54": {
+      "type": "String",
+      "value": "5"
+    },
+    "D55": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D56": null,
+    "D57": null,
+    "D58": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D59": null,
+    "D60": null,
+    "D61": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D62": null,
+    "D63": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD63|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:87\n"
+    },
+    "D64": null,
+    "D65": null,
+    "D66": null,
+    "D67": null,
+    "D68": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as {urn:hl7-org:elm-types:r1}DateTime\n\tCQL Library:\tD68|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:50\n"
+    },
+    "D69": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D70": {
+      "type": "Unencoded:Code",
+      "value": "[object Object]"
+    },
+    "D71": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD71|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:54\n"
+    },
+    "D72": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:00:00Z"
+    },
+    "D73": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D74": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D75": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<>> as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD75|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:63\n"
+    },
+    "D76": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D77": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D78": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D79": {
+      "type": "Unencoded:Code",
+      "value": "[object Object]"
+    },
+    "D80": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D81": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D82": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D83": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D84": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D85": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD85|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:70\n"
+    },
+    "D86": null,
+    "D87": null,
+    "D88": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D89": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D90": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D91": null,
+    "D92": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D93": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D94": null,
+    "D95": null,
+    "D96": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D97": null,
+    "D98": null,
+    "D99": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D100": null,
+    "D101": null,
+    "D102": null,
+    "D103": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D104": {
+      "type": "List",
+      "elements": []
+    },
+    "D105": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D106": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D107": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D108": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D109": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<>> as {urn:hl7-org:elm-types:r1}String\n\tCQL Library:\tD109|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:63\n"
+    },
+    "D110": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD110|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:72\n"
+    },
+    "D111": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D112": {
+      "type": "String",
+      "value": "5"
+    },
+    "D113": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D114": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D115": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D116": null,
+    "D117": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD117|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:48\n"
+    },
+    "D118": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD118|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:56\n"
+    },
+    "D119": null,
+    "D120": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D121": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D122": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D123": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D124": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D125": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD125|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:56\n"
+    },
+    "D126": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D127": null,
+    "D128": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D129": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D130": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D131": null,
+    "D132": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D133": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD133|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:64\n"
+    },
+    "D134": {
+      "type": "Integer",
+      "value": "5"
+    },
+    "D135": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D136": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Boolean as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD136|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:55\n"
+    },
+    "D137": null,
+    "D138": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D139": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D140": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D141": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D142": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D143": null,
+    "D144": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D145": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D146": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D147": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as Interval<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD147|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:75\n"
+    },
+    "D148": null,
+    "D149": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD149|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:74\n"
+    },
+    "D150": null,
+    "D151": {
+      "type": "Interval",
+      "low": {
+        "type": "Unencoded:number",
+        "value": "1"
+      },
+      "lowClosed": true,
+      "high": null,
+      "highClosed": true
+    },
+    "D152": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D153": null,
+    "D154": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D155": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD155|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:74\n"
+    },
+    "D156": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD156|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:54\n"
+    },
+    "D157": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D158": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D159": null,
+    "D160": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D161": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D162": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as {urn:hl7-org:elm-types:r1}Long\n\tCQL Library:\tD162|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:56\n"
+    },
+    "D163": null,
+    "D164": null,
+    "D165": null,
+    "D166": null,
+    "D167": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D168": {
+      "type": "String",
+      "value": "a"
+    },
+    "D169": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD169|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:64\n"
+    },
+    "D170": null,
+    "D171": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D172": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D173": null,
+    "D174": null,
+    "D175": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Date\n\tCQL Library:\tD175|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:63\n"
+    },
+    "D176": null,
+    "D177": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D178": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D179": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D180": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D181": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D182": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D183": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD183|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:72\n"
+    },
+    "D184": null,
+    "D185": null,
+    "D186": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D187": null,
+    "D188": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D189": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D190": null,
+    "D191": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD191|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:94\n"
+    },
+    "D192": null,
+    "D193": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as Interval<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD193|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:80\n"
+    },
+    "D194": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D195": null,
+    "D196": {
+      "type": "String",
+      "value": "a"
+    },
+    "D197": {
+      "type": "String",
+      "value": "a"
+    },
+    "D198": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D199": null,
+    "D200": {
+      "type": "String",
+      "value": "5"
+    },
+    "D201": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D202": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as {urn:hl7-org:elm-types:r1}Date\n\tCQL Library:\tD202|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:49\n"
+    },
+    "D203": null,
+    "D204": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D205": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D206": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D207": null,
+    "D208": {
+      "type": "Long",
+      "value": "a"
+    },
+    "D209": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D210": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D211": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D212": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D213": {
+      "type": "Decimal",
+      "value": "5"
+    },
+    "D214": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as Interval<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD214|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:98\n"
+    },
+    "D215": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D216": null,
+    "D217": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D218": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D219": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D220": null,
+    "D221": null,
+    "D222": null,
+    "D223": {
+      "type": "Unencoded:number",
+      "value": "2.5"
+    },
+    "D224": null,
+    "D225": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D226": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Date\n\tCQL Library:\tD226|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D227": null,
+    "D228": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D229": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD229|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:90\n"
+    },
+    "D230": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D231": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D232": null,
+    "D233": null,
+    "D234": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D235": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D236": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D237": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D238": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D239": null,
+    "D240": null,
+    "D241": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D242": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Date as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD242|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:57\n"
+    },
+    "D243": null,
+    "D244": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D245": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Boolean\n\tCQL Library:\tD245|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:74\n"
+    },
+    "D246": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D247": {
+      "type": "Unencoded:Code",
+      "value": "[object Object]"
+    },
+    "D248": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D249": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D250": null,
+    "D251": null,
+    "D252": null,
+    "D253": null,
+    "D254": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D255": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D256": null,
+    "D257": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D258": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D259": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as Interval<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD259|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D260": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D261": null,
+    "D262": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D263": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D264": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D265": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D266": null,
+    "D267": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D268": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D269": null,
+    "D270": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D271": null,
+    "D272": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D273": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D274": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D275": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D276": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D277": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Boolean as {urn:hl7-org:elm-types:r1}DateTime\n\tCQL Library:\tD277|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:54\n"
+    },
+    "D278": null,
+    "D279": null,
+    "D280": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D281": null,
+    "D282": null,
+    "D283": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D284": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D285": null,
+    "D286": null,
+    "D287": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D288": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD288|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D289": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D290": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD290|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:51\n"
+    },
+    "D291": null,
+    "D292": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D293": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D294": null,
+    "D295": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D296": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD296|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:54\n"
+    },
+    "D297": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D298": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D299": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D300": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D301": null,
+    "D302": null,
+    "D303": null,
+    "D304": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D305": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D306": null,
+    "D307": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}String\n\tCQL Library:\tD307|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:73\n"
+    },
+    "D308": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD308|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:48\n"
+    },
+    "D309": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Tuple<a {urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD309|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:62\n"
+    },
+    "D310": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D311": null,
+    "D312": null,
+    "D313": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D314": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D315": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D316": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D317": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D318": null,
+    "D319": null,
+    "D320": null,
+    "D321": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Tuple<a {urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD321|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:68\n"
+    },
+    "D322": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D323": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D324": null,
+    "D325": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D326": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD326|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:68\n"
+    },
+    "D327": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D328": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D329": null,
+    "D330": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Vocabulary\n\tCQL Library:\tD330|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:69\n"
+    },
+    "D331": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D332": null,
+    "D333": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D334": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D335": null,
+    "D336": null,
+    "D337": null,
+    "D338": {
+      "type": "Unencoded:Code",
+      "value": "[object Object]"
+    },
+    "D339": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:00:00Z"
+    },
+    "D340": null,
+    "D341": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D342": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D343": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D344": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Tuple<a {urn:hl7-org:elm-types:r1}Integer> as Interval<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD344|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:68\n"
+    },
+    "D345": null,
+    "D346": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D347": null,
+    "D348": null,
+    "D349": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD349|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D350": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D351": null,
+    "D352": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D353": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD353|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D354": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D355": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD355|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:56\n"
+    },
+    "D356": null,
+    "D357": null,
+    "D358": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D359": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Vocabulary\n\tCQL Library:\tD359|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:60\n"
+    },
+    "D360": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D361": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D362": null,
+    "D363": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as {urn:hl7-org:elm-types:r1}String\n\tCQL Library:\tD363|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:87\n"
+    },
+    "D364": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D365": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D366": null,
+    "D367": null,
+    "D368": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D369": null,
+    "D370": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D371": null,
+    "D372": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:00:00Z"
+    },
+    "D373": null,
+    "D374": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Tuple<a {urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}String\n\tCQL Library:\tD374|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D375": null,
+    "D376": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D377": null,
+    "D378": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:00:00Z"
+    },
+    "D379": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D380": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D381": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD381|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:71\n"
+    },
+    "D382": null,
+    "D383": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD383|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D384": null,
+    "D385": null,
+    "D386": {
+      "type": "Unencoded:Concept",
+      "value": "[object Object]"
+    },
+    "D387": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "a"
+        }
+      ]
+    },
+    "D388": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D389": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D390": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D391": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D392": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D393": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D394": null,
+    "D395": null,
+    "D396": null,
+    "D397": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D398": null,
+    "D399": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD399|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:63\n"
+    },
+    "D400": null,
+    "D401": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as Interval<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD401|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:72\n"
+    },
+    "D402": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as Interval<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD402|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:84\n"
+    },
+    "D403": null,
+    "D404": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D405": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D406": null,
+    "D407": null,
+    "D408": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D409": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Date as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD409|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:60\n"
+    },
+    "D410": null,
+    "D411": null,
+    "D412": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D413": null,
+    "D414": null,
+    "D415": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D416": null,
+    "D417": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D418": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD418|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:47\n"
+    },
+    "D419": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D420": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D421": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D422": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D423": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D424": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}DateTime\n\tCQL Library:\tD424|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D425": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D426": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Boolean as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD426|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D427": null,
+    "D428": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as {urn:hl7-org:elm-types:r1}Quantity\n\tCQL Library:\tD428|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D429": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D430": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D431": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD431|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:63\n"
+    },
+    "D432": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<>> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD432|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:60\n"
+    },
+    "D433": null,
+    "D434": null,
+    "D435": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D436": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D437": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D438": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D439": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D440": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D441": {
+      "type": "Decimal",
+      "value": "5"
+    },
+    "D442": null,
+    "D443": null,
+    "D444": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D445": null,
+    "D446": null,
+    "D447": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD447|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:66\n"
+    },
+    "D448": {
+      "type": "String",
+      "value": "5"
+    },
+    "D449": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}DateTime\n\tCQL Library:\tD449|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D450": null,
+    "D451": null,
+    "D452": null,
+    "D453": null,
+    "D454": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D455": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD455|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:62\n"
+    },
+    "D456": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D457": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D458": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D459": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D460": null,
+    "D461": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D462": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Long\n\tCQL Library:\tD462|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:64\n"
+    },
+    "D463": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as Interval<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD463|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:65\n"
+    },
+    "D464": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as {urn:hl7-org:elm-types:r1}Boolean\n\tCQL Library:\tD464|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D465": null,
+    "D466": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D467": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D468": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D469": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D470": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD470|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:55\n"
+    },
+    "D471": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D472": null,
+    "D473": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D474": null,
+    "D475": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D476": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D477": null,
+    "D478": null,
+    "D479": null,
+    "D480": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD480|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:69\n"
+    },
+    "D481": null,
+    "D482": {
+      "type": "Unencoded:Code",
+      "value": "[object Object]"
+    },
+    "D483": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D484": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D485": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D486": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Unencoded:number",
+          "value": "1"
+        },
+        {
+          "type": "Unencoded:number",
+          "value": "2"
+        }
+      ]
+    },
+    "D487": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D488": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D489": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D490": null,
+    "D491": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D492": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D493": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD493|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:55\n"
+    },
+    "D494": null,
+    "D495": null,
+    "D496": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D497": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D498": null,
+    "D499": null,
+    "D500": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D501": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D502": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D503": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D504": null,
+    "D505": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D506": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D507": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D508": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D509": null,
+    "D510": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as Interval<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD510|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:62\n"
+    },
+    "D511": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:00:00Z"
+    },
+    "D512": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D513": null,
+    "D514": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D515": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D516": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as Interval<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD516|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:75\n"
+    },
+    "D517": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D518": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D519": null,
+    "D520": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "a"
+        }
+      ]
+    },
+    "D521": {
+      "type": "List",
+      "elements": []
+    },
+    "D522": null,
+    "D523": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD523|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:56\n"
+    },
+    "D524": null,
+    "D525": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D526": null,
+    "D527": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D528": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D529": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D530": null,
+    "D531": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD531|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D532": null,
+    "D533": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD533|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D534": null,
+    "D535": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D536": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D537": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as {urn:hl7-org:elm-types:r1}DateTime\n\tCQL Library:\tD537|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D538": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D539": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D540": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D541": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D542": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D543": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D544": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D545": null,
+    "D546": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD546|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:62\n"
+    },
+    "D547": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD547|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D548": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD548|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:49\n"
+    },
+    "D549": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD549|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:79\n"
+    },
+    "D550": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D551": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D552": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D553": null,
+    "D554": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D555": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D556": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD556|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:47\n"
+    },
+    "D557": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D558": null,
+    "D559": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D560": {
+      "type": "Long",
+      "value": "5"
+    },
+    "D561": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D562": null,
+    "D563": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D564": null,
+    "D565": null,
+    "D566": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D567": null,
+    "D568": null,
+    "D569": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD569|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D570": null,
+    "D571": null,
+    "D572": null,
+    "D573": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D574": null,
+    "D575": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D576": null,
+    "D577": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D578": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D579": null,
+    "D580": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D581": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Quantity\n\tCQL Library:\tD581|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D582": null,
+    "D583": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D584": null,
+    "D585": null,
+    "D586": null,
+    "D587": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D588": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<>> as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD588|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D589": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D590": null,
+    "D591": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD591|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:73\n"
+    },
+    "D592": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "a"
+        }
+      ]
+    },
+    "D593": null,
+    "D594": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D595": null,
+    "D596": null,
+    "D597": null,
+    "D598": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD598|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D599": null,
+    "D600": null,
+    "D601": null,
+    "D602": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D603": null,
+    "D604": null,
+    "D605": null,
+    "D606": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D607": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D608": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD608|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:64\n"
+    },
+    "D609": null,
+    "D610": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D611": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D612": null,
+    "D613": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD613|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:85\n"
+    },
+    "D614": {
+      "type": "Interval",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "lowClosed": true,
+      "high": {
+        "type": "Integer",
+        "value": "2"
+      },
+      "highClosed": true
+    },
+    "D615": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD615|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:71\n"
+    },
+    "D616": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD616|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D617": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D618": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D619": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D620": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D621": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD621|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:80\n"
+    },
+    "D622": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D623": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Boolean as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD623|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D624": null,
+    "D625": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D626": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:00:00Z"
+    },
+    "D627": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}String\n\tCQL Library:\tD627|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:55\n"
+    },
+    "D628": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D629": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD629|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:54\n"
+    },
+    "D630": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D631": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D632": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D633": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D634": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D635": null,
+    "D636": null,
+    "D637": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD637|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D638": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D639": null,
+    "D640": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D641": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D642": null,
+    "D643": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D644": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD644|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:66\n"
+    },
+    "D645": {
+      "type": "Interval",
+      "low": {
+        "type": "String",
+        "value": "a"
+      },
+      "lowClosed": true,
+      "high": {
+        "type": "String",
+        "value": "b"
+      },
+      "highClosed": true
+    },
+    "D646": null,
+    "D647": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D648": null,
+    "D649": null,
+    "D650": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as Interval<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD650|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D651": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD651|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:67\n"
+    },
+    "D652": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D653": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D654": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D655": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as {urn:hl7-org:elm-types:r1}Boolean\n\tCQL Library:\tD655|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:50\n"
+    },
+    "D656": null,
+    "D657": null,
+    "D658": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D659": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D660": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D661": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D662": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D663": null,
+    "D664": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D665": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D666": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "a"
+        }
+      ]
+    },
+    "D667": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD667|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:53\n"
+    },
+    "D668": null,
+    "D669": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D670": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D671": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D672": null,
+    "D673": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D674": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D675": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as Interval<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD675|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:94\n"
+    },
+    "D676": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D677": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D678": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D679": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as {urn:hl7-org:elm-types:r1}Quantity\n\tCQL Library:\tD679|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:89\n"
+    },
+    "D680": null,
+    "D681": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as Interval<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD681|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:68\n"
+    },
+    "D682": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D683": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Date as Interval<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD683|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:70\n"
+    },
+    "D684": null,
+    "D685": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD685|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:60\n"
+    },
+    "D686": null,
+    "D687": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D688": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D689": null,
+    "D690": {
+      "type": "Unencoded:Code",
+      "value": "[object Object]"
+    },
+    "D691": null,
+    "D692": null,
+    "D693": null,
+    "D694": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D695": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD695|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:68\n"
+    },
+    "D696": null,
+    "D697": null,
+    "D698": {
+      "type": "List",
+      "elements": []
+    },
+    "D699": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD699|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:67\n"
+    },
+    "D700": null,
+    "D701": null,
+    "D702": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D703": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D704": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Boolean\n\tCQL Library:\tD704|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:55\n"
+    },
+    "D705": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Quantity\n\tCQL Library:\tD705|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:75\n"
+    },
+    "D706": null,
+    "D707": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D708": null,
+    "D709": null,
+    "D710": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD710|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D711": null,
+    "D712": null,
+    "D713": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D714": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D715": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D716": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD716|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D717": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D718": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as {urn:hl7-org:elm-types:r1}String\n\tCQL Library:\tD718|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:58\n"
+    },
+    "D719": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D720": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D721": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<>> as {urn:hl7-org:elm-types:r1}Date\n\tCQL Library:\tD721|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D722": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "1"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "D723": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD723|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:51\n"
+    },
+    "D724": null,
+    "D725": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D726": {
+      "type": "Long",
+      "value": "a"
+    },
+    "D727": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD727|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:57\n"
+    },
+    "D728": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D729": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D730": null,
+    "D731": null,
+    "D732": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D733": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Time as Interval<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD733|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:69\n"
+    },
+    "D734": {
+      "type": "Integer",
+      "value": "5"
+    },
+    "D735": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D736": null,
+    "D737": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D738": null,
+    "D739": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}String as {urn:hl7-org:elm-types:r1}Boolean\n\tCQL Library:\tD739|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:51\n"
+    },
+    "D740": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D741": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D742": null,
+    "D743": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D744": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D745": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D746": null,
+    "D747": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D748": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D749": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D750": {
+      "type": "Interval",
+      "low": {
+        "type": "String",
+        "value": "a"
+      },
+      "lowClosed": true,
+      "high": {
+        "type": "String",
+        "value": "b"
+      },
+      "highClosed": true
+    },
+    "D751": null,
+    "D752": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D753": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D754": null,
+    "D755": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Integer as Interval<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD755|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D756": null,
+    "D757": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D758": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<> as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD758|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:67\n"
+    },
+    "D759": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D760": {
+      "type": "Time",
+      "value": "10:00:00",
+      "precision": "second"
+    },
+    "D761": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D762": null,
+    "D763": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D764": null,
+    "D765": null,
+    "D766": null,
+    "D767": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D768": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD768|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:66\n"
+    },
+    "D769": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D770": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D771": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D772": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D773": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D774": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D775": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD775|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:95\n"
+    },
+    "D776": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D777": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD777|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D778": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D779": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D780": {
+      "type": "Long",
+      "value": "5"
+    },
+    "D781": null,
+    "D782": null,
+    "D783": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<>> as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD783|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:61\n"
+    },
+    "D784": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D785": null,
+    "D786": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Boolean as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD786|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:58\n"
+    },
+    "D787": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D788": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D789": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<>> as Interval<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD789|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:74\n"
+    },
+    "D790": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D791": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D792": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D793": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Tuple<a {urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD793|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:64\n"
+    },
+    "D794": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D795": null,
+    "D796": null,
+    "D797": null,
+    "D798": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D799": null,
+    "D800": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Unencoded:number",
+          "value": "1"
+        },
+        {
+          "type": "Unencoded:number",
+          "value": "2"
+        }
+      ]
+    },
+    "D801": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Tuple<a {urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD801|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:67\n"
+    },
+    "D802": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as List<{urn:hl7-org:elm-types:r1}Any>\n\tCQL Library:\tD802|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:57\n"
+    },
+    "D803": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D804": null,
+    "D805": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Date\n\tCQL Library:\tD805|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D806": null,
+    "D807": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D808": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D809": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D810": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D811": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D812": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D813": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Vocabulary\n\tCQL Library:\tD813|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D814": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D815": null,
+    "D816": null,
+    "D817": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Vocabulary\n\tCQL Library:\tD817|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:66\n"
+    },
+    "D818": null,
+    "D819": null,
+    "D820": null,
+    "D821": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D822": null,
+    "D823": {
+      "type": "List",
+      "elements": []
+    },
+    "D824": null,
+    "D825": null,
+    "D826": null,
+    "D827": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D828": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D829": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Interval<{urn:hl7-org:elm-types:r1}Integer> as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD829|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:69\n"
+    },
+    "D830": null,
+    "D831": null,
+    "D832": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast Tuple<a {urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Code\n\tCQL Library:\tD832|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D833": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as {urn:hl7-org:elm-types:r1}DateTime\n\tCQL Library:\tD833|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:67\n"
+    },
+    "D834": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D835": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D836": {
+      "type": "Unencoded:Object",
+      "value": "[object Object]"
+    },
+    "D837": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D838": null,
+    "D839": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D840": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D841": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D842": {
+      "type": "Decimal",
+      "value": "2.5"
+    },
+    "D843": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D844": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D845": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D846": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D847": {
+      "type": "Unencoded:Concept",
+      "value": "[object Object]"
+    },
+    "D848": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D849": null,
+    "D850": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D851": null,
+    "D852": null,
+    "D853": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}Concept\n\tCQL Library:\tD853|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:74\n"
+    },
+    "D854": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D855": null,
+    "D856": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D857": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D858": null,
+    "D859": null,
+    "D860": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D861": {
+      "type": "DateTime",
+      "value": "2020-01-01T10:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2020-01-01T10:00:00Z"
+    },
+    "D862": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D863": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D864": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D865": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as {urn:hl7-org:elm-types:r1}Decimal\n\tCQL Library:\tD865|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:88\n"
+    },
+    "D866": null,
+    "D867": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D868": null,
+    "D869": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D870": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Decimal as {urn:hl7-org:elm-types:r1}Boolean\n\tCQL Library:\tD870|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:52\n"
+    },
+    "D871": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D872": {
+      "type": "Quantity",
+      "value": "5",
+      "unit": "mg"
+    },
+    "D873": {
+      "type": "Interval",
+      "low": {
+        "type": "Unencoded:number",
+        "value": "1"
+      },
+      "lowClosed": true,
+      "high": {
+        "type": "Unencoded:number",
+        "value": "2"
+      },
+      "highClosed": true
+    },
+    "D874": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D875": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D876": {
+      "type": "Integer",
+      "value": "5"
+    },
+    "D877": null,
+    "D878": {
+      "type": "Date",
+      "value": "2020-01-01",
+      "precision": "day"
+    },
+    "D879": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D880": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as {urn:hl7-org:elm-types:r1}Time\n\tCQL Library:\tD880|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:63\n"
+    },
+    "D881": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D882": null,
+    "D883": null,
+    "D884": null,
+    "D885": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Date as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD885|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:67\n"
+    },
+    "D886": null,
+    "D887": {
+      "type": "Long",
+      "value": "5"
+    },
+    "D888": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD888|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:59\n"
+    },
+    "D889": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Concept as {urn:hl7-org:elm-types:r1}Date\n\tCQL Library:\tD889|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:85\n"
+    },
+    "D890": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as Interval<{urn:hl7-org:elm-types:r1}String>\n\tCQL Library:\tD890|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:68\n"
+    },
+    "D891": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}DateTime as {urn:hl7-org:elm-types:r1}String\n\tCQL Library:\tD891|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:54\n"
+    },
+    "D892": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D893": {
+      "type": "Unencoded:number",
+      "value": "2.5"
+    },
+    "D894": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D895": null,
+    "D896": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D897": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}String> as {urn:hl7-org:elm-types:r1}Quantity\n\tCQL Library:\tD897|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:57\n"
+    },
+    "D898": null,
+    "D899": {
+      "type": "Boolean",
+      "value": false
+    }
+  }
+}

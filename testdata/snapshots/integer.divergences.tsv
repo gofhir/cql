@@ -1,0 +1,622 @@
+# name	reference	note — see TestAnswersMatchTheReferences
+D0	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D102	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D104	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D106	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D107	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D108	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D108	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D109	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D110	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D111	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D112	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D114	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D115	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D116	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D125	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D126	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D128	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D129	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D133	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D134	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D135	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D135	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D136	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D139	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D14	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D14	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D144	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D146	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D147	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D148	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D15	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D151	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D154	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D154	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D156	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D157	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D158	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D158	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D159	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D16	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D16	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D161	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D161	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D162	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D166	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D167	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D167	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D168	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D172	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D173	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D174	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D175	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D175	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D177	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D178	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D181	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D181	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D182	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D182	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D186	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D187	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D188	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D188	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D189	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D191	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D191	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D193	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D193	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D194	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D195	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D202	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D205	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D205	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D206	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D208	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D209	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D21	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D212	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D212	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D214	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D214	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D217	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D219	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D220	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D220	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D223	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D223	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D225	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D227	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D23	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D23	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D230	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D236	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D239	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D239	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D240	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D241	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D244	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D245	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D245	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D248	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D248	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D249	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D249	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D251	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D252	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D253	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D253	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D256	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D256	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D26	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D261	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D262	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D263	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D263	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D264	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D264	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D267	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D267	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D269	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D269	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D27	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D271	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D272	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D278	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D28	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D280	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D280	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D283	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D284	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D284	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D285	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D286	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D288	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D288	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D29	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D29	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D291	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D292	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D292	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D293	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D296	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D297	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D297	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D298	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D298	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D3	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D3	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D302	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D303	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D304	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D305	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D306	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D311	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D312	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D314	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D315	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D319	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D32	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D32	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D320	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D324	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D325	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D326	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D327	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D328	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D328	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D329	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D33	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D334	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D334	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D335	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D336	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D340	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D340	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D342	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D343	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D346	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D346	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D348	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D350	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D351	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D352	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D352	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D356	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D356	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D359	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D36	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D360	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D360	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D361	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D362	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D366	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D369	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D370	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D371	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D372	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D373	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D375	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D376	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D378	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D378	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D379	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D379	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D381	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D383	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D39	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D390	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D390	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D395	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D395	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D396	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D398	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D4	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D403	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D404	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D405	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D406	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D406	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D408	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D41	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D411	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D411	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D413	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D417	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D419	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D42	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D420	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D420	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D422	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D424	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D425	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D426	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D427	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D428	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D428	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D429	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D431	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D433	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D433	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D435	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D435	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D437	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D438	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D439	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D44	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D44	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D441	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D443	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D443	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D447	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D447	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D448	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D449	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D450	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D451	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D452	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D456	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D456	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D457	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D458	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D459	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D459	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D460	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D460	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D462	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D472	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D48	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D480	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D481	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D482	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D482	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D483	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D483	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D486	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D487	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D487	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D489	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D49	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D491	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D498	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D5	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D500	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D503	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D504	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D505	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D506	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D506	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D507	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D508	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D51	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D51	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D512	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D513	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D514	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D514	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D515	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D518	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D518	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D519	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D519	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D520	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D522	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D522	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D525	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D525	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D526	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D528	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D528	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D530	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D530	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D531	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D534	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D537	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D538	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D538	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D539	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D539	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D542	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D543	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D546	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D546	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D547	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D55	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D550	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D551	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D552	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D554	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D56	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D561	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D562	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D563	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D565	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D565	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D568	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D568	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D569	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D57	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D570	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D570	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D571	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D576	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D578	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D578	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D580	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D583	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D584	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D587	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D588	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D589	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D593	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D594	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D596	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D596	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D597	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D598	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D599	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D60	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D600	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D601	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D604	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D609	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D609	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D610	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D611	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D612	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D612	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D615	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D619	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D620	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D622	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D623	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D624	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D624	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D626	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D629	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D630	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D630	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D636	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D636	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D638	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D64	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D640	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D645	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D645	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D647	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D648	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D648	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D649	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D65	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D65	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D652	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D652	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D653	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D654	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D655	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D659	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D663	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D664	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D665	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D665	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D668	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D669	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D672	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D676	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D678	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D68	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D68	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D681	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D681	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D683	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D683	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D684	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D684	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D685	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D691	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D691	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D692	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D692	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D696	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D70	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D70	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D703	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D704	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D706	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D709	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D711	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D711	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D713	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D713	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D717	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D72	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D72	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D721	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D723	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D724	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D725	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D728	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D728	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D731	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D735	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D735	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D738	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D738	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D739	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D739	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D74	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D74	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D740	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D741	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D745	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D749	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D749	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D750	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D753	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D753	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D756	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D757	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D759	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D760	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D762	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D762	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D763	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D764	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D767	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D769	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D77	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D772	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D773	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D773	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D774	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D781	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D781	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D782	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D785	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D786	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D788	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D79	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D799	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D799	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D8	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D8	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D80	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D802	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D802	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D803	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D806	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D809	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D809	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D81	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D810	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D812	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D817	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D818	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D819	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D82	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D820	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D820	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D823	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D823	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D827	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D828	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D829	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D83	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D83	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D832	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D833	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D833	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D835	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D84	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D845	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D847	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D847	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D849	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D850	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D850	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D851	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D853	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D858	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D859	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D859	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D86	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D860	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D862	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D862	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D864	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D871	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D871	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D872	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D875	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D877	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D878	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D881	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D884	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D885	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D886	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D887	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D887	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D889	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D89	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D890	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D890	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D891	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D891	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D895	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D896	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D899	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D899	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D90	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D90	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D902	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D903	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D904	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D905	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D906	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D906	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D907	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D907	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D908	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D91	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D91	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D910	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D910	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D911	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D912	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D917	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D917	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D918	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D919	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D92	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D922	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D924	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D926	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D927	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D930	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D931	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D931	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D933	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D935	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D936	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D938	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D94	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D942	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D943	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D943	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D944	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D944	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D945	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D948	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D948	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D949	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D95	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D95	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D950	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D951	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D952	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D953	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D953	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D954	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D955	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D958	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D960	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D962	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D964	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D965	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D966	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D966	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D969	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D972	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D973	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D975	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D978	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D979	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D979	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D982	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D982	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D988	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D989	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D99	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D991	java	the Java engine departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135
+D995	js	cql-execution departs from the specification here; this engine agrees with it on all 1000 definitions, checked by the exact-integer oracle of #135

@@ -93,7 +93,16 @@ async function each([elmsPath, cqlPath, helpersPath, dataPath]) {
     bundle = { resourceType: 'Bundle', type: 'collection', entry };
   }
   const results = {};
+  // cql-execution rejects a promise of its own outside the one awaited for
+  // some expressions — Multiply over a null operand — and the process would
+  // die with the answers half written. Such a rejection belongs to the
+  // definition being run, the only one in flight, and is its answer.
+  let current = null;
+  process.on('unhandledRejection', (e) => {
+    if (current) results[current] = { error: e.constructor.name, message: String(e.message) };
+  });
   for (const [name, elm] of Object.entries(elms)) {
+    current = name;
     let entry;
     try {
       const library = new cql.Library(elm, new cql.Repository({ FHIRHelpers: helpers }));
@@ -114,8 +123,11 @@ async function each([elmsPath, cqlPath, helpersPath, dataPath]) {
     } catch (e) {
       entry = { error: e.constructor.name, message: String(e.message) };
     }
-    results[name] = entry;
+    // Let a rejection the run left behind land before the answer is kept.
+    await new Promise((resolve) => setImmediate(resolve));
+    if (!(name in results)) results[name] = entry;
   }
+  current = null;
   const out = {
     library: 'corpus ' + cqlPath.split('/').pop(),
     sourceSha256: crypto.createHash('sha256').update(fs.readFileSync(cqlPath)).digest('hex'),

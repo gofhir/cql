@@ -1,7 +1,9 @@
-package main
+package answers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	cql "github.com/gofhir/cql"
@@ -21,7 +23,7 @@ func TestReferenceAnswersAreReadAsEvaluateWritesThem(t *testing.T) {
 		`{"type":"List","elements":[]}`:            "list",
 		`{"type":"Tuple","fields":{}}`:             "other",
 	} {
-		if got := referenceAnswer(json.RawMessage(raw)).kind; got != want {
+		if got := Reference(json.RawMessage(raw)).Kind; got != want {
 			t.Errorf("%s read as %s, want %s", raw, got, want)
 		}
 	}
@@ -30,13 +32,13 @@ func TestReferenceAnswersAreReadAsEvaluateWritesThem(t *testing.T) {
 // TestNumbersAreComparedByValue covers 1.0 = 1: the two engines write a number
 // at different scales, and that is not a difference.
 func TestNumbersAreComparedByValue(t *testing.T) {
-	ref := referenceAnswer(json.RawMessage(`{"type":"Decimal","value":"1.0"}`))
-	engine := engineAnswer(cql.NewEngine(), "library T version '1.0'\ndefine R: 1\n", "R", nil)
-	if !same(ref, engine) {
+	ref := Reference(json.RawMessage(`{"type":"Decimal","value":"1.0"}`))
+	engine := evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: 1\n", "R")
+	if !Same(ref, engine) {
 		t.Errorf("1.0 and 1 were reported different: %+v %+v", ref, engine)
 	}
-	other := referenceAnswer(json.RawMessage(`{"type":"Decimal","value":"1.00000001"}`))
-	if same(other, engine) {
+	other := Reference(json.RawMessage(`{"type":"Decimal","value":"1.00000001"}`))
+	if Same(other, engine) {
 		t.Error("1.00000001 and 1 were reported the same")
 	}
 }
@@ -45,8 +47,8 @@ func TestNumbersAreComparedByValue(t *testing.T) {
 // error marked as a panic, so it is reported even where the reference failed
 // too and a plain comparison would call the two the same.
 func TestAnEnginePanicIsCaughtAndMarked(t *testing.T) {
-	a := engineAnswer(nil, "", "R", nil) // a nil engine panics on use
-	if !a.panicked || a.kind != "error" {
+	a := evaluate(nil, "", "R") // a nil engine panics on use
+	if !a.Panicked || a.Kind != "error" {
 		t.Errorf("a panic became %+v, want an error marked as a panic", a)
 	}
 }
@@ -56,22 +58,22 @@ func TestAnEnginePanicIsCaughtAndMarked(t *testing.T) {
 // was reported different before, equal or not.
 func TestListsAreComparedByTheirElements(t *testing.T) {
 	src := "library T version '1.0'\ndefine R: { 1, 2.0, null }\ndefine N: { { 1 }, {} }\n"
-	ref := referenceAnswer(json.RawMessage(`{"type":"List","elements":[{"type":"Integer","value":"1"},` +
+	ref := Reference(json.RawMessage(`{"type":"List","elements":[{"type":"Integer","value":"1"},` +
 		`{"type":"Decimal","value":"2"},null]}`))
-	if engine := engineAnswer(cql.NewEngine(), src, "R", nil); !same(ref, engine) {
+	if engine := evaluate(cql.NewEngine(), src, "R"); !Same(ref, engine) {
 		t.Errorf("equal lists were reported different: %+v %+v", ref, engine)
 	}
-	nested := referenceAnswer(json.RawMessage(`{"type":"List","elements":[{"type":"List","elements":` +
+	nested := Reference(json.RawMessage(`{"type":"List","elements":[{"type":"List","elements":` +
 		`[{"type":"Integer","value":"1"}]},{"type":"List","elements":[]}]}`))
-	if engine := engineAnswer(cql.NewEngine(), src, "N", nil); !same(nested, engine) {
+	if engine := evaluate(cql.NewEngine(), src, "N"); !Same(nested, engine) {
 		t.Errorf("equal nested lists were reported different: %+v %+v", nested, engine)
 	}
-	strs := referenceAnswer(json.RawMessage(`{"type":"List","elements":[{"type":"String","value":"a"}]}`))
-	if engine := engineAnswer(cql.NewEngine(), "library T version '1.0'\ndefine S: { 'a' }\n", "S", nil); !same(strs, engine) {
+	strs := Reference(json.RawMessage(`{"type":"List","elements":[{"type":"String","value":"a"}]}`))
+	if engine := evaluate(cql.NewEngine(), "library T version '1.0'\ndefine S: { 'a' }\n", "S"); !Same(strs, engine) {
 		t.Errorf("equal string lists were reported different: %+v %+v", strs, engine)
 	}
-	other := referenceAnswer(json.RawMessage(`{"type":"List","elements":[{"type":"Integer","value":"1"}]}`))
-	if engine := engineAnswer(cql.NewEngine(), src, "R", nil); same(other, engine) {
+	other := Reference(json.RawMessage(`{"type":"List","elements":[{"type":"Integer","value":"1"}]}`))
+	if engine := evaluate(cql.NewEngine(), src, "R"); Same(other, engine) {
 		t.Error("{1} and {1, 2.0, null} were reported the same")
 	}
 }
@@ -89,19 +91,33 @@ func TestQuantitiesTemporalsIntervalsAndFHIRValuesAreRead(t *testing.T) {
 		"I": `{"type":"Interval","low":{"type":"Integer","value":"1"},"lowClosed":true,` +
 			`"high":{"type":"Integer","value":"2"},"highClosed":false}`,
 	} {
-		ref := referenceAnswer(json.RawMessage(raw))
-		if engine := engineAnswer(cql.NewEngine(), src, name, nil); !same(ref, engine) {
+		ref := Reference(json.RawMessage(raw))
+		if engine := evaluate(cql.NewEngine(), src, name); !Same(ref, engine) {
 			t.Errorf("%s: equal answers were reported different: %+v %+v", name, ref, engine)
 		}
 	}
-	closed := referenceAnswer(json.RawMessage(`{"type":"Interval","low":{"type":"Integer","value":"1"},` +
+	closed := Reference(json.RawMessage(`{"type":"Interval","low":{"type":"Integer","value":"1"},` +
 		`"lowClosed":true,"high":{"type":"Integer","value":"2"},"highClosed":true}`))
-	if engine := engineAnswer(cql.NewEngine(), src, "I", nil); same(closed, engine) {
+	if engine := evaluate(cql.NewEngine(), src, "I"); Same(closed, engine) {
 		t.Error("Interval[1, 2] and Interval[1, 2) were reported the same")
 	}
-	a := referenceAnswer(json.RawMessage(`{"type":"FHIR.Quantity","value":"{\"unit\":\"mg\",\"value\":-5}"}`))
-	b := referenceAnswer(json.RawMessage(`{"type":"FHIR.Quantity","value":"{ \"value\": -5, \"unit\": \"mg\" }"}`))
-	if !same(a, b) {
+	a := Reference(json.RawMessage(`{"type":"FHIR.Quantity","value":"{\"unit\":\"mg\",\"value\":-5}"}`))
+	b := Reference(json.RawMessage(`{"type":"FHIR.Quantity","value":"{ \"value\": -5, \"unit\": \"mg\" }"}`))
+	if !Same(a, b) {
 		t.Errorf("one FHIR resource in two encodings was reported different: %+v %+v", a, b)
 	}
+}
+
+// evaluate is this engine's answer to a definition, as compare reads it.
+func evaluate(engine *cql.Engine, src, name string) (a Answer) {
+	defer func() {
+		if p := recover(); p != nil {
+			a = Failed(fmt.Errorf("%v", p), true)
+		}
+	}()
+	v, err := engine.EvaluateExpression(context.Background(), src, name, nil, nil)
+	if err != nil {
+		return Failed(err, false)
+	}
+	return Value(v)
 }

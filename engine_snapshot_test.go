@@ -333,59 +333,71 @@ func TestASnapshotComparesPastFloatNoiseOnly(t *testing.T) {
 	}
 }
 
-// TestTheFHIRReferencesAreOfThisCorpus holds the two references of the fhir
-// area to the corpus they were run on: both carry its SHA-256, the Java engine
-// answers every definition — a translation error is an answer — and
-// cql-execution every one the translator accepted. A missing file fails rather
-// than skips, so that the comparison cannot quietly lose its oracle. What the
-// references answer is compared by internal/referenceharness/differential/compare
-// -each -data, and inventoried in testdata/snapshots/fhir.divergences.md.
-func TestTheFHIRReferencesAreOfThisCorpus(t *testing.T) {
-	corpus, err := os.ReadFile(filepath.Join("testdata", "snapshots", "fhir.cql"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	sum := sha256.Sum256(corpus)
-	want := hex.EncodeToString(sum[:])
-	read := func(name string) map[string]json.RawMessage {
-		raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", name))
-		if err != nil {
-			t.Fatalf("%v: the fhir area's references are part of the corpus", err)
-		}
-		var ref struct {
-			SourceSha256 string                     `json:"sourceSha256"`
-			Results      map[string]json.RawMessage `json:"results"`
-		}
-		if err := json.Unmarshal(raw, &ref); err != nil {
-			t.Fatalf("%s: %v", name, err)
-		}
-		if ref.SourceSha256 != want {
-			t.Errorf("%s was run on another fhir.cql (%s, now %s); regenerate it", name, ref.SourceSha256, want)
-		}
-		return ref.Results
-	}
-	java, js := read("fhir.java.json"), read("fhir.js.json")
-	definitions := len(snapshotDefine.FindAllString(string(corpus), -1))
-	if len(java) != definitions {
-		t.Errorf("the Java engine answered %d definitions of %d", len(java), definitions)
-	}
-	accepted := 0
-	for name, answer := range java {
-		var e struct {
-			Error string `json:"error"`
-		}
-		if json.Unmarshal(answer, &e) == nil && e.Error == "Translation" {
-			if _, ok := js[name]; ok {
-				t.Errorf("%s: cql-execution answered a definition the translator refused", name)
+// TestTheReferencesAreOfTheirCorpus holds each area's two references to the
+// corpus they were run on: both carry its SHA-256, the Java engine answers
+// every definition — a translation error is an answer — and cql-execution
+// every one the translator accepted. A missing file fails rather than skips,
+// so that the comparison cannot quietly lose its oracle.
+func TestTheReferencesAreOfTheirCorpus(t *testing.T) {
+	for _, a := range snapshotAreas {
+		t.Run(a.area, func(t *testing.T) {
+			corpus, err := os.ReadFile(filepath.Join("testdata", "snapshots", a.area+".cql"))
+			if err != nil {
+				t.Fatal(err)
 			}
-			continue
-		}
-		accepted++
-		if _, ok := js[name]; !ok {
-			t.Errorf("%s: cql-execution did not answer a definition the translator accepted", name)
-		}
+			sum := sha256.Sum256(corpus)
+			want := hex.EncodeToString(sum[:])
+			java, js := readReference(t, a.area, "java", want), readReference(t, a.area, "js", want)
+			definitions := len(snapshotDefine.FindAllString(string(corpus), -1))
+			if len(java) != definitions {
+				t.Errorf("the Java engine answered %d definitions of %d", len(java), definitions)
+			}
+			accepted := 0
+			for name, answer := range java {
+				if translationRefused(answer) {
+					if _, ok := js[name]; ok {
+						t.Errorf("%s: cql-execution answered a definition the translator refused", name)
+					}
+					continue
+				}
+				accepted++
+				if _, ok := js[name]; !ok {
+					t.Errorf("%s: cql-execution did not answer a definition the translator accepted", name)
+				}
+			}
+			if len(js) != accepted {
+				t.Errorf("cql-execution answered %d definitions; the translator accepted %d", len(js), accepted)
+			}
+		})
 	}
-	if len(js) != accepted {
-		t.Errorf("cql-execution answered %d definitions; the translator accepted %d", len(js), accepted)
+}
+
+// readReference is an area's answers from one reference engine, held to the
+// corpus by its SHA-256.
+func readReference(t *testing.T, area, engine, sha string) map[string]json.RawMessage {
+	t.Helper()
+	name := area + "." + engine + ".json"
+	raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", name))
+	if err != nil {
+		t.Fatalf("%v: the references are part of the corpus; see internal/referenceharness/README.md", err)
 	}
+	var ref struct {
+		SourceSha256 string                     `json:"sourceSha256"`
+		Results      map[string]json.RawMessage `json:"results"`
+	}
+	if err := json.Unmarshal(raw, &ref); err != nil {
+		t.Fatalf("%s: %v", name, err)
+	}
+	if ref.SourceSha256 != sha {
+		t.Errorf("%s was run on another %s.cql (%s, now %s); regenerate it", name, area, ref.SourceSha256, sha)
+	}
+	return ref.Results
+}
+
+// translationRefused reports whether a Java answer is the translator's refusal.
+func translationRefused(answer json.RawMessage) bool {
+	var e struct {
+		Error string `json:"error"`
+	}
+	return json.Unmarshal(answer, &e) == nil && e.Error == "Translation"
 }

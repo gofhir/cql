@@ -306,6 +306,35 @@ change of its own, with its answers as written by the engine it lands on.
 Each definition is evaluated in a library of its own, with its area's header,
 so that an invalid expression — the corpora hold them on purpose — fails alone.
 
+## Divergences from the references
+
+The snapshot says which answers moved; it does not say whether they moved
+toward the reference engines or away. Each area also keeps what the Java
+engine (`<area>.java.json`) and cql-execution (`<area>.js.json`) answer to its
+corpus, run with `Evaluate -each` and `evaluate.js --each` as for the fhir area
+above, and a manifest, `<area>.divergences.tsv`: one line per definition and
+reference that differ, with a note saying why.
+
+`TestAnswersMatchTheReferences`, part of `go test ./...`, compares this engine
+with both and fails on any divergence the manifest does not record — a
+regression, or a change to account for — and on any it records that is gone,
+so that what a change settles is struck from the list in the same diff:
+
+```sh
+go test -run TestAnswersMatchTheReferences -update-divergences .
+```
+
+keeps the note of every entry that stays and marks a new one `unclassified`.
+A divergence is not a defect by itself, and the notes say which it is: a
+reference's own failure (in the integer area every one is, checked against the
+exact-integer oracle of #135; in scope, cql-execution's resolution of a
+definition's names), a CQL the Java translator refuses, a decision, or one
+still to settle. The unclassified ones are the inventory of what remains to be
+read; none of them is excused by being listed.
+
+`TestTheReferencesAreOfTheirCorpus` holds every reference to its corpus by its
+SHA-256, and fails rather than skips when one is missing.
+
 ## Two things worth knowing
 
 `cql-to-elm-cli`'s published POM is invalid — it declares

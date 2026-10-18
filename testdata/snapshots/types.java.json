@@ -1,0 +1,2909 @@
+{
+  "library" : "corpus types.cql",
+  "sourceSha256" : "2260372802166136c6bfaf2c06eb1971d9f15d3eeb0896c3860c81f7df4c3877",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Time as org.opencds.cqf.cql.engine.runtime.Date."
+    },
+    "D1" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D2" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Integer as org.opencds.cqf.cql.engine.runtime.Quantity."
+    },
+    "D3" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D3: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D4" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D5" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D6" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D6: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D7" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D8" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D9" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D10" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D11" : null,
+    "D12" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D12: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D13" : null,
+    "D14" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D15" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D16" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D16: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D17" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D18" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D19" : null,
+    "D20" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Quantity."
+    },
+    "D21" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D22" : null,
+    "D23" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D24" : null,
+    "D25" : null,
+    "D26" : null,
+    "D27" : null,
+    "D28" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D28: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D29" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.math.BigDecimal as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D30" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D31" : null,
+    "D32" : null,
+    "D33" : null,
+    "D34" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D35" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D36" : null,
+    "D37" : null,
+    "D38" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D39" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D39: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D40" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D40: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D41" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D42" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D43" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D44" : {
+      "type" : "Unencoded:org.opencds.cqf.cql.engine.runtime.Concept",
+      "value" : "Concept {\n\tCode { code: x, system: null, version: null, display: null }\n}"
+    },
+    "D45" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D46" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D47" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D48" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D49" : null,
+    "D50" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D51" : null,
+    "D52" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D53" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D54" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Long as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D55" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D56" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D57" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D58" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D59" : null,
+    "D60" : null,
+    "D61" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D62" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D63" : null,
+    "D64" : null,
+    "D65" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D66" : null,
+    "D67" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D68" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Integer as org.opencds.cqf.cql.engine.runtime.DateTime."
+    },
+    "D69" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D70" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D70: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D71" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D71: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D72" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D72: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D73" : null,
+    "D74" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D75" : null,
+    "D76" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D77" : null,
+    "D78" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D79" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D79: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D80" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D81" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D82" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D83" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D83: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D84" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D85" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.DateTime as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D86" : null,
+    "D87" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D88" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D89" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D90" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D90: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D91" : null,
+    "D92" : null,
+    "D93" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D94" : null,
+    "D95" : null,
+    "D96" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D97" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D98" : null,
+    "D99" : null,
+    "D100" : null,
+    "D101" : null,
+    "D102" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D103" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D104" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D105" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D106" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D107" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D108" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D109" : null,
+    "D110" : null,
+    "D111" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D112" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D112: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D113" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D114" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D115" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D116" : null,
+    "D117" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Long as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D118" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Time as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D119" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D120" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D121" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D122" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D123" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D124" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D125" : null,
+    "D126" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D127" : null,
+    "D128" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D128: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D129" : null,
+    "D130" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D130: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D131" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D132" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D133" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D134" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D135" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D136" : null,
+    "D137" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D138" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D139" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D139: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D140" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D141" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D142" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D143" : null,
+    "D144" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D145" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D146" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D147" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Code as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D148" : null,
+    "D149" : null,
+    "D150" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D151" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : null,
+      "highClosed" : true
+    },
+    "D152" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D153" : null,
+    "D154" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D155" : null,
+    "D156" : null,
+    "D157" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D158" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D159" : null,
+    "D160" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D161" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D162" : null,
+    "D163" : null,
+    "D164" : null,
+    "D165" : null,
+    "D166" : null,
+    "D167" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D168" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D168: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D169" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D170" : null,
+    "D171" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D171: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D172" : null,
+    "D173" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D174" : null,
+    "D175" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Date."
+    },
+    "D176" : null,
+    "D177" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D178" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D179" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D180" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D181" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D181: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D182" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D183" : null,
+    "D184" : null,
+    "D185" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D186" : {
+      "type" : "Time",
+      "value" : "10:00:00",
+      "precision" : "second"
+    },
+    "D187" : null,
+    "D188" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D188: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D189" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D190" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D191" : null,
+    "D192" : null,
+    "D193" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.DateTime as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D194" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D195" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D196" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.String as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D197" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D198" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D198: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D199" : null,
+    "D200" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D200: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D201" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D202" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.math.BigDecimal as org.opencds.cqf.cql.engine.runtime.Date."
+    },
+    "D203" : null,
+    "D204" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D205" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D205: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D206" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D207" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D208" : null,
+    "D209" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D210" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D211" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D212" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D213" : null,
+    "D214" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Concept as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D215" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D215: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D216" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D217" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D218" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D219" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D220" : null,
+    "D221" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D221: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D222" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : null,
+      "highClosed" : true
+    },
+    "D223" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D223: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D224" : null,
+    "D225" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D226" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Date."
+    },
+    "D227" : null,
+    "D228" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D229" : null,
+    "D230" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D230: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D231" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D232" : null,
+    "D233" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D234" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D235" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D236" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D237" : {
+      "type" : "Time",
+      "value" : "10:00:00",
+      "precision" : "second"
+    },
+    "D238" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D239" : null,
+    "D240" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D241" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D242" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Date as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D243" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "String",
+        "value" : "a"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "String",
+        "value" : "b"
+      },
+      "highClosed" : true
+    },
+    "D244" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D245" : null,
+    "D246" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D247" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Code as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D248" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D249" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D250" : null,
+    "D251" : null,
+    "D252" : null,
+    "D253" : null,
+    "D254" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D255" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D256" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D257" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D258" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D259" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.math.BigDecimal as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D260" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D261" : null,
+    "D262" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D263" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D264" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D264: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D265" : null,
+    "D266" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D267" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D268" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D269" : null,
+    "D270" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D271" : null,
+    "D272" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D273" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D274" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D275" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D276" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D277" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Boolean as org.opencds.cqf.cql.engine.runtime.DateTime."
+    },
+    "D278" : null,
+    "D279" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D280" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D281" : null,
+    "D282" : null,
+    "D283" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D284" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D285" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D286" : null,
+    "D287" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D288" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.math.BigDecimal as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D289" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D289: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D290" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Long as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D291" : null,
+    "D292" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D293" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D294" : null,
+    "D295" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D296" : null,
+    "D297" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D298" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D299" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D300" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D301" : null,
+    "D302" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D302: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D303" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D304" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D305" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D306" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D306: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D307" : null,
+    "D308" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Long as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D309" : null,
+    "D310" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D311" : null,
+    "D312" : null,
+    "D313" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D314" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D314: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D315" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D316" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D316: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D317" : null,
+    "D318" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D319" : null,
+    "D320" : null,
+    "D321" : null,
+    "D322" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D323" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D324" : null,
+    "D325" : {
+      "type" : "Date",
+      "value" : "2020-01-01",
+      "precision" : "day"
+    },
+    "D326" : null,
+    "D327" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D328" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D329" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D330" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D331" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D332" : null,
+    "D333" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D334" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D335" : null,
+    "D336" : null,
+    "D337" : null,
+    "D338" : null,
+    "D339" : {
+      "type" : "DateTime",
+      "value" : "2020-01-01T10:00:00.000+00:00",
+      "precision" : "millisecond",
+      "offset" : "Z",
+      "instant" : "2020-01-01T10:00:00Z"
+    },
+    "D340" : null,
+    "D341" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D342" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D342: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D343" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D344" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Tuple as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D345" : null,
+    "D346" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D347" : null,
+    "D348" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D349" : null,
+    "D350" : null,
+    "D351" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D352" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D353" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D354" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D355" : null,
+    "D356" : null,
+    "D357" : null,
+    "D358" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D359" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D360" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D361" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D362" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D363" : null,
+    "D364" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D365" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D366" : null,
+    "D367" : null,
+    "D368" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D369" : null,
+    "D370" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D370: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D371" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D371: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D372" : null,
+    "D373" : null,
+    "D374" : null,
+    "D375" : null,
+    "D376" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D377" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D378" : null,
+    "D379" : null,
+    "D380" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D381" : null,
+    "D382" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D383" : null,
+    "D384" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D385" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D386" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Concept as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D387" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D388" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D389" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D390" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D391" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D392" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D393" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D393: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D394" : null,
+    "D395" : null,
+    "D396" : null,
+    "D397" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D398" : null,
+    "D399" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D400" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D401" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2"
+      },
+      "highClosed" : true
+    },
+    "D402" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.DateTime as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D403" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D404" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D405" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D406" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D407" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D408" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D408: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D409" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Date as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D410" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D411" : null,
+    "D412" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D413" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D414" : null,
+    "D415" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D416" : null,
+    "D417" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D418" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Integer as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D419" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D420" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D421" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D422" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D423" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D424" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Long as org.opencds.cqf.cql.engine.runtime.DateTime."
+    },
+    "D425" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D425: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D426" : null,
+    "D427" : null,
+    "D428" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.math.BigDecimal as org.opencds.cqf.cql.engine.runtime.Quantity."
+    },
+    "D429" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D430" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D431" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D431: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D432" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D432: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D433" : null,
+    "D434" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D435" : null,
+    "D436" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D437" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D437: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D438" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D438: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D439" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D440" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D441" : null,
+    "D442" : null,
+    "D443" : null,
+    "D444" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D444: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D445" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D446" : null,
+    "D447" : null,
+    "D448" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D448: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D449" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.String as org.opencds.cqf.cql.engine.runtime.DateTime."
+    },
+    "D450" : null,
+    "D451" : null,
+    "D452" : null,
+    "D453" : null,
+    "D454" : {
+      "type" : "Quantity",
+      "value" : "5",
+      "unit" : "mg"
+    },
+    "D455" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "D456" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D457" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D458" : null,
+    "D459" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D460" : null,
+    "D461" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D462" : null,
+    "D463" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D464" : null,
+    "D465" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D466" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D467" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D468" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D469" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D469: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D470" : null,
+    "D471" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D472" : null,
+    "D473" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D473: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D474" : null,
+    "D475" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D476" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D477" : null,
+    "D478" : null,
+    "D479" : null,
+    "D480" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D480: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D481" : null,
+    "D482" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D482: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D483" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D483: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D484" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D484: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D485" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D486" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "D487" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D487: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D488" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D489" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D490" : null,
+    "D491" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D492" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D493" : null,
+    "D494" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D495" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D496" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D497" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D498" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D499" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D500" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D501" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D502" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D503" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D504" : null,
+    "D505" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D506" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D507" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D507: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D508" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D509" : null,
+    "D510" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D511" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D511: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D512" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D513" : null,
+    "D514" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D515" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D516" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : null,
+      "highClosed" : true
+    },
+    "D517" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D518" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D519" : null,
+    "D520" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D521" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D522" : null,
+    "D523" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D524" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D525" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D526" : null,
+    "D527" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D528" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D529" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D530" : null,
+    "D531" : null,
+    "D532" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D532: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D533" : null,
+    "D534" : null,
+    "D535" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D536" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D536: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D537" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.math.BigDecimal as org.opencds.cqf.cql.engine.runtime.DateTime."
+    },
+    "D538" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D539" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D540" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D541" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D542" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Tuple as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D543" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D544" : null,
+    "D545" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D546" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D547" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D547: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D548" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.String as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D549" : null,
+    "D550" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D550: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D551" : null,
+    "D552" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D553" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D554" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D555" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D556" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Integer as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D557" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D558" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D559" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D560" : null,
+    "D561" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D561: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D562" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D563" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D564" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D565" : null,
+    "D566" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D567" : null,
+    "D568" : null,
+    "D569" : null,
+    "D570" : null,
+    "D571" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D572" : null,
+    "D573" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D574" : null,
+    "D575" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D576" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D577" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D577: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D578" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D578: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D579" : null,
+    "D580" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D581" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.String as org.opencds.cqf.cql.engine.runtime.Quantity."
+    },
+    "D582" : null,
+    "D583" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D584" : null,
+    "D585" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D586" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D587" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D588" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D589" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D590" : null,
+    "D591" : null,
+    "D592" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D593" : null,
+    "D594" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D595" : null,
+    "D596" : null,
+    "D597" : null,
+    "D598" : null,
+    "D599" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D600" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D601" : null,
+    "D602" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D603" : null,
+    "D604" : null,
+    "D605" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D606" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D607" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D607: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D608" : null,
+    "D609" : null,
+    "D610" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D610: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D611" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D612" : null,
+    "D613" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Concept as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D614" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2"
+      },
+      "highClosed" : true
+    },
+    "D615" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.DateTime as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D616" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D616: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D617" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D618" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D619" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D620" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D621" : null,
+    "D622" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D623" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Boolean as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D624" : null,
+    "D625" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D626" : null,
+    "D627" : null,
+    "D628" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D629" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D630" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D631" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D631: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D632" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D633" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D634" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D635" : null,
+    "D636" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D637" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D637: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D638" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D639" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D640" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D641" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D642" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D643" : {
+      "type" : "Date",
+      "value" : "2020-01-01",
+      "precision" : "day"
+    },
+    "D644" : null,
+    "D645" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "String",
+        "value" : "a"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "String",
+        "value" : "b"
+      },
+      "highClosed" : true
+    },
+    "D646" : null,
+    "D647" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D648" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D649" : null,
+    "D650" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Quantity as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D651" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D652" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D652: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D653" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D654" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D655" : null,
+    "D656" : null,
+    "D657" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D658" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D659" : null,
+    "D660" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D661" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D662" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D663" : null,
+    "D664" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D665" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D666" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D667" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D668" : null,
+    "D669" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D670" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D671" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D672" : null,
+    "D673" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D674" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D675" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Concept as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D676" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D676: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D677" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D678" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D679" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Concept as org.opencds.cqf.cql.engine.runtime.Quantity."
+    },
+    "D680" : null,
+    "D681" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Time as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D682" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D683" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Date as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D684" : null,
+    "D685" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D686" : null,
+    "D687" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D688" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D689" : null,
+    "D690" : {
+      "type" : "Unencoded:org.opencds.cqf.cql.engine.runtime.Code",
+      "value" : "Code { code: x, system: null, version: null, display: null }"
+    },
+    "D691" : null,
+    "D692" : null,
+    "D693" : null,
+    "D694" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D695" : null,
+    "D696" : null,
+    "D697" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D698" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D699" : null,
+    "D700" : null,
+    "D701" : null,
+    "D702" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D703" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D704" : null,
+    "D705" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.DateTime as org.opencds.cqf.cql.engine.runtime.Quantity."
+    },
+    "D706" : null,
+    "D707" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D707: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D708" : null,
+    "D709" : null,
+    "D710" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.String as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D711" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D712" : null,
+    "D713" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D714" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D715" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D715: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D716" : null,
+    "D717" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D718" : null,
+    "D719" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D720" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D721" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Date."
+    },
+    "D722" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "D723" : null,
+    "D724" : null,
+    "D725" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D726" : null,
+    "D727" : null,
+    "D728" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D729" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D730" : null,
+    "D731" : null,
+    "D732" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D733" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Time as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D734" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D735" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D736" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D737" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D737: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D738" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D739" : null,
+    "D740" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D740: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D741" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D742" : null,
+    "D743" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D744" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D745" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D746" : null,
+    "D747" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D748" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D749" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D750" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "String",
+        "value" : "a"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "String",
+        "value" : "b"
+      },
+      "highClosed" : true
+    },
+    "D751" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D752" : null,
+    "D753" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D754" : null,
+    "D755" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.lang.Integer as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D756" : null,
+    "D757" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D758" : null,
+    "D759" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D760" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Time as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D761" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D762" : null,
+    "D763" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D764" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D764: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D765" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D766" : null,
+    "D767" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D768" : null,
+    "D769" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D770" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D771" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D772" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D773" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D773: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D774" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D774: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D775" : null,
+    "D776" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D777" : null,
+    "D778" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D778: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D779" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D780" : null,
+    "D781" : null,
+    "D782" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D783" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D784" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D785" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D786" : null,
+    "D787" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D788" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D789" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D790" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D791" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D791: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D792" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D793" : null,
+    "D794" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D795" : null,
+    "D796" : null,
+    "D797" : null,
+    "D798" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D799" : null,
+    "D800" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "D801" : null,
+    "D802" : null,
+    "D803" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D804" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D805" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Quantity as org.opencds.cqf.cql.engine.runtime.Date."
+    },
+    "D806" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D806: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D807" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D808" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D809" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D810" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D811" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D812" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D812: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D813" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D814" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D815" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D816" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, {
+        "type" : "String",
+        "value" : "a"
+      } ]
+    },
+    "D817" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Interval as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D818" : null,
+    "D819" : null,
+    "D820" : null,
+    "D821" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D822" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D823" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D824" : null,
+    "D825" : null,
+    "D826" : null,
+    "D827" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D827: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D828" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D829" : null,
+    "D830" : null,
+    "D831" : null,
+    "D832" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Tuple as org.opencds.cqf.cql.engine.runtime.Code."
+    },
+    "D833" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Code as org.opencds.cqf.cql.engine.runtime.DateTime."
+    },
+    "D834" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D834: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D835" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D836" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D836: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D837" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D838" : null,
+    "D839" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D840" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D841" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D842" : {
+      "type" : "Decimal",
+      "value" : "2.5"
+    },
+    "D843" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D844" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D844: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D845" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D845: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D846" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D846: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D847" : null,
+    "D848" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D849" : null,
+    "D850" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D851" : null,
+    "D852" : null,
+    "D853" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.DateTime as org.opencds.cqf.cql.engine.runtime.Concept."
+    },
+    "D854" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D855" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2"
+      },
+      "highClosed" : true
+    },
+    "D856" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D857" : null,
+    "D858" : null,
+    "D859" : null,
+    "D860" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D860: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D861" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D861: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D862" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D862: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D863" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D864" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D864: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D865" : null,
+    "D866" : null,
+    "D867" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D868" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D869" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D870" : null,
+    "D871" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D872" : {
+      "type" : "Quantity",
+      "value" : "5",
+      "unit" : "mg"
+    },
+    "D873" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2"
+      },
+      "highClosed" : true
+    },
+    "D874" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D875" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D876" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D877" : null,
+    "D878" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D878: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D879" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D880" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Code as org.opencds.cqf.cql.engine.runtime.Time."
+    },
+    "D881" : null,
+    "D882" : null,
+    "D883" : null,
+    "D884" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D885" : null,
+    "D886" : null,
+    "D887" : {
+      "type" : "Long",
+      "value" : "5"
+    },
+    "D888" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D888: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D889" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.opencds.cqf.cql.engine.runtime.Concept as org.opencds.cqf.cql.engine.runtime.Date."
+    },
+    "D890" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Interval."
+    },
+    "D891" : null,
+    "D892" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D893" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.math.BigDecimal as org.opencds.cqf.cql.engine.runtime.Vocabulary."
+    },
+    "D894" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D895" : null,
+    "D896" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D896: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D897" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type java.util.ArrayList as org.opencds.cqf.cql.engine.runtime.Quantity."
+    },
+    "D898" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D898: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D899" : {
+      "type" : "Boolean",
+      "value" : false
+    }
+  }
+}
