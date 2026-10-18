@@ -4,7 +4,8 @@ The `fhir` corpus (`fhir.cql`, over `fhir-data.json`) run by the Java engine
 3.26.0 with engine-fhir (`fhir.java.json`) and by cql-execution 3.3.2 with
 cql-exec-fhir 2.1.6 (`fhir.js.json`), each definition in a library of its own
 and all three engines on the same FHIRHelpers 4.0.1 text. Measured on
-18 October 2026, against main at `8090460`.
+18 October 2026, against main at `8090460`, and updated as the groups below
+are settled.
 
 Of the 900 definitions, the Java translator refuses 574: it types strictly, and
 refuses a cast between unrelated types and an operator a choice does not fit,
@@ -12,10 +13,10 @@ which this engine accepts. The 326 it accepts compare as follows.
 
 | Outcome | Definitions |
 |---|---|
-| All three agree | 174 |
+| All three agree | 177 |
 | This engine agrees with the Java engine; cql-execution differs | 63 |
 | This engine agrees with cql-execution; the Java engine differs | 32 |
-| **Both references agree, and this engine differs** | **34** |
+| **Both references agree, and this engine differs** | **31** |
 | All three differ | 23 |
 
 This is an inventory, not a list of decisions: nothing here is fixed or
@@ -36,12 +37,6 @@ D371, D543, D617, D772, D808.
 + 1 day` is 2020-02-03 in both, and `effective + 1 day` 2020-01-02; this engine
 fails the library with "Choice<…>". `-(O.value)` and `effective + 1 'mg'` are
 null in both. D104, D111, D156, D296, D299, D390.
-
-**A choice that is no number at run time is null** (3). `Abs`, `Sum` and `Avg`
-of a `valueString` are null in both; this engine fails with "String is not a
-number or a quantity", since #139 — it answered 0 before. A choice reaches the
-operator unconverted, and the branch it takes decides; an error is for an
-operand whose static type is no number. D10, D374, D792.
 
 **A type name is read without its model** (2). `Patient.id is String` and a
 `valueInteger is Integer` are false in both: FHIR.id is no System.String, and
@@ -64,6 +59,15 @@ answers the element's JSON as text. D322, D369.
   System Integer (D782).
 - `cast { 1, 2 } as Any` fails in the Java engine on Any, as recorded in
   `testdata/reference/runtime.divergences.md` (D797).
+
+## Settled
+
+**A choice that is no number at run time is null** (3), in #142. `Abs`, `Sum`
+and `Avg` of a `valueString` are null here too, as in both, where #139 failed
+with "String is not a number or a quantity" (and main before it answered 0).
+Beside a number, Sum reads the string alone as null, as both do; Avg and
+Product of the pair are null, as both do for Avg and the Java engine for
+Product. An operand typed as no number at all still fails. D10, D374, D792.
 
 ## Regenerating the references
 

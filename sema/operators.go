@@ -346,6 +346,9 @@ func (c *checker) listOperand(expr, at ast.Expression) Type {
 	return Unknown
 }
 
+// IsNumeric reports whether a type is one of System's numbers or a Quantity.
+func IsNumeric(t Type) bool { return isNumeric(t) }
+
 func isNumeric(t Type) bool {
 	n, ok := t.(*Named)
 	if !ok || n.Model != systemModel {

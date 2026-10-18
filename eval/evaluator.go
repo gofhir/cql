@@ -2685,7 +2685,7 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		if _, isInteger := operand.(fptypes.Integer); isInteger {
 			return e.withinInteger(n, v, err)
 		}
-		return v, err
+		return e.orNullOverAnotherBranch(n.Operand, v, err)
 	case ast.OpPositive:
 		return operand, nil
 	case ast.OpDistinct:
@@ -2964,12 +2964,135 @@ func (e *Evaluator) systemItems(c fptypes.Collection) (fptypes.Collection, error
 	return out, nil
 }
 
-// notANumber is the error for a value an arithmetic operator was given that is
-// no number: toDecimal reads one as zero, and negation, Abs, Sum and Product of
-// a string or a resource answered 0 — `as Any` hands them one, where CQL's
-// static types would have refused it.
+// firstArgument is the operand a one-argument call reads: its fluent source,
+// or its first operand.
+func firstArgument(n *ast.FunctionCall) ast.Expression {
+	if n.Source != nil {
+		return n.Source
+	}
+	if len(n.Operands) > 0 {
+		return n.Operands[0]
+	}
+	return nil
+}
+
+// errNotANumber is a value an arithmetic operator was given that is no
+// number. toDecimal reads one as zero, and negation, Abs, Sum, Product and Avg
+// of a string or a resource answered 0.
+var errNotANumber = errors.New("is not a number or a quantity")
+
 func notANumber(v fptypes.Value) error {
-	return fmt.Errorf("%s is not a number or a quantity", v.Type())
+	return fmt.Errorf("%s %w", v.Type(), errNotANumber)
+}
+
+// orNullOverAnotherBranch is the answer of Abs, negation, Avg and Product for
+// the operand expr: null, where it failed on a value that is no number and the
+// operand's static type admits one that is — a choice, of which the run took
+// another branch. Both reference engines answer null there: Abs of a
+// valueString, one branch of a choice of eleven, is null in each, and an error
+// failed a whole evaluation over one patient's data taking it. An operand typed
+// as no number at all, a FHIR.date, keeps the error: the reference translator
+// refuses that CQL, and null would pass it off as data. So do an Any, which it
+// refuses as ambiguous, and an operand evaluated with no plan, which cannot
+// tell the two apart.
+//
+// Negation reaches here over a type the phase could not tell; over a choice
+// the semantic check refuses it first.
+func (e *Evaluator) orNullOverAnotherBranch(expr ast.Expression, v fptypes.Value, err error) (fptypes.Value, error) {
+	if !errors.Is(err, errNotANumber) || !e.admitsANumberAt(expr) {
+		return v, err
+	}
+	return nil, nil
+}
+
+// sumOverChoices is Sum of the list expr evaluated to src. Where the list's
+// elements are typed to admit a number, each that is none is null to it, as
+// both reference engines read it: Sum({ valueString, valueInteger }) is the
+// integer. A list typed as no number keeps the error.
+//
+// The references read the other aggregates otherwise, and they are followed:
+// Avg of the same list is null in both, and Product null in the Java engine
+// (the integer in cql-execution), so those two answer null for the whole list,
+// through orNullOverAnotherBranch.
+func (e *Evaluator) sumOverChoices(expr ast.Expression, src fptypes.Value) (fptypes.Value, error) {
+	aggregate := e.evalAggregateSum
+	if !e.admitsANumberAt(expr) {
+		return aggregate(src)
+	}
+	c, err := e.systemItems(toCollection(src))
+	if err != nil {
+		return nil, err
+	}
+	var kept fptypes.Collection
+	for i, item := range c {
+		if item == nil || isNumeric(item) || isQuantityOrUncertainty(item) {
+			if kept != nil {
+				kept = append(kept, item)
+			}
+			continue
+		}
+		if kept == nil {
+			kept = append(make(fptypes.Collection, 0, len(c)), c[:i]...)
+		}
+		kept = append(kept, nil)
+	}
+	if kept == nil {
+		return aggregate(src)
+	}
+	return aggregate(cqltypes.NewList(kept))
+}
+
+func isQuantityOrUncertainty(v fptypes.Value) bool {
+	switch v.(type) {
+	case fptypes.Quantity, cqltypes.Uncertainty:
+		return true
+	}
+	return false
+}
+
+// admitsANumberAt reports whether the static type of expr — an operand, or an
+// aggregate's list — may hold a number while the value at hand is none: a
+// choice with a numeric alternative, or a type the phase could not tell. With
+// no plan to read, it does not.
+func (e *Evaluator) admitsANumberAt(expr ast.Expression) bool {
+	return expr != nil && e.ctx.Plan != nil && admitsANumber(e.ctx.Plan.TypeOf(expr))
+}
+
+func admitsANumber(t sema.Type) bool {
+	switch x := t.(type) {
+	case *sema.List:
+		return admitsANumber(x.Element)
+	case *sema.Choice:
+		// A choice of the model's — an element's value[x], whose alternatives
+		// are FHIR's — not one CQL made by mixing values: a list literal of a
+		// Quantity and a String is a List<System.Any> to the reference
+		// translator, which refuses Sum over it.
+		for _, alt := range x.Types {
+			if isFHIRNumericType(alt) {
+				return true
+			}
+		}
+		return false
+	}
+	// An Any is not: the reference translator refuses Abs(System.Any) and
+	// Sum(List<System.Any>) as ambiguous, so `Sum({ 1 'mg', 'abc' })` and
+	// `Abs('a' as Any)` keep the error.
+	return sema.IsUnknown(t)
+}
+
+// isFHIRNumericType reports whether a static type is one of FHIR's numbers or
+// quantities, which FHIRHelpers converts to a System one.
+func isFHIRNumericType(t sema.Type) bool {
+	n, ok := t.(*sema.Named)
+	return ok && n.Model == "FHIR" && fhirNumericTypes[n.Name]
+}
+
+// fhirNumericTypes is FHIR's numbers and quantities, R4's and its profiles of
+// Quantity.
+var fhirNumericTypes = map[string]bool{
+	"integer": true, "decimal": true, "positiveInt": true, "unsignedInt": true, "integer64": true,
+	"Quantity": true, "Age": true, "Duration": true, "Count": true, "Distance": true,
+	"SimpleQuantity": true, "MoneyQuantity": true,
 }
 
 // isSystemType reports whether a named type is System's: qualified so, or
@@ -3618,13 +3741,14 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		return e.evalAggregateSum(src)
+		return e.sumOverChoices(firstArgument(n), src)
 	case "avg":
 		src, err := resolveSource()
 		if err != nil {
 			return nil, err
 		}
-		return e.evalAggregateAvg(src)
+		v, err := e.evalAggregateAvg(src)
+		return e.orNullOverAnotherBranch(firstArgument(n), v, err)
 	case "min":
 		src, err := resolveSource()
 		if err != nil {
@@ -3642,7 +3766,8 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		return e.evalAbs(src)
+		v, err := e.evalAbs(src)
+		return e.orNullOverAnotherBranch(firstArgument(n), v, err)
 	case "flatten":
 		src, err := resolveSource()
 		if err != nil {
@@ -4630,7 +4755,8 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		return e.evalAggregateProduct(src)
+		v, err := e.evalAggregateProduct(src)
+		return e.orNullOverAnotherBranch(firstArgument(n), v, err)
 
 	// ConvertsTo* predicates (CQL 1.5.3 §22)
 	// Null in → null out. Never errors. Returns true if conversion would succeed.
