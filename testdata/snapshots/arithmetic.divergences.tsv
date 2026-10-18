@@ -20,6 +20,7 @@ D142	js	unclassified: Decimal -0.2675159235668789 vs Decimal -0.26751593
 D143	java	unclassified: error: Error evaluating expression D143: Division by zero vs null
 D144	js	unclassified: Decimal 0.06517330801812805 vs Decimal 0.0651733
 D147	js	unclassified: Decimal 0.041152263333333335 vs Decimal 0.04115226
+D154	js	cql-execution's failure: it labels a negative power of an Integer an Integer, 0.1 here, which no Integer is; the Java engine answers the Decimal this engine does
 D155	java	unclassified: null vs Decimal -1
 D157	java	unclassified: error: Error evaluating expression D157: Division by zero vs null
 D159	java	unclassified: error: Error evaluating expression D159: Division by zero vs null
@@ -221,11 +222,13 @@ D739	java	unclassified: error: Error evaluating expression D739: Division by zer
 D74	java	unclassified: error: Error evaluating expression D74: Division by zero vs null
 D742	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
 D747	js	unclassified: Decimal -3.436426116838488e-9 vs Decimal -0.00000001
+D749	js	cql-execution's failure: an Integer of -0.5; see D154
 D752	js	unclassified: Decimal -0.34399222980741023 vs Decimal -0.34399223
 D755	java	unclassified: Integer -402653184 vs null
 D756	java	unclassified: error: Error evaluating expression D756: Division by zero vs null
 D759	java	unclassified: error: Error evaluating expression D759: Infinite or NaN vs null
 D762	js	unclassified: Decimal 502.24084453516906 vs Decimal 502.24084453
+D767	js	cql-execution's failure: an Integer of -0.125; see D154
 D768	java	unclassified: error: Error evaluating expression D768: Character I is neither a decimal digit number, decimal point, nor "e" notation … vs null
 D774	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
 D778	js	unclassified: Decimal 42.150771048700875 vs Decimal 42.15077104

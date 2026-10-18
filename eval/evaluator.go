@@ -1718,8 +1718,17 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 		}
 		// QuoRem truncates exactly. Div rounded to 16 places first, so a
 		// quotient just below a whole number became it before IntPart saw it.
+		//
+		// A Decimal, as div(Decimal, Decimal) is, and an Integer argument
+		// converted to one: it answered an Integer, so `7.0 div 2` was 3 where
+		// both reference engines answer 3.0, and a quotient past int64 but
+		// within the Decimal range was null. Past that range it is, as a result
+		// that cannot be represented.
 		quotient, _ := ld.QuoRem(rd, 0)
-		return funcs.IntegerOf(quotient), nil
+		if !funcs.WithinDecimal(quotient) {
+			return nil, nil
+		}
+		return newDecimalFromD(quotient), nil
 	case ast.OpMod:
 		if rd.IsZero() {
 			return nil, nil

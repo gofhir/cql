@@ -38,7 +38,7 @@ var updateDivergences = flag.Bool("update-divergences", false,
 func TestAnswersMatchTheReferences(t *testing.T) {
 	for _, a := range snapshotAreas {
 		t.Run(a.area, func(t *testing.T) {
-			got := referenceDivergences(t, a.area)
+			got := referenceDivergences(t, a.area, a.exact)
 			path := filepath.Join("testdata", "snapshots", a.area+".divergences.tsv")
 			recorded := readDivergences(t, path)
 			if *updateDivergences {
@@ -67,7 +67,7 @@ func TestAnswersMatchTheReferences(t *testing.T) {
 
 // referenceDivergences is every definition of an area and reference engine
 // whose answers differ, keyed "D17\tjava", with both answers as its value.
-func referenceDivergences(t *testing.T, area string) map[string]string {
+func referenceDivergences(t *testing.T, area string, exact bool) map[string]string {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", area+".cql"))
 	if err != nil {
@@ -91,6 +91,10 @@ func referenceDivergences(t *testing.T, area string) map[string]string {
 		"java": readReferenceResults(t, area, "java"),
 		"js":   readReferenceResults(t, area, "js"),
 	}
+	same := answers.Same
+	if exact {
+		same = answers.SameExactly
+	}
 	divergences := map[string]string{}
 	for _, m := range snapshotDefine.FindAllStringSubmatch(src, -1) {
 		name := m[1]
@@ -101,7 +105,7 @@ func referenceDivergences(t *testing.T, area string) map[string]string {
 				continue // cql-execution runs only what the translator accepted
 			}
 			reference := answers.Reference(raw)
-			if answers.Same(reference, answer) && !answer.Panicked {
+			if same(reference, answer) && !answer.Panicked {
 				continue
 			}
 			divergences[name+"\t"+engineName] = fmt.Sprintf("%s vs %s", oneLine(reference.Text), oneLine(answer.Text))

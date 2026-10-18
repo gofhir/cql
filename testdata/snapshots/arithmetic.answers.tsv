@@ -1,7 +1,7 @@
 D0	null
 D1	Integer 2
 D10	Decimal 0.8555992
-D100	Integer 0
+D100	Decimal 0
 D101	Decimal 2.05
 D102	Integer 100
 D103	Decimal 0.7
@@ -51,7 +51,7 @@ D142	Decimal -0.26751593
 D143	null
 D144	Decimal 0.0651733
 D145	Decimal 1
-D146	Integer 120
+D146	Decimal 120
 D147	Decimal 0.04115226
 D148	null
 D149	Integer 2
@@ -116,7 +116,7 @@ D200	null
 D201	Decimal 24
 D202	Decimal 0.09623408
 D203	Decimal 7342155.26486215
-D204	Integer 12
+D204	Decimal 12
 D205	Decimal 0.009
 D206	null
 D207	Decimal 0.03703703
@@ -172,7 +172,7 @@ D251	Decimal 9.5
 D252	Decimal 0.00000002
 D253	null
 D254	null
-D255	Integer 476
+D255	Decimal 476
 D256	Decimal 0.65788145
 D257	Decimal 249955.002025
 D258	null
@@ -251,7 +251,7 @@ D322	Decimal 0.000001
 D323	Decimal 2
 D324	null
 D325	Decimal 1
-D326	Integer 2
+D326	Decimal 2
 D327	Decimal -0.09
 D328	Decimal -0.93827161
 D329	null
@@ -293,12 +293,12 @@ D360	null
 D361	Decimal -11162.79080152
 D362	null
 D363	Decimal 1.5606477482646683
-D364	Integer 0
+D364	Decimal 0
 D365	Decimal 0
 D366	null
 D367	Decimal 2000.08654322
-D368	Integer 1
-D369	Integer 2
+D368	Decimal 1
+D369	Decimal 2
 D37	Integer 2
 D370	Integer 1
 D371	null
@@ -311,7 +311,7 @@ D377	Decimal 12.25
 D378	null
 D379	Decimal 1907346572495099500000
 D38	null
-D380	Integer 65500
+D380	Decimal 65500
 D381	Decimal -12.99382712
 D382	Decimal 8.33333333
 D383	null
@@ -352,12 +352,12 @@ D413	null
 D414	null
 D415	Decimal 0
 D416	null
-D417	Integer 0
+D417	Decimal 0
 D418	null
 D419	Integer 3
 D42	Decimal 2.5
 D420	Decimal 0
-D421	Integer 0
+D421	Decimal 0
 D422	Integer 40
 D423	Integer 1000
 D424	null
@@ -389,7 +389,7 @@ D447	Integer -2
 D448	Decimal 0.62499999
 D449	Decimal 0.4054651081081644
 D45	Decimal 34.79296875
-D450	Integer -10
+D450	Decimal -10
 D451	Integer 100
 D452	Decimal 0.001
 D453	null
@@ -498,8 +498,8 @@ D545	Decimal -0.08220229
 D546	Decimal 2.0794415416798357
 D547	null
 D548	Decimal -0.5
-D549	Integer 0
-D55	Integer 30
+D549	Decimal 0
+D55	Decimal 30
 D550	Decimal 4.0625
 D551	Decimal 0
 D552	null
@@ -535,7 +535,7 @@ D579	null
 D58	null
 D580	Decimal 0
 D581	Integer 1
-D582	Integer 0
+D582	Decimal 0
 D583	null
 D584	Decimal 0.09531017980432493
 D585	Decimal 0.16672839
@@ -562,7 +562,7 @@ D602	Decimal 0.33333333
 D603	Decimal 8.33333333
 D604	null
 D605	null
-D606	Integer 0
+D606	Decimal 0
 D607	Decimal 0.42
 D608	null
 D609	Decimal 9.79
@@ -630,7 +630,7 @@ D664	Decimal -0.125
 D665	Decimal 2.5
 D666	Decimal 4
 D667	Decimal -1.7095113
-D668	Integer 0
+D668	Decimal 0
 D669	null
 D67	null
 D670	Decimal -3.5
@@ -651,7 +651,7 @@ D683	null
 D684	Decimal 0
 D685	Integer 2
 D686	null
-D687	Integer 0
+D687	Decimal 0
 D688	Integer 5
 D689	Integer 3
 D69	Decimal 0.74202154
@@ -737,7 +737,7 @@ D760	Decimal 248751.5625
 D761	null
 D762	Decimal 502.24084453
 D763	Decimal 3
-D764	Integer 1111
+D764	Decimal 1111
 D765	Decimal -1.00000001
 D766	null
 D767	Decimal -0.125
@@ -786,7 +786,7 @@ D85	null
 D86	null
 D87	Decimal 0.33333333
 D88	null
-D89	Integer 0
+D89	Decimal 0
 D9	null
 D90	Integer 10
 D91	Integer 99

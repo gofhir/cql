@@ -158,7 +158,8 @@ func Value(v fptypes.Value) Answer {
 }
 
 // list is a list of answers, as one text both engines' lists come to:
-// numbers by value, so {1.0} is {1}, strings quoted, and nested lists alike.
+// numbers by value and kind — see numberText — so {1.0} is {1.00} and not {1},
+// strings quoted, and nested lists alike.
 // An element of another type — a tuple, an interval, a date — has a text of
 // each engine's own, so it keeps the list "other": reported, never matched.
 func list(items []Answer) Answer {
@@ -167,7 +168,7 @@ func list(items []Answer) Answer {
 	for i, it := range items {
 		switch it.Kind {
 		case "number":
-			parts[i] = it.Num.String()
+			parts[i] = numberText(it)
 		case "null", "boolean", "string", "fhir", "list", "quantity", "temporal", "interval":
 			parts[i] = it.Text
 		default:
@@ -178,9 +179,16 @@ func list(items []Answer) Answer {
 	return Answer{Kind: kind, Text: "{" + strings.Join(parts, ", ") + "}"}
 }
 
-// Same compares numbers by value, since 1.0 = 1 in CQL, and everything else by
-// kind and text, exactly: 'abc' and 'ABC' are two strings. Two errors are the
-// same whatever their messages say.
+// Same compares numbers by value within their kind, and everything else by kind
+// and text, exactly: 'abc' and 'ABC' are two strings. Two errors are the same
+// whatever their messages say.
+//
+// A number's kind is Decimal or whole. 1.0 and 1.00 are the same Decimal, which
+// the two engines write at different scales; the Integer 3 and the Decimal 3.0
+// are not the same answer, though CQL's equality says they are equal: compared
+// by value alone, `7.0 div 2` answering an Integer went unseen. An Integer and
+// a Long are both whole, a known loss — this engine has no Long at run time
+// (D4c), so telling them apart would report every Long it computes.
 //
 // A Decimal a float64 computed — more significant digits than one holds for
 // certain, on either side — is the same within floatTolerance of the other.
@@ -194,6 +202,9 @@ func Same(a, b Answer) bool {
 	case a.Kind != b.Kind:
 		return false
 	case a.Kind == "number":
+		if isDecimal(a) != isDecimal(b) {
+			return false
+		}
 		if a.Num.Equal(b.Num) {
 			return true
 		}
@@ -204,12 +215,34 @@ func Same(a, b Answer) bool {
 			significantDigits(a.Num) <= floatDigits && significantDigits(b.Num) <= floatDigits {
 			return false
 		}
+		// Two whole numbers, one of more digits than a float64 writes, are no
+		// float's noise but an exact result, `div` above all: 99999999999999999999
+		// and 99999999999999999998 are a relative 1e-20 apart. Only two whole
+		// numbers: a whole one and a fraction stay within the tolerance, and so
+		// do whole numbers padded with zeros; SameExactly is for a corpus that
+		// has no float in it.
+		if a.Num.IsInteger() && b.Num.IsInteger() &&
+			max(writtenDigits(a.Num), writtenDigits(b.Num)) > floatWrittenDigits {
+			return false
+		}
 		scale := decimal.Max(a.Num.Abs(), b.Num.Abs())
 		return a.Num.Sub(b.Num).Abs().LessThanOrEqual(scale.Mul(floatTolerance))
 	case a.Kind == "error", a.Kind == "null":
 		return true
 	}
 	return a.Text == b.Text
+}
+
+// SameExactly is Same without the tolerance for a float64's last digits: for a
+// corpus that computes nothing in floating point, where a number a hair away
+// is a wrong answer. The tolerance cannot tell an exact result from a float's
+// by its digits alone — 10000000000000000000 and 10000000000000100000 are
+// within it, a quotient off by a hundred thousand.
+func SameExactly(a, b Answer) bool {
+	if a.Kind == "number" && b.Kind == "number" {
+		return isDecimal(a) == isDecimal(b) && a.Num.Equal(b.Num)
+	}
+	return Same(a, b)
 }
 
 // canonicalJSON is a JSON document read and written back, with its keys
@@ -253,7 +286,7 @@ func interval(low, high Answer, lowClosed, highClosed bool) Answer {
 	}
 	text := func(b Answer) string {
 		if b.Kind == "number" {
-			return b.Num.String()
+			return numberText(b)
 		}
 		return b.Text
 	}
@@ -268,9 +301,12 @@ func Failed(err error, panicked bool) Answer {
 	return Answer{Kind: "error", Text: "error: " + err.Error()}
 }
 
-// floatDigits is the significant digits a float64 holds for certain; it writes
-// up to 17.
-const floatDigits = 15
+// floatDigits is the significant digits a float64 holds for certain, and
+// floatWrittenDigits the most it writes.
+const (
+	floatDigits        = 15
+	floatWrittenDigits = 17
+)
 
 // floatTolerance is how far apart, relative to the larger, two numbers a
 // float64 computed may be and be the same answer.
@@ -280,4 +316,19 @@ func significantDigits(d decimal.Decimal) int {
 	return len(strings.TrimLeft(d.Abs().Coefficient().String(), "0"))
 }
 
+// writtenDigits is the significant digits of d without its trailing zeros:
+// 1907346572495099500000 is the 17 a float64 wrote, padded to its magnitude.
+func writtenDigits(d decimal.Decimal) int {
+	return len(strings.Trim(d.Abs().Coefficient().String(), "0"))
+}
+
 func isDecimal(a Answer) bool { return strings.HasPrefix(a.Text, "Decimal ") }
+
+// numberText is a number inside a list or an interval: its value, and its kind
+// for a Decimal, so that an Integer element does not stand for a Decimal one.
+func numberText(a Answer) string {
+	if isDecimal(a) {
+		return "Decimal " + a.Num.String()
+	}
+	return a.Num.String()
+}

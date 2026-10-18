@@ -88,6 +88,13 @@ Run conformance tests locally:
 go test ./conformance/... -v
 ```
 
+Everything a change has to pass before it is done (gofmt, golangci-lint, the
+race-enabled tests, six time zones and the oracle mutations):
+
+```bash
+make check
+```
+
 ## Features
 
 - Full CQL parsing via ANTLR4 grammar

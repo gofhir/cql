@@ -743,6 +743,12 @@ func ExactPower(base, exponent decimal.Decimal) (power decimal.Decimal, exact, o
 	return power, true, false
 }
 
+// WithinDecimal reports whether d is a value of the Decimal type, no larger in
+// magnitude than maximum Decimal.
+func WithinDecimal(d decimal.Decimal) bool {
+	return d.Abs().LessThanOrEqual(maxDecimal)
+}
+
 // maxDecimal is the largest value of the Decimal type, `maximum Decimal`, and
 // maxDecimalDigitsBeforePoint its count of digits before the point.
 var maxDecimal = decimal.RequireFromString("99999999999999999999.99999999")

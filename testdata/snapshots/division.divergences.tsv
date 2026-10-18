@@ -1,0 +1,7 @@
+# name	reference	note — see TestAnswersMatchTheReferences
+D10	js	cql-execution's failure: null within the Decimal range; see D7
+D11	java	deliberate: the quotient is past the largest Decimal, and "if the result of the operation cannot be represented, the result is null" (CQL Appendix B, Truncated Divide); cql-execution agrees; the Java engine's BigDecimal has no bound. See TestATruncatedQuotientPastTheDecimalRangeIsNull
+D14	js	cql-execution's failure: it divides in binary floating point, which rounds 2.99999999999999999 up to 3 before truncating; the Java engine answers 2, as this engine does
+D7	js	cql-execution's failure: null for a quotient within the Decimal range, whose largest is 99999999999999999999.99999999 (CQL, Types, Decimal); the Java engine answers it, as this engine does
+D8	js	cql-execution's failure: null within the Decimal range; see D7
+D9	js	cql-execution's failure: null within the Decimal range; see D7

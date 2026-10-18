@@ -35,12 +35,17 @@ var updateSnapshots = flag.Bool("update-snapshots", false, "rewrite testdata/sna
 var snapshotAreas = []struct {
 	area        string
 	definitions int
+	// exact is a corpus that computes nothing in floating point, compared with
+	// the references without the tolerance for a float's last digits.
+	exact bool
 }{
-	{"arithmetic", 800}, // gen -area arithmetic -seed 7 -n 800
-	{"integer", 1000},   // gen -area integer -seed 1 -n 1000
-	{"scope", 600},      // gen -area scope -seed 1 -n 600
-	{"types", 900},      // gen -area types -seed 1 -n 900
-	{"fhir", 900},       // gen -area fhir -seed 1 -n 900, on testdata/snapshots/fhir-data.json
+	{"arithmetic", 800, false}, // gen -area arithmetic -seed 7 -n 800
+	{"integer", 1000, false},   // gen -area integer -seed 1 -n 1000
+	{"scope", 600, false},      // gen -area scope -seed 1 -n 600
+	{"types", 900, false},      // gen -area types -seed 1 -n 900
+	{"fhir", 900, false},       // gen -area fhir -seed 1 -n 900, on testdata/snapshots/fhir-data.json
+	// Written by hand, not generated: the cases of docs/plans/001-decimal-division.md.
+	{"division", 29, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over
@@ -70,7 +75,9 @@ func TestAnswersMatchTheSnapshots(t *testing.T) {
 			want := readSnapshot(t, path)
 			var moved []string
 			for _, name := range sortedNames(got) {
-				if !snapshotSame(want[name], got[name]) {
+				// An exact area's answers are its text: the tolerance for a
+				// float's last digits would let 10^19 + 1 pass for 10^19.
+				if a.exact && want[name] != got[name] || !a.exact && !snapshotSame(want[name], got[name]) {
 					moved = append(moved, fmt.Sprintf("%s: %s, was %s", name, got[name], want[name]))
 				}
 			}
