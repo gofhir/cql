@@ -3,6 +3,8 @@ package cql
 import (
 	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -328,5 +330,62 @@ func TestASnapshotComparesPastFloatNoiseOnly(t *testing.T) {
 		if got := snapshotSame(tt.want, tt.got); got != tt.same {
 			t.Errorf("snapshotSame(%q, %q) = %t; want %t", tt.want, tt.got, got, tt.same)
 		}
+	}
+}
+
+// TestTheFHIRReferencesAreOfThisCorpus holds the two references of the fhir
+// area to the corpus they were run on: both carry its SHA-256, the Java engine
+// answers every definition — a translation error is an answer — and
+// cql-execution every one the translator accepted. A missing file fails rather
+// than skips, so that the comparison cannot quietly lose its oracle. What the
+// references answer is compared by internal/referenceharness/differential/compare
+// -each -data, and inventoried in testdata/snapshots/fhir.divergences.md.
+func TestTheFHIRReferencesAreOfThisCorpus(t *testing.T) {
+	corpus, err := os.ReadFile(filepath.Join("testdata", "snapshots", "fhir.cql"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(corpus)
+	want := hex.EncodeToString(sum[:])
+	read := func(name string) map[string]json.RawMessage {
+		raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", name))
+		if err != nil {
+			t.Fatalf("%v: the fhir area's references are part of the corpus", err)
+		}
+		var ref struct {
+			SourceSha256 string                     `json:"sourceSha256"`
+			Results      map[string]json.RawMessage `json:"results"`
+		}
+		if err := json.Unmarshal(raw, &ref); err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if ref.SourceSha256 != want {
+			t.Errorf("%s was run on another fhir.cql (%s, now %s); regenerate it", name, ref.SourceSha256, want)
+		}
+		return ref.Results
+	}
+	java, js := read("fhir.java.json"), read("fhir.js.json")
+	definitions := len(snapshotDefine.FindAllString(string(corpus), -1))
+	if len(java) != definitions {
+		t.Errorf("the Java engine answered %d definitions of %d", len(java), definitions)
+	}
+	accepted := 0
+	for name, answer := range java {
+		var e struct {
+			Error string `json:"error"`
+		}
+		if json.Unmarshal(answer, &e) == nil && e.Error == "Translation" {
+			if _, ok := js[name]; ok {
+				t.Errorf("%s: cql-execution answered a definition the translator refused", name)
+			}
+			continue
+		}
+		accepted++
+		if _, ok := js[name]; !ok {
+			t.Errorf("%s: cql-execution did not answer a definition the translator accepted", name)
+		}
+	}
+	if len(js) != accepted {
+		t.Errorf("cql-execution answered %d definitions; the translator accepted %d", len(js), accepted)
 	}
 }

@@ -1,0 +1,3516 @@
+{
+  "library" : "corpus fhir.cql",
+  "sourceSha256" : "a8d7b5174b1135a0db8803e9173b133f16c5967476284e5541a71942fe3b2c1d",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D1" : null,
+    "D2" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D2: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D3" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.date>)."
+    },
+    "D4" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (FHIR.id)."
+    },
+    "D5" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (FHIR.Period)."
+    },
+    "D6" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D7" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D8" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D9" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.Period)."
+    },
+    "D10" : null,
+    "D11" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D12" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D13" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D14" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Patient'."
+    },
+    "D15" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D16" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.StringType as org.hl7.fhir.r4.model.IntegerType."
+    },
+    "D17" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Coding'."
+    },
+    "D18" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (System.ValueSet)."
+    },
+    "D19" : {
+      "type" : "FHIR.date",
+      "value" : "1980-01-01"
+    },
+    "D20" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'Quantity'."
+    },
+    "D21" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.id,System.Quantity)."
+    },
+    "D22" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Quantity'."
+    },
+    "D23" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.String'."
+    },
+    "D24" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D25" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D26" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'date'."
+    },
+    "D27" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D28" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D28: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D29" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (list<System.Integer>,System.Quantity)."
+    },
+    "D30" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D31" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'Period'."
+    },
+    "D32" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<choice<FHIR.boolean,FHIR.dateTime>>)."
+    },
+    "D33" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (System.Integer,System.DateTime)."
+    },
+    "D34" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.CodeableConcept,System.DateTime)."
+    },
+    "D35" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'dateTime'."
+    },
+    "D36" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Coding'."
+    },
+    "D37" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (FHIR.AdministrativeGender)."
+    },
+    "D38" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D39" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D40" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Element'."
+    },
+    "D41" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (list<System.Integer>)."
+    },
+    "D42" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D43" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.Patient,System.DateTime)."
+    },
+    "D44" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Resource'."
+    },
+    "D45" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D46" : {
+      "type" : "FHIR.Coding",
+      "value" : "{\"code\":\"x\"}"
+    },
+    "D47" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D48" : null,
+    "D49" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D49: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D50" : {
+      "type" : "Quantity",
+      "value" : "6",
+      "unit" : "mg"
+    },
+    "D51" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D52" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D53" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D54" : {
+      "type" : "FHIR.date",
+      "value" : "1980-01-01"
+    },
+    "D55" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.String'."
+    },
+    "D56" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'Resource'."
+    },
+    "D57" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<System.ValueSet>)."
+    },
+    "D58" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D59" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D60" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Element'."
+    },
+    "D61" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D62" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D63" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.CodeableConcept,System.Quantity)."
+    },
+    "D64" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D65" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Quantity'."
+    },
+    "D66" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'code'."
+    },
+    "D67" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D68" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D69" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D70" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D70: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D71" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'Period'."
+    },
+    "D72" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'code'."
+    },
+    "D73" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'System.Date'."
+    },
+    "D74" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.Coding>)."
+    },
+    "D75" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D76" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (System.ValueSet,System.Quantity)."
+    },
+    "D77" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<FHIR.id>)."
+    },
+    "D78" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D79" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D80" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'date'."
+    },
+    "D81" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'Patient'."
+    },
+    "D82" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'date'."
+    },
+    "D83" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D84" : null,
+    "D85" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (FHIR.Period)."
+    },
+    "D86" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Resource'."
+    },
+    "D87" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.String'."
+    },
+    "D88" : {
+      "type" : "FHIR.code",
+      "value" : "male"
+    },
+    "D89" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D90" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D91" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Resource'."
+    },
+    "D92" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'string'."
+    },
+    "D93" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D94" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'date'."
+    },
+    "D95" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'integer'."
+    },
+    "D96" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D97" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D98" : null,
+    "D99" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.Period,System.Quantity)."
+    },
+    "D100" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D101" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D102" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D103" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Resource'."
+    },
+    "D104" : null,
+    "D105" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D106" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'string'."
+    },
+    "D107" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D108" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.code,System.Quantity)."
+    },
+    "D109" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (FHIR.code)."
+    },
+    "D110" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'string'."
+    },
+    "D111" : {
+      "type" : "DateTime",
+      "value" : "2020-02-03",
+      "precision" : "day",
+      "offset" : "Z",
+      "instant" : "2020-02-03T00:00:00Z"
+    },
+    "D112" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.Date'."
+    },
+    "D113" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D114" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D115" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D116" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Patient'."
+    },
+    "D117" : null,
+    "D118" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D119" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.Period,System.Quantity)."
+    },
+    "D120" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Patient'."
+    },
+    "D121" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Quantity'."
+    },
+    "D122" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D123" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D124" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'string'."
+    },
+    "D125" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D126" : {
+      "error" : "Translation",
+      "message" : "Call to operator ToString(choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>) is ambiguous with: \n  - ToString(System.Time)\n  - ToString(System.Boolean)\n  - ToString(System.Integer)\n  - ToString(System.DateTime)"
+    },
+    "D127" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D128" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D129" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'Patient'."
+    },
+    "D130" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D131" : null,
+    "D132" : {
+      "type" : "Quantity",
+      "value" : "6",
+      "unit" : "mg"
+    },
+    "D133" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D133: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D134" : null,
+    "D135" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'code'."
+    },
+    "D136" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D137" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'Coding'."
+    },
+    "D138" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D139" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D140" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (choice<FHIR.boolean,FHIR.dateTime>)."
+    },
+    "D141" : null,
+    "D142" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Quantity'."
+    },
+    "D143" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Quantity'."
+    },
+    "D144" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D145" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D146" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.CodeableConcept>)."
+    },
+    "D147" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (System.Quantity,System.DateTime)."
+    },
+    "D148" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D149" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D149: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D150" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D151" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D152" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D153" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.String'."
+    },
+    "D154" : {
+      "type" : "Quantity",
+      "value" : "-5",
+      "unit" : "mg"
+    },
+    "D155" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (list<System.Integer>,System.Quantity)."
+    },
+    "D156" : null,
+    "D157" : null,
+    "D158" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Date'."
+    },
+    "D159" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D160" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D161" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Coding'."
+    },
+    "D162" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D163" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D164" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D165" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Quantity'."
+    },
+    "D166" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D167" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D168" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<list<System.Integer>>)."
+    },
+    "D169" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.date)."
+    },
+    "D170" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Coding'."
+    },
+    "D171" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D172" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D173" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Coding'."
+    },
+    "D174" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Date'."
+    },
+    "D175" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'Quantity'."
+    },
+    "D176" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Patient'."
+    },
+    "D177" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.code,System.DateTime)."
+    },
+    "D178" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'date'."
+    },
+    "D179" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D180" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Quantity'."
+    },
+    "D181" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D182" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (FHIR.Patient)."
+    },
+    "D183" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'integer'."
+    },
+    "D184" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (list<System.Integer>,System.DateTime)."
+    },
+    "D185" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D186" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D186: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D187" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D188" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'dateTime'."
+    },
+    "D189" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'code'."
+    },
+    "D190" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D190: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D191" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'Patient'."
+    },
+    "D192" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'System.String'."
+    },
+    "D193" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D194" : null,
+    "D195" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Patient'."
+    },
+    "D196" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D197" : {
+      "type" : "String",
+      "value" : "5 'mg'"
+    },
+    "D198" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.Period,System.DateTime)."
+    },
+    "D199" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'integer'."
+    },
+    "D200" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D201" : {
+      "type" : "FHIR.Patient",
+      "value" : "{\"resourceType\":\"Patient\",\"id\":\"p\",\"gender\":\"male\",\"birthDate\":\"1980-01-01\",\"deceasedDateTime\":\"2020-02-02\"}"
+    },
+    "D202" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D203" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D204" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D205" : {
+      "error" : "Translation",
+      "message" : "Call to operator Add(choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,System.Quantity) is ambiguous with: \n  - Add(System.Time,System.Quantity)\n  - Add(System.DateTime,System.Quantity)"
+    },
+    "D206" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D207" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D208" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Resource'."
+    },
+    "D209" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D210" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'date'."
+    },
+    "D211" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D212" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D213" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.Period>)."
+    },
+    "D214" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D215" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Resource'."
+    },
+    "D216" : {
+      "type" : "FHIR.id",
+      "value" : "Patient/p"
+    },
+    "D217" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D218" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'string'."
+    },
+    "D219" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Element'."
+    },
+    "D220" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D221" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.AdministrativeGender,System.Quantity)."
+    },
+    "D222" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'Quantity'."
+    },
+    "D223" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D223: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D224" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D225" : {
+      "error" : "Translation",
+      "message" : "Call to operator Add(choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,System.Quantity) is ambiguous with: \n  - Add(System.Time,System.Quantity)\n  - Add(System.DateTime,System.Quantity)"
+    },
+    "D226" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D227" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D228" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D229" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.AdministrativeGender,System.DateTime)."
+    },
+    "D230" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D231" : {
+      "error" : "Translation",
+      "message" : "Call to operator Add(choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,System.Quantity) is ambiguous with: \n  - Add(System.Time,System.Quantity)\n  - Add(System.DateTime,System.Quantity)"
+    },
+    "D232" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D233" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D234" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D235" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D236" : {
+      "type" : "FHIR.Period",
+      "value" : "{\"start\":\"2020-01-01\"}"
+    },
+    "D237" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D238" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'dateTime'."
+    },
+    "D239" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.date,System.DateTime)."
+    },
+    "D240" : {
+      "type" : "FHIR.code",
+      "value" : "male"
+    },
+    "D241" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D242" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Patient'."
+    },
+    "D243" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Resource'."
+    },
+    "D244" : null,
+    "D245" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D246" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.String'."
+    },
+    "D247" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'code'."
+    },
+    "D248" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D249" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D250" : {
+      "type" : "FHIR.dateTime",
+      "value" : "2020-02-02"
+    },
+    "D251" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'date'."
+    },
+    "D252" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'date'."
+    },
+    "D253" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D254" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'integer'."
+    },
+    "D255" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.id>)."
+    },
+    "D256" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D257" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.String'."
+    },
+    "D258" : {
+      "error" : "InvalidPrecision",
+      "message" : "Invalid precision: mg"
+    },
+    "D259" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.code,System.Quantity)."
+    },
+    "D260" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'Patient'."
+    },
+    "D261" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D262" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'dateTime'."
+    },
+    "D263" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D264" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D265" : {
+      "error" : "Translation",
+      "message" : "Call to operator Add(choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,System.Quantity) is ambiguous with: \n  - Add(System.Time,System.Quantity)\n  - Add(System.DateTime,System.Quantity)"
+    },
+    "D266" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<list<System.Integer>>)."
+    },
+    "D267" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Element'."
+    },
+    "D268" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D269" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D270" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D271" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'System.String'."
+    },
+    "D272" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'string'."
+    },
+    "D273" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D274" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D275" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'string'."
+    },
+    "D276" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D277" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D278" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Element'."
+    },
+    "D279" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.Code'."
+    },
+    "D280" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'string'."
+    },
+    "D281" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Period'."
+    },
+    "D282" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.String'."
+    },
+    "D283" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<FHIR.AdministrativeGender>)."
+    },
+    "D284" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D285" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.Patient,System.Quantity)."
+    },
+    "D286" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D287" : {
+      "type" : "FHIR.dateTime",
+      "value" : "2020-01-01"
+    },
+    "D288" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D289" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D290" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Resource'."
+    },
+    "D291" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'dateTime'."
+    },
+    "D292" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D293" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D294" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'string'."
+    },
+    "D295" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D296" : null,
+    "D297" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D298" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D299" : {
+      "type" : "DateTime",
+      "value" : "2020-01-02",
+      "precision" : "day",
+      "offset" : "Z",
+      "instant" : "2020-01-02T00:00:00Z"
+    },
+    "D300" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'Patient'."
+    },
+    "D301" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Coding'."
+    },
+    "D302" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D303" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.Coding,System.Quantity)."
+    },
+    "D304" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.id)."
+    },
+    "D305" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D306" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D307" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D308" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'date'."
+    },
+    "D309" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>>)."
+    },
+    "D310" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (FHIR.Coding)."
+    },
+    "D311" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D312" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D313" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D314" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D315" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>)."
+    },
+    "D316" : {
+      "type" : "FHIR.id",
+      "value" : "Patient/p"
+    },
+    "D317" : {
+      "type" : "FHIR.code",
+      "value" : "x"
+    },
+    "D318" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D319" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (System.ValueSet)."
+    },
+    "D320" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D321" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'string'."
+    },
+    "D322" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.Quantity as org.hl7.fhir.r4.model.StringType."
+    },
+    "D323" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D324" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D324: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D325" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'code'."
+    },
+    "D326" : null,
+    "D327" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D328" : {
+      "error" : "Translation",
+      "message" : "Call to operator ToString(choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>) is ambiguous with: \n  - ToString(System.Time)\n  - ToString(System.Boolean)\n  - ToString(System.Integer)\n  - ToString(System.DateTime)"
+    },
+    "D329" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'Quantity'."
+    },
+    "D330" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'integer'."
+    },
+    "D331" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<System.ValueSet>)."
+    },
+    "D332" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'code'."
+    },
+    "D333" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D334" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'dateTime'."
+    },
+    "D335" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D335: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D336" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D337" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D338" : null,
+    "D339" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D340" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D341" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'Patient'."
+    },
+    "D342" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D343" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D344" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D345" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D345: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D346" : {
+      "error" : "Translation",
+      "message" : "Call to operator Add(choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,System.Quantity) is ambiguous with: \n  - Add(System.Time,System.Quantity)\n  - Add(System.DateTime,System.Quantity)"
+    },
+    "D347" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D348" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Element'."
+    },
+    "D349" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D350" : null,
+    "D351" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D352" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.AdministrativeGender,System.Quantity)."
+    },
+    "D353" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'dateTime'."
+    },
+    "D354" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Quantity'."
+    },
+    "D355" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D356" : {
+      "type" : "FHIR.Quantity",
+      "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+    },
+    "D357" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D358" : {
+      "type" : "FHIR.code",
+      "value" : "x"
+    },
+    "D359" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D360" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Period'."
+    },
+    "D361" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D362" : {
+      "type" : "FHIR.Period",
+      "value" : "{\"start\":\"2020-01-01\",\"end\":\"2020-01-03T10:00:00Z\"}"
+    },
+    "D363" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D364" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'Coding'."
+    },
+    "D365" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'date'."
+    },
+    "D366" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D367" : null,
+    "D368" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D369" : null,
+    "D370" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D371" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D372" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Coding'."
+    },
+    "D373" : {
+      "type" : "String",
+      "value" : "2020-01-01"
+    },
+    "D374" : null,
+    "D375" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D376" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Patient'."
+    },
+    "D377" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D378" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D379" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D380" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.CodeableConcept)."
+    },
+    "D381" : null,
+    "D382" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D383" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (FHIR.id)."
+    },
+    "D384" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D385" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'code'."
+    },
+    "D386" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Element'."
+    },
+    "D387" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'integer'."
+    },
+    "D388" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D389" : {
+      "type" : "FHIR.dateTime",
+      "value" : "2020-01-01"
+    },
+    "D390" : null,
+    "D391" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D392" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D393" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D394" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D395" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<FHIR.dateTime>)."
+    },
+    "D396" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Quantity'."
+    },
+    "D397" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'Quantity'."
+    },
+    "D398" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.dateTime)."
+    },
+    "D399" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (FHIR.date)."
+    },
+    "D400" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D401" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.Patient,System.Quantity)."
+    },
+    "D402" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Date'."
+    },
+    "D403" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'Coding'."
+    },
+    "D404" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D405" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<choice<FHIR.boolean,FHIR.dateTime>>)."
+    },
+    "D406" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.Quantity as org.hl7.fhir.r4.model.CodeableConcept."
+    },
+    "D407" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Code'."
+    },
+    "D408" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.Code'."
+    },
+    "D409" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D410" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'code'."
+    },
+    "D411" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D412" : null,
+    "D413" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D414" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D415" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Patient'."
+    },
+    "D416" : {
+      "type" : "Quantity",
+      "value" : "5",
+      "unit" : "mg"
+    },
+    "D417" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'date'."
+    },
+    "D418" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D419" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (FHIR.AdministrativeGender)."
+    },
+    "D420" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.code>)."
+    },
+    "D421" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D422" : null,
+    "D423" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D424" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D425" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D426" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D427" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.dateTime>)."
+    },
+    "D428" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.AdministrativeGender)."
+    },
+    "D429" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Element'."
+    },
+    "D430" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D431" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D432" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D433" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Code'."
+    },
+    "D434" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D435" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D436" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D437" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D438" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D438: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D439" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D440" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'code'."
+    },
+    "D441" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Quantity'."
+    },
+    "D442" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D443" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D443: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D444" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D445" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D446" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (FHIR.id,System.Quantity)."
+    },
+    "D447" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (FHIR.CodeableConcept)."
+    },
+    "D448" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D449" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D450" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D451" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D452" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (System.ValueSet)."
+    },
+    "D453" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'date'."
+    },
+    "D454" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'integer'."
+    },
+    "D455" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'Patient'."
+    },
+    "D456" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'date'."
+    },
+    "D457" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Quantity'."
+    },
+    "D458" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Quantity'."
+    },
+    "D459" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D460" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'integer'."
+    },
+    "D461" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Add with signature (System.ValueSet,System.Quantity)."
+    },
+    "D462" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'integer'."
+    },
+    "D463" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'Period'."
+    },
+    "D464" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D465" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D466" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'Resource'."
+    },
+    "D467" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'code'."
+    },
+    "D468" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D469" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D470" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.String'."
+    },
+    "D471" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D471: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D472" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.String'."
+    },
+    "D473" : {
+      "type" : "FHIR.Patient",
+      "value" : "{\"resourceType\":\"Patient\",\"id\":\"p\",\"gender\":\"male\",\"birthDate\":\"1980-01-01\",\"deceasedDateTime\":\"2020-02-02\"}"
+    },
+    "D474" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Coding'."
+    },
+    "D475" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D476" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Element'."
+    },
+    "D477" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D478" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D479" : {
+      "type" : "Quantity",
+      "value" : "-5",
+      "unit" : "mg"
+    },
+    "D480" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D481" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D482" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D483" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.Code'."
+    },
+    "D484" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Quantity'."
+    },
+    "D485" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D486" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'integer'."
+    },
+    "D487" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D488" : {
+      "type" : "Quantity",
+      "value" : "5",
+      "unit" : "mg"
+    },
+    "D489" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Element'."
+    },
+    "D490" : {
+      "error" : "Translation",
+      "message" : "Call to operator ToString(choice<FHIR.boolean,FHIR.dateTime>) is ambiguous with: \n  - ToString(System.Boolean)\n  - ToString(System.DateTime)"
+    },
+    "D491" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'System.String'."
+    },
+    "D492" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D493" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D494" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D494: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D495" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>>)."
+    },
+    "D496" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Coding'."
+    },
+    "D497" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Coding'."
+    },
+    "D498" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D499" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D500" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D501" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D502" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'string'."
+    },
+    "D503" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.Date'."
+    },
+    "D504" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D505" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.Coding,System.DateTime)."
+    },
+    "D506" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'string'."
+    },
+    "D507" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Coding'."
+    },
+    "D508" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Element'."
+    },
+    "D509" : null,
+    "D510" : {
+      "type" : "Date",
+      "value" : "1980-01-02",
+      "precision" : "day"
+    },
+    "D511" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Resource'."
+    },
+    "D512" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'dateTime'."
+    },
+    "D513" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D514" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D515" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D516" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D516: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D517" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Quantity'."
+    },
+    "D518" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Resource'."
+    },
+    "D519" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D520" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'Quantity'."
+    },
+    "D521" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D522" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D523" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Coding'."
+    },
+    "D524" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D525" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Quantity'."
+    },
+    "D526" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D527" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Element'."
+    },
+    "D528" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Patient'."
+    },
+    "D529" : {
+      "type" : "DateTime",
+      "value" : "2020-01-02",
+      "precision" : "day",
+      "offset" : "Z",
+      "instant" : "2020-01-02T00:00:00Z"
+    },
+    "D530" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D530: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D531" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D532" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D533" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Code'."
+    },
+    "D534" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D535" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<FHIR.AdministrativeGender>)."
+    },
+    "D536" : null,
+    "D537" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D538" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D539" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (FHIR.id,System.DateTime)."
+    },
+    "D540" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'dateTime'."
+    },
+    "D541" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'string'."
+    },
+    "D542" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'date'."
+    },
+    "D543" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D544" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D545" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D546" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D547" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D548" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Quantity'."
+    },
+    "D549" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D550" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D551" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'Resource'."
+    },
+    "D552" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D553" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'Quantity'."
+    },
+    "D554" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D555" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'code'."
+    },
+    "D556" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Quantity'."
+    },
+    "D557" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D558" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Period'."
+    },
+    "D559" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.Code'."
+    },
+    "D560" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Date'."
+    },
+    "D561" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D562" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'date'."
+    },
+    "D563" : null,
+    "D564" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D565" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>>)."
+    },
+    "D566" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D567" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D568" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D569" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Period'."
+    },
+    "D570" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D571" : null,
+    "D572" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D573" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D574" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (list<System.Integer>)."
+    },
+    "D575" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D576" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.String'."
+    },
+    "D577" : null,
+    "D578" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D579" : {
+      "type" : "FHIR.Quantity",
+      "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+    },
+    "D580" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D581" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'string'."
+    },
+    "D582" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'Resource'."
+    },
+    "D583" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D583: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D584" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'code'."
+    },
+    "D585" : null,
+    "D586" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Period'."
+    },
+    "D587" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Quantity'."
+    },
+    "D588" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D589" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D590" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D591" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D592" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'System.Code'."
+    },
+    "D593" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D593: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D594" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Date'."
+    },
+    "D595" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'dateTime'."
+    },
+    "D596" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D597" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D598" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Code'."
+    },
+    "D599" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'dateTime'."
+    },
+    "D600" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D601" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D602" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'integer'."
+    },
+    "D603" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D604" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator SameAs with signature (System.ValueSet,System.DateTime)."
+    },
+    "D605" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'System.Code'."
+    },
+    "D606" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D607" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D608" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D609" : {
+      "type" : "FHIR.Period",
+      "value" : "{\"start\":\"2020-01-01\",\"end\":\"2020-01-03T10:00:00Z\"}"
+    },
+    "D610" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Period'."
+    },
+    "D611" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D612" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<FHIR.Patient>)."
+    },
+    "D613" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D614" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Period'."
+    },
+    "D615" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D616" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'code'."
+    },
+    "D617" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D618" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D619" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D619: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D620" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D621" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D622" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'code'."
+    },
+    "D623" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'Coding'."
+    },
+    "D624" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D625" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D626" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D627" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D628" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D629" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D630" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'dateTime'."
+    },
+    "D631" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D632" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (FHIR.code)."
+    },
+    "D633" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.String'."
+    },
+    "D634" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D635" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'code'."
+    },
+    "D636" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D637" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D638" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Quantity'."
+    },
+    "D639" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'code'."
+    },
+    "D640" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Code'."
+    },
+    "D641" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D642" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Patient'."
+    },
+    "D643" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Sum with signature (list<choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>>)."
+    },
+    "D644" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'dateTime'."
+    },
+    "D645" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D646" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D647" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D648" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (FHIR.Coding)."
+    },
+    "D649" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'date'."
+    },
+    "D650" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'string'."
+    },
+    "D651" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D652" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'code'."
+    },
+    "D653" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D654" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D655" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D656" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D657" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.Coding)."
+    },
+    "D658" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D659" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D660" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Coding'."
+    },
+    "D661" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D662" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D663" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D663: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D664" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D665" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D666" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D667" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Element'."
+    },
+    "D668" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (list<System.Integer>)."
+    },
+    "D669" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.String'."
+    },
+    "D670" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D671" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D672" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'date'."
+    },
+    "D673" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D674" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D675" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D676" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D677" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Resource'."
+    },
+    "D678" : {
+      "error" : "InvalidPrecision",
+      "message" : "Invalid precision: mg"
+    },
+    "D679" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D679: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D680" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D680: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D681" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D682" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Period'."
+    },
+    "D683" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D683: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D684" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Quantity'."
+    },
+    "D685" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D686" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D687" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D688" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D688: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D689" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Resource'."
+    },
+    "D690" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'code'."
+    },
+    "D691" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Resource'."
+    },
+    "D692" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'Patient'."
+    },
+    "D693" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D694" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D695" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.code)."
+    },
+    "D696" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'code'."
+    },
+    "D697" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D698" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'Resource'."
+    },
+    "D699" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Resource'."
+    },
+    "D700" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D701" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D702" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D703" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D704" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D705" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D705: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D706" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D707" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<FHIR.CodeableConcept>)."
+    },
+    "D708" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D709" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D710" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D711" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D712" : null,
+    "D713" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D714" : {
+      "type" : "String",
+      "value" : "1980-01-01"
+    },
+    "D715" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'integer'."
+    },
+    "D716" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D717" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D718" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>)."
+    },
+    "D719" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'System.String'."
+    },
+    "D720" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D721" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D722" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.String'."
+    },
+    "D723" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D724" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D725" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'Quantity'."
+    },
+    "D726" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>)."
+    },
+    "D727" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D728" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D729" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D730" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D731" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D732" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Coding'."
+    },
+    "D733" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D734" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D735" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D736" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D737" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.DateTimeType as org.hl7.fhir.r4.model.Period."
+    },
+    "D738" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D739" : null,
+    "D740" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D741" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Quantity'."
+    },
+    "D742" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D743" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Coding'."
+    },
+    "D744" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D745" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D746" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'System.Code'."
+    },
+    "D747" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'code'."
+    },
+    "D748" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D749" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D750" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Avg with signature (list<FHIR.Period>)."
+    },
+    "D751" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D752" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.Date'."
+    },
+    "D753" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D754" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>)."
+    },
+    "D755" : {
+      "type" : "FHIR.Coding",
+      "value" : "{\"code\":\"x\"}"
+    },
+    "D756" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D757" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Integer'."
+    },
+    "D758" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D759" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.Date'."
+    },
+    "D760" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D761" : {
+      "type" : "FHIR.CodeableConcept",
+      "value" : "{\"coding\":[{\"system\":\"s\",\"code\":\"c\"}]}"
+    },
+    "D762" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D763" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.IntegerType as org.hl7.fhir.r4.model.DateTimeType."
+    },
+    "D764" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D765" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Coding'."
+    },
+    "D766" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D767" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Quantity'."
+    },
+    "D768" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Date'."
+    },
+    "D769" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.StringType as org.hl7.fhir.r4.model.Quantity."
+    },
+    "D770" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'System.Code'."
+    },
+    "D771" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D772" : {
+      "type" : "FHIR.date",
+      "value" : "1980-01-01"
+    },
+    "D773" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D773: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D774" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D775" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Element'."
+    },
+    "D776" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D777" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D777: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D778" : {
+      "type" : "FHIR.Coding",
+      "value" : "{\"code\":\"x\"}"
+    },
+    "D779" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Date'."
+    },
+    "D780" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Negate with signature (choice<FHIR.boolean,FHIR.dateTime>)."
+    },
+    "D781" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D782" : {
+      "type" : "Integer",
+      "value" : "7"
+    },
+    "D783" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D784" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D785" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D786" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D787" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D787: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D788" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D788: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D789" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'integer'."
+    },
+    "D790" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'Resource'."
+    },
+    "D791" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Quantity'."
+    },
+    "D792" : null,
+    "D793" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D794" : {
+      "type" : "FHIR.string",
+      "value" : "abc"
+    },
+    "D795" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Abs with signature (FHIR.Patient)."
+    },
+    "D796" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D797" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D797: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D798" : {
+      "type" : "FHIR.code",
+      "value" : "x"
+    },
+    "D799" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D800" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Patient'."
+    },
+    "D801" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.String'."
+    },
+    "D802" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D803" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'Period'."
+    },
+    "D804" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D805" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D806" : null,
+    "D807" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D808" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D809" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'System.Code'."
+    },
+    "D810" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D811" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D812" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToString with signature (FHIR.Patient)."
+    },
+    "D813" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D814" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'date'."
+    },
+    "D815" : null,
+    "D816" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.StringType as org.hl7.fhir.r4.model.CodeableConcept."
+    },
+    "D817" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'System.Concept'."
+    },
+    "D818" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D819" : {
+      "type" : "FHIR.id",
+      "value" : "Patient/p"
+    },
+    "D820" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'FHIR.AdministrativeGender' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D821" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D822" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D823" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Resource'."
+    },
+    "D824" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Quantity'."
+    },
+    "D825" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'integer'."
+    },
+    "D826" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D827" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D828" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'dateTime'."
+    },
+    "D829" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Quantity'."
+    },
+    "D830" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D831" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D832" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D833" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D834" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'Period'."
+    },
+    "D835" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D836" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.String'."
+    },
+    "D837" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Resource'."
+    },
+    "D838" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'System.Code'."
+    },
+    "D839" : {
+      "type" : "FHIR.Coding",
+      "value" : "{\"code\":\"x\"}"
+    },
+    "D840" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'Quantity'."
+    },
+    "D841" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D842" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D843" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Code'."
+    },
+    "D844" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D845" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Quantity'."
+    },
+    "D846" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D847" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Element'."
+    },
+    "D848" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D849" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Date'."
+    },
+    "D850" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D851" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D852" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D853" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Date'."
+    },
+    "D854" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'CodeableConcept'."
+    },
+    "D855" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D856" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D857" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D858" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'date' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D859" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D859: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D860" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D861" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'date'."
+    },
+    "D862" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D863" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D864" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D865" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'date'."
+    },
+    "D866" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D867" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D868" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D869" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'Patient'."
+    },
+    "D870" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D871" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Period' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D872" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D873" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'code' cannot be cast as a value of type 'System.Quantity'."
+    },
+    "D874" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'dateTime'."
+    },
+    "D875" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'DomainResource'."
+    },
+    "D876" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'id' cannot be cast as a value of type 'Coding'."
+    },
+    "D877" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D878" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Coding' cannot be cast as a value of type 'System.String'."
+    },
+    "D879" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.ValueSet' cannot be cast as a value of type 'Interval of System.DateTime'."
+    },
+    "D880" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D881" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'System.DateTime'."
+    },
+    "D882" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'System.String'."
+    },
+    "D883" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'List of System.Integer' cannot be cast as a value of type 'date'."
+    },
+    "D884" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'Element'."
+    },
+    "D885" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'List of System.Any'."
+    },
+    "D886" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D887" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'System.String'."
+    },
+    "D888" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>' cannot be cast as a value of type 'Patient'."
+    },
+    "D889" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'CodeableConcept' cannot be cast as a value of type 'code'."
+    },
+    "D890" : {
+      "error" : "InvalidCast",
+      "message" : "Cannot cast a value of type org.hl7.fhir.r4.model.Quantity as org.hl7.fhir.r4.model.IntegerType."
+    },
+    "D891" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D892" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Integer' cannot be cast as a value of type 'integer'."
+    },
+    "D893" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'Patient' cannot be cast as a value of type 'Element'."
+    },
+    "D894" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.Quantity' cannot be cast as a value of type 'System.String'."
+    },
+    "D895" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>' cannot be cast as a value of type 'string'."
+    },
+    "D896" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D897" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D898" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'choice<FHIR.boolean,FHIR.dateTime>' cannot be cast as a value of type 'System.Decimal'."
+    },
+    "D899" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'dateTime' cannot be cast as a value of type 'System.Decimal'."
+    }
+  }
+}

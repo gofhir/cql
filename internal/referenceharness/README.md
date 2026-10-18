@@ -247,9 +247,39 @@ specification: every value is of type Any.
 `fhir` covers FHIR data: `is`, `as` and `cast` of resources, their primitives
 and choices, and of FHIR instances built in CQL, against System and FHIR
 types, and the operators that read them. Its values come from resources a test
-serves by fixed ids (`testdata/snapshots/fhir-data.json`). The reference
-engines cannot run it yet, since the harness gives them no data; until they
-can, it is held to the snapshot below.
+serves by fixed ids (`testdata/snapshots/fhir-data.json`). Both reference
+engines run it over the same resources and the same FHIRHelpers 4.0.1 text —
+the translator's own copy is the one this engine embeds, line for line — each
+definition in a library of its own, since the translator refuses a whole file
+for one invalid expression and this corpus holds them on purpose:
+
+```sh
+cd internal/referenceharness
+docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+  mvn -q -B dependency:copy-dependencies -DoutputDirectory=/w/lib
+docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+  sh -c 'javac -cp "lib/*" -d out src/Translate.java src/Evaluate.java'
+mkdir -p /tmp/fhir && cp ../../testdata/snapshots/fhir.cql ../../testdata/snapshots/fhir-data.json \
+  ../../fhirhelpers/FHIRHelpers-4.0.1.cql /tmp/fhir/
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3-eclipse-temurin-21 \
+  java -cp "out:lib/*" Evaluate -each /cql/fhir.cql /cql /cql/fhir-data.json /cql/fhir.elm.json \
+  > /tmp/fhir/java.json && mv /tmp/fhir/java.json ../../testdata/snapshots/fhir.java.json
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3-eclipse-temurin-21 \
+  java -cp "out:lib/*" Translate /cql/FHIRHelpers-4.0.1.cql /cql > /tmp/fhir/FHIRHelpers.elm.json
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w node:20 node js/evaluate.js --each \
+  /cql/fhir.elm.json /cql/fhir.cql /cql/FHIRHelpers.elm.json /cql/fhir-data.json \
+  > /tmp/fhir/js.json && mv /tmp/fhir/js.json ../../testdata/snapshots/fhir.js.json
+cd ../..
+go run ./internal/referenceharness/differential/compare -each -data testdata/snapshots/fhir-data.json \
+  -cql testdata/snapshots/fhir.cql -reference testdata/snapshots/fhir.java.json
+```
+
+The Java engine reads the resources through engine-fhir's R4 model resolver,
+cql-execution through cql-exec-fhir 2.1.6, both pinned. A translation error is
+the Java engine's answer for its definition, and cql-execution runs only the
+ELM the translator wrote. What the three engines answer is inventoried in
+`testdata/snapshots/fhir.divergences.md`; the references are held to the
+corpus by `TestTheFHIRReferencesAreOfThisCorpus`.
 
 ## Answer snapshots
 
