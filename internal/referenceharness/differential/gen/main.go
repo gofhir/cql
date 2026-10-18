@@ -36,12 +36,14 @@ var areas = map[string]area{
 	"integer":    integer,
 	"scope":      scope,
 	"types":      types,
+	"fhir":       fhirArea,
 }
 
 // preambles are the definitions an area's expressions refer to, written once
 // ahead of them.
 var preambles = map[string]string{
 	"scope": scopePreamble,
+	"fhir":  fhirPreamble,
 }
 
 type generator struct {
@@ -298,6 +300,61 @@ var (
 func types(g *generator, _ int) string {
 	v := "(List<Any>{ " + g.pick(typedValues...) + " })[0]"
 	t := g.pick(typeNames...)
+	switch g.pick("is", "as", "as-null", "cast") {
+	case "is":
+		return "(" + v + " is " + t + ")"
+	case "as":
+		return "(" + v + " as " + t + ")"
+	case "as-null":
+		return "((" + v + " as " + t + ") is null)"
+	}
+	return "(cast " + v + " as " + t + ")"
+}
+
+// fhirPreamble puts the fhir area's expressions in a FHIR library with the
+// model's conversions, about one patient.
+const fhirPreamble = `using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+context Patient
+`
+
+// The values fhir draws from: what FHIR data holds — a resource, its
+// primitives, a choice on each branch, a period, a code — read from resources
+// a test serves by these ids (Observation q with valueQuantity, s with
+// valueString, i with valueInteger and an effectivePeriod; an Encounter whose
+// period starts on a date with no time; a Patient with a gender, a birth date
+// and a date-only deceasedDateTime), beside FHIR instances built in CQL and
+// System values of the same names.
+var (
+	fhirValues = []string{
+		"Patient", "Patient.gender", "Patient.birthDate", "Patient.deceased", "Patient.id",
+		"First([Encounter]).period", "First([Encounter]).period.start",
+		"(First([Observation] O where O.id = 'q')).value", "(First([Observation] O where O.id = 's')).value",
+		"(First([Observation] O where O.id = 'i')).value", "(First([Observation] O where O.id = 'q')).effective",
+		"(First([Observation] O where O.id = 'i')).effective", "(First([Observation] O where O.id = 'q')).code",
+		"FHIR.Coding { code: FHIR.code { value: 'x' } }", "FHIR.code { value: 'x' }",
+		"5 'mg'", "{ 1, 2 }", "System.ValueSet { id: 'x' }", "(null as Integer)",
+	}
+	fhirTypes = []string{
+		"Any", "Integer", "Decimal", "String", "Date", "DateTime", "Quantity", "System.Quantity", "Code",
+		"Concept", "List<Any>", "Interval<DateTime>", "FHIR.Element", "Element", "FHIR.Resource",
+		"FHIR.DomainResource", "Patient", "FHIR.Quantity", "FHIR.dateTime", "FHIR.date", "FHIR.string",
+		"FHIR.code", "FHIR.integer", "FHIR.Period", "CodeableConcept", "FHIR.Coding",
+	}
+	fhirOperations = []string{
+		"-(%s)", "Abs(%s)", "Sum({ %s })", "Avg({ %s })", "(%s) + 1 day", "(%s) + 1 'mg'",
+		"(%s) same day as @2020-01-01T", "ToString(%s)", "(%s) is null",
+	}
+)
+
+// fhirArea is is, as and cast of FHIR data against System and FHIR types, and
+// the operators that read it, where a value's model decides the answer.
+func fhirArea(g *generator, _ int) string {
+	v := "(" + g.pick(fhirValues...) + ")"
+	if g.chance(0.3) {
+		return fmt.Sprintf(g.pick(fhirOperations...), v)
+	}
+	t := g.pick(fhirTypes...)
 	switch g.pick("is", "as", "as-null", "cast") {
 	case "is":
 		return "(" + v + " is " + t + ")"

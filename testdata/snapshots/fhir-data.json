@@ -1,0 +1,15 @@
+{
+  "Patient": {"resourceType": "Patient", "id": "p", "gender": "male", "birthDate": "1980-01-01", "deceasedDateTime": "2020-02-02"},
+  "Encounter": [
+    {"resourceType": "Encounter", "id": "e", "status": "finished", "period": {"start": "2020-01-01", "end": "2020-01-03T10:00:00Z"}}
+  ],
+  "Observation": [
+    {"resourceType": "Observation", "id": "q", "status": "final", "effectiveDateTime": "2020-01-01",
+     "code": {"coding": [{"system": "s", "code": "c"}]},
+     "valueQuantity": {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}},
+    {"resourceType": "Observation", "id": "s", "status": "final", "effectiveDateTime": "2020-01-01T10:00:00Z",
+     "code": {"coding": [{"system": "s", "code": "d"}]}, "valueString": "abc"},
+    {"resourceType": "Observation", "id": "i", "status": "final", "effectivePeriod": {"start": "2020-01-01"},
+     "code": {"coding": [{"system": "s", "code": "e"}]}, "valueInteger": 7}
+  ]
+}

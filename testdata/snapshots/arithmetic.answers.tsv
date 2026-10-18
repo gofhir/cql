@@ -1,0 +1,800 @@
+D0	null
+D1	Integer 2
+D10	Decimal 0.8555992
+D100	Integer 0
+D101	Decimal 2.05
+D102	Integer 100
+D103	Decimal 0.7
+D104	Decimal 10000
+D105	null
+D106	Integer 7
+D107	Decimal 9.99999999
+D108	Decimal 1.00071017
+D109	Decimal 2
+D11	Decimal 10000000
+D110	Decimal 0.4
+D111	null
+D112	null
+D113	null
+D114	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)
+D115	error: CQL evaluation error: Exp: overflow for value 1001.5
+D116	Decimal 0
+D117	Decimal 334.33333333
+D118	Decimal 2.0625
+D119	null
+D12	null
+D120	Decimal 2238.38888835
+D121	null
+D122	Decimal 0
+D123	Decimal 1.62345678
+D124	Integer 0
+D125	null
+D126	Decimal -2
+D127	Decimal 7
+D128	Decimal -2
+D129	Decimal -1.1
+D13	null
+D130	Decimal 24.25
+D131	Decimal 0
+D132	Decimal 8
+D133	Decimal 251.45833333
+D134	Integer 5
+D135	null
+D136	Decimal -8
+D137	Decimal 4.89740059
+D138	null
+D139	Decimal 2.5
+D14	Decimal 1.5
+D140	Decimal 0
+D141	null
+D142	Decimal -0.26751593
+D143	null
+D144	Decimal 0.0651733
+D145	Decimal 1
+D146	Integer 120
+D147	Decimal 0.04115226
+D148	null
+D149	Integer 2
+D15	Decimal 2
+D150	Decimal 0.000001
+D151	null
+D152	Decimal 0
+D153	null
+D154	Decimal 0.1
+D155	Decimal -1
+D156	Decimal 10.0
+D157	null
+D158	null
+D159	null
+D16	null
+D160	Decimal 3.5
+D161	Integer 0
+D162	Decimal 2
+D163	Integer 1000
+D164	Integer -900
+D165	null
+D166	Decimal 0.69314718
+D167	null
+D168	Decimal 9
+D169	Decimal 0.045
+D17	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)
+D170	Decimal 2.75
+D171	null
+D172	null
+D173	Integer 1
+D174	Decimal 102.99999999
+D175	null
+D176	Integer -3
+D177	Integer -2
+D178	Decimal 0.00000001
+D179	Decimal 4
+D18	null
+D180	null
+D181	null
+D182	null
+D183	Integer 0
+D184	null
+D185	Decimal 0
+D186	Decimal 0.8
+D187	null
+D188	null
+D189	Decimal 22.18795
+D19	null
+D190	Decimal -1.491654876777717
+D191	Decimal 0.5
+D192	null
+D193	Decimal -3
+D194	Decimal 9.5
+D195	Decimal 0
+D196	null
+D197	null
+D198	Decimal 15.125
+D199	Decimal -0.12345678
+D2	Decimal 0.0081
+D20	null
+D200	null
+D201	Decimal 24
+D202	Decimal 0.09623408
+D203	Decimal 7342155.26486215
+D204	Integer 12
+D205	Decimal 0.009
+D206	null
+D207	Decimal 0.03703703
+D208	Decimal 0.19090909
+D209	Decimal 39
+D21	null
+D210	Integer 0
+D211	null
+D212	error: CQL evaluation error: Exp: overflow for value 1000
+D213	null
+D214	Decimal 2.302585092994046
+D215	null
+D216	null
+D217	Integer 1000
+D218	null
+D219	Decimal 0
+D22	Decimal 1
+D220	Decimal 1.49999999
+D221	Decimal 4
+D222	Integer -2
+D223	null
+D224	null
+D225	Integer 0
+D226	Integer 0
+D227	Decimal 12
+D228	Decimal 97.99999999
+D229	Integer 1000
+D23	Decimal 1995.26231496
+D230	null
+D231	Decimal -11
+D232	Decimal 5
+D233	Decimal 8.33333332
+D234	null
+D235	null
+D236	null
+D237	null
+D238	Integer 1
+D239	null
+D24	Decimal -0.00071018
+D240	Decimal -0.91
+D241	null
+D242	Decimal 99.99999999
+D243	Decimal 20.25
+D244	null
+D245	null
+D246	Integer 84
+D247	Decimal 0.1
+D248	Decimal 2.5
+D249	Decimal -0.00000015
+D25	Decimal 0
+D250	Decimal 3
+D251	Decimal 9.5
+D252	Decimal 0.00000002
+D253	null
+D254	null
+D255	Integer 476
+D256	Decimal 0.65788145
+D257	Decimal 249955.002025
+D258	null
+D259	null
+D26	Decimal 183.09405819371818
+D260	Decimal 99.9013877
+D261	null
+D262	null
+D263	null
+D264	Integer 10000
+D265	Decimal 33.33333333
+D266	Decimal 0
+D267	Decimal 19.92382599
+D268	null
+D269	null
+D27	Decimal 1
+D270	Decimal 108.12345678
+D271	null
+D272	null
+D273	Integer 0
+D274	null
+D275	null
+D276	Decimal 3000.00003
+D277	Decimal 0
+D278	null
+D279	null
+D28	null
+D280	Decimal 0
+D281	Decimal 1.1051709180756477
+D282	Decimal 58.83943679
+D283	null
+D284	Decimal 2
+D285	null
+D286	null
+D287	null
+D288	null
+D289	Integer 50
+D29	Decimal 0.0081
+D290	Decimal -0.1
+D291	null
+D292	Decimal 1020.5
+D293	Decimal 2.75
+D294	Decimal 0
+D295	null
+D296	null
+D297	null
+D298	Decimal -1.47540346
+D299	Integer -1
+D3	null
+D30	Decimal 3
+D300	null
+D301	null
+D302	null
+D303	Decimal 1000
+D304	Decimal 488
+D305	Decimal 0
+D306	Decimal 2.5
+D307	Decimal 3
+D308	Decimal -98.12345678
+D309	Decimal 4.605170185988092
+D31	Decimal 4.4816890703380645
+D310	Decimal 0
+D311	Decimal 0
+D312	null
+D313	null
+D314	Decimal 20.085536923187668
+D315	Integer 5
+D316	Decimal 0.0001
+D317	Decimal 5.1
+D318	Decimal -7.25
+D319	Integer 7
+D32	Integer 2
+D320	null
+D321	Decimal 0
+D322	Decimal 0.000001
+D323	Decimal 2
+D324	null
+D325	Decimal 1
+D326	Integer 2
+D327	Decimal -0.09
+D328	Decimal -0.93827161
+D329	null
+D33	Decimal 1
+D330	Decimal 0.55
+D331	Integer 1
+D332	Decimal 0.13750352
+D333	Integer 11
+D334	null
+D335	Integer 2
+D336	Decimal 1096.63315842
+D337	null
+D338	null
+D339	Integer 1
+D34	Integer 12
+D340	Decimal 0.98019867
+D341	Decimal -0.6931471805599453
+D342	Decimal 0
+D343	null
+D344	Integer -7
+D345	Integer 7
+D346	null
+D347	Integer 3
+D348	Decimal 0.09
+D349	null
+D35	Decimal 10.0
+D350	Integer 1
+D351	null
+D352	Decimal 100
+D353	null
+D354	Decimal 2.302585092994046
+D355	Integer 46
+D356	null
+D357	Decimal 5304.5
+D358	Decimal 0
+D359	Decimal 0
+D36	null
+D360	null
+D361	Decimal -11162.79080152
+D362	null
+D363	Decimal 1.5606477482646683
+D364	Integer 0
+D365	Decimal 0
+D366	null
+D367	Decimal 2000.08654322
+D368	Integer 1
+D369	Integer 2
+D37	Integer 2
+D370	Integer 1
+D371	null
+D372	null
+D373	null
+D374	Decimal 0.0001
+D375	null
+D376	Decimal 1
+D377	Decimal 12.25
+D378	null
+D379	Decimal 1907346572495099500000
+D38	null
+D380	Integer 65500
+D381	Decimal -12.99382712
+D382	Decimal 8.33333333
+D383	null
+D384	Decimal 8
+D385	Decimal 6.68650052
+D386	null
+D387	null
+D388	null
+D389	null
+D39	Integer 1
+D390	null
+D391	null
+D392	Decimal 3
+D393	null
+D394	Decimal 100
+D395	null
+D396	null
+D397	Decimal 0.13793103
+D398	Decimal 0.0
+D399	Decimal 1
+D4	Decimal 1
+D40	Integer 0
+D400	Integer -1
+D401	Integer -1
+D402	Decimal 2.718281828459045
+D403	Integer 2
+D404	Decimal 0.15311848890866597
+D405	Decimal -11.01770058
+D406	Decimal 0
+D407	null
+D408	Integer 0
+D409	Decimal 1
+D41	null
+D410	null
+D411	null
+D412	null
+D413	null
+D414	null
+D415	Decimal 0
+D416	null
+D417	Integer 0
+D418	null
+D419	Integer 3
+D42	Decimal 2.5
+D420	Decimal 0
+D421	Integer 0
+D422	Integer 40
+D423	Integer 1000
+D424	null
+D425	null
+D426	null
+D427	Decimal 26881171418161356000000000000000000000000000
+D428	null
+D429	null
+D43	null
+D430	Decimal 10
+D431	Decimal 8.33333333
+D432	Integer 1000
+D433	Decimal 0.33333333
+D434	null
+D435	Decimal 0
+D436	null
+D437	Decimal 0.00048734258608908046
+D438	null
+D439	null
+D44	null
+D440	Integer 1
+D441	Decimal 1397.83577143
+D442	null
+D443	null
+D444	null
+D445	Decimal 1
+D446	Decimal 10.0
+D447	Integer -2
+D448	Decimal 0.62499999
+D449	Decimal 0.4054651081081644
+D45	Decimal 34.79296875
+D450	Integer -10
+D451	Integer 100
+D452	Decimal 0.001
+D453	null
+D454	Integer 0
+D455	Decimal -0.00008
+D456	Decimal 502166722801123063.04896699
+D457	Decimal 1.0986122986681097
+D458	Integer 1
+D459	Decimal 0.1493612
+D46	Integer 8
+D460	Decimal 0.0009
+D461	Decimal 5.65685424
+D462	Decimal -3
+D463	Decimal 498.11684957
+D464	null
+D465	Decimal 14.69693845
+D466	null
+D467	null
+D468	Decimal -2.41666667
+D469	null
+D47	null
+D470	Decimal 0
+D471	Decimal 0.06172839
+D472	Decimal 0.6931471805599453
+D473	null
+D474	Integer 12
+D475	null
+D476	null
+D477	null
+D478	null
+D479	null
+D48	null
+D480	Decimal -1.375
+D481	null
+D482	Decimal 0
+D483	null
+D484	Decimal 40.22916666
+D485	null
+D486	null
+D487	Decimal 0
+D488	Decimal -0.5
+D489	null
+D49	null
+D490	null
+D491	Decimal 3.776476039046951
+D492	null
+D493	null
+D494	null
+D495	null
+D496	null
+D497	null
+D498	null
+D499	Decimal -1
+D5	Decimal 0
+D50	Decimal 999.5
+D500	Decimal 0
+D501	Decimal -3
+D502	null
+D503	Decimal 1008
+D504	Integer -2
+D505	null
+D506	Integer 14
+D507	null
+D508	Decimal 162754.79141900392
+D509	Decimal 0
+D51	Integer -3
+D510	Decimal 2
+D511	null
+D512	Decimal 1
+D513	null
+D514	Integer 0
+D515	null
+D516	Decimal 0.1111111
+D517	Integer 12
+D518	Integer 0
+D519	Decimal -6
+D52	null
+D520	null
+D521	Decimal -0.4
+D522	Decimal 52.5625
+D523	Decimal 0.95
+D524	Decimal 1.0017346
+D525	null
+D526	null
+D527	Integer 0
+D528	Decimal 245025
+D529	null
+D53	Decimal -1.0986122986681097
+D530	Integer 0
+D531	null
+D532	null
+D533	null
+D534	Decimal -2999.87654322
+D535	null
+D536	Integer -3
+D537	Integer -3
+D538	Decimal 1
+D539	Integer 0
+D54	Decimal 1.1
+D540	Integer 49
+D541	Decimal 249500.25
+D542	null
+D543	null
+D544	Integer -112
+D545	Decimal -0.08220229
+D546	Decimal 2.0794415416798357
+D547	null
+D548	Decimal -0.5
+D549	Integer 0
+D55	Integer 30
+D550	Decimal 4.0625
+D551	Decimal 0
+D552	null
+D553	null
+D554	Integer 10
+D555	Integer 0
+D556	Decimal 1.00000002
+D557	Decimal 401.43486498
+D558	null
+D559	Decimal 7999999.9976
+D56	Decimal -0.74098339
+D560	null
+D561	Integer -1000
+D562	Integer -1
+D563	Decimal 0
+D564	Decimal 1
+D565	Decimal 1096.6331584284585
+D566	null
+D567	Integer -997
+D568	null
+D569	null
+D57	null
+D570	Decimal 0.45825756
+D571	null
+D572	Decimal 0
+D573	error: CQL evaluation error: Exp: overflow for value 1000
+D574	Integer -7
+D575	Decimal -1.5
+D576	null
+D577	Decimal 2
+D578	Decimal 253638.140625
+D579	null
+D58	null
+D580	Decimal 0
+D581	Integer 1
+D582	Integer 0
+D583	null
+D584	Decimal 0.09531017980432493
+D585	Decimal 0.16672839
+D586	Integer 9
+D587	null
+D588	null
+D589	null
+D59	null
+D590	Decimal 2
+D591	null
+D592	null
+D593	null
+D594	null
+D595	Decimal 1.25
+D596	Integer 3
+D597	Decimal 0
+D598	Integer 998
+D599	Decimal 1.331
+D6	Decimal 0
+D60	null
+D600	Decimal -4.56593978
+D601	Decimal 1
+D602	Decimal 0.33333333
+D603	Decimal 8.33333333
+D604	null
+D605	null
+D606	Integer 0
+D607	Decimal 0.42
+D608	null
+D609	Decimal 9.79
+D61	null
+D610	null
+D611	Decimal 5432.50843411
+D612	Decimal 4.5
+D613	null
+D614	null
+D615	Decimal 80.13035643
+D616	null
+D617	Decimal 0.08782288
+D618	Integer -2
+D619	null
+D62	Integer 3
+D620	null
+D621	null
+D622	Decimal 1001.7320508
+D623	null
+D624	Integer -18
+D625	Decimal -6
+D626	null
+D627	Decimal 1.75
+D628	null
+D629	null
+D63	Decimal -0.0005
+D630	null
+D631	null
+D632	null
+D633	Decimal -10.25
+D634	Decimal 11425.2429738
+D635	Integer 12
+D636	Decimal -5
+D637	null
+D638	null
+D639	Decimal 4
+D64	null
+D640	Decimal -0.5
+D641	Decimal -0.37654322
+D642	Decimal 12.005
+D643	null
+D644	Decimal 1
+D645	Integer 8
+D646	Decimal 19.07677524
+D647	Decimal 0.13
+D648	null
+D649	null
+D65	null
+D650	Decimal 64
+D651	Decimal 2.12132034
+D652	Decimal 0.00000001
+D653	Decimal 100.00000000000004
+D654	Integer 0
+D655	Integer 0
+D656	Decimal 101.99999999
+D657	null
+D658	null
+D659	null
+D66	null
+D660	Integer 14
+D661	Decimal 0
+D662	null
+D663	null
+D664	Decimal -0.125
+D665	Decimal 2.5
+D666	Decimal 4
+D667	Decimal -1.7095113
+D668	Integer 0
+D669	null
+D67	null
+D670	Decimal -3.5
+D671	Integer 1
+D672	Decimal -1
+D673	null
+D674	Decimal 0.0940478276166989
+D675	null
+D676	Decimal 3.07468755
+D677	Decimal 2.99202221
+D678	Integer 0
+D679	Integer 5
+D68	Decimal 6.14240723
+D680	Decimal 8.12784588
+D681	null
+D682	Decimal 1
+D683	null
+D684	Decimal 0
+D685	Integer 2
+D686	null
+D687	Integer 0
+D688	Integer 5
+D689	Integer 3
+D69	Decimal 0.74202154
+D690	Decimal 0.003
+D691	Decimal 7.5
+D692	null
+D693	Decimal 990.5
+D694	null
+D695	Integer 4
+D696	null
+D697	Decimal 999.68191918
+D698	null
+D699	Decimal 26881171149349810000000000000000000000000000
+D7	error: CQL evaluation error: Exp: overflow for value 1000
+D70	null
+D700	null
+D701	Decimal 0.03345678
+D702	Decimal 1
+D703	Decimal 0.14285714
+D704	Decimal 1
+D705	Decimal 2.30286656
+D706	Decimal 0
+D707	Decimal 7.93235707
+D708	Integer 3
+D709	null
+D71	Integer 11
+D710	null
+D711	Decimal 0
+D712	null
+D713	Decimal 483.55124082
+D714	Integer 5
+D715	Decimal 250000000
+D716	null
+D717	Decimal 3000
+D718	Integer 0
+D719	Integer 1
+D72	null
+D720	Decimal 31.25884891
+D721	Integer 0
+D722	Integer 0
+D723	Decimal -16.11809565095832
+D724	Decimal 1.2
+D725	Decimal 1000
+D726	null
+D727	Integer 3
+D728	null
+D729	Decimal 0.8161872625906434
+D73	Decimal 16
+D730	null
+D731	null
+D732	Decimal -200000000
+D733	null
+D734	Decimal 9.9999
+D735	Decimal 2.85361711
+D736	null
+D737	Decimal 2.16666666
+D738	Integer -1
+D739	null
+D74	null
+D740	Decimal 0
+D741	null
+D742	null
+D743	Integer 100
+D744	Decimal 1000
+D745	Integer 0
+D746	null
+D747	Decimal -0.00000001
+D748	null
+D749	Decimal -0.5
+D75	null
+D750	Decimal 3
+D751	Decimal 5
+D752	Decimal -0.34399223
+D753	Decimal 2
+D754	Decimal -24
+D755	null
+D756	null
+D757	null
+D758	Decimal 1.5
+D759	null
+D76	null
+D760	Decimal 248751.5625
+D761	null
+D762	Decimal 502.24084453
+D763	Decimal 3
+D764	Integer 1111
+D765	Decimal -1.00000001
+D766	null
+D767	Decimal -0.125
+D768	null
+D769	Decimal 100
+D77	null
+D770	null
+D771	Decimal 1
+D772	Decimal 10
+D773	Integer 0
+D774	null
+D775	null
+D776	Decimal 3
+D777	Decimal -6
+D778	Decimal 42.15077104
+D779	Integer -4000
+D78	null
+D780	Decimal 26881171418161356000000000000000000000000000
+D781	null
+D782	Integer 0
+D783	Decimal 1
+D784	Integer -1
+D785	Decimal -7.58333333
+D786	null
+D787	null
+D788	Decimal 3
+D789	Decimal 0
+D79	null
+D790	Decimal -0.33333334
+D791	Decimal 249450.3025
+D792	null
+D793	null
+D794	Decimal 1.5
+D795	null
+D796	null
+D797	Integer 5
+D798	Decimal 1
+D799	Integer 1
+D8	Decimal 1.5
+D80	Decimal 0
+D81	null
+D82	Decimal 0
+D83	Decimal -2.91
+D84	Decimal 0
+D85	null
+D86	null
+D87	Decimal 0.33333333
+D88	null
+D89	Integer 0
+D9	null
+D90	Integer 10
+D91	Integer 99
+D92	Integer 97
+D93	null
+D94	null
+D95	Integer 1
+D96	Decimal 7.38905609893065
+D97	Integer -3
+D98	null
+D99	Decimal 1000.00000001

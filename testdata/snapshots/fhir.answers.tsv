@@ -1,0 +1,900 @@
+D0	null
+D1	null
+D10	error: CQL evaluation error: String is not a number or a quantity
+D100	Boolean true
+D101	Boolean false
+D102	Boolean true
+D103	error: CQL evaluation error: cast failed: cannot convert Integer to Resource
+D104	error: CQL semantic error: error: in D104: Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is not a number
+D105	Boolean false
+D106	null
+D107	null
+D108	error: CQL semantic error: error: in D108: expected a String, got System.Quantity
+D109	String "Code '' from "
+D11	Boolean false
+D110	Boolean true
+D111	error: CQL semantic error: error: in D111: Choice<FHIR.boolean, FHIR.dateTime, System.Quantity> is not a number
+D112	null
+D113	Boolean true
+D114	Boolean true
+D115	null
+D116	Boolean true
+D117	Boolean false
+D118	error: CQL evaluation error: cast failed: cannot convert String to Concept
+D119	error: CQL semantic error: error: in D119: Choice<FHIR.Period, System.Quantity> is not a number
+D12	Boolean true
+D120	Boolean true
+D121	error: CQL evaluation error: cast failed: cannot convert Code to Quantity
+D122	null
+D123	Boolean true
+D124	Boolean true
+D125	Boolean false
+D126	String "{\"value\": -5, \"unit\": \"mg\", \"system\": \"http://unitsofmeasure.org\", \"code\": \"mg\"}"
+D127	Boolean false
+D128	Boolean true
+D129	Boolean true
+D13	Boolean false
+D130	Boolean false
+D131	null
+D132	null
+D133	DateTime 2020-02-02
+D134	Boolean false
+D135	error: CQL evaluation error: cast failed: cannot convert DateTime to code
+D136	Boolean false
+D137	null
+D138	null
+D139	Boolean false
+D14	error: CQL evaluation error: cast failed: cannot convert DateTime to Patient
+D140	error: CQL evaluation error: DateTime is not a number or a quantity
+D141	null
+D142	error: CQL evaluation error: cast failed: cannot convert ValueSet to Quantity
+D143	Boolean false
+D144	Boolean false
+D145	Boolean false
+D146	error: CQL evaluation error: Concept is not a number or a quantity
+D147	null
+D148	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to DateTime
+D149	Boolean true
+D15	Boolean false
+D150	Boolean false
+D151	Boolean false
+D152	Boolean true
+D153	null
+D154	Quantity -5 'mg'
+D155	error: CQL evaluation error: cannot perform arithmetic on List
+D156	error: CQL semantic error: error: in D156: Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is not a number
+D157	null
+D158	null
+D159	Boolean false
+D16	null
+D160	Boolean false
+D161	error: CQL evaluation error: cast failed: cannot convert Quantity to Coding
+D162	null
+D163	Boolean true
+D164	null
+D165	error: CQL evaluation error: cast failed: cannot convert Date to Quantity
+D166	null
+D167	Boolean true
+D168	error: CQL evaluation error: List is not a number or a quantity
+D169	error: CQL evaluation error: Date is not a number or a quantity
+D17	null
+D170	error: CQL evaluation error: cast failed: cannot convert Quantity to Coding
+D171	Boolean false
+D172	Boolean false
+D173	Boolean true
+D174	error: CQL evaluation error: cast failed: cannot convert DateTime to Date
+D175	null
+D176	null
+D177	null
+D178	null
+D179	Boolean false
+D18	error: CQL evaluation error: ValueSet is not a number or a quantity
+D180	Boolean true
+D181	Boolean true
+D182	error: CQL semantic error: error: in D182: FHIR.Patient is not a number
+D183	null
+D184	Boolean false
+D185	Boolean false
+D186	Code{system: "", code: "", display: "", version: ""}
+D187	Boolean true
+D188	error: CQL evaluation error: cast failed: cannot convert Quantity to dateTime
+D189	error: CQL evaluation error: cast failed: cannot convert String to code
+D19	Date 1980-01-01
+D190	Boolean false
+D191	error: CQL evaluation error: cast failed: cannot convert Coding to Patient
+D192	Boolean false
+D193	Boolean false
+D194	Quantity -5 'mg'
+D195	Boolean true
+D196	Boolean false
+D197	String "5 'mg'"
+D198	Boolean false
+D199	null
+D2	Quantity 5 'mg'
+D20	null
+D200	null
+D201	Patient {"resourceType": "Patient", "id": "p", "gender": "male", "birthDate": "1980-01-01", "deceasedDateTime": "2020-02-02"}
+D202	Boolean false
+D203	null
+D204	error: CQL evaluation error: cast failed: cannot convert String to DomainResource
+D205	null
+D206	Boolean true
+D207	Boolean false
+D208	error: CQL evaluation error: cast failed: cannot convert List to Resource
+D209	Boolean false
+D21	error: CQL semantic error: error: in D21: expected a String, got System.Quantity
+D210	null
+D211	Boolean true
+D212	null
+D213	error: CQL evaluation error: Interval is not a number or a quantity
+D214	Boolean false
+D215	error: CQL evaluation error: cast failed: cannot convert Period to Resource
+D216	null
+D217	Boolean false
+D218	null
+D219	Boolean true
+D22	error: CQL evaluation error: cast failed: cannot convert Date to Quantity
+D220	Boolean true
+D221	error: CQL semantic error: error: in D221: expected a String, got System.Quantity
+D222	null
+D223	Boolean false
+D224	Boolean false
+D225	error: CQL evaluation error: cannot perform arithmetic on String
+D226	Boolean true
+D227	Boolean false
+D228	Boolean true
+D229	null
+D23	null
+D230	Boolean false
+D231	error: CQL evaluation error: cannot perform arithmetic on Quantity
+D232	null
+D233	Boolean false
+D234	error: CQL evaluation error: cast failed: cannot convert DateTime to CodeableConcept
+D235	null
+D236	Period {"start": "2020-01-01"}
+D237	Boolean false
+D238	null
+D239	Boolean false
+D24	null
+D240	null
+D241	Boolean false
+D242	null
+D243	null
+D244	Boolean false
+D245	Boolean false
+D246	null
+D247	null
+D248	Boolean true
+D249	Boolean false
+D25	Boolean true
+D250	DateTime 2020-02-02
+D251	null
+D252	error: CQL evaluation error: cast failed: cannot convert ValueSet to date
+D253	error: CQL evaluation error: cast failed: cannot convert DateTime to DomainResource
+D254	error: CQL evaluation error: cast failed: cannot convert DateTime to integer
+D255	error: CQL evaluation error: String is not a number or a quantity
+D256	Boolean true
+D257	Boolean true
+D258	error: CQL semantic error: error: in D258: Choice<FHIR.boolean, FHIR.dateTime, System.Quantity> is not a number
+D259	error: CQL semantic error: error: in D259: expected a String, got System.Quantity
+D26	null
+D260	null
+D261	Boolean false
+D262	null
+D263	String "abc"
+D264	error: CQL evaluation error: cast failed: cannot convert Period to Integer
+D265	error: CQL evaluation error: cannot perform arithmetic on Quantity
+D266	error: CQL evaluation error: List is not a number or a quantity
+D267	null
+D268	Boolean true
+D269	Boolean true
+D27	Boolean false
+D270	error: CQL evaluation error: cast failed: cannot convert DateTime to CodeableConcept
+D271	Boolean true
+D272	String "{\"resourceType\": \"Patient\", \"id\": \"p\", \"gender\": \"male\", \"birthDate\": \"1980-01-01\", \"deceasedDateTime\": \"2020-02-02\"}"
+D273	Boolean false
+D274	Period {"start": "2020-01-01"}
+D275	null
+D276	Boolean false
+D277	Boolean false
+D278	null
+D279	Boolean true
+D28	String "male"
+D280	Boolean true
+D281	Boolean true
+D282	String "abc"
+D283	error: CQL evaluation error: String is not a number or a quantity
+D284	Boolean false
+D285	error: CQL semantic error: error: in D285: Choice<FHIR.Patient, System.Quantity> is not a number
+D286	Boolean false
+D287	null
+D288	Boolean false
+D289	Boolean false
+D29	error: CQL evaluation error: cannot perform arithmetic on List
+D290	null
+D291	null
+D292	null
+D293	error: CQL evaluation error: cast failed: cannot convert DateTime to Quantity
+D294	null
+D295	null
+D296	error: CQL semantic error: error: in D296: Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant, System.Quantity> is not a number
+D297	error: CQL evaluation error: cast failed: cannot convert String to CodeableConcept
+D298	null
+D299	error: CQL semantic error: error: in D299: Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant, System.Quantity> is not a number
+D3	error: CQL evaluation error: Date is not a number or a quantity
+D30	Boolean false
+D300	error: CQL evaluation error: cast failed: cannot convert String to Patient
+D301	Boolean true
+D302	Boolean false
+D303	error: CQL semantic error: error: in D303: Choice<System.Code, System.Quantity> is not a number
+D304	error: CQL evaluation error: String is not a number or a quantity
+D305	Boolean false
+D306	Boolean false
+D307	Boolean false
+D308	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to date
+D309	error: CQL evaluation error: Interval is not a number or a quantity
+D31	error: CQL evaluation error: cast failed: cannot convert Coding to Period
+D310	String "Tuple{code: Code '' from }"
+D311	Boolean false
+D312	Boolean false
+D313	null
+D314	error: CQL evaluation error: cast failed: cannot convert Integer to Quantity
+D315	error: CQL semantic error: error: in D315: Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is not a number
+D316	null
+D317	Code{system: "", code: "", display: "", version: ""}
+D318	Boolean false
+D319	error: CQL semantic error: error: in D319: System.ValueSet is not a number
+D32	error: CQL evaluation error: DateTime is not a number or a quantity
+D320	Boolean false
+D321	null
+D322	String "{\"value\": -5, \"unit\": \"mg\", \"system\": \"http://unitsofmeasure.org\", \"code\": \"mg\"}"
+D323	error: CQL evaluation error: cast failed: cannot convert List to CodeableConcept
+D324	Boolean true
+D325	Boolean true
+D326	Boolean false
+D327	Boolean false
+D328	String "7"
+D329	null
+D33	null
+D330	null
+D331	error: CQL evaluation error: ValueSet is not a number or a quantity
+D332	null
+D333	error: CQL evaluation error: cast failed: cannot convert String to Quantity
+D334	Boolean true
+D335	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D336	Boolean false
+D337	Boolean false
+D338	null
+D339	Boolean true
+D34	null
+D340	Boolean false
+D341	error: CQL evaluation error: cast failed: cannot convert String to Patient
+D342	Boolean true
+D343	Boolean false
+D344	null
+D345	ValueSet{id: String "x"}
+D346	null
+D347	Boolean true
+D348	Boolean true
+D349	Boolean true
+D35	error: CQL evaluation error: cast failed: cannot convert Code to dateTime
+D350	null
+D351	null
+D352	error: CQL semantic error: error: in D352: expected a String, got System.Quantity
+D353	Boolean true
+D354	null
+D355	Boolean false
+D356	Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}
+D357	null
+D358	null
+D359	Boolean true
+D36	error: CQL evaluation error: cast failed: cannot convert Integer to Coding
+D360	Boolean true
+D361	null
+D362	Period {"start": "2020-01-01", "end": "2020-01-03T10:00:00Z"}
+D363	Boolean true
+D364	error: CQL evaluation error: cast failed: cannot convert Period to Coding
+D365	error: CQL evaluation error: cast failed: cannot convert Code to date
+D366	error: CQL evaluation error: cast failed: cannot convert ValueSet to CodeableConcept
+D367	null
+D368	Boolean false
+D369	String "{\"start\": \"2020-01-01\"}"
+D37	error: CQL semantic error: error: in D37: System.String is not a number
+D370	Boolean false
+D371	Boolean false
+D372	Boolean true
+D373	String "2020-01-01"
+D374	error: CQL evaluation error: String is not a number or a quantity
+D375	Boolean false
+D376	null
+D377	error: CQL evaluation error: cast failed: cannot convert Period to Decimal
+D378	Boolean false
+D379	Boolean true
+D38	Boolean true
+D380	error: CQL evaluation error: Concept is not a number or a quantity
+D381	null
+D382	error: CQL evaluation error: cast failed: cannot convert DateTime to Quantity
+D383	String "p"
+D384	Boolean false
+D385	error: CQL evaluation error: cast failed: cannot convert Integer to code
+D386	error: CQL evaluation error: cast failed: cannot convert DateTime to Element
+D387	null
+D388	Boolean false
+D389	DateTime 2020-01-01
+D39	Boolean true
+D390	error: CQL semantic error: error: in D390: Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant, System.Quantity> is not a number
+D391	null
+D392	Boolean true
+D393	Boolean false
+D394	error: CQL evaluation error: cast failed: cannot convert Coding to Decimal
+D395	error: CQL evaluation error: DateTime is not a number or a quantity
+D396	Boolean true
+D397	error: CQL evaluation error: cast failed: cannot convert DateTime to Quantity
+D398	error: CQL evaluation error: DateTime is not a number or a quantity
+D399	error: CQL semantic error: error: in D399: System.Date is not a number
+D4	error: CQL semantic error: error: in D4: System.String is not a number
+D40	error: CQL evaluation error: cast failed: cannot convert String to Element
+D400	Boolean true
+D401	error: CQL semantic error: error: in D401: Choice<FHIR.Patient, System.Quantity> is not a number
+D402	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to Date
+D403	Boolean true
+D404	Boolean true
+D405	error: CQL evaluation error: DateTime is not a number or a quantity
+D406	error: CQL evaluation error: cast failed: cannot convert Quantity to CodeableConcept
+D407	Boolean true
+D408	Boolean true
+D409	Boolean true
+D41	error: CQL semantic error: error: in D41: List<System.Integer> is not a number
+D410	error: CQL evaluation error: cast failed: cannot convert Period to code
+D411	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to Integer
+D412	null
+D413	Boolean false
+D414	error: CQL evaluation error: cast failed: cannot convert Period to DomainResource
+D415	Boolean true
+D416	Quantity 5 'mg'
+D417	Boolean true
+D418	Boolean true
+D419	String "male"
+D42	Boolean false
+D420	error: CQL evaluation error: Code is not a number or a quantity
+D421	Boolean true
+D422	null
+D423	Boolean false
+D424	Boolean true
+D425	Boolean false
+D426	Boolean true
+D427	error: CQL evaluation error: DateTime is not a number or a quantity
+D428	error: CQL evaluation error: String is not a number or a quantity
+D429	Boolean true
+D43	null
+D430	Boolean false
+D431	Boolean true
+D432	Boolean false
+D433	Boolean true
+D434	Boolean false
+D435	Boolean false
+D436	Boolean true
+D437	Boolean true
+D438	Boolean false
+D439	Boolean false
+D44	Boolean true
+D440	error: CQL evaluation error: cast failed: cannot convert Coding to code
+D441	error: CQL evaluation error: cast failed: cannot convert ValueSet to Quantity
+D442	Boolean false
+D443	Boolean false
+D444	Boolean false
+D445	Boolean false
+D446	error: CQL semantic error: error: in D446: expected a String, got System.Quantity
+D447	String "{\"coding\": [{\"system\": \"s\", \"code\": \"c\"}]}"
+D448	error: CQL evaluation error: cast failed: cannot convert Patient to CodeableConcept
+D449	Boolean true
+D45	Boolean false
+D450	null
+D451	Boolean false
+D452	String "Tuple{id: x}"
+D453	null
+D454	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to integer
+D455	null
+D456	error: CQL evaluation error: cast failed: cannot convert Quantity to date
+D457	null
+D458	null
+D459	Boolean true
+D46	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D460	Boolean true
+D461	error: CQL semantic error: error: in D461: Choice<System.ValueSet, System.Quantity> is not a number
+D462	error: CQL evaluation error: cast failed: cannot convert Coding to integer
+D463	Boolean true
+D464	error: CQL evaluation error: cast failed: cannot convert Coding to CodeableConcept
+D465	null
+D466	error: CQL evaluation error: cast failed: cannot convert String to Resource
+D467	error: CQL evaluation error: cast failed: cannot convert Patient to code
+D468	error: CQL evaluation error: cast failed: cannot convert DateTime to Code
+D469	Boolean false
+D47	Boolean false
+D470	String "male"
+D471	DateTime 2020-01-01
+D472	String "{\"start\": \"2020-01-01\"}"
+D473	Patient {"resourceType": "Patient", "id": "p", "gender": "male", "birthDate": "1980-01-01", "deceasedDateTime": "2020-02-02"}
+D474	null
+D475	error: CQL evaluation error: cast failed: cannot convert Coding to DateTime
+D476	Period {"start": "2020-01-01"}
+D477	Boolean true
+D478	Boolean true
+D479	Quantity -5 'mg'
+D48	null
+D480	Boolean false
+D481	Boolean true
+D482	Boolean false
+D483	error: CQL evaluation error: cast failed: cannot convert Coding to Code
+D484	Boolean true
+D485	Boolean true
+D486	null
+D487	error: CQL evaluation error: cast failed: cannot convert Date to Concept
+D488	Quantity 5 'mg'
+D489	null
+D49	Boolean true
+D490	String "2020-02-02"
+D491	String "p"
+D492	Boolean false
+D493	Boolean false
+D494	null
+D495	error: CQL evaluation error: DateTime is not a number or a quantity
+D496	null
+D497	Boolean true
+D498	null
+D499	error: CQL evaluation error: cast failed: cannot convert DateTime to DomainResource
+D5	String "{\"start\": \"2020-01-01\", \"end\": \"2020-01-03T10:00:00Z\"}"
+D50	Quantity 6 'mg'
+D500	Boolean true
+D501	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D502	String "2020-02-02"
+D503	Boolean true
+D504	Boolean false
+D505	null
+D506	Boolean true
+D507	Boolean true
+D508	null
+D509	Quantity 5 'mg'
+D51	null
+D510	Date 1980-01-02
+D511	error: CQL evaluation error: cast failed: cannot convert DateTime to Resource
+D512	null
+D513	Boolean false
+D514	Boolean false
+D515	Boolean false
+D516	Boolean true
+D517	Boolean true
+D518	null
+D519	error: CQL evaluation error: cast failed: cannot convert DateTime to Decimal
+D52	null
+D520	null
+D521	Boolean false
+D522	Boolean true
+D523	null
+D524	Boolean true
+D525	null
+D526	null
+D527	null
+D528	error: CQL evaluation error: cast failed: cannot convert ValueSet to Patient
+D529	DateTime 2020-01-02
+D53	Boolean false
+D530	Boolean false
+D531	Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}
+D532	Boolean true
+D533	null
+D534	Boolean false
+D535	error: CQL evaluation error: String is not a number or a quantity
+D536	null
+D537	Boolean true
+D538	Boolean false
+D539	null
+D54	Date 1980-01-01
+D540	null
+D541	null
+D542	error: CQL evaluation error: cast failed: cannot convert DateTime to date
+D543	Boolean false
+D544	Boolean false
+D545	null
+D546	Boolean false
+D547	Integer 7
+D548	null
+D549	Boolean false
+D55	Boolean false
+D550	Boolean true
+D551	Boolean true
+D552	Boolean true
+D553	Boolean true
+D554	null
+D555	Boolean true
+D556	Quantity 5 'mg'
+D557	DateTime 2020-02-02
+D558	null
+D559	Code{system: "", code: "", display: "", version: ""}
+D56	error: CQL evaluation error: cast failed: cannot convert String to Resource
+D560	Boolean true
+D561	Boolean false
+D562	error: CQL evaluation error: cast failed: cannot convert DateTime to date
+D563	null
+D564	Boolean true
+D565	error: CQL evaluation error: Interval is not a number or a quantity
+D566	Boolean false
+D567	Boolean false
+D568	Boolean false
+D569	Boolean true
+D57	error: CQL evaluation error: ValueSet is not a number or a quantity
+D570	error: CQL evaluation error: cast failed: cannot convert Date to DomainResource
+D571	null
+D572	Boolean false
+D573	Boolean true
+D574	String "{1, 2}"
+D575	Boolean false
+D576	Boolean true
+D577	Boolean false
+D578	Boolean false
+D579	Quantity -5 'mg'
+D58	Boolean true
+D580	Boolean true
+D581	Boolean true
+D582	error: CQL evaluation error: cast failed: cannot convert Period to Resource
+D583	Boolean false
+D584	Boolean true
+D585	null
+D586	null
+D587	Boolean true
+D588	Boolean false
+D589	null
+D59	Boolean true
+D590	null
+D591	Boolean true
+D592	null
+D593	Boolean true
+D594	error: CQL evaluation error: cast failed: cannot convert DateTime to Date
+D595	Boolean true
+D596	null
+D597	Boolean false
+D598	Boolean true
+D599	null
+D6	null
+D60	null
+D600	Boolean true
+D601	Boolean false
+D602	Boolean true
+D603	Boolean true
+D604	null
+D605	null
+D606	Boolean false
+D607	Boolean false
+D608	Boolean true
+D609	Period {"start": "2020-01-01", "end": "2020-01-03T10:00:00Z"}
+D61	Boolean true
+D610	null
+D611	Boolean true
+D612	error: CQL evaluation error: Patient is not a number or a quantity
+D613	Boolean false
+D614	null
+D615	Boolean false
+D616	error: CQL evaluation error: cast failed: cannot convert ValueSet to code
+D617	Boolean false
+D618	Boolean false
+D619	Boolean true
+D62	Boolean false
+D620	Boolean false
+D621	DateTime 2020-02-02
+D622	Boolean true
+D623	null
+D624	error: CQL evaluation error: cast failed: cannot convert Patient to Concept
+D625	Boolean true
+D626	Boolean true
+D627	null
+D628	Boolean true
+D629	error: CQL evaluation error: cast failed: cannot convert String to DomainResource
+D63	error: CQL semantic error: error: in D63: Choice<System.Concept, System.Quantity> is not a number
+D630	null
+D631	Boolean false
+D632	error: CQL semantic error: error: in D632: System.String is not a number
+D633	null
+D634	Boolean true
+D635	null
+D636	Boolean false
+D637	DateTime 2020-01-01
+D638	error: CQL evaluation error: cast failed: cannot convert Code to Quantity
+D639	Boolean true
+D64	Boolean true
+D640	error: CQL evaluation error: cast failed: cannot convert Patient to Code
+D641	null
+D642	null
+D643	error: CQL evaluation error: DateTime is not a number or a quantity
+D644	Boolean true
+D645	Boolean false
+D646	Boolean true
+D647	Boolean true
+D648	error: CQL semantic error: error: in D648: System.Code is not a number
+D649	null
+D65	Boolean true
+D650	Boolean true
+D651	Boolean true
+D652	error: CQL evaluation error: cast failed: cannot convert String to code
+D653	null
+D654	Boolean false
+D655	null
+D656	Boolean true
+D657	error: CQL evaluation error: Coding is not a number or a quantity
+D658	Boolean false
+D659	error: CQL evaluation error: cast failed: cannot convert Period to Code
+D66	Boolean true
+D660	Boolean true
+D661	Boolean false
+D662	Boolean false
+D663	Period {"start": "2020-01-01", "end": "2020-01-03T10:00:00Z"}
+D664	null
+D665	Boolean false
+D666	Boolean false
+D667	Period {"start": "2020-01-01"}
+D668	error: CQL evaluation error: List is not a number or a quantity
+D669	null
+D67	Boolean false
+D670	error: CQL evaluation error: cast failed: cannot convert Coding to Concept
+D671	Boolean false
+D672	Boolean true
+D673	null
+D674	Boolean false
+D675	Boolean false
+D676	Boolean false
+D677	null
+D678	error: CQL evaluation error: "mg" is not a duration unit
+D679	Boolean true
+D68	Boolean true
+D680	DateTime 2020-01-01
+D681	error: CQL evaluation error: cast failed: cannot convert Code to Integer
+D682	Boolean true
+D683	Boolean true
+D684	Boolean true
+D685	error: CQL evaluation error: cast failed: cannot convert ValueSet to Concept
+D686	null
+D687	Boolean false
+D688	Boolean false
+D689	error: CQL evaluation error: cast failed: cannot convert Quantity to Resource
+D69	Boolean true
+D690	null
+D691	Boolean true
+D692	Boolean true
+D693	Boolean false
+D694	Boolean false
+D695	error: CQL evaluation error: Code is not a number or a quantity
+D696	Boolean true
+D697	Boolean false
+D698	error: CQL evaluation error: cast failed: cannot convert Coding to Resource
+D699	null
+D7	Boolean false
+D70	Integer 7
+D700	Boolean false
+D701	Period {"start": "2020-01-01", "end": "2020-01-03T10:00:00Z"}
+D702	null
+D703	Boolean false
+D704	Boolean false
+D705	DateTime 2020-02-02
+D706	Boolean false
+D707	error: CQL evaluation error: Concept is not a number or a quantity
+D708	Boolean false
+D709	Boolean true
+D71	error: CQL evaluation error: cast failed: cannot convert String to Period
+D710	Boolean true
+D711	Boolean true
+D712	null
+D713	Code{system: "", code: "", display: "", version: ""}
+D714	String "1980-01-01"
+D715	null
+D716	error: CQL evaluation error: cast failed: cannot convert List to Element
+D717	Boolean true
+D718	error: CQL evaluation error: DateTime is not a number or a quantity
+D719	String "p"
+D72	null
+D720	error: CQL evaluation error: cast failed: cannot convert Quantity to Decimal
+D721	Boolean false
+D722	String "{\"value\": -5, \"unit\": \"mg\", \"system\": \"http://unitsofmeasure.org\", \"code\": \"mg\"}"
+D723	Boolean true
+D724	Boolean false
+D725	Boolean true
+D726	error: CQL evaluation error: Interval is not a number or a quantity
+D727	Boolean false
+D728	Boolean false
+D729	null
+D73	error: CQL evaluation error: cast failed: cannot convert List to Date
+D730	Boolean true
+D731	Boolean false
+D732	null
+D733	Boolean false
+D734	Boolean true
+D735	Boolean false
+D736	Boolean false
+D737	error: CQL evaluation error: cast failed: cannot convert DateTime to Period
+D738	null
+D739	Boolean false
+D74	error: CQL evaluation error: Code is not a number or a quantity
+D740	Boolean false
+D741	Boolean true
+D742	null
+D743	null
+D744	null
+D745	Boolean true
+D746	error: CQL evaluation error: cast failed: cannot convert String to Code
+D747	null
+D748	Boolean false
+D749	Boolean true
+D75	Boolean false
+D750	error: CQL evaluation error: Interval is not a number or a quantity
+D751	error: CQL evaluation error: cast failed: cannot convert Quantity to DomainResource
+D752	null
+D753	Boolean false
+D754	error: CQL semantic error: error: in D754: Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is not a number
+D755	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D756	error: CQL evaluation error: cast failed: cannot convert Coding to DomainResource
+D757	Integer 7
+D758	Boolean true
+D759	null
+D76	error: CQL semantic error: error: in D76: Choice<System.ValueSet, System.Quantity> is not a number
+D760	Boolean false
+D761	CodeableConcept {"coding": [{"system": "s", "code": "c"}]}
+D762	Boolean true
+D763	error: CQL evaluation error: cast failed: cannot convert Integer to dateTime
+D764	Boolean false
+D765	Boolean true
+D766	Boolean true
+D767	null
+D768	null
+D769	error: CQL evaluation error: cast failed: cannot convert String to Quantity
+D77	error: CQL evaluation error: String is not a number or a quantity
+D770	error: CQL evaluation error: cast failed: cannot convert Quantity to Code
+D771	Boolean false
+D772	null
+D773	Boolean false
+D774	null
+D775	null
+D776	String "abc"
+D777	Quantity 5 'mg'
+D778	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D779	Boolean true
+D78	Boolean false
+D780	error: CQL semantic error: error: in D780: Choice<FHIR.boolean, FHIR.dateTime> is not a number
+D781	error: CQL evaluation error: cast failed: cannot convert Quantity to Code
+D782	Integer 7
+D783	Boolean true
+D784	Boolean true
+D785	null
+D786	Boolean false
+D787	String "p"
+D788	ValueSet{id: String "x"}
+D789	Boolean true
+D79	Boolean true
+D790	null
+D791	null
+D792	error: CQL evaluation error: String is not a number or a quantity
+D793	Boolean true
+D794	String "abc"
+D795	error: CQL evaluation error: Patient is not a number or a quantity
+D796	Boolean false
+D797	List[Integer 1, Integer 2]
+D798	null
+D799	error: CQL evaluation error: cast failed: cannot convert DateTime to Decimal
+D8	null
+D80	Boolean true
+D800	Boolean true
+D801	String "7"
+D802	Boolean false
+D803	null
+D804	null
+D805	error: CQL evaluation error: cast failed: cannot convert Period to DateTime
+D806	null
+D807	Boolean true
+D808	Boolean false
+D809	null
+D81	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to Patient
+D810	error: CQL evaluation error: cast failed: cannot convert Integer to Code
+D811	error: CQL evaluation error: cast failed: cannot convert String to Code
+D812	String "{\"resourceType\": \"Patient\", \"id\": \"p\", \"gender\": \"male\", \"birthDate\": \"1980-01-01\", \"deceasedDateTime\": \"2020-02-02\"}"
+D813	Boolean true
+D814	null
+D815	null
+D816	error: CQL evaluation error: cast failed: cannot convert String to CodeableConcept
+D817	error: CQL evaluation error: cast failed: cannot convert List to Concept
+D818	Boolean false
+D819	error: CQL evaluation error: cast failed: cannot convert String to Element
+D82	Boolean true
+D820	null
+D821	Boolean false
+D822	null
+D823	error: CQL evaluation error: cast failed: cannot convert Code to Resource
+D824	null
+D825	null
+D826	Boolean false
+D827	Boolean false
+D828	Boolean true
+D829	Boolean true
+D83	Boolean true
+D830	Boolean false
+D831	null
+D832	error: CQL evaluation error: cast failed: cannot convert Code to CodeableConcept
+D833	Boolean true
+D834	error: CQL evaluation error: cast failed: cannot convert String to Period
+D835	null
+D836	null
+D837	error: CQL evaluation error: cast failed: cannot convert Quantity to Resource
+D838	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to Code
+D839	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D84	Boolean false
+D840	null
+D841	Boolean true
+D842	Boolean false
+D843	Boolean true
+D844	Boolean true
+D845	error: CQL evaluation error: cast failed: cannot convert DateTime to Quantity
+D846	Boolean false
+D847	error: CQL evaluation error: cast failed: cannot convert Patient to Element
+D848	null
+D849	Boolean true
+D85	error: CQL semantic error: error: in D85: FHIR.Period is not a number
+D850	Boolean true
+D851	Quantity 5 'mg'
+D852	Boolean true
+D853	error: CQL evaluation error: cast failed: cannot convert DateTime to Date
+D854	error: CQL evaluation error: cast failed: cannot convert Period to CodeableConcept
+D855	Boolean false
+D856	Boolean false
+D857	Boolean false
+D858	null
+D859	Period {"start": "2020-01-01"}
+D86	null
+D860	null
+D861	error: CQL evaluation error: cast failed: cannot convert Coding to date
+D862	Boolean false
+D863	Boolean false
+D864	null
+D865	null
+D866	null
+D867	Boolean true
+D868	Boolean false
+D869	Boolean true
+D87	String "abc"
+D870	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D871	null
+D872	Boolean true
+D873	error: CQL evaluation error: cast failed: cannot convert Code to Quantity
+D874	null
+D875	null
+D876	error: CQL evaluation error: cast failed: cannot convert String to Coding
+D877	Boolean false
+D878	String "Tuple{code: Code '' from }"
+D879	ValueSet{id: String "x"}
+D88	error: CQL evaluation error: cast failed: cannot convert String to Element
+D880	Boolean false
+D881	null
+D882	String "2020-01-01"
+D883	null
+D884	Boolean true
+D885	null
+D886	Boolean false
+D887	Boolean true
+D888	error: CQL evaluation error: cast failed: cannot convert Integer to Patient
+D889	Boolean true
+D89	Boolean true
+D890	error: CQL evaluation error: cast failed: cannot convert Quantity to integer
+D891	Boolean false
+D892	null
+D893	Boolean true
+D894	null
+D895	String "2020-01-01"
+D896	Boolean false
+D897	Boolean false
+D898	Boolean true
+D899	error: CQL evaluation error: cast failed: cannot convert DateTime to Decimal
+D9	error: CQL evaluation error: Interval is not a number or a quantity
+D90	Boolean false
+D91	error: CQL evaluation error: cast failed: cannot convert String to Resource
+D92	Boolean true
+D93	error: CQL evaluation error: cast failed: cannot convert DateTime to Integer
+D94	Boolean true
+D95	null
+D96	Boolean false
+D97	Boolean false
+D98	null
+D99	error: CQL semantic error: error: in D99: Choice<FHIR.Period, System.Quantity> is not a number
