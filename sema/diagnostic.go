@@ -38,10 +38,17 @@ type Diagnostic struct {
 	// produced. A position alone answers "where"; this answers "in what", which
 	// is what a reader scanning twenty findings sorts by.
 	Define string
+	// Library is the library the diagnostic is in when it is not the one
+	// checked, but one it includes: its position is in that library's text.
+	// Nil for the library checked.
+	Library *ast.LibraryIdentifier
 }
 
 func (d Diagnostic) String() string {
 	var b strings.Builder
+	if d.Library != nil {
+		fmt.Fprintf(&b, "library %s version '%s', ", d.Library.Name, d.Library.Version)
+	}
 	if d.Position.Known() {
 		fmt.Fprintf(&b, "%s: ", d.Position)
 	}

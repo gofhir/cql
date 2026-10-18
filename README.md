@@ -128,6 +128,10 @@ diagnostics, err := engine.Check(cqlSource)
 if diagnostics.HasErrors() {
     fmt.Println(diagnostics.Errors().Error())
 }
+
+// The same over every library it includes, resolved through the
+// LibraryResolver. A finding in an included library names it in Library.
+diagnostics, err = engine.CheckContext(ctx, cqlSource)
 ```
 
 ### Options
@@ -143,7 +147,7 @@ if diagnostics.HasErrors() {
 | `WithMaxDepth` | Maximum recursion depth | 10000 |
 | `WithTraceListener` | Trace listener for debugging | `nil` |
 | `WithCompiledCacheSize` | Parsed libraries kept; `0` disables, negative is unbounded | 64 |
-| `WithSemanticValidation` | Refuse to evaluate a library whose meaning does not check out | `true` |
+| `WithSemanticValidation` | Refuse to evaluate a library whose meaning does not check out, or that includes one | `true` |
 
 ## Error Handling
 

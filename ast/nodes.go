@@ -47,6 +47,10 @@ type IncludeDef struct {
 	Name    string // qualified library name
 	Version string
 	Alias   string // local alias ('called' clause)
+	// Position is where the include is written, so that a finding about the
+	// library it names — not found, not the one asked for, wrong — points at
+	// it. Unknown for an include no source text was parsed for.
+	Position Position
 }
 
 // CodeSystemDef represents a 'codesystem' definition.

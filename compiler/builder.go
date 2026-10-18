@@ -438,6 +438,9 @@ func (b *builder) VisitUsingDefinition(ctx *grammar.UsingDefinitionContext) inte
 
 func (b *builder) VisitIncludeDefinition(ctx *grammar.IncludeDefinitionContext) interface{} {
 	i := &ast.IncludeDef{}
+	if tok := ctx.GetStart(); tok != nil {
+		i.Position = ast.Position{Line: tok.GetLine(), Col: tok.GetColumn() + 1}
+	}
 	if qi := ctx.QualifiedIdentifier(); qi != nil {
 		i.Name = undelimitIdentifier(qi.GetText())
 	}

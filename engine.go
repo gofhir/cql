@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -255,8 +256,13 @@ func WithCompiledCacheSize(n int) Option {
 // choice of intervals refused by an operator that takes intervals. Several were
 // wrong answers at evaluation too, not merely noisy diagnostics.
 //
+// It holds every library the evaluated one includes, directly or through
+// others, to the same: an included library's findings were not looked at, and
+// it was evaluated 1 + 'text' and all.
+//
 // Turn it off for a library that has to run despite its findings. Engine.Check
-// reports them without evaluating anything, either way.
+// reports them without evaluating anything, either way, and Engine.CheckContext
+// those of its includes too.
 func WithSemanticValidation(enabled bool) Option {
 	return func(e *Engine) {
 		e.semanticValidation = enabled
@@ -359,7 +365,11 @@ func parse(cqlSource string) (*ast.Library, error) {
 // how `C.Answer()` in the top-level library came to resolve against a `C` that
 // some included library had chosen. Each library's own alias map is rebuilt from
 // LoadedLibraries when its scope is created.
-func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) error {
+//
+// It answers what the semantic phase found in every library it resolved, each
+// finding with the library it is in, and fails with an *includeError naming the
+// include it could not resolve.
+func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) (sema.Diagnostics, error) {
 	seen := make(map[string]includeState)
 	// The library itself is on the walk, so that one of its includes including
 	// it back is a cycle rather than a second copy of it, resolved again and
@@ -367,8 +377,23 @@ func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx 
 	if lib.Identifier != nil {
 		seen[lib.Identifier.Name+"/"+lib.Identifier.Version] = includeVisiting
 	}
-	return e.resolveIncludesInto(ctx, lib, evalCtx, seen, true)
+	var found sema.Diagnostics
+	err := e.resolveIncludesInto(ctx, lib, evalCtx, seen, true, &found)
+	return found, err
 }
+
+// includeError is an include that could not be resolved, with the library
+// that wrote it — nil for the library evaluated or checked — so that the
+// failure can be reported where the include is written.
+type includeError struct {
+	from *ast.LibraryIdentifier
+	inc  *ast.IncludeDef
+	err  error
+}
+
+func (e *includeError) Error() string { return e.err.Error() }
+
+func (e *includeError) Unwrap() error { return e.err }
 
 // includeState is where the walk of the include graph is with a library: on
 // the path being walked, or done with.
@@ -379,65 +404,103 @@ const (
 	includeDone
 )
 
-func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, evalCtx *eval.Context, seen map[string]includeState, top bool) error {
+func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, evalCtx *eval.Context, seen map[string]includeState, top bool, found *sema.Diagnostics) error {
+	// A copy: the identifier is the cached parse's, and the caller of Check is
+	// handed this one in a Diagnostic.
+	var from *ast.LibraryIdentifier
+	if !top && lib.Identifier != nil {
+		copied := *lib.Identifier
+		from = &copied
+	}
 	for _, inc := range lib.Includes {
-		alias := inc.Alias
-		if alias == "" {
-			alias = inc.Name
-		}
-		key := inc.Name + "/" + inc.Version
-		switch seen[key] {
-		case includeVisiting:
-			// The specification does not allow a library to include itself,
-			// directly or through others; the reference translator refuses it.
-			return fmt.Errorf("library '%s' version '%s' includes itself through its includes: circular library references are not allowed", inc.Name, inc.Version)
-		case includeDone:
-			// A library already compiled elsewhere in the graph still has to be
-			// named under this library's alias when this is the top level.
-			if top {
-				if known, ok := evalCtx.LoadedLibraries[key]; ok {
-					evalCtx.IncludedLibraries[alias] = known
-				} else if known, ok := evalCtx.LoadedLibraries[inc.Name]; ok {
-					evalCtx.IncludedLibraries[alias] = known
-				}
-			}
-			continue
-		}
-		seen[key] = includeVisiting
-
-		src, builtin, err := e.includeSource(ctx, inc)
-		if err != nil {
+		if err := e.resolveInclude(ctx, from, inc, evalCtx, seen, top, found); err != nil {
 			return err
 		}
-
-		incLib, incPlan, err := e.compileOrCache(src)
-		if err != nil {
-			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
-		}
-		// The built-in FHIRHelpers stands in for whichever version was asked
-		// for; any other source is the library asked for or an error.
-		if !builtin {
-			if err := checkIncludedIdentity(inc, incLib); err != nil {
-				return err
-			}
-		}
-		if err := e.unservedModel(incLib); err != nil {
-			return fmt.Errorf("library '%s' version '%s': %w", inc.Name, inc.Version, err)
-		}
-		// The plan was computed here and thrown away, so every decision the
-		// semantic phase makes about an included library was invisible at
-		// evaluation. See eval.Context.Plans.
-		evalCtx.RegisterPlan(incLib, incPlan)
-		if top {
-			evalCtx.IncludedLibraries[alias] = incLib
-		}
-		evalCtx.RegisterLoadedLibrary(inc.Name, inc.Version, incLib)
-		if err := e.resolveIncludesInto(ctx, incLib, evalCtx, seen, false); err != nil {
-			return err
-		}
-		seen[key] = includeDone
 	}
 	return nil
+}
+
+// resolveInclude resolves one include of the library from, and the graph
+// below it.
+func (e *Engine) resolveInclude(ctx context.Context, from *ast.LibraryIdentifier, inc *ast.IncludeDef, evalCtx *eval.Context, seen map[string]includeState, top bool, found *sema.Diagnostics) error {
+	fail := func(err error) error { return &includeError{from: from, inc: inc, err: err} }
+	alias := inc.Alias
+	if alias == "" {
+		alias = inc.Name
+	}
+	key := inc.Name + "/" + inc.Version
+	switch seen[key] {
+	case includeVisiting:
+		// The specification does not allow a library to include itself,
+		// directly or through others; the reference translator refuses it.
+		return fail(fmt.Errorf("library '%s' version '%s' includes itself through its includes: circular library references are not allowed", inc.Name, inc.Version))
+	case includeDone:
+		// A library already compiled elsewhere in the graph still has to be
+		// named under this library's alias when this is the top level.
+		if top {
+			if known, ok := evalCtx.LoadedLibraries[key]; ok {
+				evalCtx.IncludedLibraries[alias] = known
+			} else if known, ok := evalCtx.LoadedLibraries[inc.Name]; ok {
+				evalCtx.IncludedLibraries[alias] = known
+			}
+		}
+		return nil
+	}
+	seen[key] = includeVisiting
+
+	src, builtin, err := e.includeSource(ctx, inc)
+	if err != nil {
+		return fail(err)
+	}
+
+	incLib, incPlan, err := e.compileOrCache(src)
+	if err != nil {
+		return fail(fmt.Errorf("compiling library '%s': %w", inc.Name, err))
+	}
+	// The built-in FHIRHelpers stands in for whichever version was asked
+	// for; any other source is the library asked for or an error.
+	if !builtin {
+		if err := checkIncludedIdentity(inc, incLib); err != nil {
+			return fail(err)
+		}
+	}
+	if err := e.unservedModel(incLib); err != nil {
+		return fail(fmt.Errorf("library '%s' version '%s': %w", inc.Name, inc.Version, err))
+	}
+	*found = append(*found, inThatLibrary(incPlan.Diagnostics, incLib.Identifier)...)
+	// The plan was computed here and thrown away, so every decision the
+	// semantic phase makes about an included library was invisible at
+	// evaluation. See eval.Context.Plans.
+	evalCtx.RegisterPlan(incLib, incPlan)
+	if top {
+		evalCtx.IncludedLibraries[alias] = incLib
+	}
+	evalCtx.RegisterLoadedLibrary(inc.Name, inc.Version, incLib)
+	if err := e.resolveIncludesInto(ctx, incLib, evalCtx, seen, false, found); err != nil {
+		return err
+	}
+	seen[key] = includeDone
+	return nil
+}
+
+// inThatLibrary is an included library's diagnostics, each saying which
+// library it is in. They are copies: the plan they come from is cached and
+// shared by every evaluation that includes the library.
+func inThatLibrary(diags sema.Diagnostics, lib *ast.LibraryIdentifier) sema.Diagnostics {
+	if len(diags) == 0 {
+		return nil
+	}
+	var id *ast.LibraryIdentifier
+	if lib != nil {
+		copied := *lib
+		id = &copied
+	}
+	out := make(sema.Diagnostics, len(diags))
+	for i, d := range diags {
+		d.Library = id
+		out[i] = d
+	}
+	return out
 }
 
 // checkIncludedIdentity refuses a source that is not the library its include
@@ -646,11 +709,19 @@ func (e *Engine) newEvalContext(
 	}
 	maps.Copy(evalCtx.Parameters, params)
 
-	if err := e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+	found, err := e.resolveIncludes(ctx, lib, evalCtx)
+	if err != nil {
 		if stopErr := stopped(ctx, budget); stopErr != nil {
 			return nil, stopErr
 		}
 		return nil, &ErrEvaluation{Cause: err}
+	}
+	// An included library is held to what the evaluated one is: one whose
+	// semantic phase found errors was evaluated all the same, 1 + 'x' and all.
+	if e.semanticValidation {
+		if errs := found.Errors(); len(errs) > 0 {
+			return nil, &ErrSemantic{Diagnostics: errs}
+		}
 	}
 	return evalCtx, nil
 }
@@ -845,6 +916,66 @@ func (e *Engine) CheckParsed(lib *Library) sema.Diagnostics {
 		return lib.plan.Diagnostics
 	}
 	return sema.Check(lib.lib, e.semanticModel()).Diagnostics
+}
+
+// CheckContext is Check over the library and every library it includes,
+// resolved as an evaluation resolves them. Each finding in an included library
+// says which library it is in, and an include that cannot be resolved is a
+// finding at the line that writes it. It is held to the engine's timeout as an
+// evaluation is, and a context that ends first is the error, as ErrCanceled or
+// ErrTimeout.
+//
+// Check itself stays with the one library it is given and reaches nothing
+// outside it. Neither can tell a name or a signature an included library does
+// not have: the semantic phase reads a reference into another library as of
+// unknown type. What this adds is each included library's own findings.
+func (e *Engine) CheckContext(ctx context.Context, cqlSource string) (sema.Diagnostics, error) {
+	if err := stopped(ctx, 0); err != nil {
+		return nil, err
+	}
+	lib, err := e.Parse(cqlSource)
+	if err != nil {
+		return nil, err
+	}
+	return e.CheckParsedContext(ctx, lib)
+}
+
+// CheckParsedContext is CheckContext over an already parsed library.
+//
+// The walk of the graph stops at the first include it cannot resolve, as an
+// evaluation does: what that include would have brought in is not there to
+// check.
+func (e *Engine) CheckParsedContext(ctx context.Context, lib *Library) (sema.Diagnostics, error) {
+	if lib == nil || lib.lib == nil {
+		return nil, nil
+	}
+	ctx, budget, cancel := e.withTimeout(ctx)
+	defer cancel()
+	if err := stopped(ctx, budget); err != nil {
+		return nil, err
+	}
+	diags := slices.Clone(e.CheckParsed(lib))
+	found, err := e.resolveIncludes(ctx, lib.lib, eval.NewContext(ctx, lib.lib))
+	// Whether the walk failed or not: a resolver can hand back a source after
+	// the context ended, and what it is checked against is then a graph nobody
+	// waited for.
+	if stopErr := stopped(ctx, budget); stopErr != nil {
+		return nil, stopErr
+	}
+	diags = append(diags, found...)
+	if err != nil {
+		var unresolved *includeError
+		if !errors.As(err, &unresolved) {
+			return nil, err
+		}
+		diags = append(diags, sema.Diagnostic{
+			Position: unresolved.inc.Position,
+			Severity: sema.SeverityError,
+			Message:  unresolved.err.Error(),
+			Library:  unresolved.from,
+		})
+	}
+	return diags, nil
 }
 
 // semanticModel is the model the semantic phase asks about types.
