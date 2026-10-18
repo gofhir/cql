@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/eval"
@@ -66,7 +68,7 @@ func TestAnswersMatchTheSnapshots(t *testing.T) {
 			want := readSnapshot(t, path)
 			var moved []string
 			for _, name := range sortedNames(got) {
-				if want[name] != got[name] {
+				if !snapshotSame(want[name], got[name]) {
 					moved = append(moved, fmt.Sprintf("%s: %s, was %s", name, got[name], want[name]))
 				}
 			}
@@ -138,8 +140,6 @@ func snapshotText(v fptypes.Value) string {
 		return "null"
 	case fptypes.String:
 		return fmt.Sprintf("String %q", x.Value())
-	case fptypes.Decimal:
-		return snapshotDecimal(x)
 	case cqltypes.List:
 		parts := make([]string, len(x.Values))
 		for i, e := range x.Values {
@@ -182,32 +182,54 @@ func snapshotText(v fptypes.Value) string {
 	return v.Type() + " " + v.String()
 }
 
-// snapshotSignificantDigits is the digits a float64 holds for certain. Exp, Ln
-// and a power to a fraction are computed in float64, and Go computes those
-// differently by platform — in assembly on amd64, in Go on arm64, where a
-// multiply and an add may fuse — so the digits past these are not the same on
-// the CI's machines and a developer's: Exp of one value was 183.09405819371815
-// on one and 183.09405819371818 on the other. That the engine's answer
-// depends on where it runs is a defect of its own, recorded apart; the
-// snapshot keeps to the digits that do not.
-const snapshotSignificantDigits = 15
+// snapshotTolerance is how far apart two Decimals may be, relative to the
+// larger, and be the same answer. Exp, Ln and a power to a fraction are
+// computed in float64, and Go computes those differently by platform — in
+// assembly on amd64, in Go on arm64, where a multiply and an add may fuse — so
+// their last digit is not the same on the CI's machines and a developer's: Exp
+// of one value was 183.09405819371815 on one and 183.09405819371818 on the
+// other. Rounding both to fewer digits does not settle it, as a value on a
+// rounding boundary goes up on one and down on the other. That the engine's
+// answer depends on where it runs is a defect of its own, recorded apart; the
+// snapshot keeps the digits the engine wrote and compares past that noise.
+var snapshotTolerance = decimal.New(1, -13)
 
-// snapshotDecimal is a Decimal as written — 10.0 is not 10 — or, past
-// snapshotSignificantDigits, rounded to them and marked so: Decimal~15
-// 183.094058193718 says the digits after it were dropped, not that the engine
-// stopped at them.
-func snapshotDecimal(x fptypes.Decimal) string {
-	d := x.Value()
-	digits := len(d.Coefficient().String())
-	if d.IsNegative() {
-		digits-- // the minus sign
+// snapshotSame reports whether an answer is the one recorded: the same text,
+// or two Decimals a float64 computed — more significant digits than one holds
+// for certain, on either side, since the shortest text of the same float can
+// be 15 digits on one platform and 17 on another — within snapshotTolerance of
+// each other. Any other Decimal is compared as written, so that 10.0 is still
+// not 10.
+func snapshotSame(want, got string) bool {
+	if want == got {
+		return true
 	}
-	if d.IsZero() || digits <= snapshotSignificantDigits {
-		return "Decimal " + x.String()
+	a, aFloat, aok := snapshotDecimalOf(want)
+	b, bFloat, bok := snapshotDecimalOf(got)
+	if !aok || !bok || (!aFloat && !bFloat) {
+		return false
 	}
-	before := digits + int(d.Exponent()) // digits before the point
-	return fmt.Sprintf("Decimal~%d %s", snapshotSignificantDigits,
-		d.Round(int32(snapshotSignificantDigits-before)).String())
+	scale := decimal.Max(a.Abs(), b.Abs())
+	return a.Sub(b).Abs().LessThanOrEqual(scale.Mul(snapshotTolerance))
+}
+
+// snapshotFloatDigits is the significant digits past which a Decimal is
+// taken for a float64's, which holds 15 for certain and writes up to 17.
+const snapshotFloatDigits = 15
+
+// snapshotDecimalOf is the Decimal an answer holds, and whether it has more
+// significant digits than snapshotFloatDigits.
+func snapshotDecimalOf(answer string) (d decimal.Decimal, float, ok bool) {
+	text, ok := strings.CutPrefix(answer, "Decimal ")
+	if !ok {
+		return decimal.Decimal{}, false, false
+	}
+	d, err := decimal.NewFromString(text)
+	if err != nil {
+		return decimal.Decimal{}, false, false
+	}
+	digits := len(strings.TrimLeft(d.Abs().Coefficient().String(), "0"))
+	return d, digits > snapshotFloatDigits, true
 }
 
 // snapshotProvider serves the fhir area's resources, and its patient.
@@ -282,4 +304,29 @@ func readSnapshot(t *testing.T, path string) map[string]string {
 		t.Fatal(err)
 	}
 	return answers
+}
+
+// TestASnapshotComparesPastFloatNoiseOnly covers snapshotSame: the four answers
+// CI and a developer's machine wrote differently, a float64's last digit apart,
+// are the same; a written precision, a digit an answer moved by, or a Decimal
+// against an Integer are not.
+func TestASnapshotComparesPastFloatNoiseOnly(t *testing.T) {
+	for _, tt := range []struct {
+		want, got string
+		same      bool
+	}{
+		{"Decimal 183.09405819371818", "Decimal 183.09405819371815", true},
+		{"Decimal 4.4816890703380645", "Decimal 4.481689070338065", true},
+		{"Decimal 1907346572495099500000", "Decimal 1907346572495099800000", true},
+		{"Decimal 0.15311848890866597", "Decimal 0.153118488908666", true},
+		{"Decimal 10.0", "Decimal 10", false},
+		{"Decimal 3.33333333", "Decimal 3.33333334", false},
+		{"Decimal 4.4816890703380645", "Decimal 4.5816890703380645", false},
+		{"Decimal 0.15311848890866597", "Decimal 0.15311848890", false},
+		{"Integer 5", "Decimal 5", false},
+	} {
+		if got := snapshotSame(tt.want, tt.got); got != tt.same {
+			t.Errorf("snapshotSame(%q, %q) = %t; want %t", tt.want, tt.got, got, tt.same)
+		}
+	}
 }
