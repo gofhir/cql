@@ -4,9 +4,11 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-Ninguno. **001, la división Decimal,** se cerró el 18-10-2026 y sigue sin commit: [001-decimal-division.md](001-decimal-division.md).
+Ninguno. **001, la división Decimal,** se mergeó en #148 (`871e6ee`): [001-decimal-division.md](001-decimal-division.md).
 
-**Próximo paso concreto:** que el usuario decida el commit, el push y el PR del 001. Después, el próximo de la lista.
+**Próximo paso concreto:**
+1. Commitear en un PR de docs los análisis del 13 y del 18 de octubre, que siguen sin commit; este archivo enlaza el del 18.
+2. Empezar el próximo de la lista con la skill `fhir-incremento`, desde el paso 1.
 
 ## Pendientes, en orden
 
@@ -20,8 +22,14 @@ Ninguno. **001, la división Decimal,** se cerró el 18-10-2026 y sigue sin comm
 
 ## Decisiones pendientes del usuario
 
-- Publicar el release que acumula #144, #146 y #147.
+- Publicar el release que acumula #144, #146, #147 y #148.
 - Agregar Australia/Lord_Howe a la matriz de zonas de CI.
+
+## Cerrados con el §10
+
+| PR | Qué |
+|---|---|
+| #148 | 001: la división Decimal y los oráculos que distinguen el tipo de los números |
 
 ## Cerrados el 18-10-2026, antes de adoptar el §10
 

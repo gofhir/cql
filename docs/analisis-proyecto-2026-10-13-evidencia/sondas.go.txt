@@ -1,0 +1,59 @@
+package main
+
+import (
+ "context"
+ "fmt"
+ "os"
+ cql "github.com/gofhir/cql"
+ "github.com/gofhir/cql/compiler"
+ "github.com/gofhir/cql/elm"
+ "github.com/gofhir/cql/eval"
+)
+
+func main() {
+ engine := cql.NewEngine()
+ cases := []string{
+ `({1,2,3}) X with ({2}) Y such that X = Y aggregate A starting 0: A + X`,
+ `({1,2,3}) X without ({2}) Y such that X = Y aggregate A starting 0: A + X`,
+ `({1,2,3}) X where X = 2 aggregate A starting 0: A + X`,
+ `({1,1,2}) union ({2})`,
+ `({1,1,2}) except ({3})`,
+ `({'nil', null}) X aggregate distinct A starting 0: A + 1`,
+ `({1, 1.0}) X aggregate distinct A starting 0: A + 1`,
+ `from ({'a,b','a'}) X, ({'c','b,c'}) Y aggregate distinct A starting 0: A + 1`,
+ }
+ for _, expr := range cases {
+  source := "library Probe version '1.0'\ndefine R: " + expr
+  v, err := engine.EvaluateExpression(context.Background(), source, "R", nil, nil)
+  fmt.Printf("%s => %v, error=%v\n", expr, v, err)
+ }
+ ctx, cancel := context.WithCancel(context.Background()); cancel()
+ v, err := engine.EvaluateExpression(ctx, "library Probe\ndefine R: 42", "R", nil, nil)
+ fmt.Printf("pre-canceled => %v, error=%v\n", v, err)
+ n := elm.ImportExpression(&elm.ExpressionNode{Type:"DefinitelyUnsupportedOperator"})
+ fmt.Printf("unknown ELM => %#v\n", n)
+ // Equivalent CQL scalar confirms that the AST evaluator runs the imported null.
+ lib, _ := compiler.Compile("library Probe\ndefine R: 42")
+ lib.Statements[0].Expression = n
+ v, err = eval.NewEvaluator(eval.NewContext(context.Background(), lib)).EvaluateExpression("R")
+ fmt.Printf("unknown ELM evaluation => %v, error=%v\n", v, err)
+ resolver := func(_ context.Context, _, _ string) (string,error) {
+  return "library Bad version '1.0'\ndefine X: 1 + 'bad'", nil
+ }
+ incEngine := cql.NewEngine(cql.WithLibraryResolver(resolver))
+ v, err = incEngine.EvaluateExpression(context.Background(), "library Probe\ninclude Bad version '1.0' called B\ndefine R: B.X", "R", nil, nil)
+ fmt.Printf("included semantic error => %v, error=%v\n", v, err)
+ diags, err := engine.Check("library Bad version '1.0'\ndefine X: 1 + 'bad'")
+ fmt.Printf("same included source checked directly => %v, error=%v\n", diags, err)
+ unchecked := "library Bad version '1.0'\ndefine X: if true then 1 else 1 + 'bad'"
+ incEngine = cql.NewEngine(cql.WithLibraryResolver(func(_ context.Context, _, _ string)(string,error){ return unchecked,nil }))
+ v, err = incEngine.EvaluateExpression(context.Background(), "library Probe\ninclude Bad version '1.0' called B\ndefine R: B.X", "R", nil, nil)
+ fmt.Printf("included invalid dead branch => %v, error=%v\n", v, err)
+ diags, err = engine.Check(unchecked)
+ fmt.Printf("dead branch checked directly => %v, error=%v\n", diags, err)
+ data, err := os.ReadFile("/tmp/go-cql-review-reference-elm.json")
+ if err == nil {
+  imported, err := elm.UnmarshalLibrary(data)
+  fmt.Printf("official ELM envelope => identifier=%v, statements=%v, error=%v\n", imported.Identifier, imported.Statements, err)
+ }
+}
