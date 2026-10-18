@@ -60,9 +60,7 @@ D25	js	unclassified: Integer 1e-9 vs Decimal 0
 D252	java	unclassified: null vs Decimal 0.00000002
 D256	js	unclassified: Decimal 0.6578814551268702 vs Decimal 0.65788145
 D257	java	unclassified: error: Error evaluating expression D257: Division by zero vs Decimal 249955.002025
-D257	js	unclassified: Decimal 249955.00202500002 vs Decimal 249955.002025
 D258	java	unclassified: error: Error evaluating expression D258: Division by zero vs null
-D26	js	unclassified: Decimal 183.09405819371833 vs Decimal 183.09405819371818
 D260	js	unclassified: Decimal 99.90138770133188 vs Decimal 99.9013877
 D261	java	unclassified: Integer 5 vs null
 D265	js	unclassified: Decimal 33.333333333333336 vs Decimal 33.33333333
@@ -104,9 +102,6 @@ D395	java	unclassified: error: Error evaluating expression D395: Division by zer
 D397	js	unclassified: Decimal 0.13793103448275862 vs Decimal 0.13793103
 D4	java	unclassified: Decimal 0.00000000 vs Decimal 1
 D4	js	unclassified: null vs Decimal 1
-D402	java	unclassified: Decimal 2.7182818284590455 vs Decimal 2.718281828459045
-D404	java	unclassified: Decimal 0.153118488908666 vs Decimal 0.15311848890866597
-D404	js	unclassified: Decimal 0.153118488908666 vs Decimal 0.15311848890866597
 D405	js	unclassified: Decimal -11.01770057404839 vs Decimal -11.01770058
 D41	java	unclassified: error: Error evaluating expression D41: Division by zero vs null
 D411	java	unclassified: error: Error evaluating expression D411: Division by zero vs null
@@ -122,7 +117,6 @@ D448	js	unclassified: Decimal 0.6249999993750001 vs Decimal 0.62499999
 D449	java	unclassified: Decimal 0.40546510 vs Decimal 0.4054651081081644
 D450	js	unclassified: Decimal -9 vs Integer -10
 D455	js	unclassified: Decimal -0.00007975000000000001 vs Decimal -0.00008
-D456	java	unclassified: Decimal 502166722801124416 vs Decimal 502166722801123063.04896699
 D456	js	unclassified: null vs Decimal 502166722801123063.04896699
 D457	java	unclassified: Decimal 1.09861230 vs Decimal 1.0986122986681097
 D459	js	unclassified: Decimal 0.14936120510359183 vs Decimal 0.1493612
@@ -162,7 +156,6 @@ D553	java	unclassified: error: Error evaluating expression D553: Division by zer
 D557	java	unclassified: Decimal 401.43486220 vs Decimal 401.43486498
 D557	js	unclassified: Decimal 401.4348649810604 vs Decimal 401.43486498
 D558	java	unclassified: Decimal 999999999999999983222784 vs null
-D559	js	unclassified: Decimal 7999999.997600001 vs Decimal 7999999.9976
 D56	js	unclassified: Decimal -0.7409833876184778 vs Decimal -0.74098339
 D565	java	unclassified: error: Error evaluating expression D565: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs Decimal 1096.6331584284585
 D566	java	unclassified: error: Error evaluating expression D566: Division by zero vs null
@@ -172,7 +165,6 @@ D573	js	unclassified: null vs error: CQL evaluation error: 2:124: Exp: overflow 
 D58	java	unclassified: error: Error evaluating expression D58: Character N is neither a decimal digit number, decimal point, nor "e" notation e… vs null
 D584	java	unclassified: Decimal 0.09531017 vs Decimal 0.09531017980432493
 D590	java	unclassified: Decimal 1.9999999988801094 vs Decimal 2
-D599	js	unclassified: Decimal 1.3310000000000004 vs Decimal 1.331
 D600	js	unclassified: Decimal -4.5659397632447005 vs Decimal -4.56593978
 D604	java	unclassified: error: Error evaluating expression D604: Division by zero vs null
 D604	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
@@ -187,9 +179,7 @@ D629	java	unclassified: error: Error evaluating expression D629: Division by zer
 D631	java	unclassified: error: Error evaluating expression D631: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
 D632	java	unclassified: error: Error evaluating expression D632: Infinite or NaN vs null
 D634	js	unclassified: Decimal 11425.242973858813 vs Decimal 11425.2429738
-D642	js	unclassified: Decimal 12.005000000000003 vs Decimal 12.005
 D646	js	unclassified: Decimal 19.076775245895107 vs Decimal 19.07677524
-D647	js	unclassified: Decimal 0.13000000000000037 vs Decimal 0.13
 D65	java	unclassified: Decimal -456417716257244787774047082862474862782291844010409722777100244255816198858857623290797699922105369186271232 vs null
 D651	java	unclassified: error: Error evaluating expression D651: Division by zero vs Decimal 2.12132034
 D651	js	unclassified: Decimal 2.1213203435596424 vs Decimal 2.12132034
@@ -214,7 +204,6 @@ D699	js	unclassified: null vs Decimal 268811711493498100000000000000000000000000
 D7	js	unclassified: null vs error: CQL evaluation error: 2:13: Exp: overflow for value 1000
 D70	java	unclassified: error: Error evaluating expression D70: Division by zero vs null
 D700	java	unclassified: error: Error evaluating expression D700: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D701	js	unclassified: Decimal 0.033456780000000005 vs Decimal 0.03345678
 D703	java	unclassified: error: Error evaluating expression D703: Non-terminating decimal expansion; no exact representable decimal result. vs Decimal 0.14285714
 D703	js	unclassified: Integer 0.14285714285714285 vs Decimal 0.14285714
 D705	js	unclassified: Decimal 2.3028665699737796 vs Decimal 2.30286656

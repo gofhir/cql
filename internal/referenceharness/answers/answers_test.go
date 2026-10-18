@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"testing"
 
 	cql "github.com/gofhir/cql"
@@ -120,4 +121,38 @@ func evaluate(engine *cql.Engine, src, name string) (a Answer) {
 		return Failed(err, false)
 	}
 	return Value(v)
+}
+
+// TestAFloat64sNumbersAreTheSameAcrossPlatforms covers the numbers a float64
+// computed, which differ in their last digit between amd64 and arm64: the four
+// CI and a developer's machine wrote apart are the same; a number of fewer
+// digits, one that moved by more than that noise, or a Long, is not.
+func TestAFloat64sNumbersAreTheSameAcrossPlatforms(t *testing.T) {
+	number := func(s string) Answer {
+		d := decimal.RequireFromString(s)
+		return Answer{Kind: "number", Text: "Decimal " + s, Num: d}
+	}
+	for _, tt := range []struct {
+		a, b string
+		same bool
+	}{
+		{"183.09405819371818", "183.09405819371815", true},
+		{"4.4816890703380645", "4.481689070338065", true},
+		{"1907346572495099500000", "1907346572495099800000", true},
+		{"0.15311848890866597", "0.153118488908666", true},
+		{"3.33333333", "3.33333334", false},
+		{"4.4816890703380645", "4.5816890703380645", false},
+		{"10.0", "10", true},
+	} {
+		if got := Same(number(tt.a), number(tt.b)); got != tt.same {
+			t.Errorf("Same(%s, %s) = %t; want %t", tt.a, tt.b, got, tt.same)
+		}
+	}
+	// A Long is exact: one past its range, wrapped, is a hair of its size away.
+	long := func(s string) Answer {
+		return Answer{Kind: "number", Text: "Long " + s, Num: decimal.RequireFromString(s)}
+	}
+	if Same(long("9223372036854775807"), long("9223372036854775806")) {
+		t.Error("two Longs a unit apart were reported the same")
+	}
 }

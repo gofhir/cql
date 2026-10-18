@@ -181,12 +181,31 @@ func list(items []Answer) Answer {
 // Same compares numbers by value, since 1.0 = 1 in CQL, and everything else by
 // kind and text, exactly: 'abc' and 'ABC' are two strings. Two errors are the
 // same whatever their messages say.
+//
+// A Decimal a float64 computed — more significant digits than one holds for
+// certain, on either side — is the same within floatTolerance of the other.
+// Exp, Ln and a power to a fraction are computed in float64 by every engine
+// here, and Go computes those differently by platform, in assembly on amd64
+// and in Go on arm64: the same Exp was 183.09405819371815 on CI and
+// 183.09405819371818 on a developer's machine, where the Java engine wrote the
+// second. Compared exactly, which reference agreed depended on the machine.
 func Same(a, b Answer) bool {
 	switch {
 	case a.Kind != b.Kind:
 		return false
 	case a.Kind == "number":
-		return a.Num.Equal(b.Num)
+		if a.Num.Equal(b.Num) {
+			return true
+		}
+		// Only a Decimal: an Integer or a Long is exact in every engine, and a
+		// Long one past its range differs from the wrapped one by a hair of
+		// its size.
+		if !isDecimal(a) || !isDecimal(b) ||
+			significantDigits(a.Num) <= floatDigits && significantDigits(b.Num) <= floatDigits {
+			return false
+		}
+		scale := decimal.Max(a.Num.Abs(), b.Num.Abs())
+		return a.Num.Sub(b.Num).Abs().LessThanOrEqual(scale.Mul(floatTolerance))
 	case a.Kind == "error", a.Kind == "null":
 		return true
 	}
@@ -248,3 +267,17 @@ func Failed(err error, panicked bool) Answer {
 	}
 	return Answer{Kind: "error", Text: "error: " + err.Error()}
 }
+
+// floatDigits is the significant digits a float64 holds for certain; it writes
+// up to 17.
+const floatDigits = 15
+
+// floatTolerance is how far apart, relative to the larger, two numbers a
+// float64 computed may be and be the same answer.
+var floatTolerance = decimal.New(1, -13)
+
+func significantDigits(d decimal.Decimal) int {
+	return len(strings.TrimLeft(d.Abs().Coefficient().String(), "0"))
+}
+
+func isDecimal(a Answer) bool { return strings.HasPrefix(a.Text, "Decimal ") }
