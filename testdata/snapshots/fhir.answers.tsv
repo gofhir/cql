@@ -1,6 +1,6 @@
 D0	null
 D1	null
-D10	error: CQL evaluation error: String is not a number or a quantity
+D10	null
 D100	Boolean true
 D101	Boolean false
 D102	Boolean true
@@ -304,7 +304,7 @@ D370	Boolean false
 D371	Boolean false
 D372	Boolean true
 D373	String "2020-01-01"
-D374	error: CQL evaluation error: String is not a number or a quantity
+D374	null
 D375	Boolean false
 D376	null
 D377	error: CQL evaluation error: cast failed: cannot convert Period to Decimal
@@ -768,7 +768,7 @@ D789	Boolean true
 D79	Boolean true
 D790	null
 D791	null
-D792	error: CQL evaluation error: String is not a number or a quantity
+D792	null
 D793	Boolean true
 D794	String "abc"
 D795	error: CQL evaluation error: Patient is not a number or a quantity

@@ -12,10 +12,10 @@ which this engine accepts. The 326 it accepts compare as follows.
 
 | Outcome | Definitions |
 |---|---|
-| All three agree | 174 |
+| All three agree | 177 |
 | This engine agrees with the Java engine; cql-execution differs | 63 |
 | This engine agrees with cql-execution; the Java engine differs | 32 |
-| **Both references agree, and this engine differs** | **34** |
+| **Both references agree, and this engine differs** | **31** |
 | All three differ | 23 |
 
 This is an inventory, not a list of decisions: nothing here is fixed or
@@ -37,11 +37,10 @@ D371, D543, D617, D772, D808.
 fails the library with "Choice<…>". `-(O.value)` and `effective + 1 'mg'` are
 null in both. D104, D111, D156, D296, D299, D390.
 
-**A choice that is no number at run time is null** (3). `Abs`, `Sum` and `Avg`
-of a `valueString` are null in both; this engine fails with "String is not a
-number or a quantity", since #139 — it answered 0 before. A choice reaches the
-operator unconverted, and the branch it takes decides; an error is for an
-operand whose static type is no number. D10, D374, D792.
+**A choice that is no number at run time is null** (3). Settled: `Abs`, `Sum`
+and `Avg` of a `valueString` are null here too, as in both, where #139 failed
+with "String is not a number or a quantity" (and main before it answered 0).
+An operand typed as no number at all still fails. D10, D374, D792.
 
 **A type name is read without its model** (2). `Patient.id is String` and a
 `valueInteger is Integer` are false in both: FHIR.id is no System.String, and
