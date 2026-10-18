@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.23.3](https://github.com/gofhir/cql/compare/v1.23.2...v1.23.3) (2026-10-18)
+
+
+### Bug Fixes
+
+* **eval:** a definition evaluates in its library's scope, not its caller's ([#137](https://github.com/gofhir/cql/issues/137)) ([c3dbd21](https://github.com/gofhir/cql/commit/c3dbd2169bb6c0eb184bf026c8a4d8cec6fb2567))
+* **eval:** a number operator over a choice's other branch is null ([#142](https://github.com/gofhir/cql/issues/142)) ([281dfb1](https://github.com/gofhir/cql/commit/281dfb1be06500cc86eb60337987ae8f2092cea3))
+* **eval:** an Integer or Long result past its type is null ([#135](https://github.com/gofhir/cql/issues/135)) ([dd9ff22](https://github.com/gofhir/cql/commit/dd9ff22cb7f16a3ebac6ed0defc8e92e00af4387))
+* **eval:** every value is of type Any, and is, as and cast read a type alike ([#139](https://github.com/gofhir/cql/issues/139)) ([7b5fff0](https://github.com/gofhir/cql/commit/7b5fff0f92d7d86a09ca06a5e387b45eeefb7556))
+
 ## [1.23.2](https://github.com/gofhir/cql/compare/v1.23.1...v1.23.2) (2026-10-17)
 
 
