@@ -157,6 +157,12 @@ func WithLibraryResolver(lr LibraryResolver) Option {
 // WithLibraryLoader sets the library loader for lazy cross-library include resolution.
 // When set, the evaluator will call the loader on demand when a library-qualified
 // function call is encountered and the library has not been pre-resolved.
+//
+// Deprecated: the engine resolves every include before evaluating, through
+// WithLibraryResolver, and never reaches the loader: with a loader and no
+// resolver, a library that includes any library other than FHIRHelpers does not
+// evaluate. A resolver hands over source, which the engine parses and checks
+// once and caches; a loader hands over a parse it can neither cache nor check.
 func WithLibraryLoader(loader eval.LibraryLoader) Option {
 	return func(e *Engine) {
 		e.libraryLoader = loader
@@ -354,20 +360,40 @@ func parse(cqlSource string) (*ast.Library, error) {
 // some included library had chosen. Each library's own alias map is rebuilt from
 // LoadedLibraries when its scope is created.
 func (e *Engine) resolveIncludes(ctx context.Context, lib *ast.Library, evalCtx *eval.Context) error {
-	return e.resolveIncludesInto(ctx, lib, evalCtx, make(map[string]bool), true)
+	seen := make(map[string]includeState)
+	// The library itself is on the walk, so that one of its includes including
+	// it back is a cycle rather than a second copy of it, resolved again and
+	// read in its place.
+	if lib.Identifier != nil {
+		seen[lib.Identifier.Name+"/"+lib.Identifier.Version] = includeVisiting
+	}
+	return e.resolveIncludesInto(ctx, lib, evalCtx, seen, true)
 }
 
-func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, evalCtx *eval.Context, seen map[string]bool, top bool) error {
+// includeState is where the walk of the include graph is with a library: on
+// the path being walked, or done with.
+type includeState int
+
+const (
+	includeVisiting includeState = iota + 1
+	includeDone
+)
+
+func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, evalCtx *eval.Context, seen map[string]includeState, top bool) error {
 	for _, inc := range lib.Includes {
 		alias := inc.Alias
 		if alias == "" {
 			alias = inc.Name
 		}
-		// A library already compiled elsewhere in the graph still has to be named
-		// under this library's alias when this is the top level; only the walk
-		// into its own includes is skipped, and that is what stops a cycle.
 		key := inc.Name + "/" + inc.Version
-		if seen[key] {
+		switch seen[key] {
+		case includeVisiting:
+			// The specification does not allow a library to include itself,
+			// directly or through others; the reference translator refuses it.
+			return fmt.Errorf("library '%s' version '%s' includes itself through its includes: circular library references are not allowed", inc.Name, inc.Version)
+		case includeDone:
+			// A library already compiled elsewhere in the graph still has to be
+			// named under this library's alias when this is the top level.
 			if top {
 				if known, ok := evalCtx.LoadedLibraries[key]; ok {
 					evalCtx.IncludedLibraries[alias] = known
@@ -377,9 +403,9 @@ func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, eval
 			}
 			continue
 		}
-		seen[key] = true
+		seen[key] = includeVisiting
 
-		src, err := e.includeSource(ctx, inc)
+		src, builtin, err := e.includeSource(ctx, inc)
 		if err != nil {
 			return err
 		}
@@ -387,6 +413,16 @@ func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, eval
 		incLib, incPlan, err := e.compileOrCache(src)
 		if err != nil {
 			return fmt.Errorf("compiling library '%s': %w", inc.Name, err)
+		}
+		// The built-in FHIRHelpers stands in for whichever version was asked
+		// for; any other source is the library asked for or an error.
+		if !builtin {
+			if err := checkIncludedIdentity(inc, incLib); err != nil {
+				return err
+			}
+		}
+		if err := e.unservedModel(incLib); err != nil {
+			return fmt.Errorf("library '%s' version '%s': %w", inc.Name, inc.Version, err)
 		}
 		// The plan was computed here and thrown away, so every decision the
 		// semantic phase makes about an included library was invisible at
@@ -399,28 +435,50 @@ func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, eval
 		if err := e.resolveIncludesInto(ctx, incLib, evalCtx, seen, false); err != nil {
 			return err
 		}
+		seen[key] = includeDone
 	}
 	return nil
 }
 
+// checkIncludedIdentity refuses a source that is not the library its include
+// asked for. Whatever a resolver handed back was evaluated as the library
+// asked for: version '1.0' for an include of '2.0', or a library of another
+// name altogether — which a resolver that searches by name prefix returns for
+// an include of a library whose name is the prefix of another's.
+func checkIncludedIdentity(inc *ast.IncludeDef, lib *ast.Library) error {
+	var name, version string
+	if lib.Identifier != nil {
+		name, version = lib.Identifier.Name, lib.Identifier.Version
+	}
+	if name == inc.Name && (inc.Version == "" || version == inc.Version) {
+		return nil
+	}
+	return fmt.Errorf("library '%s' version '%s' was asked for, and the source resolved for it is library '%s' version '%s'",
+		inc.Name, inc.Version, name, version)
+}
+
 // includeSource is the source of an included library: the resolver's, or the
-// built-in FHIRHelpers when the resolver has none.
-func (e *Engine) includeSource(ctx context.Context, inc *ast.IncludeDef) (string, error) {
+// built-in FHIRHelpers when the resolver does not give one. builtin reports the
+// second. A resolver's error for any other library is reported with its reason.
+func (e *Engine) includeSource(ctx context.Context, inc *ast.IncludeDef) (src string, builtin bool, err error) {
 	if e.libraryResolver != nil {
 		src, err := e.libraryResolver(ctx, inc.Name, inc.Version)
 		switch {
 		case err == nil:
-			return src, nil
+			return src, false, nil
 		case inc.Name != "FHIRHelpers":
 			// Its reason, which the message below would have replaced with
 			// "no LibraryResolver provided" to a caller who gave one.
-			return "", fmt.Errorf("library '%s' version '%s' could not be resolved: %w", inc.Name, inc.Version, err)
+			return "", false, fmt.Errorf("library '%s' version '%s' could not be resolved: %w", inc.Name, inc.Version, err)
 		}
 	}
 	if inc.Name == "FHIRHelpers" {
-		return fhirhelpers.Source, nil
+		return fhirhelpers.Source, true, nil
 	}
-	return "", fmt.Errorf("library '%s' version '%s' could not be resolved (no LibraryResolver provided)", inc.Name, inc.Version)
+	if e.libraryLoader != nil {
+		return "", false, fmt.Errorf("library '%s' version '%s' could not be resolved: includes are resolved through WithLibraryResolver, and a LibraryLoader is not consulted for them", inc.Name, inc.Version)
+	}
+	return "", false, fmt.Errorf("library '%s' version '%s' could not be resolved (no LibraryResolver provided)", inc.Name, inc.Version)
 }
 
 // EvaluateLibrary parses and evaluates a CQL library, returning named expression results.
@@ -614,6 +672,16 @@ func (e *Engine) evaluationTimestampFor(cfg evalConfig) time.Time {
 // spec, and nothing said so. A caller who supplied their own ModelInfo is taken
 // at their word.
 func (e *Engine) checkUsings(lib *ast.Library) error {
+	if err := e.unservedModel(lib); err != nil {
+		return &ErrEvaluation{Cause: err}
+	}
+	return nil
+}
+
+// unservedModel is checkUsings' finding for one library, which the include
+// graph asks of every library in it: an included library's using was not
+// checked, and one written for FHIR 5.0.0 was evaluated against R4.
+func (e *Engine) unservedModel(lib *ast.Library) error {
 	if e.modelInfoExplicit || lib == nil {
 		return nil
 	}
@@ -622,7 +690,7 @@ func (e *Engine) checkUsings(lib *ast.Library) error {
 			continue
 		}
 		if _, err := model.FHIRModelInfo(u.Version); err != nil {
-			return &ErrEvaluation{Cause: err}
+			return err
 		}
 	}
 	return nil
