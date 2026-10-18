@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"testing"
+
+	"github.com/shopspring/decimal"
 
 	cql "github.com/gofhir/cql"
 )
