@@ -138,6 +138,8 @@ func snapshotText(v fptypes.Value) string {
 		return "null"
 	case fptypes.String:
 		return fmt.Sprintf("String %q", x.Value())
+	case fptypes.Decimal:
+		return snapshotDecimal(x)
 	case cqltypes.List:
 		parts := make([]string, len(x.Values))
 		for i, e := range x.Values {
@@ -178,6 +180,34 @@ func snapshotText(v fptypes.Value) string {
 		return x.Type() + " " + string(x.Data())
 	}
 	return v.Type() + " " + v.String()
+}
+
+// snapshotSignificantDigits is the digits a float64 holds for certain. Exp, Ln
+// and a power to a fraction are computed in float64, and Go computes those
+// differently by platform — in assembly on amd64, in Go on arm64, where a
+// multiply and an add may fuse — so the digits past these are not the same on
+// the CI's machines and a developer's: Exp of one value was 183.09405819371815
+// on one and 183.09405819371818 on the other. That the engine's answer
+// depends on where it runs is a defect of its own, recorded apart; the
+// snapshot keeps to the digits that do not.
+const snapshotSignificantDigits = 15
+
+// snapshotDecimal is a Decimal as written — 10.0 is not 10 — or, past
+// snapshotSignificantDigits, rounded to them and marked so: Decimal~15
+// 183.094058193718 says the digits after it were dropped, not that the engine
+// stopped at them.
+func snapshotDecimal(x fptypes.Decimal) string {
+	d := x.Value()
+	digits := len(d.Coefficient().String())
+	if d.IsNegative() {
+		digits-- // the minus sign
+	}
+	if d.IsZero() || digits <= snapshotSignificantDigits {
+		return "Decimal " + x.String()
+	}
+	before := digits + int(d.Exponent()) // digits before the point
+	return fmt.Sprintf("Decimal~%d %s", snapshotSignificantDigits,
+		d.Round(int32(snapshotSignificantDigits-before)).String())
 }
 
 // snapshotProvider serves the fhir area's resources, and its patient.
