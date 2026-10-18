@@ -159,7 +159,10 @@ func (c *checker) inferFunctionCall(e *ast.FunctionCall) Type {
 	//
 	// The operands are still inferred, so a mistake inside the arguments is
 	// still found; it is the call itself whose type this pass cannot know.
-	if src, ok := e.Source.(*ast.IdentifierRef); ok && src.Library == "" && c.isIncludeAlias(src.Name) {
+	//
+	// A name bound in scope is not the include, as at run time: in
+	// `({10}) Inc return Inc.Thrice()` Inc is the row.
+	if src, ok := e.Source.(*ast.IdentifierRef); ok && src.Library == "" && c.isIncludeAlias(src.Name) && !c.bound(src.Name) {
 		for _, operand := range e.Operands {
 			c.infer(operand)
 		}
@@ -183,7 +186,20 @@ func (c *checker) inferFunctionCall(e *ast.FunctionCall) Type {
 		// Defined in an included library, whose AST this pass is not given.
 		return Unknown
 	}
-	if overloads, ok := c.funcNodes[e.Name]; ok {
+	overloads, ok := c.funcNodes[e.Name]
+	if ok && e.Source != nil {
+		// A method-style call is to a fluent function, as at run time. Where
+		// none of this library's functions of the name is fluent the call is
+		// refused: the reference translator resolves it by signature, to one
+		// of them or to a system function, and refuses it there, since neither
+		// is fluent.
+		if overloads = ast.FluentOverloads(overloads); len(overloads) == 0 {
+			c.reportf(e, SeverityError, "%s is called with fluent syntax on %s, and no function of the name is fluent",
+				e.Name, describeArgs(args))
+			return Unknown
+		}
+	}
+	if ok {
 		if fn, convs := c.resolveOverload(overloads, args); fn != nil {
 			// An argument that had to be converted to reach the operand it was
 			// passed to needs that conversion recorded, exactly as one that had

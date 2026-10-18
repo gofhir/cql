@@ -244,3 +244,16 @@ define IntegerSuccessorOfMaximum: successor of 2147483647 // control
 define LongAddOverflow: 9223372036854775807L + 1L
 define LongMultiplyOverflow: 4611686018427387904L * 2L
 define LongSuccessorOfMaximum: successor of 9223372036854775807L // control
+// A definition evaluates in its library's scope, not in the query or the
+// function it is referenced from.
+define ScopeY: 1
+define ScopeD: ScopeY + 1
+define DefinitionUnderAnAlias: ({10}) ScopeY return ScopeD
+define DefinitionUnderALet: ({1}) Q let ScopeY: 20 return ScopeD
+define DefinitionUnderAWhere: ({10, 20}) ScopeY where ScopeD = 2
+define DefinitionUnderAnOperand: ScopeF(30)
+define function ScopeF(ScopeY Integer): ScopeD + ScopeY
+define ScopeQuery: ({ 2, 3 }) X return X + ScopeY
+// An alias of an enclosing query, not the definition of its name memoized
+// while ScopeQuery was read.
+define AliasOverAMemoizedDefinition: (ScopeQuery) ScopeY return Sum((({ 3, 4 }) C return ScopeY))

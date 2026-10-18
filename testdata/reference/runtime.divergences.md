@@ -223,3 +223,17 @@ records how the dispute was settled, and names the Java engine as the
 reference that agrees. The test fails the day cql-execution agrees, and the
 rows then leave the list. If the Java engine changes instead, it fails with a
 different message, since that reopens the dispute rather than settling it.
+
+## Disputed: the scope of a definition
+
+A definition evaluates in the scope of its library, as the Java engine has
+it. cql-execution resolves the names in it in the scope it is referenced from,
+so a query alias, a let or a function operand of the same name stands in for
+them: `({10}) Y return D`, with `define Y: 1` and `define D: Y + 1`, is {11}
+there and {2} here (`DefinitionUnderAnAlias`).
+
+The rows — `DefinitionUnderAnAlias`, `DefinitionUnderALet`,
+`DefinitionUnderAWhere` and `DefinitionUnderAnOperand` — stay in
+`disputedRuntimeAnswers`, with the Java engine as the reference that agrees.
+The test fails the day cql-execution agrees too, and the rows then leave the
+list.

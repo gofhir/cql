@@ -271,6 +271,16 @@ func NewEvaluator(ctx *Context) *Evaluator {
 	}
 }
 
+// inLibraryScope is the evaluator for a definition's scope — see
+// Context.definitionScope — and this one when it already is, as at the top of
+// a definition, so that reading one definition from another costs nothing.
+func (e *Evaluator) inLibraryScope() *Evaluator {
+	if scope := e.ctx.definitionScope(); scope != e.ctx {
+		return e.withContext(scope)
+	}
+	return e
+}
+
 // withContext returns a lightweight evaluator sharing the same function registry
 // but using a different context. Avoids re-building the funcs map on each iteration.
 func (e *Evaluator) withContext(ctx *Context) *Evaluator {
@@ -285,7 +295,7 @@ func (e *Evaluator) EvaluateLibrary() (map[string]fptypes.Value, error) {
 	results := make(map[string]fptypes.Value)
 	for _, stmt := range e.ctx.Library.Statements {
 		e.ctx.StatementContext = stmt.Context
-		val, err := e.Eval(stmt.Expression)
+		val, err := e.inLibraryScope().Eval(stmt.Expression)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating '%s': %w", stmt.Name, err)
 		}
@@ -326,7 +336,9 @@ func (e *Evaluator) EvaluateExpression(name string) (fptypes.Value, error) {
 				continue
 			}
 			e.ctx.StatementContext = stmt.Context
-			val, err := e.Eval(stmt.Expression)
+			// In the definition's scope, as a referenced definition is: the
+			// scope handed here may sit under a query's aliases.
+			val, err := e.inLibraryScope().Eval(stmt.Expression)
 			if err != nil {
 				return nil, err
 			}
@@ -782,10 +794,16 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 	// Lazily evaluate library expression definitions referenced by name.
 	// This handles CQL like: define "A": true  define "B": "A" and false
 	// where "B" references "A" via IdentifierRef.
+	//
+	// A definition is the library's, and evaluates in the library's scope, not
+	// in the query or the function it is referenced from. In the caller's, an
+	// alias or an operand of the caller stood in for a name of the definition:
+	// with `define Y: 1` and `define D: Y + 1`, `({10}) Y return D` was {11},
+	// where it is {2} — and the 11 was memoized as D for everything after.
 	if e.ctx.Library != nil {
 		for _, stmt := range e.ctx.Library.Statements {
 			if stmt.Name == n.Name {
-				result, err := e.Eval(stmt.Expression)
+				result, err := e.inLibraryScope().Eval(stmt.Expression)
 				if err != nil {
 					return nil, wrapUnlessLimit(err, "evaluating referenced expression %q", n.Name)
 				}
@@ -810,7 +828,9 @@ func (e *Evaluator) evalIdentifierRef(n *ast.IdentifierRef) (fptypes.Value, erro
 			if p.Default == nil {
 				return nil, nil
 			}
-			result, err := e.Eval(p.Default)
+			// In the library's scope, as a definition is: an alias of the
+			// parameter's name stood in for it, and was cached as its value.
+			result, err := e.inLibraryScope().Eval(p.Default)
 			if err != nil {
 				return nil, wrapUnlessLimit(err, "evaluating default for parameter %q", n.Name)
 			}
@@ -3125,8 +3145,12 @@ func (e *Evaluator) ensureLibraryLoaded(alias string) error {
 func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error) {
 	// Check for library-qualified call via Source (e.g. FHIRHelpers.ToQuantity(...))
 	// Parser produces: FunctionCall{Source: IdentifierRef{Name: "FHIRHelpers"}, Name: "ToQuantity"}
+	//
+	// Anything bound in scope wins, as for `Alias.Name`: a query alias may share
+	// a name with an include, and `({10}) Inc return Inc.Twice()` is a fluent
+	// call on the row, not a call into the library that is called Inc.
 	if n.Source != nil {
-		if idRef, ok := n.Source.(*ast.IdentifierRef); ok {
+		if idRef, ok := n.Source.(*ast.IdentifierRef); ok && e.namesInclude(idRef.Name) {
 			// Lazy-load the library if not yet resolved
 			if _, loaded := e.includedFuncs[idRef.Name]; !loaded {
 				if err := e.ensureLibraryLoaded(idRef.Name); err != nil {
@@ -3160,9 +3184,25 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 		}
 	}
 
-	// Check if it's a library-defined function
+	// Check if it's a library-defined function.
+	//
+	// A fluent call is to a fluent function, and its source is the first
+	// operand: `5.AddK()` is AddK(5). Passing the operands alone left the body
+	// reading whatever the caller had bound by that name. A call written so
+	// where this library's functions of the name are none of them fluent is
+	// refused: the reference translator resolves it by signature, to this
+	// library's function or to a system one, and refuses it there, since
+	// neither is fluent. An included library's fluent functions are not looked
+	// in here, which resolving by signature across libraries would take.
 	if overloads, ok := e.funcs[n.Name]; ok {
-		return e.callOverload(overloads, n.Operands, nil)
+		if n.Source == nil {
+			return e.callOverload(overloads, n.Operands, nil)
+		}
+		fluent := ast.FluentOverloads(overloads)
+		if len(fluent) == 0 {
+			return nil, fmt.Errorf("%s is called with fluent syntax, and no function of the name is fluent", n.Name)
+		}
+		return e.callOverloadOn(fluent, n.Source, n.Operands, nil)
 	}
 	// Built-in functions handled here
 	if namedIn(n.Name, integerArithmetic) {
@@ -3170,6 +3210,15 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 		return e.withinInteger(n, v, err)
 	}
 	return e.evalBuiltinFunction(n)
+}
+
+// namesInclude reports whether name, as the source of a call, is an include
+// and not something bound in scope that shadows it. Only an include's name is
+// looked up among the aliases and lets, so a call on anything else pays
+// nothing for it.
+func (e *Evaluator) namesInclude(name string) bool {
+	_, loaded := e.includedFuncs[name]
+	return (loaded || e.ctx.hasInclude(name)) && !e.ctx.boundLocally(name)
 }
 
 // callOverload evaluates the arguments once, picks the overload their types fit,
@@ -3180,7 +3229,21 @@ func (e *Evaluator) evalFunctionCall(n *ast.FunctionCall) (fptypes.Value, error)
 // Range or a Quantity, and that is not visible in the syntax. Scoring only
 // literals is why the Period overload used to win every time.
 func (e *Evaluator) callOverload(overloads []*ast.FunctionDef, args []ast.Expression, owner *ast.Library) (fptypes.Value, error) {
-	values := make([]fptypes.Value, 0, len(args))
+	return e.callOverloadOn(overloads, nil, args, owner)
+}
+
+// callOverloadOn is callOverload with a source, a fluent call's, evaluated
+// first as the first argument.
+func (e *Evaluator) callOverloadOn(overloads []*ast.FunctionDef, source ast.Expression, args []ast.Expression,
+	owner *ast.Library) (fptypes.Value, error) {
+	values := make([]fptypes.Value, 0, len(args)+1)
+	if source != nil {
+		v, err := e.Eval(source)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, v)
+	}
 	for _, arg := range args {
 		v, err := e.Eval(arg)
 		if err != nil {
@@ -3200,11 +3263,15 @@ func (e *Evaluator) runFunction(fd *ast.FunctionDef, values []fptypes.Value, own
 	if fd.External {
 		return nil, fmt.Errorf("external function '%s' not implemented", fd.Name)
 	}
-	child := e.ctx.ChildScope()
+	var child *Context
 	if owner != nil {
 		// A child of the memoized library scope, not a fresh one: the operand
 		// bindings are per call, everything else the scope carries is per library.
 		child = e.libraryScope(owner).ChildScope()
+	} else {
+		// The body sees its operands and its library, not its caller's
+		// aliases: a function of Y called from a query over Y read the query's.
+		child = e.ctx.callScope()
 	}
 	for i, val := range values {
 		if i < len(fd.Operands) {

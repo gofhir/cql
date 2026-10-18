@@ -338,6 +338,10 @@ type Context struct {
 
 	// Parent context (for nested scopes)
 	parent *Context
+
+	// definitionOnly marks a scope definitionScope made: nothing but the top
+	// of the chain is above it, so a definition read from it evaluates in it.
+	definitionOnly bool
 }
 
 // NewContext creates a root evaluation context.
@@ -609,26 +613,78 @@ func (c *Context) ChildScope() *Context {
 	}
 }
 
+// definitionScope is where a definition of this library and a parameter's
+// default evaluate: this scope as it stands — its subject, its providers, its
+// limits — with none of the aliases, lets, rows or sort keys of the queries
+// and calls it is inside. The top of the chain is one already, and so is a
+// scope this made: a definition read from another evaluates where that one
+// did, at no cost. Any other gives callScope's fresh scope.
+func (c *Context) definitionScope() *Context {
+	if c.definitionOnly || (c.parent == nil && !c.InSortKey && c.This == nil) {
+		return c
+	}
+	scope := c.callScope()
+	scope.definitionOnly = true
+	return scope
+}
+
+// callScope is a fresh scope for what is evaluated apart from the queries and
+// calls c is inside — a definition, a parameter's default, a function's body:
+// a child of c, so that it keeps c's subject and providers, hung from the top
+// of c's chain, so that what the top binds still reaches it and nothing bound
+// between them does. A child does not take the row or the sort key of the
+// scope it is made from, so a child of the top needs nothing more.
+func (c *Context) callScope() *Context {
+	scope := c.ChildScope()
+	if top := c.top(); top != c {
+		scope.parent = top
+	}
+	return scope
+}
+
+// top is the scope at the top of the chain c is in.
+func (c *Context) top() *Context {
+	for c.parent != nil {
+		c = c.parent
+	}
+	return c
+}
+
+// resolveLocal looks a name up among the aliases and lets in scope, the
+// innermost first.
+func (c *Context) resolveLocal(name string) (fptypes.Value, bool) {
+	for s := c; s != nil; s = s.parent {
+		if v, ok := s.Aliases[name]; ok {
+			return v, true
+		}
+		if v, ok := s.LetBindings[name]; ok {
+			return v, true
+		}
+	}
+	return nil, false
+}
+
 // boundLocally reports whether name is an alias or a let in scope, which a
 // definition of the same name stands behind.
 func (c *Context) boundLocally(name string) bool {
-	for s := c; s != nil; s = s.parent {
-		if _, ok := s.Aliases[name]; ok {
-			return true
-		}
-		if _, ok := s.LetBindings[name]; ok {
-			return true
-		}
-	}
-	return false
+	_, ok := c.resolveLocal(name)
+	return ok
 }
 
 // ResolveIdentifier looks up a name in order: aliases, let bindings, definitions, parameters.
+//
+// The order holds across the whole chain of scopes: every alias and let in
+// scope comes before any definition. The definitions are one map that every
+// scope of a library shares, so checking them at each level found a memoized
+// definition before the alias of an enclosing query: with B a definition, in
+// `(DQuery) B return Sum(({ 3, 4 }) C return B)` the inner B was the
+// definition as soon as DQuery had read it, and the outer B never.
+//
+// Every scope of a chain shares one map of definitions and one of parameters
+// — ChildScope hands them down, and LibraryScope starts a chain of its own —
+// so the innermost scope's are the chain's.
 func (c *Context) ResolveIdentifier(name string) (fptypes.Value, bool) {
-	if v, ok := c.Aliases[name]; ok {
-		return v, true
-	}
-	if v, ok := c.LetBindings[name]; ok {
+	if v, ok := c.resolveLocal(name); ok {
 		return v, true
 	}
 	if v, ok := c.Definitions[name]; ok {
@@ -636,9 +692,6 @@ func (c *Context) ResolveIdentifier(name string) (fptypes.Value, bool) {
 	}
 	if v, ok := c.Parameters[name]; ok {
 		return v, true
-	}
-	if c.parent != nil {
-		return c.parent.ResolveIdentifier(name)
 	}
 	return nil, false
 }

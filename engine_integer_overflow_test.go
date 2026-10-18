@@ -127,14 +127,20 @@ func TestTheCertainIntegersAreFollowedThrough(t *testing.T) {
 		"Precision(1.58700) + 2147483647": "null",
 		// A let or an alias of a definition's name is what the name means
 		// there, and may be a Long.
-		"({1}) Q let Max24: 3000000000L return Max24 + 1":                                             "{3000000001}",
-		"({3000000000L}) Max24 return Max24 + 1":                                                      "{3000000001}",
-		"({1}) Max24 return Max24 + 1":                                                                "{2}",
+		"({1}) Q let Max24: 3000000000L return Max24 + 1": "{3000000001}",
+		"({3000000000L}) Max24 return Max24 + 1":          "{3000000001}",
+		"({1}) Max24 return Max24 + 1":                    "{2}",
+		// A definition's own names are its library's, under any alias: Y is the
+		// definition inside D whatever the query calls its rows.
+		"({1}) Y return D24 + 1":          "{null}",
+		"({1}) X let Y: 5 return D24 + 1": "{null}",
+		"G24(3)":                          "null",
 		"First((List<Tuple{X Long}>{Tuple{X: 3000000000L}, Tuple{X: 1L}}) T sort by X + 1).X":         "1",
 		"Last((List<Tuple{X Long}>{Tuple{X: 3000000000L}, Tuple{X: 4000000000L}}) T sort by X * 1).X": "4000000000",
 	} {
 		src := "library T version '1.0'\ndefine A: 50000\ndefine X: 5\ndefine Max24: 2147483647\n" +
-			"define Edge: {2147483647, 1}\ndefine R: " + expr + "\n"
+			"define Edge: {2147483647, 1}\ndefine Y: 2147483647\ndefine D24: Y\n" +
+			"define function G24(Y Integer): D24 + 1\ndefine R: " + expr + "\n"
 		v, err := NewEngine().EvaluateExpression(context.Background(), src, "R", nil, nil)
 		got := "null"
 		if v != nil {
