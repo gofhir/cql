@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -209,4 +211,59 @@ func writeDivergences(t *testing.T, path string, found, recorded map[string]stri
 	if err := os.WriteFile(path, []byte(b.String()), 0o644); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// TestTheUnclassifiedDivergencesDoNotGrow holds the divergences the manifests
+// mark "unclassified" to the debt recorded in
+// testdata/snapshots/unclassified-debt.tsv when ADR-001 was written: every one
+// of them has to be an entry there, and every entry has to be still
+// unclassified, so an entry can only be removed, when its divergence is
+// classified. -update-divergences writes a new divergence as unclassified on
+// its own, which would join the debt unseen; and a count let one row be
+// classified while another, classified before, was unclassified in its place.
+func TestTheUnclassifiedDivergencesDoNotGrow(t *testing.T) {
+	debt := readUnclassifiedDebt(t)
+	unclassified := map[string]bool{}
+	for _, a := range snapshotAreas {
+		for key, note := range readDivergences(t, filepath.Join("testdata", "snapshots", a.area+".divergences.tsv")) {
+			if strings.HasPrefix(note, "unclassified") {
+				unclassified[a.area+"\t"+key] = true
+			}
+		}
+	}
+	for _, key := range slices.Sorted(maps.Keys(unclassified)) {
+		if !debt[key] {
+			t.Errorf("%s is unclassified and not in unclassified-debt.tsv: classify it in its manifest", oneLine(key))
+		}
+	}
+	for _, key := range slices.Sorted(maps.Keys(debt)) {
+		if !unclassified[key] {
+			t.Errorf("%s is in unclassified-debt.tsv and classified now: remove it from the debt", oneLine(key))
+		}
+	}
+}
+
+func readUnclassifiedDebt(t *testing.T) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", "unclassified-debt.tsv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "\r") {
+		t.Fatal("unclassified-debt.tsv has CRLF line endings: write it with LF")
+	}
+	debt := map[string]bool{}
+	for _, line := range strings.Split(string(raw), "\n") {
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if strings.Count(line, "\t") != 2 {
+			t.Fatalf("unclassified-debt.tsv: %q is not area, name and reference", line)
+		}
+		if debt[line] {
+			t.Errorf("unclassified-debt.tsv lists %s twice", oneLine(line))
+		}
+		debt[line] = true
+	}
+	return debt
 }

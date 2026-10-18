@@ -4,15 +4,13 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-Ninguno. **001, la división Decimal,** se mergeó en #148 (`871e6ee`): [001-decimal-division.md](001-decimal-division.md).
+Ninguno. **002, el ADR único,** se cerró el 18-10-2026 y sigue sin commit: [002-adr-semantica-cql.md](002-adr-semantica-cql.md).
 
-**Próximo paso concreto:**
-1. Commitear en un PR de docs los análisis del 13 y del 18 de octubre, que siguen sin commit; este archivo enlaza el del 18.
-2. Empezar el próximo de la lista con la skill `fhir-incremento`, desde el paso 1.
+**Próximo paso concreto:** el commit, el push y el PR del 002, cuando el usuario lo pida. Después, el 003.
 
 ## Pendientes, en orden
 
-1. **El ADR único de la semántica de CQL:** la semántica se programa desde la especificación de CQL, y la verifican la conformance y las dos referencias (decisión del usuario, 18-10-2026).
+1. **003:** clasificar las 855 divergencias sin clasificar (`types`, `arithmetic` y `fhir`). Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.
 3. **D4a, identidad de tipo:** un descriptor `{modelo, nombre}` en vez del texto de `Type()`. Ver [arquitectura-verificacion-2026-10-18.md](../arquitectura-verificacion-2026-10-18.md) §4.
 4. **ELM oficial:** el documento completo del traductor y los 54 de 115 tipos de nodo que faltan. Ya hay un arreglo listo para entrar cuando sea: `Abs` se importa como `OpPositive`.
@@ -30,6 +28,7 @@ Ninguno. **001, la división Decimal,** se mergeó en #148 (`871e6ee`): [001-dec
 | PR | Qué |
 |---|---|
 | #148 | 001: la división Decimal y los oráculos que distinguen el tipo de los números |
+| — | 002: el ADR 001 (Propuesto), su gobierno en CI, la procedencia de la suite y la deuda de divergencias (sin commit) |
 
 ## Cerrados el 18-10-2026, antes de adoptar el §10
 

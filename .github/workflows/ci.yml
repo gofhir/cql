@@ -181,3 +181,25 @@ jobs:
 
       - name: Verify module
         run: go mod verify
+
+  # The verification of the ADRs in docs/adr, word for word as adr_test.go's
+  # adrVerificationJob: an accepted ADR needs it unchanged.
+  adr-verification:
+    name: ADR verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: The unclassified divergences only shrink
+        run: sh scripts/debt-only-shrinks.sh
+
+      - name: ADR verification
+        run: make evidence conformance-provenance

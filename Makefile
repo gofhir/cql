@@ -6,7 +6,7 @@
 GOLANGCI_LINT := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 ZONES := UTC America/Santiago Asia/Kathmandu Pacific/Kiritimati Pacific/Midway Australia/Lord_Howe
 
-.PHONY: check fmt lint test zones mutations references
+.PHONY: check fmt lint test zones mutations references conformance-provenance evidence
 
 check: fmt lint test zones mutations
 
@@ -23,7 +23,18 @@ zones:
 	@for z in $(ZONES); do echo "TZ=$$z"; TZ=$$z go test -count=1 ./... >/dev/null || exit 1; done
 
 mutations:
-	sh scripts/mutations/001-decimal-division.sh
+	@for s in scripts/mutations/*.sh; do echo "== $$s"; sh $$s || exit 1; done
+
+# conformance-provenance needs network: it compares conformance/testdata/SOURCE.tsv
+# with the git tree of cqframework/cql-tests at the recorded commit, and runs the
+# mutation only that comparison can catch.
+conformance-provenance:
+	sh scripts/conformance-provenance.sh check
+	CQL_MUTATIONS_NETWORK=1 sh scripts/mutations/002-adr.sh
+
+# evidence writes docs/evidence/<date>.md, the report increment records link.
+evidence:
+	sh scripts/evidence.sh
 
 references:
 	@echo "see internal/referenceharness/README.md: the commands depend on the area"
