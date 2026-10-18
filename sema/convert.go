@@ -238,6 +238,9 @@ func elementwise(conv Conversion, to Type) Conversion {
 	}
 }
 
+// IsAny reports whether a type is System.Any, the supertype every value has.
+func IsAny(t Type) bool { return isAny(t) }
+
 // isAny reports whether a type is System.Any, the supertype every value has.
 func isAny(t Type) bool {
 	n, ok := t.(*Named)

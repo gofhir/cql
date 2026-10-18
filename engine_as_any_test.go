@@ -78,12 +78,12 @@ func TestTheFHIRModelsDescentIsOnlyAFHIRValues(t *testing.T) {
 			t.Errorf("%s = %s, %v; want %s", expr, got, err, want)
 		}
 	}
-	// An Any may hold a number, and one that does not is null, as a choice
-	// taking another branch is: see TestANumberOperatorOverAnotherBranchIsNull.
+	// Over an Any it fails, as the reference translator refuses Abs(System.Any);
+	// over a choice that took another branch it is null instead — see
+	// TestANumberOperatorOverAnotherBranchIsNull.
 	for _, expr := range []string{"Abs('a' as Any)", "-('a' as Any)", "Sum({ 'a' as Any })", "Avg({ 'a' as Any })"} {
-		v, err := NewEngine().EvaluateExpression(context.Background(), header+"define R: "+expr+"\n", "R", nil, nil)
-		if err != nil || v != nil {
-			t.Errorf("%s = %v, %v; want null", expr, v, err)
+		if _, err := NewEngine().EvaluateExpression(context.Background(), header+"define R: "+expr+"\n", "R", nil, nil); err == nil {
+			t.Errorf("%s was evaluated; a string is no number", expr)
 		}
 	}
 }
@@ -142,25 +142,36 @@ func TestAFHIRValueThroughIsAsAndCast(t *testing.T) {
 }
 
 // TestANumberOperatorOverAnotherBranchIsNull covers an arithmetic operator
-// given a value that is no number. Over a choice that took another branch it is
-// null, as both reference engines answer: Abs of a valueString, Sum and Avg of
-// one. #139 failed the evaluation there. Over an operand typed as no number at
-// all — a FHIR.date — it stays an error, as the reference translator refuses
-// that CQL and null would pass it off as data.
+// given a value that is no number, over a choice that took another branch: a
+// valueString beside a valueInteger. #139 failed the evaluation there. Each
+// answer is the reference engines': Abs of the string is null in both, Sum
+// reads the string alone as null and adds the integer, Avg is null in both,
+// and Product null in the Java engine. An operand typed as no number at all —
+// a FHIR.date — stays an error, as the reference translator refuses that CQL.
 func TestANumberOperatorOverAnotherBranchIsNull(t *testing.T) {
 	const header = "library T version '1.0'\nusing FHIR version '4.0.1'\ninclude FHIRHelpers version '4.0.1'\n" +
 		"context Patient\n"
 	patient := []byte(`{"resourceType":"Patient","id":"p","birthDate":"1980-01-01"}`)
-	engine := NewEngine(WithDataProvider(snapshotData{"Observation": {[]byte(
-		`{"resourceType":"Observation","id":"s","status":"final","code":{"text":"x"},"valueString":"abc"}`)}}))
-	for _, expr := range []string{
-		"Abs(First([Observation]).value)",
-		"Sum({ First([Observation]).value })",
-		"Avg({ First([Observation]).value })",
+	engine := NewEngine(WithDataProvider(snapshotData{"Observation": {
+		[]byte(`{"resourceType":"Observation","id":"s","status":"final","code":{"text":"x"},"valueString":"abc"}`),
+		[]byte(`{"resourceType":"Observation","id":"i","status":"final","code":{"text":"x"},"valueInteger":7}`),
+	}}))
+	const s, i = "(First([Observation] O where O.id = 's')).value", "(First([Observation] O where O.id = 'i')).value"
+	for expr, want := range map[string]string{
+		"Abs(" + s + ")":                    "null",
+		"Sum({ " + s + " })":                "null",
+		"Avg({ " + s + " })":                "null",
+		"Sum({ " + s + ", " + i + " })":     "7",
+		"Avg({ " + s + ", " + i + " })":     "null",
+		"Product({ " + s + ", " + i + " })": "null",
 	} {
 		v, err := engine.EvaluateExpression(context.Background(), header+"define R: "+expr+"\n", "R", patient, nil)
-		if err != nil || v != nil {
-			t.Errorf("%s = %v, %v; want null", expr, v, err)
+		got := "null"
+		if v != nil {
+			got = valueString(v)
+		}
+		if err != nil || got != want {
+			t.Errorf("%s = %s, %v; want %s", expr, got, err, want)
 		}
 	}
 	if _, err := engine.EvaluateExpression(context.Background(),
