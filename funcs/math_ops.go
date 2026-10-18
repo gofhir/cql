@@ -41,9 +41,8 @@ func Floor(v fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}
-	// If already an integer, return as-is.
-	if _, ok := v.(fptypes.Integer); ok {
-		return v, nil
+	if i, ok := v.(fptypes.Integer); ok {
+		return integerInRange(i), nil
 	}
 	d, ok := toDecimalVal(v)
 	if !ok {
@@ -57,8 +56,8 @@ func Ceiling(v fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}
-	if _, ok := v.(fptypes.Integer); ok {
-		return v, nil
+	if i, ok := v.(fptypes.Integer); ok {
+		return integerInRange(i), nil
 	}
 	d, ok := toDecimalVal(v)
 	if !ok {
@@ -68,30 +67,46 @@ func Ceiling(v fptypes.Value) (fptypes.Value, error) {
 }
 
 // integerOrNull returns d as an Integer, or null when it falls outside the range
-// CQL gives that type. Floor and Ceiling are the two operators that can carry a
+// CQL gives that type. Floor, Ceiling and Truncate are the operators that can carry a
 // Decimal past the Integer bounds while still being asked for an Integer, and CQL
 // answers that with null rather than a wrapped or clamped number.
 func integerOrNull(d decimal.Decimal) fptypes.Value {
-	if d.LessThan(decimal.NewFromInt(math.MinInt32)) || d.GreaterThan(decimal.NewFromInt(math.MaxInt32)) {
+	if d.LessThan(minInteger) || d.GreaterThan(maxInteger) {
 		return nil
 	}
 	return fptypes.NewInteger(d.IntPart())
 }
+
+// integerInRange is integerOrNull for an Integer or a Long given to Floor,
+// Ceiling or Truncate: an Integer is itself, and a Long past the Integer
+// bounds — Floor(3000000000L) — is null, the same rule as for a Decimal.
+func integerInRange(i fptypes.Integer) fptypes.Value {
+	if v := i.Value(); v < math.MinInt32 || v > math.MaxInt32 {
+		return nil
+	}
+	return i
+}
+
+var (
+	minInteger = decimal.NewFromInt(math.MinInt32)
+	maxInteger = decimal.NewFromInt(math.MaxInt32)
+)
 
 // Truncate removes the fractional part of a decimal value, returning an integer.
 func Truncate(v fptypes.Value) (fptypes.Value, error) {
 	if v == nil {
 		return nil, nil
 	}
-	if _, ok := v.(fptypes.Integer); ok {
-		return v, nil
+	if i, ok := v.(fptypes.Integer); ok {
+		return integerInRange(i), nil
 	}
 	d, ok := toDecimalVal(v)
 	if !ok {
 		return nil, fmt.Errorf("Truncate: expected numeric, got %s", v.Type())
 	}
-	truncated := d.Truncate(0)
-	return fptypes.NewInteger(truncated.IntPart()), nil
+	// As Floor and Ceiling: past the Integer bounds is null. IntPart wrapped,
+	// and Truncate(100000000000000000000.0) was 7766279631452241920.
+	return integerOrNull(d.Truncate(0)), nil
 }
 
 // Ln returns the natural logarithm of the value.

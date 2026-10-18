@@ -32,6 +32,7 @@ type area func(g *generator, depth int) string
 
 var areas = map[string]area{
 	"arithmetic": arithmetic,
+	"integer":    integer,
 }
 
 type generator struct {
@@ -107,6 +108,95 @@ func arithmetic(g *generator, depth int) string {
 		}
 		return g.pick("Avg", "Sum", "Product", "Median", "Variance", "StdDev",
 			"PopulationVariance", "PopulationStdDev", "Max", "Min") + "({" + strings.Join(items, ", ") + "})"
+	}
+}
+
+// The literals integer draws from: the edges of Integer and Long, the roots
+// and halves whose products and sums cross them (46341² and 65536² pass the
+// largest Integer, 3037000500² the largest Long), and small values beside them
+// so most results stay in range and the ones that cross are told apart.
+var (
+	integerEdges = []string{
+		"2147483647", "(-2147483648)", "2147483646", "(-2147483647)", "1073741824", "46340", "46341",
+		"65536", "0", "1", "(-1)", "2", "3", "10", "1000000",
+	}
+	longEdges = []string{
+		"9223372036854775807L", "(-9223372036854775807L)", "4611686018427387904L", "3037000499L",
+		"3037000500L", "4294967296L", "2147483648L", "0L", "1L", "(-1L)", "2L",
+	}
+	// Decimals at and past the Integer edges, for the functions that return an
+	// Integer from one.
+	integerDecimals = []string{
+		"2147483647.0", "2147483647.5", "2147483648.0", "-2147483648.0", "-2147483648.5",
+		"-2147483649.0", "0.5", "-0.5", "3000000000.5",
+	}
+)
+
+// integerAtom is an Integer, or a Long when long is set, at or near an edge.
+func (g *generator) integerAtom(long bool) string {
+	switch {
+	case g.chance(0.06):
+		if long {
+			return "(null as Long)"
+		}
+		return "(null as Integer)"
+	case long:
+		return g.pick(longEdges...)
+	}
+	return g.pick(integerEdges...)
+}
+
+// integer is the operators and functions whose Integer or Long result can fall
+// outside its type, nested; a Long expression mixes in Integer operands.
+func integer(g *generator, depth int) string {
+	return integerOf(g, depth, g.chance(0.35))
+}
+
+func integerOf(g *generator, depth int, long bool) string {
+	if depth == 0 {
+		return g.integerAtom(long)
+	}
+	// An operand of a Long can be an Integer, promoted to one, so the edge of
+	// each type is reached in the other's company.
+	a, b := integerOf(g, depth-1, long && g.chance(0.7)), integerOf(g, depth-1, long && g.chance(0.7))
+	switch r := g.rnd.Float64(); {
+	case r < 0.5:
+		op := g.pick("+", "-", "*", "*", "div", "mod", "^")
+		if op == "^" {
+			b = g.pick("0", "1", "2", "3", "31", "32", "63")
+			if long {
+				b += "L"
+			}
+		}
+		return "(" + a + " " + op + " " + b + ")"
+	case r < 0.65:
+		return g.integerUnary(a)
+	case r < 0.75 && !long:
+		d := g.pick(integerDecimals...)
+		if strings.HasPrefix(d, "-") {
+			d = "(" + d + ")"
+		}
+		return g.pick("Truncate", "Floor", "Ceiling") + "(" + d + ")"
+	case r < 0.8 && !long:
+		return "ToInteger('" + strings.Trim(g.pick(integerEdges...), "()") + g.pick("", "0", "1") + "')"
+	default:
+		items := make([]string, 1+g.rnd.Intn(4))
+		for i := range items {
+			items[i] = integerOf(g, max(depth-2, 0), long)
+		}
+		return g.pick("Sum", "Product", "Max", "Min", "Sum", "Product") + "({" + strings.Join(items, ", ") + "})"
+	}
+}
+
+// integerUnary is a one-operand operator or function of a.
+func (g *generator) integerUnary(a string) string {
+	switch f := g.pick("Negate", "Abs", "successor", "predecessor"); f {
+	case "Negate":
+		return "(-" + a + ")"
+	case "successor", "predecessor":
+		return "(" + f + " of " + a + ")"
+	default:
+		return f + "(" + a + ")"
 	}
 }
 

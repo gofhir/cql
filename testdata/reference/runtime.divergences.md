@@ -95,6 +95,12 @@ define DecimalPowerShortestFloat: 0.09 ^ 0.5                         // Java: 0.
 define DecimalLogNearInteger: Log(1000.0, 10.0)                      // Java: 2.99999999
 define DecimalWholePowerExact: 0.21 ^ 2                              // Java: 0.04409999
 define ConvertsToDecimalOutOfRange: ConvertsToDecimal('100000000000000000000') // Java: true
+define IntegerNegateMinimum: -(-2147483648)                          // Java: -2147483648
+define IntegerAbsMinimum: Abs(-2147483648)                           // Java: -2147483648
+define IntegerSumOverflow: Sum({2147483647, 1})                      // Java: -2147483648
+define IntegerProductOverflow: Product({65536, 65536})               // Java: 0
+define IntegerTruncatePastTheType: Truncate(3000000000.5)            // Java: -1294967296
+define LongAddOverflow: 9223372036854775807L + 1L                    // Java: -9223372036854775808
 ```
 
 The Java engine floors these to 8 places as well, and this engine does not:
@@ -112,6 +118,16 @@ The Java engine floors these to 8 places as well, and this engine does not:
   binary value. The float written 0.3 is 0.29999999999999998…, so `0.09 ^ 0.5` is
   0.29999999 there. The conformance suite asks `Power(10, -7)` for 0.0000001, and
   the float 1e-7 is 0.0000000999…, which the exact reading floors to 0.00000009.
+- A result past its type, 32 bits for an Integer and 64 for a Long: null, as
+  the specification has it ("if the result of the operation cannot be
+  represented, the result is null"). The Java engine wraps it to the low bits.
+  Where cql-execution also answers null — `+`, `*`, `div` and `^` of an
+  Integer, `*` of a Long — the rows are disputed rather than decided. The
+  32-bit edge is read from the static type, since the engine holds an Integer
+  and a Long alike, and only where every operand is an Integer for certain:
+  sema types a value it cannot follow — from an included library, an alias —
+  plus an Integer as an Integer, and a Long can stand behind it. There, and
+  without a plan, as for imported ELM, only the 64-bit edge is caught.
 - `ConvertsToDecimal` of a string past the largest Decimal: it is whether
   ToDecimal succeeds, and ToDecimal of it is null in both engines. The Java
   engine answers true all the same.

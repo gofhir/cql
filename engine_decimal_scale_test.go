@@ -105,9 +105,10 @@ func TestTheLogarithmOfADecimalPastAFloatIsStillOne(t *testing.T) {
 
 // TestPowerAndTheOperatorAgree covers powers, through `^` and through Power,
 // which are one implementation. A whole-number exponent is computed exactly —
-// 0.21 ^ 2 is 0.0441 as 0.21 * 0.21 is, and 3 ^ 35 is exact past what a float
-// holds — zero to the zero is one whatever zero it is, and a power past int64
-// for an Integer, or past the largest Decimal, is null. Each was answered
+// 0.21 ^ 2 is 0.0441 as 0.21 * 0.21 is, and 3L ^ 35L is exact past what a
+// float holds — zero to the zero is one whatever zero it is, and a power past
+// its type — 32 bits for an Integer, 64 for a Long, the largest Decimal — is
+// null. Each was answered
 // differently by the operator and the function, or wrapped a value in silence.
 func TestPowerAndTheOperatorAgree(t *testing.T) {
 	for _, tt := range []struct{ base, exponent, want string }{
@@ -115,10 +116,14 @@ func TestPowerAndTheOperatorAgree(t *testing.T) {
 		{"0.0", "0", "1"},
 		{"0", "0", "1"},
 		{"2", "-1", "0.5"},
-		{"3", "35", "50031545098999707"},
+		{"3L", "35L", "50031545098999707"},
+		{"3", "35", "null"},
+		{"2", "30", "1073741824"},
+		{"2", "31", "null"},
 		{"(-2)", "3", "-8"},
 		{"1", "-5000", "1"},
-		{"2", "63", "null"},
+		{"2L", "63L", "null"},
+		{"2L", "62L", "4611686018427387904"},
 		{"10.0", "21", "null"},
 		{"1.1", "2000", "null"},
 		{"2.0", "18446744073709551616.0", "null"},
