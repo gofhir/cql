@@ -699,6 +699,41 @@ func (c *Context) ResolveIdentifier(name string) (fptypes.Value, bool) {
 // checkCanceled reports the Go context's error, if any, so that a canceled or
 // timed-out evaluation stops where it is rather than running to completion and
 // having the caller notice afterwards.
+// canceler stops a loop that runs long within one node — a distinct or a set
+// operation over a list of intervals compares each with every other, and a
+// hundred thousand took more than a minute — by checking the evaluation's
+// context every cancelStepInterval steps, where Eval checks it only between
+// nodes. A nil canceler never stops: the loops are also run outside an
+// evaluation, by tests.
+type canceler struct {
+	ctx   *Context
+	steps int
+	err   error
+}
+
+// cancelStepInterval is how many steps of such a loop pass between two checks:
+// each step can cost a comparison with every value kept, so fewer than Eval's.
+const cancelStepInterval = 64
+
+func (c *Context) newCanceler() *canceler { return &canceler{ctx: c} }
+
+// step reports whether the loop may go on, recording why it may not.
+func (s *canceler) step() bool {
+	if s == nil {
+		return true
+	}
+	if s.err != nil {
+		return false
+	}
+	s.steps++
+	if s.steps < cancelStepInterval {
+		return true
+	}
+	s.steps = 0
+	s.err = s.ctx.checkCanceled()
+	return s.err == nil
+}
+
 func (c *Context) checkCanceled() error {
 	if c.GoCtx == nil {
 		return nil

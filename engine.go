@@ -379,25 +379,9 @@ func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, eval
 		}
 		seen[key] = true
 
-		// Try user-provided resolver first
-		var src string
-		var resolved bool
-		if e.libraryResolver != nil {
-			s, err := e.libraryResolver(ctx, inc.Name, inc.Version)
-			if err == nil {
-				src = s
-				resolved = true
-			}
-		}
-
-		// Fall back to built-in FHIRHelpers
-		if !resolved && inc.Name == "FHIRHelpers" {
-			src = fhirhelpers.Source
-			resolved = true
-		}
-
-		if !resolved {
-			return fmt.Errorf("library '%s' version '%s' could not be resolved (no LibraryResolver provided)", inc.Name, inc.Version)
+		src, err := e.includeSource(ctx, inc)
+		if err != nil {
+			return err
 		}
 
 		incLib, incPlan, err := e.compileOrCache(src)
@@ -419,6 +403,26 @@ func (e *Engine) resolveIncludesInto(ctx context.Context, lib *ast.Library, eval
 	return nil
 }
 
+// includeSource is the source of an included library: the resolver's, or the
+// built-in FHIRHelpers when the resolver has none.
+func (e *Engine) includeSource(ctx context.Context, inc *ast.IncludeDef) (string, error) {
+	if e.libraryResolver != nil {
+		src, err := e.libraryResolver(ctx, inc.Name, inc.Version)
+		switch {
+		case err == nil:
+			return src, nil
+		case inc.Name != "FHIRHelpers":
+			// Its reason, which the message below would have replaced with
+			// "no LibraryResolver provided" to a caller who gave one.
+			return "", fmt.Errorf("library '%s' version '%s' could not be resolved: %w", inc.Name, inc.Version, err)
+		}
+	}
+	if inc.Name == "FHIRHelpers" {
+		return fhirhelpers.Source, nil
+	}
+	return "", fmt.Errorf("library '%s' version '%s' could not be resolved (no LibraryResolver provided)", inc.Name, inc.Version)
+}
+
 // EvaluateLibrary parses and evaluates a CQL library, returning named expression results.
 // Optional EvalOption arguments allow per-call configuration (e.g., WithCallTraceListener).
 func (e *Engine) EvaluateLibrary(
@@ -428,6 +432,11 @@ func (e *Engine) EvaluateLibrary(
 	params map[string]fptypes.Value,
 	evalOpts ...EvalOption,
 ) (map[string]fptypes.Value, error) {
+	// Parsing is not interrupted once started, so it is not started for a
+	// caller who has already gone.
+	if err := stopped(ctx, 0); err != nil {
+		return nil, err
+	}
 	parsed, err := e.Parse(cqlSource)
 	if err != nil {
 		return nil, err
@@ -447,16 +456,25 @@ func (e *Engine) EvaluateParsedLibrary(
 	if parsed == nil || parsed.lib == nil {
 		return nil, &ErrEvaluation{Cause: fmt.Errorf("no library to evaluate")}
 	}
-	ctx, cancel := e.withTimeout(ctx)
+	ctx, budget, cancel := e.withTimeout(ctx)
 	defer cancel()
+	if err := stopped(ctx, budget); err != nil {
+		return nil, err
+	}
 
-	evalCtx, err := e.newEvalContext(ctx, parsed.lib, parsed.plan, contextResource, params, evalOpts)
+	evalCtx, err := e.newEvalContext(ctx, budget, parsed.lib, parsed.plan, contextResource, params, evalOpts)
 	if err != nil {
 		return nil, err
 	}
 	results, err := eval.NewEvaluator(evalCtx).EvaluateLibrary()
 	if err != nil {
-		return nil, e.classifyEvalError(ctx, err)
+		return nil, classifyEvalError(ctx, budget, err)
+	}
+	// The evaluator checks the context only every so many steps, so an
+	// evaluation can finish past its deadline: an answer nobody waited for is
+	// not handed back as if it had been in time.
+	if err := stopped(ctx, budget); err != nil {
+		return nil, err
 	}
 	return results, nil
 }
@@ -471,6 +489,9 @@ func (e *Engine) EvaluateExpression(
 	params map[string]fptypes.Value,
 	evalOpts ...EvalOption,
 ) (fptypes.Value, error) {
+	if err := stopped(ctx, 0); err != nil {
+		return nil, err
+	}
 	parsed, err := e.Parse(cqlSource)
 	if err != nil {
 		return nil, err
@@ -491,16 +512,25 @@ func (e *Engine) EvaluateParsedExpression(
 	if parsed == nil || parsed.lib == nil {
 		return nil, &ErrEvaluation{Cause: fmt.Errorf("no library to evaluate")}
 	}
-	ctx, cancel := e.withTimeout(ctx)
+	ctx, budget, cancel := e.withTimeout(ctx)
 	defer cancel()
+	if err := stopped(ctx, budget); err != nil {
+		return nil, err
+	}
 
-	evalCtx, err := e.newEvalContext(ctx, parsed.lib, parsed.plan, contextResource, params, evalOpts)
+	evalCtx, err := e.newEvalContext(ctx, budget, parsed.lib, parsed.plan, contextResource, params, evalOpts)
 	if err != nil {
 		return nil, err
 	}
 	result, err := eval.NewEvaluator(evalCtx).EvaluateExpression(expressionName)
 	if err != nil {
-		return nil, e.classifyEvalError(ctx, err)
+		return nil, classifyEvalError(ctx, budget, err)
+	}
+	// The evaluator checks the context only every so many steps, so an
+	// evaluation can finish past its deadline: an answer nobody waited for is
+	// not handed back as if it had been in time.
+	if err := stopped(ctx, budget); err != nil {
+		return nil, err
 	}
 	return result, nil
 }
@@ -511,6 +541,7 @@ func (e *Engine) EvaluateParsedExpression(
 // cannot drift apart — LibraryLoader was already only wired on one of them.
 func (e *Engine) newEvalContext(
 	ctx context.Context,
+	budget time.Duration,
 	lib *ast.Library,
 	plan *sema.Result,
 	contextResource json.RawMessage,
@@ -558,6 +589,9 @@ func (e *Engine) newEvalContext(
 	maps.Copy(evalCtx.Parameters, params)
 
 	if err := e.resolveIncludes(ctx, lib, evalCtx); err != nil {
+		if stopErr := stopped(ctx, budget); stopErr != nil {
+			return nil, stopErr
+		}
 		return nil, &ErrEvaluation{Cause: err}
 	}
 	return evalCtx, nil
@@ -598,9 +632,9 @@ func (e *Engine) checkUsings(lib *ast.Library) error {
 // A canceled context is checked first: the evaluator stops on cancellation and
 // reports it as an ordinary error, so the reason has to be recovered from the
 // context rather than from the error alone.
-func (e *Engine) classifyEvalError(ctx context.Context, err error) error {
-	if ctx.Err() == context.DeadlineExceeded {
-		return &ErrTimeout{Duration: e.evalTimeout}
+func classifyEvalError(ctx context.Context, budget time.Duration, err error) error {
+	if stopErr := stopped(ctx, budget); stopErr != nil {
+		return stopErr
 	}
 	if errors.Is(err, eval.ErrMaxDepthExceeded) || errors.Is(err, eval.ErrMaxRetrieveSizeExceeded) ||
 		errors.Is(err, eval.ErrMaxExpandSizeExceeded) {
@@ -609,12 +643,40 @@ func (e *Engine) classifyEvalError(ctx context.Context, err error) error {
 	return &ErrEvaluation{Cause: err}
 }
 
-// withTimeout applies the engine's per-evaluation timeout.
-func (e *Engine) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
-	if e.evalTimeout <= 0 {
-		return ctx, func() {}
+// stopped is the error of an evaluation whose context is done: ErrTimeout past
+// its deadline, given budget, ErrCanceled when the caller canceled it.
+//
+// A canceled context was reported as an evaluation error, which a caller could
+// not tell from a defect of the library, and one already canceled before the
+// evaluation started was not reported at all if it ended before the first
+// check.
+func stopped(ctx context.Context, budget time.Duration) error {
+	switch err := ctx.Err(); {
+	case err == nil:
+		return nil
+	case errors.Is(err, context.DeadlineExceeded):
+		return &ErrTimeout{Duration: budget, Cause: err}
+	default:
+		return &ErrCanceled{Cause: err}
 	}
-	return context.WithTimeout(ctx, e.evalTimeout)
+}
+
+// withTimeout applies the engine's per-evaluation timeout, and says how long
+// the evaluation has: the timeout, or what is left of the caller's own
+// deadline when that comes first — the one that will end it, and so the one an
+// ErrTimeout has to name. Zero is no deadline.
+func (e *Engine) withTimeout(ctx context.Context) (context.Context, time.Duration, context.CancelFunc) {
+	budget := e.evalTimeout
+	if deadline, ok := ctx.Deadline(); ok {
+		if left := time.Until(deadline); budget <= 0 || left < budget {
+			budget = max(left, 0)
+		}
+	}
+	if e.evalTimeout <= 0 {
+		return ctx, budget, func() {}
+	}
+	ctx, cancel := context.WithTimeout(ctx, e.evalTimeout)
+	return ctx, budget, cancel
 }
 
 // Library is a parsed CQL library, ready to be evaluated as many times as
@@ -777,13 +839,38 @@ func (e *ErrEvaluation) Unwrap() error {
 	return e.Cause
 }
 
-// ErrTimeout indicates the evaluation exceeded the configured timeout (HTTP 408).
+// ErrTimeout indicates the evaluation ran past its deadline (HTTP 408): the
+// engine's timeout or the caller's own, whichever came first.
 type ErrTimeout struct {
+	// Duration is how long the evaluation had: the engine's timeout, or what
+	// was left of the caller's deadline when the evaluation started. Zero when
+	// the deadline had passed before it started.
 	Duration time.Duration
+	// Cause is the context's error, context.DeadlineExceeded.
+	Cause error
 }
 
 func (e *ErrTimeout) Error() string {
 	return fmt.Sprintf("CQL evaluation timed out after %v", e.Duration)
+}
+
+func (e *ErrTimeout) Unwrap() error {
+	return e.Cause
+}
+
+// ErrCanceled indicates the caller canceled the evaluation's context before it
+// finished.
+type ErrCanceled struct {
+	// Cause is the context's error, context.Canceled.
+	Cause error
+}
+
+func (e *ErrCanceled) Error() string {
+	return fmt.Sprintf("CQL evaluation canceled: %v", e.Cause)
+}
+
+func (e *ErrCanceled) Unwrap() error {
+	return e.Cause
 }
 
 // ErrTooCostly indicates the evaluation is too expensive (HTTP 422).

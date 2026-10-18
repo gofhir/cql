@@ -1760,15 +1760,22 @@ func (e *Evaluator) evalSetOperation(n *ast.BinaryExpression, left, right fptype
 func (e *Evaluator) evalSetOp(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
 	lc := toCollection(left)
 	rc := toCollection(right)
+	stop := e.ctx.newCanceler()
+	var result fptypes.Collection
 	switch op {
 	case ast.OpUnion:
-		return cqltypes.NewList(nullSafeUnion(lc, rc)), nil
+		result = nullSafeUnion(lc, rc, stop)
 	case ast.OpIntersect:
-		return cqltypes.NewList(nullSafeIntersect(lc, rc)), nil
+		result = nullSafeIntersect(lc, rc, stop)
 	case ast.OpExcept:
-		return cqltypes.NewList(nullSafeExclude(lc, rc)), nil
+		result = nullSafeExclude(lc, rc, stop)
+	default:
+		return nil, nil
 	}
-	return nil, nil
+	if stop.err != nil {
+		return nil, stop.err
+	}
+	return cqltypes.NewList(result), nil
 }
 
 // The list set operations. All three are defined with set semantics — "each
@@ -1781,7 +1788,7 @@ func (e *Evaluator) evalSetOp(op ast.BinaryOp, left, right fptypes.Value) (fptyp
 // nullSafeUnion is the unique elements of both lists, the first list's first.
 // It used to append the first list whole and add only the second's new
 // elements, so {1, 1, 2} union {2} kept both ones.
-func nullSafeUnion(lc, rc fptypes.Collection) fptypes.Collection {
+func nullSafeUnion(lc, rc fptypes.Collection, stop *canceler) fptypes.Collection {
 	result := make(fptypes.Collection, 0, len(lc)+len(rc))
 	if len(lc)+len(rc) <= distinctPairwiseUpTo {
 		for _, c := range []fptypes.Collection{lc, rc} {
@@ -1793,21 +1800,36 @@ func nullSafeUnion(lc, rc fptypes.Collection) fptypes.Collection {
 		}
 		return result
 	}
-	return indexedUnion(lc, rc, result)
+	return indexedUnion(lc, rc, result, stop)
 }
 
 // indexedUnion is nullSafeUnion through a valueIndex, appending to result. It
 // is its own function so that it can be held to the pairwise answer.
-func indexedUnion(lc, rc, result fptypes.Collection) fptypes.Collection {
+func indexedUnion(lc, rc, result fptypes.Collection, stop *canceler) fptypes.Collection {
 	kept := newValueIndex()
 	for _, c := range []fptypes.Collection{lc, rc} {
 		for _, item := range c {
+			if !stop.step() {
+				return result
+			}
 			if kept.addIfAbsent(item) {
 				result = append(result, item)
 			}
 		}
 	}
 	return result
+}
+
+// distinctList is a list's distinct elements, stopped by a cancellation of the
+// evaluation, which a list of intervals long enough can outlast: every one is
+// compared with every other.
+func (e *Evaluator) distinctList(c fptypes.Collection) (fptypes.Value, error) {
+	stop := e.ctx.newCanceler()
+	result := nullSafeDistinct(c, stop)
+	if stop.err != nil {
+		return nil, stop.err
+	}
+	return cqltypes.NewList(result), nil
 }
 
 // nullSafeExclude is the unique elements of the first list that the second
@@ -1818,21 +1840,21 @@ func indexedUnion(lc, rc, result fptypes.Collection) fptypes.Collection {
 // duplicates included, and against what has been kept: with an equality that
 // is not transitive, testing against the second list's distinct elements
 // alone could let through one equal to a duplicate that was dropped.
-func nullSafeExclude(lc, rc fptypes.Collection) fptypes.Collection {
-	return keepFirst(lc, rc, false)
+func nullSafeExclude(lc, rc fptypes.Collection, stop *canceler) fptypes.Collection {
+	return keepFirst(lc, rc, false, stop)
 }
 
 // nullSafeIntersect is the unique elements of the first list that the second
 // also holds.
-func nullSafeIntersect(lc, rc fptypes.Collection) fptypes.Collection {
-	return keepFirst(lc, rc, true)
+func nullSafeIntersect(lc, rc fptypes.Collection, stop *canceler) fptypes.Collection {
+	return keepFirst(lc, rc, true, stop)
 }
 
 // keepFirst is the unique elements of lc whose presence in rc is inRC: except
 // keeps those absent from rc, intersect those present. Short lists are
 // compared pairwise; long ones through a valueIndex of all of rc. The result
 // is never nil, so that an empty except reads as the empty union does.
-func keepFirst(lc, rc fptypes.Collection, inRC bool) fptypes.Collection {
+func keepFirst(lc, rc fptypes.Collection, inRC bool, stop *canceler) fptypes.Collection {
 	// Pairwise costs len(lc)·len(rc) comparisons for membership and up to
 	// len(lc)² more for the result's own duplicates; an index costs a key for
 	// every element of both. Both terms have to be small: bounding the first
@@ -1848,12 +1870,12 @@ func keepFirst(lc, rc fptypes.Collection, inRC bool) fptypes.Collection {
 		}
 		return result
 	}
-	return indexedKeepFirst(lc, rc, inRC)
+	return indexedKeepFirst(lc, rc, inRC, stop)
 }
 
 // indexedKeepFirst is keepFirst through a valueIndex. It is its own function
 // so that it can be held to the pairwise answer on lists of any length.
-func indexedKeepFirst(lc, rc fptypes.Collection, inRC bool) fptypes.Collection {
+func indexedKeepFirst(lc, rc fptypes.Collection, inRC bool, stop *canceler) fptypes.Collection {
 	result := make(fptypes.Collection, 0, len(lc))
 	second := newValueIndex()
 	for _, item := range rc {
@@ -1861,6 +1883,9 @@ func indexedKeepFirst(lc, rc fptypes.Collection, inRC bool) fptypes.Collection {
 	}
 	kept := newValueIndex()
 	for _, item := range lc {
+		if !stop.step() {
+			return result
+		}
 		k := keyOf(item)
 		if second.holdsKeyed(item, k) == inRC && !kept.holdsKeyed(item, k) {
 			result = append(result, item)
@@ -2139,11 +2164,11 @@ func tupleEqual(a, b cqltypes.Tuple) (fptypes.Value, error) {
 // that cannot be. Aggregate distinct used to get this wrong: it let a key of
 // text decide equality, merging values that differ and splitting values that
 // do not.
-func nullSafeDistinct(c fptypes.Collection) fptypes.Collection {
+func nullSafeDistinct(c fptypes.Collection, stop *canceler) fptypes.Collection {
 	if len(c) <= 1 {
 		return c
 	}
-	positions := distinctPositions(c)
+	positions := distinctPositions(c, stop)
 	result := make(fptypes.Collection, len(positions))
 	for i, at := range positions {
 		result[i] = c[at]
@@ -2154,11 +2179,11 @@ func nullSafeDistinct(c fptypes.Collection) fptypes.Collection {
 // distinctPositions is nullSafeDistinct answered as the positions of the
 // values it keeps, in order, for a caller that has to keep something else
 // alongside each value: aggregate distinct keeps the row the value came from.
-func distinctPositions(c fptypes.Collection) []int {
+func distinctPositions(c fptypes.Collection, stop *canceler) []int {
 	// A short list is cheaper to compare pairwise than to index: the buckets
 	// cost maps and keys, and most query results for one patient are short.
 	if len(c) > distinctPairwiseUpTo {
-		return indexedDistinctPositions(c)
+		return indexedDistinctPositions(c, stop)
 	}
 	var positions []int
 	for at, item := range c {
@@ -2183,10 +2208,13 @@ func keptAlready(c fptypes.Collection, positions []int, item fptypes.Value) bool
 // indexedDistinctPositions is distinctPositions for a list long enough to
 // index. It is its own function so that it can be held to the pairwise answer
 // on lists of any length, short ones included.
-func indexedDistinctPositions(c fptypes.Collection) []int {
+func indexedDistinctPositions(c fptypes.Collection, stop *canceler) []int {
 	var positions []int
 	kept := newValueIndex()
 	for at, item := range c {
+		if !stop.step() {
+			return positions
+		}
 		if kept.addIfAbsent(item) {
 			positions = append(positions, at)
 		}
@@ -2689,8 +2717,7 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 	case ast.OpPositive:
 		return operand, nil
 	case ast.OpDistinct:
-		c := toCollection(operand)
-		return cqltypes.NewList(nullSafeDistinct(c)), nil
+		return e.distinctList(toCollection(operand))
 	case ast.OpFlatten:
 		return e.evalFlatten(operand), nil
 	case ast.OpSingletonFrom:
@@ -3779,8 +3806,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if err != nil {
 			return nil, err
 		}
-		c := toCollection(src)
-		return cqltypes.NewList(nullSafeDistinct(c)), nil
+		return e.distinctList(toCollection(src))
 
 	// Clinical functions
 	case "ageinyears":
@@ -5576,7 +5602,11 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 			for i, row := range aggregated {
 				rows[i] = queryRowValue(row.combo, n.Sources)
 			}
-			positions := distinctPositions(rows)
+			stop := e.ctx.newCanceler()
+			positions := distinctPositions(rows, stop)
+			if stop.err != nil {
+				return nil, stop.err
+			}
 			distinct := make([]aggregatedRow, len(positions))
 			for i, at := range positions {
 				distinct[i] = aggregated[at]
@@ -5613,7 +5643,11 @@ func (e *Evaluator) evalQuery(n *ast.Query) (fptypes.Value, error) {
 	// with no return clause is left as it is, as the translator leaves it —
 	// it emits no return clause there, and the Java engine keeps duplicates.
 	if (n.Return != nil && !n.Return.All) || (n.Return == nil && len(n.Sources) > 1) {
-		results = nullSafeDistinct(results)
+		stop := e.ctx.newCanceler()
+		results = nullSafeDistinct(results, stop)
+		if stop.err != nil {
+			return nil, stop.err
+		}
 	}
 
 	// Apply sort clause
@@ -7274,6 +7308,22 @@ func listContainsValueTriState(c fptypes.Collection, val fptypes.Value) (found, 
 }
 
 // evalListTimingOp handles timing operations when one or both operands are lists.
+// allContained reports whether every item is in list, stopped by a
+// cancellation of the evaluation: it compares each item with the list, which
+// over twenty thousand intervals each way ran for seconds past a deadline.
+func (e *Evaluator) allContained(items, list fptypes.Collection) (fptypes.Value, error) {
+	stop := e.ctx.newCanceler()
+	for _, item := range items {
+		if !stop.step() {
+			return nil, stop.err
+		}
+		if !listContainsValue(list, item) {
+			return fptypes.NewBoolean(false), nil
+		}
+	}
+	return fptypes.NewBoolean(true), nil
+}
+
 func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList bool, left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
 	lc := toCollection(left)
 	rc := toCollection(right)
@@ -7319,19 +7369,9 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 			if rc.Count() >= lc.Count() {
 				return fptypes.NewBoolean(false), nil
 			}
-			for _, item := range rc {
-				if !listContainsValue(lc, item) {
-					return fptypes.NewBoolean(false), nil
-				}
-			}
-			return fptypes.NewBoolean(true), nil
+			return e.allContained(rc, lc)
 		}
-		for _, item := range rc {
-			if !listContainsValue(lc, item) {
-				return fptypes.NewBoolean(false), nil
-			}
-		}
-		return fptypes.NewBoolean(true), nil
+		return e.allContained(rc, lc)
 
 	case ast.TimingIncludedIn, ast.TimingDuring:
 		if rightIsList && !leftIsList {
@@ -7371,19 +7411,9 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 			if lc.Count() >= rc.Count() {
 				return fptypes.NewBoolean(false), nil
 			}
-			for _, item := range lc {
-				if !listContainsValue(rc, item) {
-					return fptypes.NewBoolean(false), nil
-				}
-			}
-			return fptypes.NewBoolean(true), nil
+			return e.allContained(lc, rc)
 		}
-		for _, item := range lc {
-			if !listContainsValue(rc, item) {
-				return fptypes.NewBoolean(false), nil
-			}
-		}
-		return fptypes.NewBoolean(true), nil
+		return e.allContained(lc, rc)
 
 	case ast.TimingBeforeOrAfter:
 		return nil, nil
@@ -7392,15 +7422,14 @@ func (e *Evaluator) evalListTimingOp(_, _ cqltypes.List, leftIsList, rightIsList
 		if lc.Count() != rc.Count() {
 			return fptypes.NewBoolean(false), nil
 		}
-		for _, item := range lc {
-			if !listContainsValue(rc, item) {
-				return fptypes.NewBoolean(false), nil
-			}
-		}
-		return fptypes.NewBoolean(true), nil
+		return e.allContained(lc, rc)
 
 	case ast.TimingOverlaps:
-		inter := nullSafeIntersect(lc, rc)
+		stop := e.ctx.newCanceler()
+		inter := nullSafeIntersect(lc, rc, stop)
+		if stop.err != nil {
+			return nil, stop.err
+		}
 		return fptypes.NewBoolean(len(inter) > 0), nil
 
 	default:

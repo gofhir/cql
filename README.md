@@ -153,7 +153,8 @@ The engine returns typed errors for different failure modes:
 |---|---|
 | `ErrSyntaxError` | CQL parse error |
 | `ErrEvaluation` | Runtime evaluation error |
-| `ErrTimeout` | Evaluation exceeded timeout |
+| `ErrTimeout` | Evaluation ran past its deadline, the engine's timeout or the caller's; unwraps to `context.DeadlineExceeded` |
+| `ErrCanceled` | The caller canceled the context; unwraps to `context.Canceled` |
 | `ErrTooCostly` | Expression exceeds size limits |
 
 ## License
