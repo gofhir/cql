@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "5ce9e933c106e6a406e8a1482abd34c19a95c7d83378b7fcb00a9c3ecd951919",
+  "sourceSha256" : "14b8939ede9eef95dbb7bae14e05ceb3e7788b4921f29cd85f0c6c990c2113fe",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -1059,6 +1059,38 @@
         "type" : "Integer",
         "value" : "4"
       } ]
+    },
+    "AsAny" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression AsAny: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "IsAny" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression IsAny: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "CastAsAny" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression CastAsAny: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "AsAnyInArithmetic" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression AsAnyInArithmetic: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "ListIsListOfAny" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "IntervalIsIntervalOfAny" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "ListOfIntegersIsNotListOfString" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "IntervalOfIntegersIsNotIntervalOfString" : {
+      "type" : "Boolean",
+      "value" : true
     }
   }
 }

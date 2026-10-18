@@ -237,6 +237,13 @@ library's scope, and the Java engine is the oracle; cql-execution resolves a
 definition's names where it is referenced. A let takes a name not bound
 already, since one bound twice in a query is not CQL to settle by a run.
 
+`types` covers `is`, `as` and `cast` of a value whose static type is Any — an
+element of a `List<Any>` — against its own type, its supertypes and unrelated
+ones, so that every type can be asked about as a downcast: the reference
+translator refuses a cast between unrelated static types. The Java engine
+fails at run time on Any as a target, so those rows are read against the
+specification: every value is of type Any.
+
 ## Two things worth knowing
 
 `cql-to-elm-cli`'s published POM is invalid — it declares

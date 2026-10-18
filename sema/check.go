@@ -578,3 +578,7 @@ var systemTypeNames = map[string]bool{
 }
 
 func isSystemTypeName(name string) bool { return systemTypeNames[name] }
+
+// IsSystemTypeName reports whether name is a type CQL defines itself, the
+// System model's: Any, Integer, Code, ValueSet and the rest.
+func IsSystemTypeName(name string) bool { return systemTypeNames[name] }

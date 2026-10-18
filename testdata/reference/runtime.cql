@@ -257,3 +257,13 @@ define ScopeQuery: ({ 2, 3 }) X return X + ScopeY
 // An alias of an enclosing query, not the definition of its name memoized
 // while ScopeQuery was read.
 define AliasOverAMemoizedDefinition: (ScopeQuery) ScopeY return Sum((({ 3, 4 }) C return ScopeY))
+// Any is the type every other one descends from: every value is one.
+define AsAny: 'a' as Any
+define IsAny: 'a' is Any
+define CastAsAny: cast 'a' as Any
+define AsAnyInArithmetic: (5 as Any) + 1
+define ListIsListOfAny: (List<Any>{ { 1, 2 } })[0] is List<Any> // control
+define IntervalIsIntervalOfAny: (List<Any>{ Interval[1, 2] })[0] is Interval<Any> // control
+// A list or an interval is of the element type it holds.
+define ListOfIntegersIsNotListOfString: (List<Any>{ { 1, 2 } })[0] is List<String>
+define IntervalOfIntegersIsNotIntervalOfString: (List<Any>{ Interval[1, 2] })[0] is Interval<String>

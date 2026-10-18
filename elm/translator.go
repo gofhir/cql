@@ -517,8 +517,13 @@ var widenedPrecisions = map[string]bool{
 }
 
 func fhirModelURI(ns string) string {
-	if ns == "FHIR" {
+	switch ns {
+	case "FHIR":
 		return "http://hl7.org/fhir"
+	case "System":
+		// The importer reads urn:hl7-org:elm-types:r1 as System; it is written
+		// back as the URI, so imported ELM round-trips.
+		return "urn:hl7-org:elm-types:r1"
 	}
 	return ns
 }

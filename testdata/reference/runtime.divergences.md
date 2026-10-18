@@ -237,3 +237,23 @@ The rows — `DefinitionUnderAnAlias`, `DefinitionUnderALet`,
 `disputedRuntimeAnswers`, with the Java engine as the reference that agrees.
 The test fails the day cql-execution agrees too, and the rows then leave the
 list.
+
+## Disputed: Any
+
+Every value is of type Any, the type every other one descends from, so
+`x as Any` and `cast x as Any` are `x`, and `x is Any` is true. cql-execution
+answers so for a scalar, and null for a list or an interval as Any; this
+engine answers the list or the interval. The Java engine fails at run time on
+each, resolving the type (`Could not resolve type
+org.opencds.cqf.cql.engine.runtime.Any`). The rows — `AsAny`, `IsAny`,
+`CastAsAny` and `AsAnyInArithmetic`, a scalar each — stay in
+`disputedRuntimeAnswers`, with cql-execution as the reference that agrees.
+
+## Disputed: the element type of a list or an interval
+
+A list is a `List<T>`, and an interval an `Interval<T>`, when what it holds is
+of `T`: `{ 1, 2 } is List<String>` is false. cql-execution answers so. The
+Java engine answers true for any list or interval, whatever its elements. The
+rows `ListOfIntegersIsNotListOfString` and
+`IntervalOfIntegersIsNotIntervalOfString` stay in `disputedRuntimeAnswers`,
+with cql-execution agreeing.

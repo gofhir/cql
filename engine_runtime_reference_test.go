@@ -218,6 +218,13 @@ var disputedRuntimeAnswers = map[string]struct {
 	agree []string
 	why   string
 }{
+	"AsAny":                           {`String("a")`, []string{"cql-execution"}, anySettled},
+	"IsAny":                           {"Boolean(true)", []string{"cql-execution"}, anySettled},
+	"CastAsAny":                       {`String("a")`, []string{"cql-execution"}, anySettled},
+	"AsAnyInArithmetic":               {"Integer(6)", []string{"cql-execution"}, anySettled},
+	"ListOfIntegersIsNotListOfString": {"Boolean(false)", []string{"cql-execution"}, elementTypeSettled},
+	"IntervalOfIntegersIsNotIntervalOfString": {"Boolean(false)", []string{"cql-execution"},
+		elementTypeSettled},
 	"DefinitionUnderAnAlias":   {"List[Integer(2)]", []string{"the Java engine"}, scopeSettled},
 	"DefinitionUnderALet":      {"List[Integer(2)]", []string{"the Java engine"}, scopeSettled},
 	"DefinitionUnderAWhere":    {"List[Integer(10), Integer(20)]", []string{"the Java engine"}, scopeSettled},
@@ -246,6 +253,18 @@ const setOpNullSettled = "a null operand of union, or the second of except, is a
 	"and returns \"all unique elements\"; Except \"the operation is performed as though the second argument " +
 	"was an empty list\" and \"each element will appear in the result at most once\" (CQL 1.5, list " +
 	"operators). The Java engine answers so; cql-execution returns the other operand with its duplicates"
+
+// anySettled is how the rows on Any were settled.
+const anySettled = "every value is of type Any, the type every other one descends from (CQL 1.5, types: \"System.Any " +
+	"is the base type of all types\"), so x as Any and cast x as Any are x and x is Any is true. cql-execution " +
+	"answers so for these rows, a scalar each, and null for a list or an interval as Any; the Java engine fails " +
+	"at run time resolving the type, org.opencds.cqf.cql.engine.runtime.Any"
+
+// elementTypeSettled is how the rows on the element type of a list or an
+// interval were settled.
+const elementTypeSettled = "a list is a List<T>, and an interval an Interval<T>, when what it holds is of T: a " +
+	"List<Integer> is not a List<String>. cql-execution answers so; the Java engine answers true for any list " +
+	"or interval, whatever its elements"
 
 // scopeSettled is how the rows on the scope of a definition were settled.
 const scopeSettled = "a definition evaluates in the scope of its library, not in the query or the function it " +
