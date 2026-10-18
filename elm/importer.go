@@ -198,7 +198,12 @@ func importTypeSpecifier(ts *TypeSpecifier) ast.TypeSpecifier {
 	}
 	switch ts.Type {
 	case "NamedTypeSpecifier":
-		return &ast.NamedType{Namespace: ts.Namespace, Name: ts.Name}
+		// The model is in the name as its URI, {urn:hl7-org:elm-types:r1}Any,
+		// and comes out as the qualifier CQL text writes, System.Any.
+		if ts.Namespace == "" {
+			return parseDataType(ts.Name)
+		}
+		return &ast.NamedType{Namespace: modelAlias(ts.Namespace), Name: ts.Name}
 	case "ListTypeSpecifier":
 		return &ast.ListType{ElementType: importTypeSpecifier(ts.ElementType)}
 	case "IntervalTypeSpecifier":
@@ -495,13 +500,21 @@ func parseDataType(dt string) *ast.NamedType {
 	if idx := strings.LastIndex(dt, "}"); idx >= 0 && strings.HasPrefix(dt, "{") {
 		ns := dt[1:idx]
 		name := dt[idx+1:]
-		// Convert well-known URIs back to namespace aliases
-		if ns == "http://hl7.org/fhir" {
-			ns = "FHIR"
-		}
-		return &ast.NamedType{Namespace: ns, Name: name}
+		return &ast.NamedType{Namespace: modelAlias(ns), Name: name}
 	}
 	return &ast.NamedType{Name: dt}
+}
+
+// modelAlias is the qualifier CQL text writes for a model ELM names by URI:
+// FHIR for http://hl7.org/fhir, System for urn:hl7-org:elm-types:r1.
+func modelAlias(uri string) string {
+	switch uri {
+	case "http://hl7.org/fhir":
+		return "FHIR"
+	case "urn:hl7-org:elm-types:r1":
+		return "System"
+	}
+	return uri
 }
 
 var elmBinaryOps = map[string]ast.BinaryOp{

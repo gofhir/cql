@@ -35,6 +35,7 @@ var areas = map[string]area{
 	"arithmetic": arithmetic,
 	"integer":    integer,
 	"scope":      scope,
+	"types":      types,
 }
 
 // preambles are the definitions an area's expressions refer to, written once
@@ -273,6 +274,39 @@ func (g *generator) scopeQuery(depth int, bound []string) string {
 		q += " where " + g.scopeExpr(max(depth-1, 0), inner) + " > " + g.pick("0", "5", "50")
 	}
 	return q + " return " + g.scopeExpr(depth, inner) + ")"
+}
+
+// The values types draws from, one of each kind, and the types it asks about:
+// the value's own, its supertypes and unrelated ones, by name and qualified.
+var (
+	typedValues = []string{
+		"5", "5L", "2.5", "'a'", "true", "@2020-01-01", "@2020-01-01T10:00:00.000Z", "@T10:00:00",
+		"5 'mg'", "{ 1, 2 }", "Interval[1, 2]", "Tuple{ a: 1 }", "Code{ code: 'x' }",
+		"Concept{ codes: { Code{ code: 'x' } } }", "(null as Integer)", "{ 1, 'a' }", "{ 'a' }",
+		"List<Integer>{}", "Interval[1, null]", "Interval['a', 'b']",
+	}
+	typeNames = []string{
+		"Any", "System.Any", "Integer", "System.Integer", "Long", "Decimal", "String", "Boolean", "Date",
+		"DateTime", "Time", "Quantity", "Code", "Concept", "Vocabulary", "List<Integer>", "List<Any>",
+		"Interval<Integer>", "Interval<Any>", "List<String>", "Interval<String>",
+	}
+)
+
+// types is is, as and cast of a value whose static type is Any — an element
+// of a List<Any> — so that every type can be asked about it, as a downcast:
+// the reference translator refuses a cast between unrelated static types.
+func types(g *generator, _ int) string {
+	v := "(List<Any>{ " + g.pick(typedValues...) + " })[0]"
+	t := g.pick(typeNames...)
+	switch g.pick("is", "as", "as-null", "cast") {
+	case "is":
+		return "(" + v + " is " + t + ")"
+	case "as":
+		return "(" + v + " as " + t + ")"
+	case "as-null":
+		return "((" + v + " as " + t + ") is null)"
+	}
+	return "(cast " + v + " as " + t + ")"
 }
 
 // unbound is the names that are not among bound.

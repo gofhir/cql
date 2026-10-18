@@ -1,6 +1,6 @@
 {
   "library": "RuntimeProbe",
-  "sourceSha256": "5ce9e933c106e6a406e8a1482abd34c19a95c7d83378b7fcb00a9c3ecd951919",
+  "sourceSha256": "14b8939ede9eef95dbb7bae14e05ceb3e7788b4921f29cd85f0c6c990c2113fe",
   "engine": "cql-execution 3.3.2",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -1162,6 +1162,38 @@
           "value": "4"
         }
       ]
+    },
+    "AsAny": {
+      "type": "String",
+      "value": "a"
+    },
+    "IsAny": {
+      "type": "Boolean",
+      "value": true
+    },
+    "CastAsAny": {
+      "type": "String",
+      "value": "a"
+    },
+    "AsAnyInArithmetic": {
+      "type": "Integer",
+      "value": "6"
+    },
+    "ListIsListOfAny": {
+      "type": "Boolean",
+      "value": true
+    },
+    "IntervalIsIntervalOfAny": {
+      "type": "Boolean",
+      "value": true
+    },
+    "ListOfIntegersIsNotListOfString": {
+      "type": "Boolean",
+      "value": false
+    },
+    "IntervalOfIntegersIsNotIntervalOfString": {
+      "type": "Boolean",
+      "value": false
     }
   }
 }

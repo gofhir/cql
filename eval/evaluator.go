@@ -2675,15 +2675,17 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		if operand == nil {
 			return nil, nil
 		}
-		if i, ok := operand.(fptypes.Integer); ok {
-			v, err := exactInteger(i.NegateExact())
+		// An uncertainty is negated bound by bound, and the bounds swap:
+		// years between @2000 and @2010-05-01 is [9, 10], and its negation
+		// [-10, -9]. It was read as zero.
+		if u, ok := operand.(cqltypes.Uncertainty); ok {
+			return negateUncertainty(u)
+		}
+		v, err := negate(operand)
+		if _, isInteger := operand.(fptypes.Integer); isInteger {
 			return e.withinInteger(n, v, err)
 		}
-		if q, ok := operand.(fptypes.Quantity); ok {
-			return fptypes.NewQuantityFromDecimal(q.Value().Neg(), q.Unit()), nil
-		}
-		d := toDecimal(operand)
-		return newDecimalFromD(d.Neg()), nil
+		return v, err
 	case ast.OpPositive:
 		return operand, nil
 	case ast.OpDistinct:
@@ -2843,28 +2845,163 @@ func (e *Evaluator) evalIs(n *ast.IsExpression) (fptypes.Value, error) {
 	if operand == nil {
 		return fptypes.NewBoolean(false), nil
 	}
-	nt, ok := n.Type.(*ast.NamedType)
-	if !ok {
-		return fptypes.NewBoolean(false), nil
-	}
-	typeName := nt.Name
-	operandType := operand.Type()
-	if strings.EqualFold(operandType, typeName) {
-		return fptypes.NewBoolean(true), nil
-	}
-	// A resource is also every type it descends from. Comparing names alone
-	// made `x is DomainResource` false for a Patient, which is the whole point
-	// of asking.
-	if e.modelSaysSubtype(operandType, typeName) {
-		return fptypes.NewBoolean(true), nil
-	}
-	// CQL: Vocabulary is a supertype of ValueSet and CodeSystem
-	if strings.EqualFold(typeName, "Vocabulary") {
-		if strings.EqualFold(operandType, "ValueSet") || strings.EqualFold(operandType, "CodeSystem") {
-			return fptypes.NewBoolean(true), nil
+	return fptypes.NewBoolean(e.valueIsOf(operand, n.Type)), nil
+}
+
+// valueIsOf reports whether a value is of a type: the answer to `is`, and
+// whether a value passes `as` and `cast` of a named type unchanged. A value is
+// of its own type, of every type the model says it descends from — a Patient
+// is a DomainResource — and of Any, the type every other one descends from.
+// The FHIR model's descent is only a FHIR value's: a System Quantity is not a
+// FHIR.Element, though the FHIR Quantity of the same name is one. A list is a
+// List<T> and an interval an Interval<T> when what they hold is of T, which
+// any value is for T Any. (`as` of a list or an interval type keeps the value
+// whatever it holds; see evalAs.) A type is matched by its name as it always
+// was, whatever model qualifies it: 5 is FHIR.integer.
+//
+// `x as Any` was null and `x is Any` false for every x, since no value's type
+// is named Any; `{ 1, 2 } is List<Any>` was false, since only a named type was
+// ever compared.
+func (e *Evaluator) valueIsOf(v fptypes.Value, t ast.TypeSpecifier) bool {
+	switch t := t.(type) {
+	case *ast.NamedType:
+		name := t.Name
+		if isAnyNamed(t) {
+			return true
 		}
+		vt := v.Type()
+		if strings.EqualFold(vt, name) {
+			return true
+		}
+		// A resource is also every type it descends from. Comparing names
+		// alone made `x is DomainResource` false for a Patient, which is the
+		// whole point of asking. A type of the model's, qualified or not —
+		// FHIR.Element, or Element where the library uses FHIR — is only a
+		// FHIR value's to descend from.
+		if (isSystemType(t) || isFHIRValue(v)) && e.modelSaysSubtype(vt, name) {
+			return true
+		}
+		// CQL: Vocabulary is a supertype of ValueSet and CodeSystem
+		return strings.EqualFold(name, "Vocabulary") &&
+			(strings.EqualFold(vt, "ValueSet") || strings.EqualFold(vt, "CodeSystem"))
+	case *ast.ListType:
+		list, ok := v.(cqltypes.List)
+		if !ok {
+			return false
+		}
+		for _, item := range list.Values {
+			if item != nil && !e.valueIsOf(item, t.ElementType) {
+				return false
+			}
+		}
+		return true
+	case *ast.IntervalType:
+		iv, ok := v.(cqltypes.Interval)
+		if !ok {
+			return false
+		}
+		return (iv.Low == nil || e.valueIsOf(iv.Low, t.PointType)) &&
+			(iv.High == nil || e.valueIsOf(iv.High, t.PointType))
 	}
-	return fptypes.NewBoolean(false), nil
+	return false
+}
+
+// negate is a number or a quantity negated, null past the range of an int64.
+// An Integer's 32 bits are the caller's to check, from the static type.
+func negate(v fptypes.Value) (fptypes.Value, error) {
+	switch x := v.(type) {
+	case nil:
+		return nil, nil
+	case fptypes.Integer:
+		return exactInteger(x.NegateExact())
+	case fptypes.Quantity:
+		return fptypes.NewQuantityFromDecimal(x.Value().Neg(), x.Unit()), nil
+	}
+	if !isNumeric(v) {
+		return nil, notANumber(v)
+	}
+	return newDecimalFromD(toDecimal(v).Neg()), nil
+}
+
+// negateUncertainty is an uncertainty negated: each bound, swapped.
+func negateUncertainty(u cqltypes.Uncertainty) (fptypes.Value, error) {
+	low, err := negate(u.High)
+	if err != nil {
+		return nil, err
+	}
+	high, err := negate(u.Low)
+	if err != nil {
+		return nil, err
+	}
+	return cqltypes.NewUncertainty(low, high), nil
+}
+
+// systemItems is a collection with each FHIR element of the data in it as the
+// System value it holds, a Quantity element as a Quantity: what an arithmetic
+// aggregate reads, as Abs reads its operand. The same collection when it has
+// none, which is the common case.
+func (e *Evaluator) systemItems(c fptypes.Collection) (fptypes.Collection, error) {
+	var out fptypes.Collection
+	for i, item := range c {
+		if _, isElement := item.(*fptypes.ObjectValue); !isElement {
+			if out != nil {
+				out = append(out, item)
+			}
+			continue
+		}
+		if out == nil {
+			out = append(make(fptypes.Collection, 0, len(c)), c[:i]...)
+		}
+		system, err := e.coerceToSystem(item)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, system)
+	}
+	if out == nil {
+		return c, nil
+	}
+	return out, nil
+}
+
+// notANumber is the error for a value an arithmetic operator was given that is
+// no number: toDecimal reads one as zero, and negation, Abs, Sum and Product of
+// a string or a resource answered 0 — `as Any` hands them one, where CQL's
+// static types would have refused it.
+func notANumber(v fptypes.Value) error {
+	return fmt.Errorf("%s is not a number or a quantity", v.Type())
+}
+
+// isSystemType reports whether a named type is System's: qualified so, or
+// unqualified with a System type's name.
+func isSystemType(t *ast.NamedType) bool {
+	switch t.Namespace {
+	case "System":
+		return true
+	case "":
+		return sema.IsSystemTypeName(t.Name)
+	}
+	return false
+}
+
+// isAnyNamed reports whether a named type is Any, System's or unqualified.
+func isAnyNamed(t *ast.NamedType) bool {
+	return t.Name == "Any" && (t.Namespace == "" || t.Namespace == "System")
+}
+
+// isFHIRValue reports whether a value is one of the FHIR model's: a resource
+// or an element, a primitive read from one, or an instance CQL built of a
+// FHIR type, FHIR.Coding { … } — not one of a System type, System.ValueSet
+// { … }. (A read primitive reports its System type's name, so the model's
+// descent finds nothing for it; it is a FHIR value for the namespace only.)
+func isFHIRValue(v fptypes.Value) bool {
+	switch x := v.(type) {
+	case *fptypes.ObjectValue:
+		return true
+	case cqltypes.Tuple:
+		return x.TypeOverride != "" && !sema.IsSystemTypeName(x.TypeOverride)
+	}
+	return fptypes.IsFHIRPrimitive(v)
 }
 
 func (e *Evaluator) evalAs(n *ast.AsExpression) (fptypes.Value, error) {
@@ -2877,7 +3014,7 @@ func (e *Evaluator) evalAs(n *ast.AsExpression) (fptypes.Value, error) {
 	}
 	switch t := n.Type.(type) {
 	case *ast.NamedType:
-		if strings.EqualFold(operand.Type(), t.Name) {
+		if e.valueIsOf(operand, t) {
 			return operand, nil
 		}
 	case *ast.ListType:
@@ -2953,6 +3090,26 @@ func (e *Evaluator) evalCast(n *ast.CastExpression) (fptypes.Value, error) {
 		return nil, nil
 	}
 	if nt, ok := n.Type.(*ast.NamedType); ok {
+		// A FHIR element from the data cast to a FHIRPath System type is the
+		// System value it holds, when that is the type: cast O.value as
+		// Quantity is the System Quantity, where converting the element failed.
+		// It comes first, as the element's own name matches the type's. Any
+		// other goes on to be converted as it was.
+		if _, isElement := operand.(*fptypes.ObjectValue); isElement && nt.Namespace != "FHIR" &&
+			fptypes.IsSystemTypeName(nt.Name) {
+			system, err := e.coerceToSystem(operand)
+			if err != nil {
+				return nil, fmt.Errorf("cast failed: %w", err)
+			}
+			if system != nil && system != operand && e.valueIsOf(system, nt) {
+				return system, nil
+			}
+		}
+		// A value already of the type is itself: cast 5 as Any is 5, and cast
+		// Patient as Patient the Patient, where converting to the type failed.
+		if e.valueIsOf(operand, nt) {
+			return operand, nil
+		}
 		val, err := convertToType(operand, nt.Name)
 		if err != nil {
 			return nil, fmt.Errorf("cast failed: %w", err)
@@ -7746,7 +7903,10 @@ func (e *Evaluator) evalSelect(source fptypes.Value, operands []ast.Expression) 
 // ---------------------------------------------------------------------------
 
 func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error) {
-	c := toCollection(source)
+	c, err := e.systemItems(toCollection(source))
+	if err != nil {
+		return nil, err
+	}
 	if c.Empty() {
 		return nil, nil
 	}
@@ -7774,6 +7934,9 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 			continue
 		}
 		present++
+		if !isNumeric(item) {
+			return nil, notANumber(item)
+		}
 		value := toDecimal(item)
 		if _, isInt := item.(fptypes.Integer); !isInt {
 			allInt = false
@@ -7796,7 +7959,10 @@ func (e *Evaluator) evalAggregateSum(source fptypes.Value) (fptypes.Value, error
 }
 
 func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error) {
-	c := toCollection(source)
+	c, err := e.systemItems(toCollection(source))
+	if err != nil {
+		return nil, err
+	}
 	if c.Empty() {
 		return nil, nil
 	}
@@ -7812,7 +7978,12 @@ func (e *Evaluator) evalAggregateAvg(source fptypes.Value) (fptypes.Value, error
 		return e.avgUncertainties(values)
 	}
 	// The numeric mean is funcs.Avg's, the one Variance takes its mean from, so
-	// the two scale it alike.
+	// the two scale it alike. It reads what is no number as zero.
+	for _, item := range c {
+		if item != nil && !isNumeric(item) {
+			return nil, notANumber(item)
+		}
+	}
 	return funcs.Avg(c), nil
 }
 
@@ -7883,7 +8054,10 @@ func (e *Evaluator) evalAggregateMinMax(source fptypes.Value, isMin bool) (fptyp
 }
 
 func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, error) {
-	c := toCollection(source)
+	c, err := e.systemItems(toCollection(source))
+	if err != nil {
+		return nil, err
+	}
 	if c.Empty() {
 		return nil, nil
 	}
@@ -7908,6 +8082,9 @@ func (e *Evaluator) evalAggregateProduct(source fptypes.Value) (fptypes.Value, e
 			continue
 		}
 		present++
+		if !isNumeric(item) {
+			return nil, notANumber(item)
+		}
 		value := toDecimal(item)
 		if _, isInt := item.(fptypes.Integer); !isInt {
 			allInt = false
@@ -7932,6 +8109,12 @@ func (e *Evaluator) evalAbs(source fptypes.Value) (fptypes.Value, error) {
 	if source == nil {
 		return nil, nil
 	}
+	// A FHIR Quantity is the System one it holds: a FHIR Quantity from the
+	// data reads as a number only once converted.
+	source, err := e.coerceToSystem(source)
+	if err != nil {
+		return nil, err
+	}
 	if i, ok := source.(fptypes.Integer); ok {
 		if i.Value() < 0 {
 			return exactInteger(i.NegateExact())
@@ -7944,6 +8127,28 @@ func (e *Evaluator) evalAbs(source fptypes.Value) (fptypes.Value, error) {
 			v = v.Neg()
 		}
 		return fptypes.NewQuantityFromDecimal(v, q.Unit()), nil
+	}
+	// An uncertainty is the absolute value of its bounds: itself above zero,
+	// negated below, and from zero to the larger magnitude across it. It was
+	// read as zero, as negation read it.
+	if u, ok := source.(cqltypes.Uncertainty); ok && u.Low != nil && u.High != nil {
+		switch {
+		case !toDecimal(u.Low).IsNegative():
+			return u, nil
+		case !toDecimal(u.High).IsPositive():
+			return negateUncertainty(u)
+		}
+		top, err := negate(u.Low)
+		if err != nil {
+			return nil, err
+		}
+		if toDecimal(u.High).GreaterThan(toDecimal(top)) {
+			top = u.High
+		}
+		return cqltypes.NewUncertainty(fptypes.NewInteger(0), top), nil
+	}
+	if !isNumeric(source) {
+		return nil, notANumber(source)
 	}
 	d := toDecimal(source)
 	return newDecimalFromD(d.Abs()), nil
