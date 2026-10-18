@@ -116,8 +116,15 @@ func (e *Evaluator) certainInteger(expr ast.Expression, seen certainty) bool {
 	case *ast.FunctionCall:
 		return e.certainCall(x, seen)
 	case *ast.IdentifierRef:
+		// The name is read where it is written; the definition's own names are
+		// read in its library's scope, as it evaluates — not under the aliases
+		// and lets of the query it was referenced from.
 		stmt := e.definitionOf(x)
-		return stmt != nil && e.certainDefinition(x.Name, stmt.Expression, seen, e.certainInteger)
+		if stmt == nil {
+			return false
+		}
+		root := e.inLibraryScope()
+		return root.certainDefinition(x.Name, stmt.Expression, seen, root.certainInteger)
 	}
 	return false
 }
@@ -199,7 +206,11 @@ func (e *Evaluator) certainList(expr ast.Expression, seen certainty) bool {
 		return true
 	case *ast.IdentifierRef:
 		stmt := e.definitionOf(x)
-		return stmt != nil && e.certainDefinition("list "+x.Name, stmt.Expression, seen, e.certainList)
+		if stmt == nil {
+			return false
+		}
+		root := e.inLibraryScope()
+		return root.certainDefinition("list "+x.Name, stmt.Expression, seen, root.certainList)
 	}
 	return false
 }

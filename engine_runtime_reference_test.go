@@ -218,11 +218,15 @@ var disputedRuntimeAnswers = map[string]struct {
 	agree []string
 	why   string
 }{
-	"IntegerAddOverflow":      {"null", []string{"cql-execution"}, overflowSettled},
-	"IntegerMultiplyOverflow": {"null", []string{"cql-execution"}, overflowSettled},
-	"IntegerDivOverflow":      {"null", []string{"cql-execution"}, overflowSettled},
-	"IntegerPowerOverflow":    {"null", []string{"cql-execution"}, overflowSettled},
-	"LongMultiplyOverflow":    {"null", []string{"cql-execution"}, overflowSettled},
+	"DefinitionUnderAnAlias":   {"List[Integer(2)]", []string{"the Java engine"}, scopeSettled},
+	"DefinitionUnderALet":      {"List[Integer(2)]", []string{"the Java engine"}, scopeSettled},
+	"DefinitionUnderAWhere":    {"List[Integer(10), Integer(20)]", []string{"the Java engine"}, scopeSettled},
+	"DefinitionUnderAnOperand": {"Integer(32)", []string{"the Java engine"}, scopeSettled},
+	"IntegerAddOverflow":       {"null", []string{"cql-execution"}, overflowSettled},
+	"IntegerMultiplyOverflow":  {"null", []string{"cql-execution"}, overflowSettled},
+	"IntegerDivOverflow":       {"null", []string{"cql-execution"}, overflowSettled},
+	"IntegerPowerOverflow":     {"null", []string{"cql-execution"}, overflowSettled},
+	"LongMultiplyOverflow":     {"null", []string{"cql-execution"}, overflowSettled},
 	"NoReturn": {"List[Integer(1), Integer(1), Integer(2)]", []string{"the Java engine"},
 		noReturnSettled + ". This row has no sort, which the conformance cases have; it rests on them by " +
 			"analogy, since a sort orders the elements a query keeps and does not decide which"},
@@ -242,6 +246,12 @@ const setOpNullSettled = "a null operand of union, or the second of except, is a
 	"and returns \"all unique elements\"; Except \"the operation is performed as though the second argument " +
 	"was an empty list\" and \"each element will appear in the result at most once\" (CQL 1.5, list " +
 	"operators). The Java engine answers so; cql-execution returns the other operand with its duplicates"
+
+// scopeSettled is how the rows on the scope of a definition were settled.
+const scopeSettled = "a definition evaluates in the scope of its library, not in the query or the function it " +
+	"is referenced from: an expression definition is a library-level declaration, and the names in it are the " +
+	"library's. The Java engine evaluates it so; cql-execution resolves its names in the caller's scope, where an " +
+	"alias, a let or an operand of the same name stands in for them"
 
 // overflowDecided is why a result past its type is null where neither
 // reference answers so.

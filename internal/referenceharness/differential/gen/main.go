@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -33,6 +34,13 @@ type area func(g *generator, depth int) string
 var areas = map[string]area{
 	"arithmetic": arithmetic,
 	"integer":    integer,
+	"scope":      scope,
+}
+
+// preambles are the definitions an area's expressions refer to, written once
+// ahead of them.
+var preambles = map[string]string{
+	"scope": scopePreamble,
 }
 
 type generator struct {
@@ -188,6 +196,96 @@ func integerOf(g *generator, depth int, long bool) string {
 	}
 }
 
+// scopePreamble is definitions and functions whose names the scope area's
+// queries reuse as aliases, lets and operands: a definition evaluates in its
+// library's scope, and a name bound where it is referenced must not reach it.
+const scopePreamble = `define A: 1
+define B: 10
+define C: 100
+define DA: A + 1
+define DB: B * 2
+define DAB: A + B
+define DList: { A, B, C }
+define DQuery: ({ 2, 3 }) A return A + B
+define function F(A Integer): DA + A
+define function G(B Integer): F(B) + DB
+define function H(A Integer, B Integer): DAB + A - B
+define fluent function Up(A Integer): A + DA
+`
+
+// The names a scope expression binds and refers to: the preamble's, so each
+// binding shadows a definition, and Q, which shadows none.
+var (
+	scopeNames = []string{"A", "B", "C", "Q"}
+	scopeRefs  = []string{"A", "B", "C", "DA", "DB", "DAB"}
+)
+
+// scope is queries, lets and function calls that bind the preamble's names,
+// with bodies that refer to both the bindings and the definitions.
+func scope(g *generator, depth int) string {
+	return g.scopeExpr(depth, nil)
+}
+
+// scopeExpr is an Integer expression over the names bound so far.
+func (g *generator) scopeExpr(depth int, bound []string) string {
+	if depth == 0 {
+		switch {
+		case len(bound) > 0 && g.chance(0.4):
+			return g.pick(bound...)
+		case g.chance(0.6):
+			return g.pick(scopeRefs...)
+		}
+		return g.pick("0", "1", "2", "5")
+	}
+	switch r := g.rnd.Float64(); {
+	case r < 0.3:
+		return "(" + g.scopeExpr(depth-1, bound) + " " + g.pick("+", "-", "*") + " " + g.scopeExpr(depth-1, bound) + ")"
+	case r < 0.45:
+		switch f := g.pick("F", "G", "H", "Up"); f {
+		case "H":
+			return "H(" + g.scopeExpr(depth-1, bound) + ", " + g.scopeExpr(depth-1, bound) + ")"
+		case "Up":
+			return "(" + g.scopeExpr(depth-1, bound) + ").Up()"
+		default:
+			return f + "(" + g.scopeExpr(depth-1, bound) + ")"
+		}
+	case r < 0.55:
+		return g.pick("Sum", "Count", "Max") + "(" + g.pick("DList", "DQuery") + ")"
+	default:
+		return "Sum(" + g.scopeQuery(depth-1, bound) + ")"
+	}
+}
+
+// scopeQuery is a query whose alias, let and clauses bind the preamble's names.
+func (g *generator) scopeQuery(depth int, bound []string) string {
+	alias := g.pick(scopeNames...)
+	source := g.pick("{ 3, 4 }", "{ 7 }", "DList", "DQuery", "({ 5, 6 }) X return X")
+	inner := append(append([]string{}, bound...), alias)
+	q := "((" + source + ") " + alias
+	// A let takes a name not bound already: one an alias or a let of the
+	// same query holds is not a name the query can bind again.
+	if free := unbound(scopeNames, inner); len(free) > 0 && g.chance(0.4) {
+		let := g.pick(free...)
+		q += " let " + let + ": " + g.scopeExpr(max(depth-1, 0), inner)
+		inner = append(inner, let)
+	}
+	if g.chance(0.3) {
+		q += " where " + g.scopeExpr(max(depth-1, 0), inner) + " > " + g.pick("0", "5", "50")
+	}
+	return q + " return " + g.scopeExpr(depth, inner) + ")"
+}
+
+// unbound is the names that are not among bound.
+func unbound(names, bound []string) []string {
+	var free []string
+	for _, n := range names {
+		if !slices.Contains(bound, n) {
+			free = append(free, n)
+		}
+	}
+	return free
+}
+
 // integerUnary is a one-operand operator or function of a.
 func (g *generator) integerUnary(a string) string {
 	switch f := g.pick("Negate", "Abs", "successor", "predecessor"); f {
@@ -213,6 +311,7 @@ func main() {
 	}
 	g := &generator{rnd: rand.New(rand.NewSource(*seed))} //nolint:gosec // reproducible test input, not a secret
 	fmt.Println("library Differential version '1.0'")
+	fmt.Print(preambles[*name])
 	seen := map[string]bool{}
 	for i := 0; i < *n; {
 		expr := gen(g, 1+g.rnd.Intn(3))

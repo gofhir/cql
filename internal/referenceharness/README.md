@@ -230,6 +230,13 @@ specification — the result as an exact number, null past 32 bits for an
 Integer or 64 for a Long — and compare runs with `-baseline`, so that what a
 change moves stands apart from what Java always answers.
 
+`scope` covers how a name resolves: a preamble of definitions and functions,
+and queries, lets and calls that bind the same names as aliases, lets and
+operands, with bodies that refer to both. A definition evaluates in its
+library's scope, and the Java engine is the oracle; cql-execution resolves a
+definition's names where it is referenced. A let takes a name not bound
+already, since one bound twice in a query is not CQL to settle by a run.
+
 ## Two things worth knowing
 
 `cql-to-elm-cli`'s published POM is invalid — it declares

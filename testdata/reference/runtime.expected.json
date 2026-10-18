@@ -1,6 +1,6 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "d11bfa9d5a2388282829841c320a2015087bebb28e56c9ee6fdbc04295736bc6",
+  "sourceSha256" : "5ce9e933c106e6a406e8a1482abd34c19a95c7d83378b7fcb00a9c3ecd951919",
   "engine" : "3.26.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -1003,6 +1003,62 @@
     "LongSuccessorOfMaximum" : {
       "error" : "TypeOverflow",
       "message" : "The result of the successor operation exceeds the maximum value allowed for the Long type"
+    },
+    "ScopeY" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "ScopeD" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "DefinitionUnderAnAlias" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "DefinitionUnderALet" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "2"
+      } ]
+    },
+    "DefinitionUnderAWhere" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "10"
+      }, {
+        "type" : "Integer",
+        "value" : "20"
+      } ]
+    },
+    "DefinitionUnderAnOperand" : {
+      "type" : "Integer",
+      "value" : "32"
+    },
+    "ScopeQuery" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "3"
+      }, {
+        "type" : "Integer",
+        "value" : "4"
+      } ]
+    },
+    "AliasOverAMemoizedDefinition" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "3"
+      }, {
+        "type" : "Integer",
+        "value" : "4"
+      } ]
     }
   }
 }

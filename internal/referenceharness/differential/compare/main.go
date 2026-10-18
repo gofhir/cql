@@ -31,6 +31,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -157,10 +158,10 @@ func printDifference(prefix string, d difference) {
 	fmt.Printf("%s%s [%s]: %s\n    reference: %s\n    engine:    %s\n", prefix, d.Name, d.Category, d.Expression, d.Reference, d.Engine)
 }
 
-// answer is one engine's answer to a definition: a number, a boolean, null, an
-// error, or anything else as its text.
+// answer is one engine's answer to a definition: a number, a boolean, a
+// string, null, an error, a list of those, or anything else as its text.
 type answer struct {
-	kind     string // "number", "boolean", "null", "error", "other"
+	kind     string // "number", "boolean", "string", "null", "error", "list", "other"
 	text     string
 	num      decimal.Decimal
 	panicked bool
@@ -171,16 +172,24 @@ func referenceAnswer(raw json.RawMessage) answer {
 		return answer{kind: "null", text: "null"}
 	}
 	var v struct {
-		Type    string          `json:"type"`
-		Value   json.RawMessage `json:"value"`
-		Error   string          `json:"error"`
-		Message string          `json:"message"`
+		Type     string            `json:"type"`
+		Value    json.RawMessage   `json:"value"`
+		Elements []json.RawMessage `json:"elements"`
+		Error    string            `json:"error"`
+		Message  string            `json:"message"`
 	}
 	if err := json.Unmarshal(raw, &v); err != nil {
 		return answer{kind: "other", text: string(raw)}
 	}
 	if v.Error != "" {
 		return answer{kind: "error", text: "error: " + v.Message}
+	}
+	if v.Type == "List" {
+		items := make([]answer, len(v.Elements))
+		for i, e := range v.Elements {
+			items[i] = referenceAnswer(e)
+		}
+		return listAnswer(items)
 	}
 	var s string
 	switch v.Type {
@@ -195,6 +204,10 @@ func referenceAnswer(raw json.RawMessage) answer {
 		if json.Unmarshal(v.Value, &b) == nil {
 			return answer{kind: "boolean", text: fmt.Sprint(b)}
 		}
+	case "String":
+		if json.Unmarshal(v.Value, &s) == nil {
+			return answer{kind: "string", text: strconv.Quote(s)}
+		}
 	}
 	return answer{kind: "other", text: string(raw)}
 }
@@ -206,27 +219,60 @@ func engineAnswer(engine *cql.Engine, src, name string) (a answer) {
 		}
 	}()
 	v, err := engine.EvaluateExpression(context.Background(), src, name, nil, nil)
-	switch {
-	case err != nil:
+	if err != nil {
 		return answer{kind: "error", text: "error: " + err.Error()}
-	case v == nil:
-		return answer{kind: "null", text: "null"}
 	}
+	return valueAnswer(v)
+}
+
+// valueAnswer is engineAnswer for a value already evaluated: an element of a
+// list.
+func valueAnswer(v fptypes.Value) answer {
 	switch n := v.(type) {
+	case nil:
+		return answer{kind: "null", text: "null"}
 	case fptypes.Integer:
 		return answer{kind: "number", text: "Integer " + n.String(), num: decimal.NewFromInt(n.Value())}
 	case fptypes.Decimal:
 		return answer{kind: "number", text: "Decimal " + n.String(), num: n.Value()}
 	case fptypes.Boolean:
 		return answer{kind: "boolean", text: fmt.Sprint(n.Bool())}
+	case fptypes.String:
+		return answer{kind: "string", text: strconv.Quote(n.Value())}
 	case cqltypes.List:
-		return answer{kind: "other", text: "list " + n.String()}
+		items := make([]answer, len(n.Values))
+		for i, e := range n.Values {
+			items[i] = valueAnswer(e)
+		}
+		return listAnswer(items)
 	}
 	return answer{kind: "other", text: v.Type() + " " + v.String()}
 }
 
+// listAnswer is a list of answers, as one text both engines' lists come to:
+// numbers by value, so {1.0} is {1}, strings quoted, and nested lists alike.
+// An element of another type — a tuple, an interval, a date — has a text of
+// each engine's own, so it keeps the list "other": reported, never matched.
+func listAnswer(items []answer) answer {
+	parts := make([]string, len(items))
+	kind := "list"
+	for i, it := range items {
+		switch it.kind {
+		case "number":
+			parts[i] = it.num.String()
+		case "null", "boolean", "string", "list":
+			parts[i] = it.text
+		default:
+			kind = "other"
+			parts[i] = it.text
+		}
+	}
+	return answer{kind: kind, text: "{" + strings.Join(parts, ", ") + "}"}
+}
+
 // same compares numbers by value, since 1.0 = 1 in CQL, and everything else by
-// kind and text. Two errors are the same whatever their messages say.
+// kind and text, exactly: 'abc' and 'ABC' are two strings. Two errors are the
+// same whatever their messages say.
 func same(a, b answer) bool {
 	switch {
 	case a.kind != b.kind:
@@ -236,7 +282,7 @@ func same(a, b answer) bool {
 	case a.kind == "error", a.kind == "null":
 		return true
 	}
-	return strings.EqualFold(a.text, b.text)
+	return a.text == b.text
 }
 
 func check(err error) {

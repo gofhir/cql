@@ -393,6 +393,12 @@ func (c *checker) typeOfFunction(fn *ast.FunctionDef, args []Type) Type {
 func (c *checker) pushScope(scope map[string]Type) { c.scopes = append(c.scopes, scope) }
 func (c *checker) popScope()                       { c.scopes = c.scopes[:len(c.scopes)-1] }
 
+// bound reports whether a name is bound in scope: an alias, a let or an operand.
+func (c *checker) bound(name string) bool {
+	_, ok := c.lookup(name)
+	return ok
+}
+
 // lookup finds a name in the innermost scope that binds it.
 func (c *checker) lookup(name string) (Type, bool) {
 	for i := len(c.scopes) - 1; i >= 0; i-- {
