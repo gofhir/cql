@@ -1,6 +1,6 @@
 #!/bin/sh
 # The unclassified divergences only shrink (docs/adr/001, docs/plans/002): the
-# diff of testdata/snapshots/unclassified-debt.tsv against the base adds no
+# diff of testdata/snapshots/pending-verdicts.tsv against the base adds no
 # line. A test of the repository cannot hold that, since one change can edit
 # both the manifests and the debt; the base it is compared against can.
 #
@@ -9,10 +9,10 @@
 # never read from a variable a workflow could set. A base that does not resolve
 # fails: the comparison fails closed.
 set -eu
-debt=testdata/snapshots/unclassified-debt.tsv
+debt=testdata/snapshots/pending-verdicts.tsv
 # The debt as ADR-001 recorded it: the only content accepted where the base
 # does not have the file yet, the change that introduces it.
-initial_sha256=6275bdf3ff9852803016550762741cc2b216dfd9399a5f2769474ec725698e99
+initial_sha256=2655bb9f9273fff0c9953bbc225b7f8df70fbd3a0b26934afd284f124908f100
 
 if [ $# -ge 1 ]; then
     base=$1

@@ -1,244 +1,244 @@
-# name	reference	note — see TestAnswersMatchTheReferences
-D0	java	unclassified: error: Error evaluating expression D0: Non-terminating decimal expansion; no exact representable decimal result. vs null
-D10	js	unclassified: Decimal 0.8555992052357225 vs Decimal 0.8555992
-D103	js	unclassified: Decimal 0.7000000050000001 vs Decimal 0.7
-D107	js	unclassified: Decimal 9.9999999995 vs Decimal 9.99999999
-D108	java	unclassified: null vs Decimal 1.00071017
-D108	js	unclassified: Decimal 1.0007101743888425 vs Decimal 1.00071017
-D114	js	unclassified: null vs error: CQL evaluation error: 2:18: Ln: undefined for zero (results in negative infinity)
-D115	js	unclassified: null vs error: CQL evaluation error: 2:14: Exp: overflow for value 1001.5
-D117	js	unclassified: Decimal 334.3333333333333 vs Decimal 334.33333333
-D12	java	unclassified: error: Error evaluating expression D12: Division by zero vs null
-D120	js	unclassified: Decimal 2238.388888888889 vs Decimal 2238.38888835
-D122	js	unclassified: Decimal 1.0000000000000001e-21 vs Decimal 0
-D127	java	unclassified: Decimal 7.000000001 vs Decimal 7
-D127	js	unclassified: Decimal 7.000000001 vs Decimal 7
-D128	java	unclassified: error: Error evaluating expression D128: Division by zero vs Decimal -2
-D133	js	unclassified: Decimal 251.4583333325 vs Decimal 251.45833333
-D137	js	unclassified: Decimal 4.897400588781057 vs Decimal 4.89740059
-D142	js	unclassified: Decimal -0.2675159235668789 vs Decimal -0.26751593
-D143	java	unclassified: error: Error evaluating expression D143: Division by zero vs null
-D144	js	unclassified: Decimal 0.06517330801812805 vs Decimal 0.0651733
-D147	js	unclassified: Decimal 0.041152263333333335 vs Decimal 0.04115226
-D154	js	cql-execution's failure: it labels a negative power of an Integer an Integer, 0.1 here, which no Integer is; the Java engine answers the Decimal this engine does
-D155	java	unclassified: null vs Decimal -1
-D157	java	unclassified: error: Error evaluating expression D157: Division by zero vs null
-D159	java	unclassified: error: Error evaluating expression D159: Division by zero vs null
-D166	js	unclassified: Decimal 0.6931471805599453 vs Decimal 0.69314718
-D169	js	unclassified: Decimal 0.045000004999999996 vs Decimal 0.045
-D17	js	unclassified: null vs error: CQL evaluation error: 2:13: Ln: undefined for zero (results in negative infinity)
-D175	java	unclassified: error: Error evaluating expression D175: Division by zero vs null
-D181	java	unclassified: error: Error evaluating expression D181: Infinite or NaN vs null
-D188	java	unclassified: error: Error evaluating expression D188: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D190	java	unclassified: Decimal -1.49165488 vs Decimal -1.491654876777717
-D192	java	unclassified: error: Error evaluating expression D192: Division by zero vs null
-D196	java	unclassified: error: Error evaluating expression D196: Infinite or NaN vs null
-D199	java	unclassified: null vs Decimal -0.12345678
-D20	java	unclassified: error: Error evaluating expression D20: Division by zero vs null
-D201	java	unclassified: null vs Decimal 24
-D202	js	unclassified: Decimal 0.09623408959407263 vs Decimal 0.09623408
-D203	js	unclassified: Decimal 7342155.264935573 vs Decimal 7342155.26486215
-D207	java	unclassified: error: Error evaluating expression D207: Non-terminating decimal expansion; no exact representable decimal result. vs Decimal 0.03703703
-D207	js	unclassified: Integer 0.037037037037037035 vs Decimal 0.03703703
-D208	js	unclassified: Decimal 0.1909090909090909 vs Decimal 0.19090909
-D212	js	unclassified: null vs error: CQL evaluation error: 2:25: Exp: overflow for value 1000
-D214	java	unclassified: Decimal 2.30258509 vs Decimal 2.302585092994046
-D223	js	unclassified: { "type": "Integer", "value": "NaN" } vs null
-D224	java	unclassified: error: Error evaluating expression D224: Division by zero vs null
-D23	js	unclassified: Decimal 1995.262314968881 vs Decimal 1995.26231496
-D233	js	unclassified: Decimal 8.333333333333332 vs Decimal 8.33333332
-D234	java	unclassified: error: Error evaluating expression D234: Infinite or NaN vs null
-D235	java	unclassified: error: Error evaluating expression D235: Character I is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D237	java	unclassified: error: Error evaluating expression D237: Division by zero vs null
-D24	java	unclassified: null vs Decimal -0.00071018
-D24	js	unclassified: Decimal -0.0007101743888425491 vs Decimal -0.00071018
-D241	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D242	java	unclassified: null vs Decimal 99.99999999
-D246	java	unclassified: null vs Integer 84
-D249	js	unclassified: Decimal -1.432e-7 vs Decimal -0.00000015
-D25	java	unclassified: Decimal 0.000000001 vs Decimal 0
-D25	js	unclassified: Integer 1e-9 vs Decimal 0
-D252	java	unclassified: null vs Decimal 0.00000002
-D256	js	unclassified: Decimal 0.6578814551268702 vs Decimal 0.65788145
-D257	java	unclassified: error: Error evaluating expression D257: Division by zero vs Decimal 249955.002025
-D258	java	unclassified: error: Error evaluating expression D258: Division by zero vs null
-D260	js	unclassified: Decimal 99.90138770133188 vs Decimal 99.9013877
-D261	java	unclassified: Integer 5 vs null
-D265	js	unclassified: Decimal 33.333333333333336 vs Decimal 33.33333333
-D267	js	unclassified: Decimal 19.923825999228438 vs Decimal 19.92382599
-D276	js	unclassified: { "type": "Decimal", "value": "NaN" } vs Decimal 3000.00003
-D281	java	unclassified: null vs Decimal 1.1051709180756477
-D282	js	unclassified: Decimal 58.83943679363379 vs Decimal 58.83943679
-D29	java	unclassified: Decimal 0.00809999 vs Decimal 0.0081
-D291	java	unclassified: error: Error evaluating expression D291: Division by zero vs null
-D296	java	unclassified: error: Error evaluating expression D296: Division by zero vs null
-D298	js	unclassified: Decimal -1.4754034634364863 vs Decimal -1.47540346
-D309	java	unclassified: Decimal 4.60517018 vs Decimal 4.605170185988092
-D310	js	unclassified: Decimal 3.486784400999999e-11 vs Decimal 0
-D312	java	unclassified: error: Error evaluating expression D312: Division undefined vs null
-D313	java	unclassified: error: Error evaluating expression D313: Division by zero vs null
-D316	js	unclassified: Decimal 0.00010000000001999998 vs Decimal 0.0001
-D324	java	unclassified: error: Error evaluating expression D324: Division by zero vs null
-D328	java	unclassified: error: Error evaluating expression D328: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs Decimal -0.93827161
-D332	js	unclassified: Decimal 0.13750352374993502 vs Decimal 0.13750352
-D334	java	unclassified: error: Error evaluating expression D334: Non-terminating decimal expansion; no exact representable decimal result. vs null
-D336	java	unclassified: error: Error evaluating expression D336: Division by zero vs Decimal 1096.63315842
-D336	js	unclassified: Decimal 1096.6331584284585 vs Decimal 1096.63315842
-D340	js	unclassified: Decimal 0.980198673304795 vs Decimal 0.98019867
-D341	java	unclassified: Decimal -0.69314719 vs Decimal -0.6931471805599453
-D351	java	unclassified: error: Error evaluating expression D351: Division by zero vs null
-D353	java	unclassified: error: Error evaluating expression D353: Infinite or NaN vs null
-D354	java	unclassified: Decimal 2.30258509 vs Decimal 2.302585092994046
-D359	java	unclassified: error: Error evaluating expression D359: Division by zero vs Decimal 0
-D361	js	unclassified: Decimal -11162.790723634398 vs Decimal -11162.79080152
-D363	java	unclassified: Decimal 1.56064775 vs Decimal 1.5606477482646683
-D373	java	unclassified: error: Error evaluating expression D373: Infinite or NaN vs null
-D379	js	unclassified: null vs Decimal 1907346572495099500000
-D380	js	unclassified: Decimal 65499 vs Integer 65500
-D385	js	unclassified: Decimal 6.6865005271832185 vs Decimal 6.68650052
-D386	java	unclassified: error: Error evaluating expression D386: Division by zero vs null
-D389	java	unclassified: error: Error evaluating expression D389: Division by zero vs null
-D390	java	unclassified: error: Error evaluating expression D390: Character I is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D395	java	unclassified: error: Error evaluating expression D395: Division by zero vs null
-D397	js	unclassified: Decimal 0.13793103448275862 vs Decimal 0.13793103
-D4	java	unclassified: Decimal 0.00000000 vs Decimal 1
-D4	js	unclassified: null vs Decimal 1
-D405	js	unclassified: Decimal -11.01770057404839 vs Decimal -11.01770058
-D41	java	unclassified: error: Error evaluating expression D41: Division by zero vs null
-D411	java	unclassified: error: Error evaluating expression D411: Division by zero vs null
-D414	java	unclassified: error: Error evaluating expression D414: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D427	js	unclassified: null vs Decimal 26881171418161356000000000000000000000000000
-D43	java	unclassified: error: Error evaluating expression D43: Character N is neither a decimal digit number, decimal point, nor "e" notation e… vs null
-D431	js	unclassified: Decimal 8.3333333325 vs Decimal 8.33333333
-D436	java	unclassified: error: Error evaluating expression D436: Division by zero vs null
-D441	java	unclassified: Decimal 1397.83577830 vs Decimal 1397.83577143
-D441	js	unclassified: Decimal 1397.8357714228746 vs Decimal 1397.83577143
-D448	java	unclassified: null vs Decimal 0.62499999
-D448	js	unclassified: Decimal 0.6249999993750001 vs Decimal 0.62499999
-D449	java	unclassified: Decimal 0.40546510 vs Decimal 0.4054651081081644
-D450	js	unclassified: Decimal -9 vs Integer -10
-D455	js	unclassified: Decimal -0.00007975000000000001 vs Decimal -0.00008
-D456	js	unclassified: null vs Decimal 502166722801123063.04896699
-D457	java	unclassified: Decimal 1.09861230 vs Decimal 1.0986122986681097
-D459	js	unclassified: Decimal 0.14936120510359183 vs Decimal 0.1493612
-D461	js	unclassified: Decimal 5.656854249492381 vs Decimal 5.65685424
-D463	js	unclassified: Decimal 498.1168495761286 vs Decimal 498.11684957
-D464	java	unclassified: error: Error evaluating expression D464: Division by zero vs null
-D465	js	unclassified: Decimal 14.696938456699069 vs Decimal 14.69693845
-D466	java	unclassified: error: Error evaluating expression D466: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D468	js	unclassified: Decimal -2.4166666666666665 vs Decimal -2.41666667
-D469	java	unclassified: error: Error evaluating expression D469: Division by zero vs null
-D471	js	unclassified: Decimal 0.061728395 vs Decimal 0.06172839
-D472	java	unclassified: Decimal 0.69314718 vs Decimal 0.6931471805599453
-D473	java	unclassified: error: Error evaluating expression D473: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D476	java	unclassified: error: Error evaluating expression D476: Division by zero vs null
-D477	java	unclassified: error: Error evaluating expression D477: Division by zero vs null
-D478	java	unclassified: error: Error evaluating expression D478: Infinite or NaN vs null
-D480	js	unclassified: Decimal -1.3749999975 vs Decimal -1.375
-D484	js	unclassified: Decimal 40.229166666666664 vs Decimal 40.22916666
-D486	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D490	java	unclassified: error: Error evaluating expression D490: Infinite or NaN vs null
-D491	js	unclassified: Decimal 3.7764760475606463 vs Decimal 3.776476039046951
-D5	java	unclassified: error: Error evaluating expression D5: Division by zero vs Decimal 0
-D502	java	unclassified: error: Error evaluating expression D502: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D507	java	unclassified: error: Error evaluating expression D507: Division by zero vs null
-D511	java	unclassified: error: Error evaluating expression D511: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D513	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D516	js	unclassified: Decimal 0.1111111088888889 vs Decimal 0.1111111
-D52	java	unclassified: Decimal 0.0 vs null
-D52	js	unclassified: Decimal 0 vs null
-D520	java	unclassified: error: Error evaluating expression D520: Infinite or NaN vs null
-D524	js	unclassified: Decimal 1.0017346066809423 vs Decimal 1.0017346
-D53	java	unclassified: Decimal -1.09861230 vs Decimal -1.0986122986681097
-D535	java	unclassified: Integer -1979711488 vs null
-D545	js	unclassified: Decimal -0.0822022830924073 vs Decimal -0.08220229
-D546	java	unclassified: Decimal 2.07944154 vs Decimal 2.0794415416798357
-D553	java	unclassified: error: Error evaluating expression D553: Division by zero vs null
-D557	java	unclassified: Decimal 401.43486220 vs Decimal 401.43486498
-D557	js	unclassified: Decimal 401.4348649810604 vs Decimal 401.43486498
-D558	java	unclassified: Decimal 999999999999999983222784 vs null
-D56	js	unclassified: Decimal -0.7409833876184778 vs Decimal -0.74098339
-D565	java	unclassified: error: Error evaluating expression D565: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs Decimal 1096.6331584284585
-D566	java	unclassified: error: Error evaluating expression D566: Division by zero vs null
-D570	js	unclassified: Decimal 0.458257569495584 vs Decimal 0.45825756
-D571	java	unclassified: error: Error evaluating expression D571: Division by zero vs null
-D573	js	unclassified: null vs error: CQL evaluation error: 2:124: Exp: overflow for value 1000
-D58	java	unclassified: error: Error evaluating expression D58: Character N is neither a decimal digit number, decimal point, nor "e" notation e… vs null
-D584	java	unclassified: Decimal 0.09531017 vs Decimal 0.09531017980432493
-D590	java	unclassified: Decimal 1.9999999988801094 vs Decimal 2
-D600	js	unclassified: Decimal -4.5659397632447005 vs Decimal -4.56593978
-D604	java	unclassified: error: Error evaluating expression D604: Division by zero vs null
-D604	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D608	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D611	js	unclassified: Decimal 5432.508434611377 vs Decimal 5432.50843411
-D612	java	unclassified: error: Error evaluating expression D612: Division by zero vs Decimal 4.5
-D614	java	unclassified: error: Error evaluating expression D614: Division by zero vs null
-D615	js	unclassified: Decimal 80.13035659230252 vs Decimal 80.13035643
-D617	js	unclassified: Decimal 0.08780385475843 vs Decimal 0.08782288
-D622	js	unclassified: Decimal 1001.7320508075688 vs Decimal 1001.7320508
-D629	java	unclassified: error: Error evaluating expression D629: Division by zero vs null
-D631	java	unclassified: error: Error evaluating expression D631: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D632	java	unclassified: error: Error evaluating expression D632: Infinite or NaN vs null
-D634	js	unclassified: Decimal 11425.242973858813 vs Decimal 11425.2429738
-D646	js	unclassified: Decimal 19.076775245895107 vs Decimal 19.07677524
-D65	java	unclassified: Decimal -456417716257244787774047082862474862782291844010409722777100244255816198858857623290797699922105369186271232 vs null
-D651	java	unclassified: error: Error evaluating expression D651: Division by zero vs Decimal 2.12132034
-D651	js	unclassified: Decimal 2.1213203435596424 vs Decimal 2.12132034
-D653	java	unclassified: Decimal 99.99999940119086 vs Decimal 100.00000000000004
-D662	java	unclassified: error: Error evaluating expression D662: Infinite or NaN vs null
-D667	js	unclassified: Decimal -1.7095112913514547 vs Decimal -1.7095113
-D67	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D674	java	unclassified: Decimal 0.09404781 vs Decimal 0.0940478276166989
-D676	js	unclassified: Decimal 3.0746875488957466 vs Decimal 3.07468755
-D677	js	unclassified: Decimal 2.992022222222222 vs Decimal 2.99202221
-D68	js	unclassified: Decimal 6.142407237123461 vs Decimal 6.14240723
-D680	java	unclassified: error: Error evaluating expression D680: Division by zero vs Decimal 8.12784588
-D680	js	unclassified: Decimal 8.127845905789448 vs Decimal 8.12784588
-D681	java	unclassified: error: Error evaluating expression D681: Division by zero vs null
-D683	java	unclassified: error: Error evaluating expression D683: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D69	js	unclassified: Decimal 0.7420215529028182 vs Decimal 0.74202154
-D696	java	unclassified: Integer 0 vs null
-D696	js	unclassified: Integer 0 vs null
-D697	js	unclassified: Decimal 999.6819191619298 vs Decimal 999.68191918
-D698	java	unclassified: error: Error evaluating expression D698: Division by zero vs null
-D699	js	unclassified: null vs Decimal 26881171149349810000000000000000000000000000
-D7	js	unclassified: null vs error: CQL evaluation error: 2:13: Exp: overflow for value 1000
-D70	java	unclassified: error: Error evaluating expression D70: Division by zero vs null
-D700	java	unclassified: error: Error evaluating expression D700: Character N is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D703	java	unclassified: error: Error evaluating expression D703: Non-terminating decimal expansion; no exact representable decimal result. vs Decimal 0.14285714
-D703	js	unclassified: Integer 0.14285714285714285 vs Decimal 0.14285714
-D705	js	unclassified: Decimal 2.3028665699737796 vs Decimal 2.30286656
-D707	js	unclassified: Decimal 7.932357093820801 vs Decimal 7.93235707
-D711	js	unclassified: error: Encountered unexpected error during execution. Error Message: Cannot read properties of undefined (reading 'unit'… vs Decimal 0
-D713	js	unclassified: Decimal 483.55124082271277 vs Decimal 483.55124082
-D720	js	unclassified: { "type": "Decimal", "value": "NaN" } vs Decimal 31.25884891
-D723	java	unclassified: Decimal -16.11809566 vs Decimal -16.11809565095832
-D725	java	unclassified: null vs Decimal 1000
-D729	java	unclassified: Decimal 0.81618726 vs Decimal 0.8161872625906434
-D729	js	unclassified: Decimal 0.816187265748627 vs Decimal 0.8161872625906434
-D735	js	unclassified: Decimal 2.853617111695658 vs Decimal 2.85361711
-D737	js	unclassified: Decimal 2.1666666666666665 vs Decimal 2.16666666
-D739	java	unclassified: error: Error evaluating expression D739: Division by zero vs null
-D74	java	unclassified: error: Error evaluating expression D74: Division by zero vs null
-D742	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D747	js	unclassified: Decimal -3.436426116838488e-9 vs Decimal -0.00000001
-D749	js	cql-execution's failure: an Integer of -0.5; see D154
-D752	js	unclassified: Decimal -0.34399222980741023 vs Decimal -0.34399223
-D755	java	unclassified: Integer -402653184 vs null
-D756	java	unclassified: error: Error evaluating expression D756: Division by zero vs null
-D759	java	unclassified: error: Error evaluating expression D759: Infinite or NaN vs null
-D762	js	unclassified: Decimal 502.24084453516906 vs Decimal 502.24084453
-D767	js	cql-execution's failure: an Integer of -0.125; see D154
-D768	java	unclassified: error: Error evaluating expression D768: Character I is neither a decimal digit number, decimal point, nor "e" notation … vs null
-D774	js	unclassified: { "type": "Decimal", "value": "NaN" } vs null
-D778	js	unclassified: Decimal 42.150771048700875 vs Decimal 42.15077104
-D779	java	unclassified: null vs Integer -4000
-D780	js	unclassified: null vs Decimal 26881171418161356000000000000000000000000000
-D790	java	unclassified: error: Error evaluating expression D790: Non-terminating decimal expansion; no exact representable decimal result. vs Decimal -0.33333334
-D790	js	unclassified: Integer -0.3333333333333333 vs Decimal -0.33333334
-D8	js	unclassified: Decimal 1.500000005 vs Decimal 1.5
-D80	java	unclassified: error: Error evaluating expression D80: Division by zero vs Decimal 0
-D80	js	unclassified: Decimal 0.009999999999994444 vs Decimal 0
-D81	java	unclassified: error: Error evaluating expression D81: Division by zero vs null
-D87	java	unclassified: error: Error evaluating expression D87: Division by zero vs Decimal 0.33333333
-D94	java	unclassified: error: Error evaluating expression D94: Division by zero vs null
+# name	reference	class	expected	evidence	reference answer	engine answer — see TestAnswersMatchTheReferences and TestTheDivergencesAreConsistent
+D0	java	unclassified			error: Error evaluating expression D0: Non-terminating decimal expansion; no exact representable decimal result.	null
+D10	js	unclassified			Decimal 0.8555992052357225	Decimal 0.8555992
+D103	js	unclassified			Decimal 0.7000000050000001	Decimal 0.7
+D107	js	unclassified			Decimal 9.9999999995	Decimal 9.99999999
+D108	java	unclassified			null	Decimal 1.00071017
+D108	js	unclassified			Decimal 1.0007101743888425	Decimal 1.00071017
+D114	js	unclassified			null	error: CQL evaluation error: 2:18: Ln: undefined for zero (results in negative infinity)
+D115	js	unclassified			null	error: CQL evaluation error: 2:14: Exp: overflow for value 1001.5
+D117	js	unclassified			Decimal 334.3333333333333	Decimal 334.33333333
+D12	java	unclassified			error: Error evaluating expression D12: Division by zero	null
+D120	js	unclassified			Decimal 2238.388888888889	Decimal 2238.38888835
+D122	js	unclassified			Decimal 1.0000000000000001e-21	Decimal 0
+D127	java	unclassified			Decimal 7.000000001	Decimal 7
+D127	js	unclassified			Decimal 7.000000001	Decimal 7
+D128	java	unclassified			error: Error evaluating expression D128: Division by zero	Decimal -2
+D133	js	unclassified			Decimal 251.4583333325	Decimal 251.45833333
+D137	js	unclassified			Decimal 4.897400588781057	Decimal 4.89740059
+D142	js	unclassified			Decimal -0.2675159235668789	Decimal -0.26751593
+D143	java	unclassified			error: Error evaluating expression D143: Division by zero	null
+D144	js	unclassified			Decimal 0.06517330801812805	Decimal 0.0651733
+D147	js	unclassified			Decimal 0.041152263333333335	Decimal 0.04115226
+D154	js	reference defect	Decimal 0.1	cql-execution's failure: it labels a negative power of an Integer an Integer, 0.1 here, which no Integer is; the Java engine answers the Decimal this engine does	Integer 0.1	Decimal 0.1
+D155	java	unclassified			null	Decimal -1
+D157	java	unclassified			error: Error evaluating expression D157: Division by zero	null
+D159	java	unclassified			error: Error evaluating expression D159: Division by zero	null
+D166	js	unclassified			Decimal 0.6931471805599453	Decimal 0.69314718
+D169	js	unclassified			Decimal 0.045000004999999996	Decimal 0.045
+D17	js	unclassified			null	error: CQL evaluation error: 2:13: Ln: undefined for zero (results in negative infinity)
+D175	java	unclassified			error: Error evaluating expression D175: Division by zero	null
+D181	java	unclassified			error: Error evaluating expression D181: Infinite or NaN	null
+D188	java	unclassified			error: Error evaluating expression D188: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D190	java	unclassified			Decimal -1.49165488	Decimal -1.491654876777717
+D192	java	unclassified			error: Error evaluating expression D192: Division by zero	null
+D196	java	unclassified			error: Error evaluating expression D196: Infinite or NaN	null
+D199	java	unclassified			null	Decimal -0.12345678
+D20	java	unclassified			error: Error evaluating expression D20: Division by zero	null
+D201	java	unclassified			null	Decimal 24
+D202	js	unclassified			Decimal 0.09623408959407263	Decimal 0.09623408
+D203	js	unclassified			Decimal 7342155.264935573	Decimal 7342155.26486215
+D207	java	unclassified			error: Error evaluating expression D207: Non-terminating decimal expansion; no exact representable decimal result.	Decimal 0.03703703
+D207	js	unclassified			Integer 0.037037037037037035	Decimal 0.03703703
+D208	js	unclassified			Decimal 0.1909090909090909	Decimal 0.19090909
+D212	js	unclassified			null	error: CQL evaluation error: 2:25: Exp: overflow for value 1000
+D214	java	unclassified			Decimal 2.30258509	Decimal 2.302585092994046
+D223	js	unclassified			{\n      "type": "Integer",\n      "value": "NaN"\n    }	null
+D224	java	unclassified			error: Error evaluating expression D224: Division by zero	null
+D23	js	unclassified			Decimal 1995.262314968881	Decimal 1995.26231496
+D233	js	unclassified			Decimal 8.333333333333332	Decimal 8.33333332
+D234	java	unclassified			error: Error evaluating expression D234: Infinite or NaN	null
+D235	java	unclassified			error: Error evaluating expression D235: Character I is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D237	java	unclassified			error: Error evaluating expression D237: Division by zero	null
+D24	java	unclassified			null	Decimal -0.00071018
+D24	js	unclassified			Decimal -0.0007101743888425491	Decimal -0.00071018
+D241	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D242	java	unclassified			null	Decimal 99.99999999
+D246	java	unclassified			null	Integer 84
+D249	js	unclassified			Decimal -1.432e-7	Decimal -0.00000015
+D25	java	unclassified			Decimal 0.000000001	Decimal 0
+D25	js	unclassified			Integer 1e-9	Decimal 0
+D252	java	unclassified			null	Decimal 0.00000002
+D256	js	unclassified			Decimal 0.6578814551268702	Decimal 0.65788145
+D257	java	unclassified			error: Error evaluating expression D257: Division by zero	Decimal 249955.002025
+D258	java	unclassified			error: Error evaluating expression D258: Division by zero	null
+D260	js	unclassified			Decimal 99.90138770133188	Decimal 99.9013877
+D261	java	unclassified			Integer 5	null
+D265	js	unclassified			Decimal 33.333333333333336	Decimal 33.33333333
+D267	js	unclassified			Decimal 19.923825999228438	Decimal 19.92382599
+D276	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	Decimal 3000.00003
+D281	java	unclassified			null	Decimal 1.1051709180756477
+D282	js	unclassified			Decimal 58.83943679363379	Decimal 58.83943679
+D29	java	unclassified			Decimal 0.00809999	Decimal 0.0081
+D291	java	unclassified			error: Error evaluating expression D291: Division by zero	null
+D296	java	unclassified			error: Error evaluating expression D296: Division by zero	null
+D298	js	unclassified			Decimal -1.4754034634364863	Decimal -1.47540346
+D309	java	unclassified			Decimal 4.60517018	Decimal 4.605170185988092
+D310	js	unclassified			Decimal 3.486784400999999e-11	Decimal 0
+D312	java	unclassified			error: Error evaluating expression D312: Division undefined	null
+D313	java	unclassified			error: Error evaluating expression D313: Division by zero	null
+D316	js	unclassified			Decimal 0.00010000000001999998	Decimal 0.0001
+D324	java	unclassified			error: Error evaluating expression D324: Division by zero	null
+D328	java	unclassified			error: Error evaluating expression D328: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	Decimal -0.93827161
+D332	js	unclassified			Decimal 0.13750352374993502	Decimal 0.13750352
+D334	java	unclassified			error: Error evaluating expression D334: Non-terminating decimal expansion; no exact representable decimal result.	null
+D336	java	unclassified			error: Error evaluating expression D336: Division by zero	Decimal 1096.63315842
+D336	js	unclassified			Decimal 1096.6331584284585	Decimal 1096.63315842
+D340	js	unclassified			Decimal 0.980198673304795	Decimal 0.98019867
+D341	java	unclassified			Decimal -0.69314719	Decimal -0.6931471805599453
+D351	java	unclassified			error: Error evaluating expression D351: Division by zero	null
+D353	java	unclassified			error: Error evaluating expression D353: Infinite or NaN	null
+D354	java	unclassified			Decimal 2.30258509	Decimal 2.302585092994046
+D359	java	unclassified			error: Error evaluating expression D359: Division by zero	Decimal 0
+D361	js	unclassified			Decimal -11162.790723634398	Decimal -11162.79080152
+D363	java	unclassified			Decimal 1.56064775	Decimal 1.5606477482646683
+D373	java	unclassified			error: Error evaluating expression D373: Infinite or NaN	null
+D379	js	unclassified			null	Decimal 1907346572495099500000
+D380	js	unclassified			Decimal 65499	Decimal 65500
+D385	js	unclassified			Decimal 6.6865005271832185	Decimal 6.68650052
+D386	java	unclassified			error: Error evaluating expression D386: Division by zero	null
+D389	java	unclassified			error: Error evaluating expression D389: Division by zero	null
+D390	java	unclassified			error: Error evaluating expression D390: Character I is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D395	java	unclassified			error: Error evaluating expression D395: Division by zero	null
+D397	js	unclassified			Decimal 0.13793103448275862	Decimal 0.13793103
+D4	java	unclassified			Decimal 0.00000000	Decimal 1
+D4	js	unclassified			null	Decimal 1
+D405	js	unclassified			Decimal -11.01770057404839	Decimal -11.01770058
+D41	java	unclassified			error: Error evaluating expression D41: Division by zero	null
+D411	java	unclassified			error: Error evaluating expression D411: Division by zero	null
+D414	java	unclassified			error: Error evaluating expression D414: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D427	js	unclassified			null	Decimal 26881171418161356000000000000000000000000000
+D43	java	unclassified			error: Error evaluating expression D43: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D431	js	unclassified			Decimal 8.3333333325	Decimal 8.33333333
+D436	java	unclassified			error: Error evaluating expression D436: Division by zero	null
+D441	java	unclassified			Decimal 1397.83577830	Decimal 1397.83577143
+D441	js	unclassified			Decimal 1397.8357714228746	Decimal 1397.83577143
+D448	java	unclassified			null	Decimal 0.62499999
+D448	js	unclassified			Decimal 0.6249999993750001	Decimal 0.62499999
+D449	java	unclassified			Decimal 0.40546510	Decimal 0.4054651081081644
+D450	js	unclassified			Decimal -9	Decimal -10
+D455	js	unclassified			Decimal -0.00007975000000000001	Decimal -0.00008
+D456	js	unclassified			null	Decimal 502166722801123063.04896699
+D457	java	unclassified			Decimal 1.09861230	Decimal 1.0986122986681097
+D459	js	unclassified			Decimal 0.14936120510359183	Decimal 0.1493612
+D461	js	unclassified			Decimal 5.656854249492381	Decimal 5.65685424
+D463	js	unclassified			Decimal 498.1168495761286	Decimal 498.11684957
+D464	java	unclassified			error: Error evaluating expression D464: Division by zero	null
+D465	js	unclassified			Decimal 14.696938456699069	Decimal 14.69693845
+D466	java	unclassified			error: Error evaluating expression D466: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D468	js	unclassified			Decimal -2.4166666666666665	Decimal -2.41666667
+D469	java	unclassified			error: Error evaluating expression D469: Division by zero	null
+D471	js	unclassified			Decimal 0.061728395	Decimal 0.06172839
+D472	java	unclassified			Decimal 0.69314718	Decimal 0.6931471805599453
+D473	java	unclassified			error: Error evaluating expression D473: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D476	java	unclassified			error: Error evaluating expression D476: Division by zero	null
+D477	java	unclassified			error: Error evaluating expression D477: Division by zero	null
+D478	java	unclassified			error: Error evaluating expression D478: Infinite or NaN	null
+D480	js	unclassified			Decimal -1.3749999975	Decimal -1.375
+D484	js	unclassified			Decimal 40.229166666666664	Decimal 40.22916666
+D486	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D490	java	unclassified			error: Error evaluating expression D490: Infinite or NaN	null
+D491	js	unclassified			Decimal 3.7764760475606463	Decimal 3.776476039046951
+D5	java	unclassified			error: Error evaluating expression D5: Division by zero	Decimal 0
+D502	java	unclassified			error: Error evaluating expression D502: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D507	java	unclassified			error: Error evaluating expression D507: Division by zero	null
+D511	java	unclassified			error: Error evaluating expression D511: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D513	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D516	js	unclassified			Decimal 0.1111111088888889	Decimal 0.1111111
+D52	java	unclassified			Decimal 0.0	null
+D52	js	unclassified			Decimal 0	null
+D520	java	unclassified			error: Error evaluating expression D520: Infinite or NaN	null
+D524	js	unclassified			Decimal 1.0017346066809423	Decimal 1.0017346
+D53	java	unclassified			Decimal -1.09861230	Decimal -1.0986122986681097
+D535	java	unclassified			Integer -1979711488	null
+D545	js	unclassified			Decimal -0.0822022830924073	Decimal -0.08220229
+D546	java	unclassified			Decimal 2.07944154	Decimal 2.0794415416798357
+D553	java	unclassified			error: Error evaluating expression D553: Division by zero	null
+D557	java	unclassified			Decimal 401.43486220	Decimal 401.43486498
+D557	js	unclassified			Decimal 401.4348649810604	Decimal 401.43486498
+D558	java	unclassified			Decimal 999999999999999983222784	null
+D56	js	unclassified			Decimal -0.7409833876184778	Decimal -0.74098339
+D565	java	unclassified			error: Error evaluating expression D565: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	Decimal 1096.6331584284585
+D566	java	unclassified			error: Error evaluating expression D566: Division by zero	null
+D570	js	unclassified			Decimal 0.458257569495584	Decimal 0.45825756
+D571	java	unclassified			error: Error evaluating expression D571: Division by zero	null
+D573	js	unclassified			null	error: CQL evaluation error: 2:124: Exp: overflow for value 1000
+D58	java	unclassified			error: Error evaluating expression D58: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D584	java	unclassified			Decimal 0.09531017	Decimal 0.09531017980432493
+D590	java	unclassified			Decimal 1.9999999988801094	Decimal 2
+D600	js	unclassified			Decimal -4.5659397632447005	Decimal -4.56593978
+D604	java	unclassified			error: Error evaluating expression D604: Division by zero	null
+D604	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D608	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D611	js	unclassified			Decimal 5432.508434611377	Decimal 5432.50843411
+D612	java	unclassified			error: Error evaluating expression D612: Division by zero	Decimal 4.5
+D614	java	unclassified			error: Error evaluating expression D614: Division by zero	null
+D615	js	unclassified			Decimal 80.13035659230252	Decimal 80.13035643
+D617	js	unclassified			Decimal 0.08780385475843	Decimal 0.08782288
+D622	js	unclassified			Decimal 1001.7320508075688	Decimal 1001.7320508
+D629	java	unclassified			error: Error evaluating expression D629: Division by zero	null
+D631	java	unclassified			error: Error evaluating expression D631: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D632	java	unclassified			error: Error evaluating expression D632: Infinite or NaN	null
+D634	js	unclassified			Decimal 11425.242973858813	Decimal 11425.2429738
+D646	js	unclassified			Decimal 19.076775245895107	Decimal 19.07677524
+D65	java	unclassified			Decimal -456417716257244787774047082862474862782291844010409722777100244255816198858857623290797699922105369186271232	null
+D651	java	unclassified			error: Error evaluating expression D651: Division by zero	Decimal 2.12132034
+D651	js	unclassified			Decimal 2.1213203435596424	Decimal 2.12132034
+D653	java	unclassified			Decimal 99.99999940119086	Decimal 100.00000000000004
+D662	java	unclassified			error: Error evaluating expression D662: Infinite or NaN	null
+D667	js	unclassified			Decimal -1.7095112913514547	Decimal -1.7095113
+D67	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D674	java	unclassified			Decimal 0.09404781	Decimal 0.0940478276166989
+D676	js	unclassified			Decimal 3.0746875488957466	Decimal 3.07468755
+D677	js	unclassified			Decimal 2.992022222222222	Decimal 2.99202221
+D68	js	unclassified			Decimal 6.142407237123461	Decimal 6.14240723
+D680	java	unclassified			error: Error evaluating expression D680: Division by zero	Decimal 8.12784588
+D680	js	unclassified			Decimal 8.127845905789448	Decimal 8.12784588
+D681	java	unclassified			error: Error evaluating expression D681: Division by zero	null
+D683	java	unclassified			error: Error evaluating expression D683: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D69	js	unclassified			Decimal 0.7420215529028182	Decimal 0.74202154
+D696	java	unclassified			Integer 0	null
+D696	js	unclassified			Integer 0	null
+D697	js	unclassified			Decimal 999.6819191619298	Decimal 999.68191918
+D698	java	unclassified			error: Error evaluating expression D698: Division by zero	null
+D699	js	unclassified			null	Decimal 26881171149349810000000000000000000000000000
+D7	js	unclassified			null	error: CQL evaluation error: 2:13: Exp: overflow for value 1000
+D70	java	unclassified			error: Error evaluating expression D70: Division by zero	null
+D700	java	unclassified			error: Error evaluating expression D700: Character N is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D703	java	unclassified			error: Error evaluating expression D703: Non-terminating decimal expansion; no exact representable decimal result.	Decimal 0.14285714
+D703	js	unclassified			Integer 0.14285714285714285	Decimal 0.14285714
+D705	js	unclassified			Decimal 2.3028665699737796	Decimal 2.30286656
+D707	js	unclassified			Decimal 7.932357093820801	Decimal 7.93235707
+D711	js	unclassified			error: Encountered unexpected error during execution.\n\n\tError Message:\tCannot read properties of undefined (reading 'unit')\n\tCQL Library:\tD711|1.0\n\tExpression:\tMedian\n\tELM Local ID:\t251\n\tCQL Locator:\t2:73-2:91\n	Decimal 0
+D713	js	unclassified			Decimal 483.55124082271277	Decimal 483.55124082
+D720	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	Decimal 31.25884891
+D723	java	unclassified			Decimal -16.11809566	Decimal -16.11809565095832
+D725	java	unclassified			null	Decimal 1000
+D729	java	unclassified			Decimal 0.81618726	Decimal 0.8161872625906434
+D729	js	unclassified			Decimal 0.816187265748627	Decimal 0.8161872625906434
+D735	js	unclassified			Decimal 2.853617111695658	Decimal 2.85361711
+D737	js	unclassified			Decimal 2.1666666666666665	Decimal 2.16666666
+D739	java	unclassified			error: Error evaluating expression D739: Division by zero	null
+D74	java	unclassified			error: Error evaluating expression D74: Division by zero	null
+D742	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D747	js	unclassified			Decimal -3.436426116838488e-9	Decimal -0.00000001
+D749	js	reference defect	Decimal -0.5	cql-execution's failure: an Integer of -0.5; see D154	Integer -0.5	Decimal -0.5
+D752	js	unclassified			Decimal -0.34399222980741023	Decimal -0.34399223
+D755	java	unclassified			Integer -402653184	null
+D756	java	unclassified			error: Error evaluating expression D756: Division by zero	null
+D759	java	unclassified			error: Error evaluating expression D759: Infinite or NaN	null
+D762	js	unclassified			Decimal 502.24084453516906	Decimal 502.24084453
+D767	js	reference defect	Decimal -0.125	cql-execution's failure: an Integer of -0.125; see D154	Integer -0.125	Decimal -0.125
+D768	java	unclassified			error: Error evaluating expression D768: Character I is neither a decimal digit number, decimal point, nor "e" notation exponential mark.	null
+D774	js	unclassified			{\n      "type": "Decimal",\n      "value": "NaN"\n    }	null
+D778	js	unclassified			Decimal 42.150771048700875	Decimal 42.15077104
+D779	java	unclassified			null	Integer -4000
+D780	js	unclassified			null	Decimal 26881171418161356000000000000000000000000000
+D790	java	unclassified			error: Error evaluating expression D790: Non-terminating decimal expansion; no exact representable decimal result.	Decimal -0.33333334
+D790	js	unclassified			Integer -0.3333333333333333	Decimal -0.33333334
+D8	js	unclassified			Decimal 1.500000005	Decimal 1.5
+D80	java	unclassified			error: Error evaluating expression D80: Division by zero	Decimal 0
+D80	js	unclassified			Decimal 0.009999999999994444	Decimal 0
+D81	java	unclassified			error: Error evaluating expression D81: Division by zero	null
+D87	java	unclassified			error: Error evaluating expression D87: Division by zero	Decimal 0.33333333
+D94	java	unclassified			error: Error evaluating expression D94: Division by zero	null

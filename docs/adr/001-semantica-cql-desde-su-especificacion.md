@@ -1,6 +1,6 @@
 # ADR-001: la semántica de CQL se programa desde su especificación
 
-**Estado:** Propuesto. Pasa a «Aceptado» cuando el incremento 003 clasifique las divergencias que los manifiestos todavía marcan `unclassified`; hasta entonces no se cumple que cada diferencia tenga su evidencia (`NUCLEO.md` §10). Decisión del usuario, 18-10-2026.
+**Estado:** Propuesto. Pasa a «Aceptado» cuando el incremento 003 dé un veredicto a las divergencias que todavía no lo tienen (`unclassified` o `undecided`, en `testdata/snapshots/pending-verdicts.tsv`); hasta entonces no se cumple que cada diferencia tenga su evidencia (`NUCLEO.md` §10). Decisión del usuario, 18-10-2026.
 **Fecha:** 18-10-2026 · **Plan:** [`docs/plans/002-adr-semantica-cql.md`](../plans/002-adr-semantica-cql.md)
 
 ## Contexto
@@ -56,6 +56,7 @@ La ronda 3 del plan 002 registra ejemplos de esa subversión: targets redefinido
 - `make conformance-provenance`: `SOURCE.tsv` es el árbol de `cqframework/cql-tests` en su commit.
 - `TestAnswersMatchTheReferences`: cada divergencia de Java y de cql-execution está en su manifiesto.
 - `TestTheReferencesAreOfTheirCorpus`: las referencias son de su corpus y del motor fijado.
+- `TestTheDivergencesAreConsistent`: cada divergencia tiene una clase con su evidencia: `own defect`, `reference defect`, `deliberate`, `undecided` o `unclassified`. Cada una queda fijada a las dos respuestas sobre las que se decidió, y `TestAnswersMatchTheReferences` falla si alguna de esas respuestas cambia.
 - `TestRuntimeMatchesTheReference`: el arnés del runtime, con `decidedRuntimeAnswers`, `disputedRuntimeAnswers` y `notOracle`.
-- `TestTheUnclassifiedDivergencesDoNotGrow`: cada divergencia sin clasificar está en `testdata/snapshots/unclassified-debt.tsv`, de donde solo se puede quitar. Su número, por área, sale de `make evidence`, que además falla si un test nombrado no corre o se salta, incluso a través de un helper.
+- `TestThePendingVerdictsDoNotGrow`: cada divergencia sin veredicto, `unclassified` o `undecided`, está en `testdata/snapshots/pending-verdicts.tsv`, de donde solo se puede quitar. Su número, por área, sale de `make evidence`, que además falla si un test nombrado no corre o se salta, incluso a través de un helper.
 - `TestADRsHaveVerification`: este ADR declara su verificación, que existe y no se salta. Para que sea «Aceptado», CI tiene que tener, palabra por palabra, el job `adr-verification`. Ese job corre `sh scripts/debt-only-shrinks.sh`, que impide agregar deuda contra la rama base, y `make evidence conformance-provenance`.

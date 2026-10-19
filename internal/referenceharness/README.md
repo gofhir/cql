@@ -313,7 +313,11 @@ toward the reference engines or away. Each area also keeps what the Java
 engine (`<area>.java.json`) and cql-execution (`<area>.js.json`) answer to its
 corpus, run with `Evaluate -each` and `evaluate.js --each` as for the fhir area
 above, and a manifest, `<area>.divergences.tsv`: one line per definition and
-reference that differ, with a note saying why.
+reference that differ, with its class (own defect, reference defect,
+deliberate, undecided or unclassified), the answer the specification expects,
+the evidence, and the two answers the verdict was given about.
+TestTheDivergencesAreConsistent holds each class to what it means, and a
+verdict whose answers change is unclassified again.
 
 `TestAnswersMatchTheReferences`, part of `go test ./...`, compares this engine
 with both and fails on any divergence the manifest does not record — a

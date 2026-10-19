@@ -4,7 +4,14 @@
 # Usage: sh scripts/mutations/001-decimal-division.sh [work-directory]
 set -eu
 repo=$(cd "$(dirname "$0")/../.." && pwd)
-work=${1:-$(mktemp -d)}
+if [ $# -ge 1 ]; then
+    work=$1
+else
+    # A directory of its own, removed when the script ends: each run copied the
+    # repository into one and left it, until the disk was full.
+    work=$(mktemp -d)
+    trap 'chmod -R u+w "$work" 2>/dev/null; rm -rf "$work"' EXIT
+fi
 python3 -I - "$repo" "$work" <<'PY'
 import os, shutil, subprocess, sys
 

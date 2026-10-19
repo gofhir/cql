@@ -64,11 +64,14 @@ out += ["", "RUN counts subtests too; a test with no RUN did not run.", ""]
 if problems:
     out += ["## Problems", ""] + [f"- {p}" for p in problems] + [""]
 
-out += ["## Divergences still unclassified", "", "| Area | Unclassified | Recorded |", "|---|---|---|"]
+CLASSES = ["own defect", "reference defect", "deliberate", "undecided", "unclassified"]
+out += ["## Divergences by class", "", "| Area | " + " | ".join(CLASSES) + " | Recorded |",
+        "|---|" + "---|" * (len(CLASSES) + 1)]
 for path in sorted(glob.glob("testdata/snapshots/*.divergences.tsv")):
     rows = [l.split("\t") for l in open(path).read().splitlines() if l and not l.startswith("#")]
-    unclassified = sum(1 for r in rows if len(r) == 3 and r[2].startswith("unclassified"))
-    out.append(f"| {os.path.basename(path).split('.')[0]} | {unclassified} | {len(rows)} |")
+    counts = collections.Counter(r[2] for r in rows if len(r) == 7)
+    cells = " | ".join(str(counts[c]) for c in CLASSES)
+    out.append(f"| {os.path.basename(path).split('.')[0]} | {cells} | {len(rows)} |")
 out.append("")
 
 out += ["## Oracle mutations", ""]
