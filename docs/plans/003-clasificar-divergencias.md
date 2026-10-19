@@ -1,6 +1,6 @@
 # 003: clasificar las divergencias sin clasificar
 
-**Estado:** PR 1 cerrado, sin commit; siguen los PR 2 (types), 3 (fhir) y 4 (arithmetic). **Fecha:** 18-10-2026.
+**Estado:** PR 1 subido (`test/divergence-evidence`); PR 2 (types) en review. **Fecha:** 18-10-2026; actualizado el 19-10-2026.
 
 ## Problema
 
@@ -197,3 +197,60 @@ Una ruta con espacios se rechaza a propósito, porque los archivos de los corpus
   - el validador de clases;
   - la deuda de veredictos pendientes (`pending-verdicts.tsv`: `unclassified` más `undecided`).
 - **Todavía no hay ningún veredicto nuevo:** la clasificación es de los PRs 2 a 4.
+
+## PR 2: el área `types`
+
+**El oráculo** (`engine_types_oracle_test.go`). El corpus de `types` es una gramática cerrada: `is`, `as`, `as … is null` y `cast` de un elemento de `List<Any>` contra un nombre de tipo, con 20 literales y 21 tipos (`gen`, `typedValues` y `typeNames`). El oráculo computa el esperado desde el tipo en ejecución del literal y la regla, no desde ninguna respuesta:
+- **Las reglas,** de CQL 1.5.3 (N1A):
+  - Appendix B, Type Operators: `Is` es verdadero si el tipo es «the same as or derived from»; `As` da null si no es del tipo, y `cast` lanza una excepción.
+  - Developer's Guide, Types: «All the system-defined types derive directly from System.Any», así que `Code` y `Concept` no son `Vocabulary`, `Long` no es `Integer` e `Integer` no es `Decimal`. `List<E'>` es subtipo de `List<E>`, e `Interval` igual; las choices se comparan como subconjuntos.
+- **`undecided`:**
+  - el tipo en ejecución del null en `is` y en `cast`, que la especificación no define (10 filas);
+  - si el especificador de una lista vacía es su tipo en ejecución.
+- **`TestTheTypesOracleReadsTheWholeCorpus`:** el oráculo lee las 900 definiciones.
+- **`TestTheTypesVerdictsFollowTheOracle`:** toda fila del área, de cualquier clase, es la que el oráculo computa, en clase, esperado y evidencia, cite lo que cite. Lo reescribe `-classify-types`.
+- **`TestTheTypesOracleAgreesWhereAllAgree`:** en las 541 definiciones donde el motor y las dos referencias dan la misma respuesta, el oráculo da esa respuesta o la deja `undecided`. Es lo que lo controla en las relaciones de tipo a las que no llega ninguna divergencia.
+
+**La validación del oráculo** (la primera medición, a mano; desde la ronda 1 la hace `TestTheTypesOracleAgreesWhereAllAgree`, comparando como compara el comparador: coincide en 533 y deja 8 `undecided`, sin diferencias de formato). Sobre las 541 definiciones donde las tres implementaciones coinciden, el oráculo coincide en 520 y deja 6 `undecided`. De las 15 restantes:
+- **13 son de formato:** el snapshot escribe `List[Integer 1, Integer 2]` y el comparador `{1, 2}`.
+- **2 son reales:** D104 y D823, con `List<Integer>{}` contra `List<String>`. Las tres implementaciones tratan la lista vacía como compatible y el oráculo no. Por eso la lista vacía pasó a `undecided`: le dieron la razón a las implementaciones contra el supuesto del oráculo.
+
+**La clasificación.** Las 472 filas quedaron así: 306 `reference defect`, 142 `own defect`, 10 `undecided` y 14 `unclassified`. Las 14 son filas donde la referencia da el valor que el oráculo espera, pero el arnés no sabe escribirlo (`Unencoded:` de Code, Concept, Tuple y los números de JS): nada dice que la referencia esté mal, y quedan sin veredicto hasta que el arnés las lea. La deuda bajó en 448 filas, a 1037. Los defectos propios son tres defectos del motor, que pasan a pendientes:
+1. **`cast` y `as` hacia un tipo genérico no comprueban el tipo** (58 definiciones): `cast` no falla, y `as` no da null. Por ejemplo, D13, D29, D43, D110, D125 y D132.
+2. **`cast` convierte en vez de fallar** (11): D37 (`cast true as Integer` da 1), D109, D307, D363, D374 y D441. Aparte, D449 (`cast 'a' as DateTime`) da null en vez de fallar: un `cast` que se porta como `as`. Y D533 (`cast 'a' as Decimal`) falla, pero porque intentó convertir el texto (`invalid decimal: a`): el veredicto es correcto y es el mismo defecto 2, de String a Decimal.
+3. **Long sin tipo en ejecución** (10; es D4c): D31, D112, D160, D200, D267, D448 y D811.
+
+**Mutaciones del oráculo,** en `003-evidence.sh`: el subtipado genérico ignorado, `Long` tomado por `Integer`, el null decidido, las clases invertidas y un literal faltante. En la ronda 1 se sumaron cinco: un veredicto que no cita al oráculo, una evidencia que no es la suya, el oráculo equivocado donde no llega ninguna divergencia, culpar a una referencia que el arnés no lee y no leer ninguna definición. Las 32 se detectan.
+
+### Review del PR 2, ronda 1 (Codex y Fable)
+
+Ninguno dejó hallazgos altos. Fable leyó las 472 filas contra el texto de la especificación y no encontró un esperado equivocado; Codex tampoco.
+
+| Hallazgo | Severidad | Resolución |
+|---|---|---|
+| Las filas que se revisan se eligen por el texto de su evidencia: cambiar la cita esquiva el oráculo (Codex y Fable, con mutación) | Media | **Corregido:** se revisa toda fila no `deliberate`, y `-classify-types` reescribe todas |
+| El oráculo no se controla fuera de las divergencias: `Time` derivado de `Date` pasaba (Codex, con mutación) | Media | **Corregido:** `TestTheTypesOracleAgreesWhereAllAgree` lo controla en las 541 definiciones unánimes |
+| 14 `reference defect` son respuestas que el arnés no sabe codificar, no errores de la referencia (Fable) | Media | **Corregido:** quedan `unclassified`, en la deuda. Codificar Code, Concept, Tuple y los números de JS es un arreglo del arnés, en su propio PR |
+| `TestTheTypesOracleReadsTheWholeCorpus` pasaba sin leer nada (Fable, con mutación) | Baja | **Corregido:** exige las 900 definiciones |
+| La guarda no compara la evidencia (Fable) | Baja | **Corregido:** compara clase, esperado y evidencia |
+| La validación y D449 estaban mal descritos; el punto de reanudación, desactualizado (Fable) | Baja | **Corregido** |
+| `expectedMatches` toma por prefijo todo esperado que termina en «…», en cualquier área (Fable) | Baja | **Sin cambio:** hoy ningún esperado de otra área termina así; se revisa si alguna lo necesita |
+
+### Review del PR 2, ronda 2 (Codex y Fable)
+
+Los arreglos de la ronda 1 cierran sus huecos: los dos ataques de entonces ahora fallan. Fable revisó a mano las 20 filas `Unencoded:`: las 14 `unclassified` son `as` y `cast` de identidad cuya respuesta cruda es el literal mismo, y las 6 `reference defect` esperan error o null y la referencia dio un valor.
+
+| Hallazgo | Severidad | Resolución |
+|---|---|---|
+| Marcar una fila `deliberate` y citar el plan 003, que nombra la definición, la saca del oráculo (Codex y Fable, con mutación) | Media | **Corregido:** el oráculo revisa toda fila, de cualquier clase. El área no tiene diferencias deliberadas; si alguna vez tiene una, cambia este test |
+| La regla `Unencoded` busca una subcadena: un error que dice «Unencoded:» también la dispara (Codex) | Media | **Corregido:** exige un objeto `"type": "Unencoded:…"`. **No se suma** comprobar que el tipo sin codificar sea el esperado: la regla solo puede dejar una fila sin veredicto, en la deuda, nunca darle uno, y se borra cuando el arnés codifique esos valores |
+| `TestTheTypesOracleAgreesWhereAllAgree` descartaba una definición si faltaba una de las referencias (Codex) | Media | **Corregido:** basta una referencia que responda y que ninguna diverja. Hoy son las mismas 541 |
+| Conteos viejos en la evidencia y el README, la fecha del plan y un motivo del oráculo que afirmaba lo que la especificación no decide (Codex y Fable) | Baja | **Corregido.** La evidencia se regenera con `make evidence` |
+
+Dos mutaciones nuevas: la fila hecha `deliberate` y el error que nombra `Unencoded:`. Son 34, y todas se detectan.
+
+### Review del PR 2, ronda 3 (Codex y Fable): converge
+
+Ninguno dejó hallazgos medios. Los ataques de la ronda 2 ahora fallan. Fable atacó además las columnas de las respuestas fijadas: falsificó la respuesta del motor, la de la referencia como `Unencoded:` y borró una fila, y las guardas lo detectaron las tres veces. Bajos corregidos: dos frases desactualizadas del plan y del README, la deuda contada desde las 1485 iniciales y D533 sumado al inventario del defecto 2.
+
+**Costo:** el oráculo corre en 0,5 s con 11 MB (lo midió Codex), así que no explica el pico de 1,08 GB de `make evidence`. La causa está en otra parte de la evidencia, y queda por medir.

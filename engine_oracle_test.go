@@ -321,12 +321,13 @@ func TestTheDivergencesAreConsistent(t *testing.T) {
 			switch d.Class {
 			case unclassified:
 			case ownDefect:
-				if d.Expected == "" || d.Expected == d.Engine {
+				if d.Expected == "" || expectedMatches(d.Expected, d.Engine) {
 					t.Errorf("%s: an own defect expects an answer other than this engine's (%s)", where, d.Engine)
 				}
 			case referenceDefect:
-				if d.Expected != d.Engine {
-					t.Errorf("%s: a reference defect expects this engine's answer, %s, not %s", where, d.Engine, d.Expected)
+				if !expectedMatches(d.Expected, d.Engine) || expectedMatches(d.Expected, d.Reference) {
+					t.Errorf("%s: a reference defect expects this engine's answer, %s, and not the reference's, %s; it expects %s",
+						where, d.Engine, d.Reference, d.Expected)
 				}
 			case deliberate:
 				m := decision.FindStringSubmatch(d.Evidence)
@@ -337,7 +338,7 @@ func TestTheDivergencesAreConsistent(t *testing.T) {
 				} else if name, _, _ := strings.Cut(key, "\t"); !namesWord(doc, name) {
 					t.Errorf("%s: a deliberate difference cites %s, which does not name %s", where, m[1], name)
 				}
-				if d.Expected != d.Engine {
+				if !expectedMatches(d.Expected, d.Engine) {
 					t.Errorf("%s: a deliberate difference expects this engine's answer, %s, which is the one decided", where, d.Engine)
 				}
 			case undecided:

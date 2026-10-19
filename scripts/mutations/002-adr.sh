@@ -55,9 +55,20 @@ def commit_all(copy, message):
     subprocess.run(GIT + ["commit", "-qm", message], cwd=copy, check=True)
 
 
+def initial_debt():
+    # The debt as it was introduced, from the repository's history: the one
+    # content the script accepts where the base does not have the file. The
+    # file shrinks as divergences get verdicts, so its content now is not it.
+    path = "testdata/snapshots/pending-verdicts.tsv"
+    first = subprocess.run(["git", "-C", repo, "log", "--diff-filter=A", "--format=%H", "--", path],
+                           capture_output=True, text=True, check=True).stdout.split()[-1]
+    return subprocess.run(["git", "-C", repo, "show", f"{first}:{path}"],
+                          capture_output=True, text=True, check=True).stdout
+
+
 def debt_without_a_base_control(copy):
     debt = os.path.join(copy, "testdata", "snapshots", "pending-verdicts.tsv")
-    content = open(debt).read()
+    content = initial_debt()
     subprocess.run(["git", "init", "-q"], cwd=copy, check=True)
     os.remove(debt)
     commit_all(copy, "base")
@@ -69,7 +80,7 @@ def debt_without_a_base(copy):
     # The base has no debt file, and the change adds one that is not the
     # recorded debt: the bootstrap is accepted for that content only.
     debt = os.path.join(copy, "testdata", "snapshots", "pending-verdicts.tsv")
-    content = open(debt).read()
+    content = initial_debt()
     subprocess.run(["git", "init", "-q"], cwd=copy, check=True)
     os.remove(debt)
     commit_all(copy, "base")
@@ -217,7 +228,7 @@ mutations = [
     ("debt swapped: one divergence classified, another unclassified in its place",
      [("testdata/snapshots/integer.divergences.tsv", "D0\tjava\treference defect\t",
        "D0\tjava\tunclassified\t"),
-      ("testdata/snapshots/types.divergences.tsv", "D1\tjs\tunclassified\t", "D1\tjs\tundecided\t")],
+      ("testdata/snapshots/arithmetic.divergences.tsv", "D0\tjava\tunclassified\t", "D0\tjava\treference defect\t")],
      ["go", "test", "-count=1", "-run", "TestThePendingVerdictsDoNotGrow", "."],
      "has no verdict and is not in pending-verdicts.tsv"),
     ("an ADR names a test behind a build tag go test does not set",
