@@ -236,6 +236,12 @@ if os.environ.get("CQL_MUTATIONS_NETWORK"):
     mutations = network_mutations
 
 
+# Each command runs without the GITHUB_* variables of the environment: in a
+# pull request CI sets GITHUB_BASE_REF, and debt-only-shrinks.sh would compare
+# a copy that has no remote with its base. A mutation that needs one sets it.
+CLEAN_ENV = {k: v for k, v in os.environ.items() if not k.startswith("GITHUB_")}
+
+
 def fresh_copy():
     copy = os.path.join(work, "copy")
     shutil.rmtree(copy, ignore_errors=True)
@@ -273,14 +279,14 @@ def apply(copy, edits):
 plain = [m for m in mutations if len(m) == 4]
 baseline = fresh_copy()
 for command in {tuple(m[2]) for m in plain}:
-    r = subprocess.run(list(command), cwd=baseline, capture_output=True, text=True)
+    r = subprocess.run(list(command), cwd=baseline, capture_output=True, text=True, env=CLEAN_ENV)
     if r.returncode != 0:
         print(f"BASELINE FAILS: {' '.join(command)}\n{r.stdout[-2000:]}{r.stderr[-2000:]}")
         sys.exit(2)
 for name, _, command, _, control in [m for m in mutations if len(m) == 5]:
     copy = fresh_copy()
     control(copy)
-    r = subprocess.run(command, cwd=copy, capture_output=True, text=True)
+    r = subprocess.run(command, cwd=copy, capture_output=True, text=True, env=CLEAN_ENV)
     if r.returncode != 0:
         print(f"BASELINE FAILS: the control of {name}\n{r.stdout[-2000:]}{r.stderr[-2000:]}")
         sys.exit(2)
@@ -294,7 +300,7 @@ for name, edits, command, text, *_ in mutations:
         print(f"NOT APPLIED  {name}: {problem}")
         survived += 1
         continue
-    r = subprocess.run(command, cwd=copy, capture_output=True, text=True)
+    r = subprocess.run(command, cwd=copy, capture_output=True, text=True, env=CLEAN_ENV)
     output = r.stdout + r.stderr
     if "build failed" in output or "[setup failed]" in output:
         print(f"BUILD FAILED {name}: a mutation that does not compile proves nothing")
