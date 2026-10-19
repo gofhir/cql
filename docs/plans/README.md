@@ -16,7 +16,7 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
   - Al clasificar `arithmetic` (PR 4), la mutación de canje del 002 (`arithmetic` D0 java) hay que moverla a otra fila pendiente.
 
 **Próximo paso concreto:**
-1. PR 3: el review convergió en la ronda 2 (plan 003). Faltan el `make check` y el `make evidence` finales, y el commit y el PR apilado sobre el #152, que esperan el pedido del usuario.
+1. PR 3 = #153 (apilado sobre el #152), abierto el 19-10-2026. Falta seguir el CI de #151, #152 y #153, y mergear (lo hace el usuario).
 2. El PR 4, `arithmetic`, con 240.
 3. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
 4. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío.
