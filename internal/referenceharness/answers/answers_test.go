@@ -3,6 +3,7 @@ package answers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -22,6 +23,7 @@ func TestReferenceAnswersAreReadAsEvaluateWritesThem(t *testing.T) {
 		`{"type":"String","value":"a"}`:            "string",
 		`null`:                                     "null",
 		`{"error":"CqlException","message":"NaN"}`: "error",
+		`{"error":"Translation","message":"x"}`:    "refused",
 		`{"type":"List","elements":[]}`:            "list",
 		`{"type":"Tuple","fields":{}}`:             "other",
 	} {
@@ -165,10 +167,43 @@ func evaluate(engine *cql.Engine, src, name string) (a Answer) {
 		}
 	}()
 	v, err := engine.EvaluateExpression(context.Background(), src, name, nil, nil)
-	if err != nil {
+	var semantic *cql.ErrSemantic
+	var syntax *cql.ErrSyntaxError
+	switch {
+	case errors.As(err, &semantic), errors.As(err, &syntax):
+		return Refused(err)
+	case err != nil:
 		return Failed(err, false)
 	}
 	return Value(v)
+}
+
+// TestARefusalIsNotARunTimeError covers the two phases an error can come
+// from: a library the translator refuses is not one that fails as it runs.
+// Read as one answer, the Java translator refusing a cast hid this engine
+// failing at run time on the same cast, which has to succeed (D40 of fhir).
+func TestARefusalIsNotARunTimeError(t *testing.T) {
+	translation := Reference(json.RawMessage(`{"error":"Translation","message":"cannot be cast"}`))
+	runTime := Reference(json.RawMessage(`{"error":"CqlException","message":"cannot cast"}`))
+	refused := evaluate(cql.NewEngine(), "library R version '1'\ndefine R: Undefined + 1\n", "R")
+	failed := evaluate(cql.NewEngine(), "library R version '1'\ndefine R: Message(1, true, 'E', 'Error', 'boom')\n", "R")
+	if refused.Kind != "refused" || failed.Kind != "error" {
+		t.Fatalf("a semantic error read as %s and a run-time one as %s; want refused and error", refused.Kind, failed.Kind)
+	}
+	for _, c := range []struct {
+		name string
+		a, b Answer
+		same bool
+	}{
+		{"two refusals", translation, refused, true},
+		{"two run-time errors", runTime, failed, true},
+		{"a refusal and a run-time error", translation, failed, false},
+		{"a run-time error and a refusal", runTime, refused, false},
+	} {
+		if got := Same(c.a, c.b); got != c.same {
+			t.Errorf("%s: Same = %v, want %v", c.name, got, c.same)
+		}
+	}
 }
 
 // TestACorpusWithoutFloatsIsComparedExactly covers what the tolerance cannot

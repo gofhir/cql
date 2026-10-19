@@ -20,7 +20,9 @@ which this engine accepts. The 326 it accepts compare as follows.
 | All three differ | 23 |
 
 This is an inventory, not a list of decisions: nothing here is fixed or
-excused yet. Each group below is a change of its own, measured against both
+excused yet. Each divergence's verdict is in `fhir.divergences.tsv`, given by
+the oracle of `engine_fhir_oracle_test.go` (docs/plans/003-clasificar-divergencias.md,
+PR 3); the groups below are where it started. Each group below is a change of its own, measured against both
 references before it lands.
 
 ## Both references agree, this engine differs

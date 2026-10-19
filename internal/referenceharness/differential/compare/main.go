@@ -33,6 +33,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -140,7 +141,7 @@ func main() {
 			category = "engine-panic"
 		case answers.Same(reference, answer):
 			continue
-		case reference.Kind == "error":
+		case reference.Kind == "error", reference.Kind == "refused":
 			category = "reference-error"
 		}
 		r.Differences = append(r.Differences, difference{name, expr, category, reference.Text, answer.Text})
@@ -255,7 +256,14 @@ func engineAnswer(engine *cql.Engine, src, name string, patient json.RawMessage)
 		}
 	}()
 	v, err := engine.EvaluateExpression(context.Background(), src, name, patient, nil)
-	if err != nil {
+	// A library this engine refuses before running it is a translator's
+	// refusal, not a run-time error: the two are different answers.
+	var semantic *cql.ErrSemantic
+	var syntax *cql.ErrSyntaxError
+	switch {
+	case errors.As(err, &semantic), errors.As(err, &syntax):
+		return answers.Refused(err)
+	case err != nil:
 		return answers.Failed(err, false)
 	}
 	return answers.Value(v)

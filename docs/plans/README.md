@@ -7,25 +7,23 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 **003: dar veredicto a las divergencias pendientes.** Plan y registro: [003-clasificar-divergencias.md](003-clasificar-divergencias.md). Son cuatro PRs: el esquema, `types`, `fhir` y `arithmetic`.
 
 **Estado al 19-10-2026:**
-- **PR 1, el esquema de la evidencia y la guarda contra veredictos obsoletos:** cerrado, con 3 rondas de review que convergieron. Está en el commit `cdda704` de la rama `test/divergence-evidence`, **ya subida**. **Falta que el usuario abra el PR** (`gh pr create … --head test/divergence-evidence`), seguir el CI y mergear.
-- **PR 2, el área `types`:** implementado **sin commit** en la rama `test/classify-types`, apilada sobre la del PR 1.
-  - El oráculo está en `engine_types_oracle_test.go`, y la clasificación quedó así: 306 `reference defect`, 142 `own defect`, 10 `undecided` y 14 `unclassified` (el arnés no codifica la respuesta de la referencia). La deuda queda en 1037.
-  - Las 34 mutaciones de `003-evidence.sh` se detectan.
-  - Las mutaciones del 002 se arreglaron para la deuda que se achica: el control del arranque toma el contenido inicial del historial de git, y el canje usa `arithmetic` D0 java.
-  - **Al clasificar `arithmetic` (PR 4), esa mutación hay que moverla a otra fila pendiente.**
-  - `make check` (521 s, 1,22 GB de RSS) y `make evidence` (538 s, 1,12 GB) en verde el 19-10-2026, después de las tres rondas.
+- **PR 1 (#151) y PR 2 (#152):** abiertos el 19-10-2026; el #152 está apilado sobre el #151. Falta seguir su CI y mergear (lo hace el usuario).
+- **PR 3, `fhir`:** implementado **sin commit** en la rama `test/classify-fhir`, apilada sobre la del PR 2. El usuario aprobó el diseño y tomó las dos decisiones (plan 003, «Aprobación del PR 3»).
+  - El comparador separa el rechazo del traductor del error en ejecución (`answers.Refused`). Aparecen 160 filas nuevas en `fhir`, y entran todas clasificadas.
+  - El oráculo está en `engine_fhir_oracle_test.go`, con siete tests. La deuda baja de 1037 a 471 (en `fhir`, de 593 a 27).
+  - Se detectan las 47 mutaciones de `003-evidence.sh` y las 30 del 002.
+  - Registro: plan 003, «Implementación del PR 3».
+  - Al clasificar `arithmetic` (PR 4), la mutación de canje del 002 (`arithmetic` D0 java) hay que moverla a otra fila pendiente.
 
 **Próximo paso concreto:**
-1. El PR 2 convergió en la ronda 3 de review, con `make check` y `make evidence` en verde (19-10-2026), y está commiteado en `test/classify-types`, **sin push**.
-2. Push y el PR del PR 2, con base en `test/divergence-evidence` o en `main` una vez mergeado el PR 1.
-3. El PR 3, el área `fhir`, con 143 `unclassified` más 450 `undecided`. Entre las `undecided` hay 390 que el traductor Java rechaza y que hay que juzgar como CQL válida o no.
-4. El PR 4, `arithmetic`, con 240.
-5. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
-6. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío.
+1. PR 3: el review convergió en la ronda 2 (plan 003). Faltan el `make check` y el `make evidence` finales, y el commit y el PR apilado sobre el #152, que esperan el pedido del usuario.
+2. El PR 4, `arithmetic`, con 240.
+3. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
+4. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío.
 
 ## Pendientes, en orden
 
-1. **003:** dar veredicto a las divergencias pendientes de `testdata/snapshots/pending-verdicts.tsv`: eran 1485 (855 `unclassified` y 630 `undecided`) y, con el PR 2, quedan 1037. Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
+1. **003:** dar veredicto a las divergencias pendientes de `testdata/snapshots/pending-verdicts.tsv`: eran 1485 (855 `unclassified` y 630 `undecided`); con el PR 2 quedaron 1037, y con el PR 3, 471. Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
 1b. **El arnés de referencia no codifica** Code ni Concept (Java y JS), ni Tuple ni los números de JS: escribe `Unencoded:`. Deja 14 filas de `types` sin veredicto (003, PR 2).
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s.** El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.
@@ -39,6 +37,7 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
   - `cast` y `as` hacia un tipo genérico (`List<T>`, `Interval<T>`) no comprueban el tipo (58 definiciones);
   - `cast` convierte en vez de fallar (11);
   - Long sin tipo en ejecución (10; D4c).
+- **Defectos propios que encontró el 003, en el área `fhir`:** siete grupos, listados en el plan 003, «Implementación del PR 3». Entre ellos, el constructor de una instancia FHIR que pierde el valor y las llamadas sin firma posible que no se rechazan.
 
 ## Decisiones pendientes del usuario
 

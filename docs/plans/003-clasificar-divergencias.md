@@ -254,3 +254,202 @@ Dos mutaciones nuevas: la fila hecha `deliberate` y el error que nombra `Unencod
 Ninguno dejó hallazgos medios. Los ataques de la ronda 2 ahora fallan. Fable atacó además las columnas de las respuestas fijadas: falsificó la respuesta del motor, la de la referencia como `Unencoded:` y borró una fila, y las guardas lo detectaron las tres veces. Bajos corregidos: dos frases desactualizadas del plan y del README, la deuda contada desde las 1485 iniciales y D533 sumado al inventario del defecto 2.
 
 **Costo:** el oráculo corre en 0,5 s con 11 MB (lo midió Codex), así que no explica el pico de 1,08 GB de `make evidence`. La causa está en otra parte de la evidencia, y queda por medir.
+
+## PR 3: el área `fhir` (diseño, antes de la ronda adversarial)
+
+**Las filas:** 593, de 540 definiciones: 143 `unclassified` (56 de Java, 87 de JS) y 450 `undecided`. Las `undecided` son 390 que el traductor Java rechaza y 60 de los grupos «open» o «disputed» de `fhir.divergences.md`.
+
+**El corpus es una gramática cerrada** (`internal/referenceharness/differential/gen/main.go`, `fhirArea`), como el de `types`:
+- **Operandos:** 19 valores, cada uno de uno de estos orígenes:
+  - elementos de `fhir-data.json`: `Patient`, `gender`, `birthDate`, `deceased`, `id`, el `period` del Encounter y su `start`, y el `value`, `effective` y `code` de tres Observations;
+  - instancias FHIR construidas en CQL: `FHIR.Coding` y `FHIR.code`;
+  - valores System: `5 'mg'`, `{ 1, 2 }`, `System.ValueSet` y `null as Integer`.
+- **Operaciones:**
+  - de tipo: `is`, `as`, `as … is null` y `cast`, contra 26 nombres de tipo;
+  - 9 operadores: `-`, `Abs`, `Sum`, `Avg`, `+ 1 day`, `+ 1 'mg'`, `same day as`, `ToString` e `is null`.
+
+### Revisión previa
+
+- **`gofhir/server`:** no tiene oráculos contra referencias CQL. **Se descarta.**
+- **La especificación** (CQL 1.5.3, N1A; cada cita se verificó con su URL):
+  - **Q1, un `as` o `cast` entre tipos sin relación estática:** la especificación no dice nada.
+    - Appendix B declara `as<T>(argument Any) T` y `cast as<T>(argument Any) T`, y todas sus reglas son de ejecución: «If the argument is not of the specified type at run-time the result is null»; con `cast`, «an exception is thrown».
+    - Ningún texto convierte un `as` sin relación en un error de compilación. El «Expression of type 'X' cannot be cast as a value of type 'Y'» del traductor Java (364 filas) no tiene base en la especificación.
+  - **Q2, una llamada sin sobrecarga que calce, sin conversión que aplique, es un error:** «CQL is a statically typed language … for any given operator invocation, the type of the arguments must match the types of the operands» (03-developersguide, Types). El Author's Guide (Comparison Operators) da como ejemplo de error un `=` entre un número y un texto. La precedencia de conversiones está en 03-developersguide, Conversion Precedence.
+  - **Q3:** el tipo de `null` es Any, y `null is T` no está definido. Esas filas quedan `undecided`, igual que en `types`.
+  - **Q4, las primitivas FHIR:** el FHIR CQL IG (using-modelinfo) dice que las primitivas FHIR son clases con un elemento `value`, convertibles a las primitivas CQL de forma implícita por FHIRHelpers. El modelinfo oficial, embebido en `model/fhir-modelinfo-4.0.1.xml.gz`, pone `FHIR.date` bajo `FHIR.Element`, y `FHIR.id` y `FHIR.code` bajo `FHIR.string`. `Is` prueba el tipo en ejecución, y nada dice que la conversión implícita se aplique a su operando: `Patient.birthDate is Date` es false, y `Patient.birthDate is FHIR.Element`, true.
+- **El modelo de primitivas del motor (Option A, issue #3)** lee una primitiva FHIR como su valor System. Es la causa del grupo «a FHIR primitive is a FHIR.Element». Este PR no lo cambia: lo clasifica, como ya decidió la ronda adversarial (§3, «Defectos propios escondidos en la deuda»).
+
+### El oráculo de las operaciones de tipo
+
+Va en `engine_fhir_oracle_test.go`, con las mismas reglas que `types` (Appendix B y Developer's Guide, Types). Agrega dos fuentes, ninguna de ellas el código del motor:
+- **La jerarquía de tipos FHIR:** el oráculo lee `name` y `baseType` de cada `typeInfo` del modelinfo oficial con su propio lector XML. No pasa por `model/`.
+- **El tipo en ejecución de cada operando:**
+  - el tipo declarado del elemento en el modelinfo (`Patient.gender` es `FHIR.AdministrativeGender`, `Patient.id` es `FHIR.id`);
+  - para una choice, la rama que trae el dato: `deceasedDateTime` es `FHIR.dateTime` y `valueQuantity` es `FHIR.Quantity`.
+- **Los nombres de tipo sin calificar** (`Quantity`, `Element`, `Patient`, `CodeableConcept`) se resuelven por la regla que la especificación da para los modelos en uso, citada en el oráculo. Java resuelve `Quantity` como `FHIR.Quantity` (D710 y D556). Si la especificación no decide un nombre, sus filas quedan `undecided`.
+- **El esperado de un `as` o un `cast` que tiene éxito** es el operando mismo, y se compara por su forma, como un prefijo, igual que las estructuras de `types`. Si el motor devuelve el valor System en vez del elemento FHIR (Option A), es `own defect`.
+
+### Las 390 que Java rechaza: una decisión del usuario
+
+- **Las 364 de «cannot be cast».** La especificación permite rechazarlas, pero no lo exige: es la regla de §3b.4, una fila que la especificación no decide se le presenta al usuario. Las dos lecturas:
+  - **(a) Son CQL válida, y el motor las acepta** (`deliberate`). Lo apoyan la firma `Any` de `As` y que ninguna regla las convierte en error. Su esperado es la respuesta en ejecución que computa el oráculo: así, aun dentro de las 364, un motor que responde mal es `own defect`.
+  - **(b) Se rechazan como Java** (`own defect`, esperado `error`). El motor tendría que rechazarlas en la fase semántica.
+- **Las 26 de «Could not resolve call»** (`ToString` y `SameAs`) se deciden por Q2, fila por fila:
+  - con una conversión implícita del modelinfo (`conversionInfo`) o de FHIRHelpers que lleva a una sobrecarga, Java se equivoca: es `reference defect`, con el esperado de la llamada convertida;
+  - sin ninguna, el motor tiene que rechazarla: es `own defect`, con esperado `error`.
+
+### El resto, a mano por grupo, con su cita
+
+- **Java con «Could not resolve type …runtime.Any»:** `reference defect`. El defecto ya está en `testdata/reference/runtime.divergences.md`, y el esperado lo da el oráculo.
+- **JS que responde null a un `x is T` con `x` no nulo:** `reference defect`, porque Appendix B dice «otherwise, the result is false». Si da «Encountered unexpected error» con un tipo FHIR, también.
+- **Los operadores** (`Abs`, `Sum`, `Avg`, `-`, `+`, `same day as`, `ToString`): por grupo, con la conversión de FHIRHelpers que aplica y la cláusula del operador. El inventario de `fhir.divergences.md` es el punto de partida.
+
+### Criterio de salida
+
+- Ninguna fila de `fhir.divergences.tsv` queda `unclassified`.
+- Las `undecided` son solo las que la especificación no decide, con sus dos lecturas. Se presentan al usuario por grupo.
+- `TestTheFHIRVerdictsFollowTheOracle` sigue a `types`: toda fila de una operación de tipo, de cualquier clase, es lo que el oráculo computa. Hay además un control del oráculo sobre las definiciones donde todos coinciden, y mutaciones del oráculo.
+
+### Lo que queda fuera
+
+- Cambiar el modelo de primitivas (Option A) y arreglar los defectos propios: van a pendientes.
+- Rechazar en sema los casts sin relación: solo si el usuario elige (b), y en su propio incremento.
+
+### Ronda adversarial del PR 3 (Codex y Fable)
+
+Los dos midieron en copias del repo. Coinciden en que el diseño, tal como estaba, clasificaría mal.
+
+| Hallazgo | Quién | Resolución |
+|---|---|---|
+| «Las 390 que Java rechaza» es lo que ve el comparador, no lo que hace Java. `fhir.java.json` tiene 574 errores de traducción, y 184 no figuran en el manifiesto porque el motor también falla y el comparador iguala un error con otro. De esos, 115 son «cannot be cast»: la decisión cubre **479** definiciones, no 364. Esconde defectos propios, como D40: `cast valueString as FHIR.Element` tiene que funcionar, porque `FHIR.string` deriva de `FHIR.Element`, y el motor falla | Los dos, medido | **Aceptado.** Un error de traducción no es la misma respuesta que un error de ejecución. Medido por área: solo pasa en `fhir` (184; en las otras cinco áreas, 0) |
+| Las reglas por mensaje («JS da *unexpected error*, entonces es defecto de JS») clasifican mal. D16 y D322 son casts que tienen que fallar, y el motor responde null o texto | Codex | **Aceptado.** Primero se computa el esperado; la clase sale de comparar el esperado con cada respuesta. No queda ninguna regla por mensaje |
+| La comparación por prefijo deja pasar corrupciones. Un Coding con `code` cambiado a `CORRUPT` pasa, y `answers.Same` iguala `FHIR.code` con `FHIR.id` cuando los dos dicen `x` | Codex, con sonda | **Aceptado.** El esperado es un tipo calificado más un valor canónico. Hay mutaciones de campo, de valor y de tipo |
+| Cada referencia escribe distinto los elementos FHIR (`Patient/p` en Java, `p` en JS), y JS escribe `Unencoded:Object` para los literales construidos | Los dos | **Aceptado.** Se separan representación, tipo y valor. Una forma que el arnés no lee queda `unclassified`, como en el PR 2: no se culpa a la referencia. El criterio de salida se ajusta |
+| 5 de las 26 son llamadas ambiguas, no llamadas sin sobrecarga: D126, D205, D328, D346 y D490 | Los dos | **Aceptado.** Function Resolution exige error cuando la ambigüedad empata. La regla de la choice es Choice Types, y donde la especificación no decide el empate, la fila es `undecided` |
+| `ToString` no tiene sobrecarga `ToString(String)` en Appendix B: con `FHIR.id` o `FHIR.string` (D383, D419 y D109) ningún camino de conversión llega, y es el motor el que se equivoca | Fable | **Aceptado**, fila por fila: cada fila escribe el camino de conversión probado, o que no hay ninguno. Cuando hacen falta dos conversiones, como en D239 (`FHIR.date → Date → DateTime`), se escribe la regla usada y su cita |
+| Los nombres sin calificar los decide la especificación: Developer's Guide, Multiple Data Models («each model used in the current library is searched for an exact match … when the System model declaration is implicit, it is not considered»). `Quantity`, `Element`, `Patient` y `CodeableConcept` son FHIR; `Code`, `Concept` e `Integer` son System, por coincidencia exacta | Fable, con cita; Codex | **Aceptado.** La regla queda en el oráculo, ejecutable. Java acierta en D556 |
+| El constructor `FHIR.code { value: 'x' }` pierde el valor (da `Code '' from`), y `FHIR.Coding { … }` igual. Son 2 de los 19 operandos, unas 95 definiciones, y el oráculo culparía a `is`, `as` y `cast` | Fable, con sonda; verificado con D317 y D109 | **Aceptado.** Es un grupo `own defect` propio: «el constructor de una instancia FHIR pierde el valor» |
+| El motor pliega `FHIR.Quantity` en `System.Quantity`: `5 'mg' is FHIR.Quantity` da true | Fable, con sonda | **Aceptado:** el oráculo lo clasifica `own defect` |
+| La decisión de fondo es la Option A frente a Q4: con el modelinfo, el motor se equivoca en 75 operaciones de tipo. La Option A se decidió como representación (issue #3) | Fable | **Aceptado:** se le presenta al usuario como una decisión, con sus cifras |
+| La decisión sobre los 479 estaba presentada con demasiada seguridad. Appendix B, `As`, trae como ejemplo `cast P as Observation`, con P un Patient, y lo da como error **en ejecución** | Codex | **Aceptado:** el ejemplo sostiene la lectura (a). Las dos opciones se presentan con sus consecuencias |
+| El control «donde todos coinciden» no puede heredar error≡error: una traducción fallida es «sin respuesta» | Los dos | **Aceptado** |
+| El tipo de cada operando sale de las estructuras del modelinfo (espacios de nombres, `Resource.id` heredado, el binding de `AdministrativeGender`, los especificadores de choice anidados), con mutaciones del modelo y de los datos | Codex | **Aceptado** |
+| Las cifras se generan, no se escriben a mano. Son 539 definiciones, no 540; D797 no es «con un tipo FHIR» | Los dos | **Aceptado** |
+
+### El diseño del PR 3, ajustado
+
+1. **El comparador distingue los errores por su fase.** El error de traducción de Java no es igual al error en ejecución del motor. Solo afecta a `fhir`: aparecen las 184 divergencias que estaban escondidas, y entran clasificadas en el mismo PR, así que la deuda no crece.
+2. **El oráculo de `fhir`** (`engine_fhir_oracle_test.go`):
+   - lee las 900 definiciones;
+   - computa, para cada operación de tipo, el esperado como tipo calificado más valor canónico, con:
+     - la jerarquía y los elementos del modelinfo oficial, leídos por su cuenta;
+     - la rama de cada choice, que sale de los datos;
+     - la regla Multiple Data Models para los nombres;
+   - para los operadores, computa el esperado desde la regla de conversiones (Conversion Precedence, Choice Types, Function Resolution y `conversionInfo`), escribiendo el camino que prueba o que no hay ninguno.
+3. **La clase sale del esperado:**
+   - `own defect` si el motor no da el esperado;
+   - `reference defect` si lo da y la referencia no;
+   - `unclassified` si el arnés no lee la respuesta de la referencia;
+   - `undecided` donde la especificación no decide (el tipo en ejecución del null, el empate de una choice), con sus dos lecturas;
+   - `deliberate` según lo que decida el usuario sobre los casts sin relación y sobre la Option A.
+4. **Las guardas:**
+   - toda fila de `fhir` es lo que el oráculo computa;
+   - el oráculo se controla donde todos coinciden, contando una traducción fallida como «sin respuesta»;
+   - mutaciones del modelinfo, de los datos, de los nombres, de los campos y de los tipos.
+5. **Criterio de salida:** toda fila tiene la clase que computa el oráculo. Las `unclassified` son solo las que el arnés no lee, y quedan en la deuda con su causa.
+
+### Decisiones del usuario
+
+1. **Los casts sin relación estática** (479 definiciones):
+   - **(a) Son CQL válida** (`deliberate`): el oráculo exige la respuesta en ejecución. Lo apoyan la firma `Any` y el ejemplo de Appendix B, que da `cast P as Observation` como error en ejecución. Como consecuencia, una biblioteca que este motor acepta, el traductor Java la rechaza.
+   - **(b) Se rechazan como en Java** (`own defect`, con esperado «error de traducción»). Queda pendiente rechazarlas en sema.
+2. **La Option A frente a Q4** (75 operaciones de tipo donde el motor responde por el valor System):
+   - **`own defect`,** como ya aprobó el plan (§3): quedan como defectos pendientes;
+   - **o `deliberate`,** documentando cada definición como consecuencia aceptada de la Option A.
+
+### Aprobación del PR 3
+
+El 19-10-2026 el usuario aprobó el plan ajustado, con estas dos decisiones:
+1. **Los casts sin relación estática son CQL válida** y se clasifican `deliberate`. El motor los acepta, y el oráculo exige la respuesta que dan en ejecución: null con `as` y error con `cast`. Un motor que responde otra cosa, como en D40, es `own defect`. Las definiciones que cubre esta decisión las computa el oráculo, se listan en este plan y un test exige que la lista coincida con lo que computa.
+
+   Son los `as` y `cast` que el traductor Java rechaza por sus tipos estáticos (`castable` en `engine_fhir_oracle_test.go`, que coincide con Java en todas las operaciones de tipo del corpus):
+
+<!-- fhir decision 1, written by -classify-fhir: begin -->
+D0 D100 D102 D103 D106 D107 D110 D112 D113 D115 D116 D118 D12 D120 D121 D122 D123 D124 D129 D135 D137 D138 D14 D142 D143 D148 D15 D152 D153 D158 D161 D162 D163 D164 D165 D166 D167 D17 D170 D173 D174 D175 D176 D178 D180 D181 D183 D187 D188 D189 D191 D192 D195 D199 D20 D200 D203 D204 D206 D208 D210 D211 D212 D215 D218 D219 D22 D220 D222 D226 D23 D232 D234 D235 D238 D24 D242 D243 D246 D247 D248 D25 D251 D252 D253 D254 D256 D257 D26 D260 D262 D263 D264 D267 D269 D270 D271 D272 D274 D275 D278 D279 D280 D281 D282 D290 D291 D292 D293 D294 D295 D297 D298 D300 D301 D308 D31 D313 D314 D321 D323 D325 D329 D330 D332 D333 D334 D339 D341 D342 D344 D347 D348 D349 D35 D351 D353 D354 D357 D36 D360 D361 D363 D364 D365 D366 D372 D376 D377 D38 D382 D385 D386 D387 D39 D391 D394 D396 D397 D40 D400 D402 D403 D407 D408 D409 D410 D411 D414 D415 D417 D418 D421 D424 D426 D429 D431 D433 D435 D436 D44 D440 D441 D448 D449 D450 D453 D454 D455 D456 D457 D458 D459 D460 D462 D463 D464 D465 D466 D467 D468 D470 D472 D474 D475 D476 D477 D478 D481 D483 D484 D485 D486 D487 D489 D491 D496 D497 D498 D499 D500 D501 D502 D503 D506 D507 D508 D51 D511 D512 D517 D518 D519 D52 D520 D523 D524 D525 D526 D527 D528 D531 D532 D533 D540 D541 D542 D545 D547 D548 D55 D550 D551 D552 D553 D554 D555 D556 D557 D558 D559 D56 D560 D562 D569 D570 D573 D576 D58 D580 D581 D582 D584 D586 D587 D589 D59 D590 D591 D592 D594 D595 D596 D598 D599 D6 D60 D602 D603 D605 D606 D610 D611 D614 D616 D621 D622 D623 D624 D625 D627 D629 D630 D633 D635 D637 D638 D639 D64 D640 D641 D642 D644 D646 D647 D649 D65 D650 D651 D652 D653 D655 D656 D659 D66 D660 D664 D667 D669 D670 D672 D673 D677 D681 D682 D684 D685 D686 D689 D69 D690 D691 D692 D696 D698 D699 D701 D702 D709 D71 D711 D713 D715 D716 D717 D719 D72 D720 D722 D723 D725 D729 D73 D730 D732 D734 D738 D741 D742 D743 D744 D745 D746 D747 D749 D751 D752 D756 D757 D758 D759 D762 D765 D766 D767 D768 D770 D774 D775 D776 D779 D781 D783 D784 D785 D789 D790 D791 D799 D8 D80 D800 D801 D803 D804 D805 D809 D81 D810 D811 D813 D814 D817 D82 D820 D822 D823 D824 D825 D828 D829 D83 D831 D832 D833 D834 D835 D836 D837 D838 D840 D841 D843 D845 D847 D848 D849 D850 D851 D853 D854 D858 D86 D860 D861 D864 D865 D866 D867 D869 D87 D870 D871 D873 D874 D875 D876 D878 D879 D881 D882 D883 D884 D885 D887 D888 D889 D89 D892 D893 D894 D895 D898 D899 D91 D92 D93 D94 D95
+<!-- fhir decision 1: end -->
+2. **Las operaciones de tipo que la Option A responde mal son `own defect`:** quedan como defectos pendientes, como ya decía §3.
+
+### Implementación del PR 3
+
+**El comparador separa las fases.** `answers.Refused` es el rechazo de una biblioteca, del motor (`ErrSemantic`, `ErrSyntaxError`) o del traductor Java (`"error": "Translation"`), y no es la misma respuesta que un error en ejecución. Solo cambia `fhir`: aparecen 160 divergencias, que ya estaban escondidas. Las otras 24 de las 184 las rechaza el motor también. Lo prueba `TestARefusalIsNotARunTimeError`.
+
+**El oráculo** (`engine_fhir_oracle_test.go`) lee las 900 definiciones con el modelinfo oficial, leído por su cuenta, y con `fhir-data.json`. Compara cada respuesta como texto tipado, con su tipo calificado y su valor. Una primitiva FHIR del motor (Option A) se escribe aparte, sin el tipo de FHIR.
+
+**Las guardas:**
+- `TestTheFHIRVerdictsFollowTheOracle`: toda fila, de cualquier clase, es lo que computa el oráculo.
+- `TestTheFHIROracleTypesStaticallyAsJava`: `castable` rechaza exactamente lo que rechaza Java en todas las operaciones de tipo. Java acepta el cast de una choice solo a uno de sus tipos o a `Any`.
+- `TestTheFHIROracleAgreesWithTheReferencesWhereAllAgree`: donde los tres responden lo mismo, cada referencia da lo que espera el oráculo.
+- `TestTheFHIROracleAgreesWhereTheReferencesAgree`: donde las dos referencias responden lo mismo y se pueden leer, el oráculo coincide. La excepción es D797, nombrada.
+- `TestTheFHIROracleValuesAreTheReferences`: donde una referencia da un valor del tipo esperado, es el mismo valor. La excepción nombrada es el id que Java escribe `Patient/p`.
+- `TestTheFHIRDecisionNamesItsCasts`: este plan nombra las 479 definiciones de la decisión 1.
+
+**Lo que decidió la implementación, con evidencia:**
+- **Las choices empatadas son un error de resolución ambigua** (Function Resolution, «an ambiguous resolution error is thrown»), con Conversion Precedence: una conversión a un tipo simple va antes que una a un tipo clase. Con ese orden, `Abs` de un `valueInteger` elige `Abs(Integer)`, y el control de las unánimes lo confirma en los tres motores. Además explica un grupo que el inventario daba por disputado: `Abs` y `Sum` de un `valueQuantity` dan null en las dos referencias, porque `Abs(Integer)` le gana a `Abs(Quantity)` y el cast implícito de la rama Quantity da null. Esto contradice la propuesta de Fable en la ronda adversarial (dejar `undecided` las choices con varias firmas). El texto de la especificación y la medición la descartan.
+- **D132** (`5 'mg' + 1 day`) es null: Appendix B, Add, «When adding quantities, the dimensions of each quantity must be the same», con el ejemplo `QuantityAddIsNull`. Java responde `6 'mg'`.
+- **D258** (`deceased + 1 'mg'`) es un error en ejecución. Para un Date, Add dice «the quantity unit must be one of: years, months, weeks, or days». La unidad es un valor, no un tipo, así que no hay error de traducción. El motor rechaza la biblioteca.
+- **Siguen `undecided`:** el tipo en ejecución de null, dos conversiones seguidas (D239: `FHIR.date → Date → DateTime`) y una lista convertida elemento por elemento (D194).
+
+**El resultado** está en `docs/evidence/2026-10-19.md` (`make evidence`). La deuda de `fhir` baja de 593 a 27 filas, y no crece: las 160 nuevas entran todas clasificadas.
+
+**Mutaciones,** en `003-evidence.sh`:
+- la base de un tipo FHIR ignorada;
+- un nombre sin calificar buscado primero en System;
+- la rama de choice equivocada;
+- Conversion Precedence ignorada;
+- un literal con un valor corrupto;
+- ninguna definición leída;
+- un cast menos en la decisión;
+- un defecto propio pasado a `deliberate`;
+- la representación de una referencia tomada por un valor;
+- un rechazo leído como error en ejecución.
+
+Se detectan las 44 del script (46 después de la ronda 1), y las 30 del 002.
+
+**Defectos propios que encontró el PR 3, en `fhir`:**
+1. **Option A:** una primitiva FHIR se lee como su valor System, así que `is`, `as` y `cast` responden por el tipo System. En D19, D54 y D794 el comparador no lo ve, porque lee la primitiva por su valor; los nombra `TestTheFHIROracleAgreesWithTheReferencesWhereAllAgree`.
+2. **El constructor de una instancia FHIR pierde el valor:** `FHIR.code { value: 'x' }` da `Code '' from`, y lo mismo pasa con `FHIR.Coding`.
+3. **`FHIR.Quantity` se pliega en `System.Quantity`** (D579 y D844).
+4. **Un `cast` o un `as` de una primitiva a `FHIR.Element` falla en ejecución** (D40, D819 y D88).
+5. **Una llamada sin firma posible no se rechaza:** `ToString` de un `FHIR.id` o de un `Period`, `Sum` y `Abs` de algo que no es número, `same day as` de algo que no es fecha. Falla en ejecución o responde.
+6. **La aritmética sobre una choice se rechaza en sema,** aunque una sola firma la toma (D111, D299 y D104).
+7. **Una llamada ambigua sobre una choice se evalúa** (`ToString`: D126, D328 y D490).
+
+### Review del PR 3, ronda 1 (Codex y Fable)
+
+| # | Hallazgo | Resolución |
+|---|---|---|
+| C1 | D239 (`FHIR.date → Date → DateTime`) debería ser `reference defect` | **Rechazado.** En Implicit Conversions, Conversion Precedence y Function Resolution no hay ninguna frase sobre encadenar conversiones; lo más cercano es «the least converting overall conversion path» (verificado en cql.hl7.org/N1A). Queda `undecided` y va al usuario. |
+| C2 / F1 | La guarda de las unánimes solo registra (`t.Logf`) las respuestas que el comparador esconde (D19, D54 y D794) | **Aceptado.** Las fija `fhirHiddenByTheComparison`, cada una con la respuesta del motor, y cualquier otra falla. Se agregaron dos mutaciones: la excepción cambiada y los Booleans del motor negados. |
+| F2 | La evidencia de `docs/evidence/2026-10-19.md` no estaba al día | **Ya resuelto:** `make evidence` corrió después de que el revisor copiara el repo, y la fila `fhir` es la del PR 3. |
+| F3 | `classifiedByFHIROracle` no consulta `fhirReferenceRenderings` | **Rechazado.** Hoy no se alcanza: el motor responde mal D216, D316 y D819. Si los arregla, `TestTheFHIRVerdictsFollowTheOracle` falla y obliga a revisarlo; no pasa en silencio. |
+| F4 | La cita de D258 dice más que el texto | **Aceptado.** La razón ahora cita «must be one of», dice que la especificación no da ni null ni error, y deja el resto como argumento: la unidad es un valor y las dos referencias fallan en ejecución. |
+| F5 | Paréntesis colgante en la evidencia | **Aceptado.** |
+| F6 | Código muerto y duplicado | **Aceptado en parte.** Se borró el caso Choice de `derives`, que no se alcanza (verificado con un `panic` de sonda), y la rama duplicada de `+ 1 day`; se usa `bytes.NewReader`. Se rechaza el helper común de `Refused`: llevarlo a `answers` haría que `answers` importe el paquete `cql`, y no hace falta para este PR. |
+| F7 | En `compare`, un rechazo de la referencia cae en `different` | **Aceptado.** Cae en `reference-error`. |
+| F8 | `fhirReferenceText` lee una respuesta ausente como null | **Rechazado.** Todo el que la llama comprueba antes que la respuesta exista. |
+| F9 | El README dice «seis guardas» | **Aceptado:** son siete tests. |
+
+También se corrigió el lint (prealloc y gocritic). Las 46 mutaciones del 003 se detectan, y las del 002 también.
+
+### Review del PR 3, ronda 2 (Codex y Fable): converge
+
+Ninguno de los dos deja hallazgos de severidad media o mayor. Los dos corrieron las 46 mutaciones (todas detectadas) y revisaron las correcciones y los rechazos de la ronda 1. Las fuentes que citan son la especificación (Add de Date y Time, Conversion Precedence) y sondas en sus copias.
+
+| # | Hallazgo (bajo) | Resolución |
+|---|---|---|
+| R2-C1 | El rechazo de F8 era falso: `TestTheFHIROracleTypesStaticallyAsJava` no comprobaba que hubiera respuesta Java, y una ausente pasaba como null. Codex lo confirmó borrando la respuesta de D19. | **Aceptado.** La guarda exige la respuesta. Se agregó la mutación «the Java engine's answer to an as missing». |
+| R2-F1 | Los recuentos de mutaciones quedaron en 44 en el README y en este plan | **Aceptado.** Se corrigieron, y `make evidence` se vuelve a correr al cierre. |
+| R2-F2 | F3: si el motor arregla D216, la fila java quedaría `reference defect` y la js `unclassified` | **Se mantiene el rechazo:** `TestTheFHIRVerdictsFollowTheOracle` falla en ese momento, y la fila se revisa entonces. |
+
+Se detectan las 47 mutaciones de `003-evidence.sh`.
