@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"os"
@@ -390,6 +391,7 @@ func readReference(t *testing.T, area, engine, sha string) map[string]json.RawMe
 	}
 	var ref struct {
 		SourceSha256 string                     `json:"sourceSha256"`
+		Engine       string                     `json:"engine"`
 		Results      map[string]json.RawMessage `json:"results"`
 	}
 	if err := json.Unmarshal(raw, &ref); err != nil {
@@ -398,7 +400,63 @@ func readReference(t *testing.T, area, engine, sha string) map[string]json.RawMe
 	if ref.SourceSha256 != sha {
 		t.Errorf("%s was run on another %s.cql (%s, now %s); regenerate it", name, area, ref.SourceSha256, sha)
 	}
+	// The engine it was run with is the one the harness pins: an answer of any
+	// other is not the reference the manifests classify against, and a
+	// reference file naming another engine passed (docs/plans/002, round 1).
+	if want := pinnedReferenceEngine(t, engine); ref.Engine != want {
+		t.Errorf("%s was run with %q; the harness pins %q", name, ref.Engine, want)
+	}
 	return ref.Results
+}
+
+// pinnedReferenceEngine is the engine a reference file has to name, read from
+// where the harness pins it: the Java engine in pom.xml, cql-execution and
+// cql-exec-fhir in the JavaScript lock file.
+func pinnedReferenceEngine(t *testing.T, engine string) string {
+	t.Helper()
+	dir := filepath.Join("internal", "referenceharness")
+	switch engine {
+	case "java":
+		raw, err := os.ReadFile(filepath.Join(dir, "pom.xml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Read as XML: a version in a comment is not the dependency's.
+		var pom struct {
+			Dependencies []struct {
+				GroupID    string `xml:"groupId"`
+				ArtifactID string `xml:"artifactId"`
+				Version    string `xml:"version"`
+			} `xml:"dependencies>dependency"`
+		}
+		if err := xml.Unmarshal(raw, &pom); err != nil {
+			t.Fatal(err)
+		}
+		for _, d := range pom.Dependencies {
+			if d.GroupID == "info.cqframework" && d.ArtifactID == "engine" {
+				return d.Version
+			}
+		}
+		t.Fatal("pom.xml pins no info.cqframework:engine")
+		return ""
+	case "js":
+		raw, err := os.ReadFile(filepath.Join(dir, "js", "package-lock.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var lock struct {
+			Packages map[string]struct {
+				Version string `json:"version"`
+			} `json:"packages"`
+		}
+		if err := json.Unmarshal(raw, &lock); err != nil {
+			t.Fatal(err)
+		}
+		return "cql-execution " + lock.Packages["node_modules/cql-execution"].Version +
+			", cql-exec-fhir " + lock.Packages["node_modules/cql-exec-fhir"].Version
+	}
+	t.Fatalf("no reference engine %q", engine)
+	return ""
 }
 
 // translationRefused reports whether a Java answer is the translator's refusal.
