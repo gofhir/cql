@@ -839,3 +839,125 @@ Se detectan las 84 mutaciones de `003-evidence.sh`.
 ### Review del PR 5, ronda 2 (Codex y Fable): converge
 
 Ninguno de los dos deja hallazgos medios ni altos. Codex volvió a traducir y ejecutar el corpus con cql-execution: las 600 respuestas son las del snapshot, con las mismas 180 divergencias, y la reproducción del issue (`[100]` con `Executor.exec` y `[3]` evaluado solo) se repite. Fable dejó dos bajos, aceptados: un agregado rechaza un elemento que no es Integer ni null (`Count({ 1 > 0 })` y `Sum({ { 1 } })` se suman a la lista de rechazos), y la cifra de mutaciones del registro de la implementación quedó corregida. Se detectan las 84 mutaciones.
+
+## PR 6: lo que la especificación no decide (diseño, 20-10-2026)
+
+El 003 no planificó este PR. Con el PR 5 (#155), quedan 54 filas pendientes: 38 `undecided` y 16 `unclassified`.
+
+### Decisiones del usuario (20-10-2026)
+
+Se le presentaron las 38 filas `undecided` en cuatro grupos, con las respuestas de cada motor:
+
+1. **`null is T` es false** (16 filas de Java: 9 de `types` y 7 de `fhir`; más D483 y D688, `is Any`). Java responde null, y este motor y cql-execution, false. Appendix B, Is: true «if the run-time type of the argument is the same as or derived from the type being tested», y false si no; la especificación no dice cuál es el tipo de null. Se lee que null no es de ningún tipo.
+2. **`cast null as T` es null**, también cuando T no se relaciona con el tipo estático (14 filas de Java en `fhir`). Java rechaza esos casts al traducir, y este motor da null. *(Corregido en la ronda adversarial: se le dijo al usuario que cql-execution también da null, pero no responde nada: el arnés solo le pasa lo que el traductor acepta, y `fhir.js.json` no tiene esas 14 definiciones. Lo que sí hay: en un cast relacionado de null, D585, los tres dan null.)* Es la misma clase de cast que la decisión 1 del PR 3 dio por CQL válido.
+3. **Arithmetic:** en D380 y D450, el piso a 8 del ADR 002 lleva el cociente de un `div` a otro entero, y la fila es `deliberate`. En D80, este motor da el valor exacto, 0, y cql-execution da 0.00999…, porque calcula `mod` en binario: es `reference defect`.
+4. **D194 y D239: se queda la respuesta del motor.** En D194, `Sum` de un value choice suma el valor según su tipo en ejecución (-5 'mg'); las dos referencias eligen la sobrecarga de Integer y dan null. En D239, `same day as` toma las dos conversiones seguidas (FHIR.date → Date → DateTime) y da false; Java no resuelve la llamada.
+
+### Revisión previa
+
+- **Qué decide hoy cada oráculo** (sonda del 20-10-2026 sobre los corpus enteros, no solo sobre las divergencias):
+  - `types`: 16 definiciones con «null's run-time type», 10 de ellas con divergencia; 2 con «empty list», sin divergencia.
+  - `fhir`: 23 con «null's run-time type» (22 con divergencia); 5 con «converting each element» (1, D194); 1 con «two conversions» (D239).
+  - `arithmetic`: las 3 filas son ambiguas en «a truncated quotient at a whole number». La ambigüedad sale de `widen`: un literal como 0.1, que no es un binary64, se ensancha para admitir una implementación en binario, y entonces `1.0 mod 0.1` puede caer a cada lado de 10.
+- **`gofhir/server`:** no aplica.
+- **Las 16 `unclassified`** son respuestas que el arnés no codifica (Code, Concept, Tuple y los números de JS; pendiente 1b del README). Quedan fuera: van en un PR 7 del arnés.
+
+### Mecánica
+
+- **`types` y `fhir`:** el caso de null deja de ser `undecided`: `is` da false y `cast` da null, con una razón que cita la decisión. Si el motor da eso y la referencia no, la fila es `deliberate`. Si la referencia da un error interno, que no es ninguna lectura (D483 y D688: «Could not resolve type …runtime.Any»), es `reference defect`.
+- **`fhir`, conversiones:** con `converting each element`, el oráculo calcula el agregado sobre el valor en ejecución de cada elemento; con `two conversions`, sigue por la firma alcanzada, como con una sola conversión. Si el motor coincide y la referencia no, la fila es `deliberate`.
+- **`arithmetic`:** en una fila ambigua solo por un cociente truncado, el oráculo calcula además la **lectura decimal exacta**: el mismo árbol a 40 cifras, sin `widen`. Entonces:
+  - el motor sigue la política y la referencia da la lectura exacta: `deliberate`, por el ADR 002 (D380 y D450);
+  - el motor sigue la política y da la lectura exacta, y la referencia no: `reference defect`, porque el tipo Decimal es decimal (Types, Decimal) (D80);
+  - en otro caso, sigue `undecided`.
+- Las pruebas «donde todos coinciden» (`TestTheTypesOracleAgreesWhereAllAgree` y la de `fhir`) pasan a revisar las 6 + 1 + 4 definiciones sin divergencia que hoy saltan por `undecided`.
+
+### Guardas y mutaciones
+
+Mutaciones nuevas en `003-evidence.sh`, cada una debe fallar:
+- `null is T` da true, y da null;
+- `cast null as T` da un error;
+- el agregado de un choice da null; las dos conversiones, un error de traducción;
+- la lectura exacta con `widen`;
+- D80 con la referencia tomada por exacta, y D380 con el motor fuera de la política;
+- D483 `deliberate` en vez de `reference defect`.
+
+Se corren también las 84 del 003 y las 30 del 002.
+
+### Criterio de salida
+
+Ninguna fila queda `undecided`. `pending-verdicts.tsv` baja de 54 a 16, todas `unclassified` del arnés. Pasan `make check` y `make evidence`, y se detectan todas las mutaciones.
+
+### Lo que queda fuera
+
+- Las 16 filas que el arnés no codifica (PR 7). Sin ellas, el ADR 001 no pasa a «Aceptado».
+- Cambiar el motor: ninguna decisión lo pide.
+
+### Ronda adversarial del PR 6 (Codex y Fable)
+
+| # | Hallazgo | Evidencia | Resolución |
+|---|---|---|---|
+| A1 (alto, los dos) | Con quitar el `undecided`, D194 queda `own defect`: el oráculo resuelve `Sum` por el tipo estático (`List<System.Integer>`) y lleva la Quantity a null | `engine_fhir_oracle_test.go`, resolución por costo y cast implícito de un choice | **Aceptado.** Con «converting each element», la sobrecarga se elige por el tipo en ejecución de cada elemento. Un elemento que no alcanza ninguna sobrecarga da null: D374 y D792 (`valueString 'abc'`) dan null en los tres motores. D194 entra en el manifiesto de las filas donde las dos referencias se equivocan |
+| A2 (alto, Codex; medio, Fable) | 40 cifras sin `widen` no es una lectura exacta: `((1.0 / 3.0) * 3.0) div 1.0` da 0 a 40 cifras y 1 con racionales; Ln, Exp, Power fraccionaria y Sqrt son aproximaciones (`Power(0.00000001, -0.5) mod -5`, D116) | Sondas en Python de los dos | **Aceptado.** La lectura exacta es un intervalo: sin la holgura de implementación de `widen`, y con un margen de 10^-35 en cada operación que redondea (la que deja 40 cifras o es trascendente). Decide solo si todo el intervalo da el mismo entero; si no, la fila sigue `undecided`. D380 (65499,99998), D450 (−9,99999991) y D80 (cociente exacto 10) deciden; `(1.0 / 3.0) * 3.0` y D116 no. La respuesta de la referencia se compara por igualdad con ese entero |
+| A3 (medio, Fable) | No hay camino `deliberate` para las filas de null ni para D239: `classifiedByTypesOracle` solo da `own defect` y `reference defect`, y `fhir` da `deliberate` solo con un cast `unrelated` | Código de los dos clasificadores | **Aceptado.** El veredicto lleva la decisión que lo funda, y esa decisión lleva a `deliberate`. Los 14 casts ya caen en `deliberate` por el camino de `unrelated` |
+| A4 (medio, Fable) | `TestTheDivergencesAreConsistent` exige que el documento citado nombre cada fila, y el plan no nombra las 16 de null | `engine_oracle_test.go` | **Aceptado.** Las cuatro decisiones van a un **ADR 003**, con un bloque de filas generado y su test, como el de la decisión 1 del PR 3 |
+| A5 (medio, Fable) | Las decisiones son reglas del motor para todo programa (null, cast de null, conversiones), y el ADR 002 se escribió porque una regla así no estaba en ningún documento | NUCLEO §2.2; plan, PR 4 | **Aceptado:** ADR 003, «Lo que la especificación no decide», con la sección de la especificación de cada decisión y su verificación |
+| A6 (bajo, Codex) | Se le atribuyó a cql-execution una respuesta a los 14 casts que no existe | `fhir.js.json` | **Aceptado:** corregido arriba, y se le informa al usuario |
+| A7 (bajo, Fable) | Faltan mutaciones | — | **Aceptado:** la lectura exacta con el piso a 8 (D380 pasa a `reference defect`), una fila de null con la referencia como `reference defect`, la resolución estática en el caso por elemento (D194 `own defect`), y un elemento sin sobrecarga que da error (D792). Además se revisa el diff del TSV, no solo las mutaciones |
+
+**Medido por los revisores:** las definiciones sin divergencia que pasan a decidirse coinciden con las nuevas lecturas. Son D86, D100, D176, D199, D312 y D746 de `types`, y D585 de `fhir`: casts de null que dan null en los tres. D154 da -5 'mg' en los tres, y D367, D374 y D792 dan null. Las cinco ambiguas de `arithmetic` sin divergencia (D116, D406, D55, D555 y D694) coinciden con el motor.
+
+### El diseño del PR 6, ajustado
+
+- **ADR 003**, «Lo que la especificación no decide»: las cuatro decisiones, con su sección de la especificación, las filas que funda (bloque generado) y su verificación.
+- **`types` y `fhir`:** `is` de null da false, y `cast` de null da null. La fila es `deliberate` por el ADR 003. D483 y D688 son `reference defect`.
+- **`fhir`, conversiones:** la sobrecarga del agregado se elige por el tipo en ejecución de cada elemento, y un elemento sin sobrecarga da null. Las dos conversiones seguidas se toman. D194 y D239 son `deliberate`.
+- **`arithmetic`:** la lectura exacta certificada de A2. D380 y D450 son `deliberate` por el ADR 002, y D80 es `reference defect`.
+- **Criterio de salida:** sin cambios. 54 → 16 filas pendientes, y el resto queda para el PR 7.
+
+### Aprobación del PR 6 (20-10-2026)
+
+El usuario mantuvo la decisión 2 tras la corrección de A6, y aprobó el diseño ajustado.
+
+### Implementación del PR 6
+
+- **ADR 003** (`docs/adr/003-lo-que-la-especificacion-no-decide.md`), «Aceptado»: las cuatro decisiones, con un bloque de filas por área que escribe el `-classify` de cada una y que comprueba `TestTheUndecidedADRNamesItsRows`.
+- **`types` y `fhir`:** el veredicto lleva `decided`. Con la respuesta del motor, la fila es `deliberate` si la referencia no da un error en ejecución (D483 y D688 quedan `reference defect`). Los 14 casts siguen el camino `unrelated` del PR 3, y su evidencia nombra también la decisión 2.
+- **`fhir`, conversiones:** `operateByElement` elige la firma por el tipo en ejecución del elemento, y da null si ninguna lo toma. Las dos conversiones seguidas se toman con `decided`. D194 entra en `fhirBothReferencesWrong`. `operateOnNull` deja de devolver un error que siempre era nil (lint).
+- **`arithmetic`:** las funciones `conform` pasan a ser métodos de `aReading`. `specification` es la lectura de siempre; `exactly` cambia `widen` por un margen de 10^-35 en cada valor que redondeó el oráculo. `TestTheExactReadingHoldsItsControls` tiene seis controles hechos a mano. La prueba de la decisión 1 del PR 4 cuenta solo las filas que citan el plan.
+- **`TestTheDivergencesAreConsistent`:** su regex de cita pasa a ser `decisionCited`, que comparte con `cites`.
+- **Resultado:** 38 filas con veredicto: 35 `deliberate` y 3 `reference defect` (D483, D688 y D80). `pending-verdicts.tsv` baja de 54 a 16, todas `unclassified`. Ninguna otra fila de los manifiestos cambió.
+- **Mutaciones:** 98 de 98 en `003-evidence.sh` (223 s, 0,53 GB de RSS) y 30 de 30 en el 002. Desde este PR, ninguna fila es `undecided`. Por eso las seis mutaciones de una fila `undecided` primero la fabrican: D380 js, con las lecturas que tenía, y su control comprueba que esa fila pasa tal como queda.
+
+### Review del PR 6, ronda 1 (Codex y Fable)
+
+La primera corrida de Codex no ejecutó nada: su sandbox no escribe en el disco externo, donde ahora está el scratchpad. Se repitió con su copia en `/private/tmp`.
+
+| # | Hallazgo | Evidencia | Resolución |
+|---|---|---|---|
+| R1-1 (medio, Codex; bajo, Fable) | La lectura exacta deducía el redondeo por las cifras: un cociente que el oráculo redondea a 1 pasaba por exacto, y `div` truncaba el cociente sin su margen | `99999999999999999998.999999999999999999999 div 99999999999999999999.0` daba 1, y el valor verdadero es 0 | **Aceptado.** `aConform.rounded` lo marca cada operación que redondea: un cociente es exacto solo si `q·b = a`. Se marcan también Ln, Log, Exp, la raíz y la potencia topada. `div` y `mod` truncan el cociente con su margen. Los dos casos son controles nuevos |
+| R1-2 (medio, Codex) | Bajo −60, `exp` da 10^-60 en vez de la exponencial, y el margen no la contiene | `((Exp(-61) * 10000000000000000000.0) div 0.00000001)` daba 0, y el valor verdadero es 3 | **Aceptado.** La lectura exacta la acota entre 0 y e^-60, y el caso es un control |
+| R1-3 (medio, Codex) | Si el cast de null de `types` volvía a `undecided`, los seis casts dejaban de probarse en silencio | mutación de Codex: pasa | **Aceptado.** `TestTheTypesOracleAgreesWhereAllAgree` falla con cualquier `undecided` que no sea el de la lista vacía. En `fhir`, que ya no deja nada sin decidir, se quita el campo `undecided` con sus ramas |
+| R1-4 (medio, Fable) | Falta la mutación «D380 con el motor fuera de la política» que pedía el plan | sonda: el código de la guarda no tiene ninguna fila que lo ejercite | **Aceptado:** mutación de datos (D380 da 65501 en `arithmetic.answers.tsv`) |
+| R1-5 (bajo, Fable) | El ADR dice que sus bloques tienen todas las filas que funda, pero los 14 casts citan primero el plan | evidencia de D112 | **Aceptado:** el texto ya lo dice |
+| R1-6 (bajo, Fable) | Falta la mutación del cast de null en `types` | sonda | **Aceptado:** el cast que falla y el cast `undecided` |
+| R1-7 (bajo, Fable) | El campo `exact` se confunde con el método `exact()`; los controles `undecided` no fijan el porqué | — | **Aceptado:** el campo pasa a llamarse `exactReading`, y un control `undecided` exige la ambigüedad del cociente truncado |
+
+Mutaciones nuevas: el cociente redondeado tomado por exacto, `div` sin margen, y la exponencial bajo −60. Corridas completas: 104 de 104 en el 003 y 30 de 30 en el 002. `make check` estuvo en verde antes de estas correcciones (759 s, 1,26 GB de RSS) y se vuelve a correr al cerrar.
+
+### Review del PR 6, ronda 2 (Codex y Fable)
+
+Los dos confirmaron las correcciones de la ronda 1. Fable midió que la lectura de la especificación es idéntica byte a byte en las 800 definiciones, comparada con HEAD.
+
+| # | Hallazgo | Evidencia | Resolución |
+|---|---|---|---|
+| R2-1 (medio, los dos) | Log y Power fraccionaria ponían el margen después de dividir o multiplicar logaritmos redondeados: un logaritmo chico amplifica su error hasta 10^8 veces | `Log(2, 1.00000001)`: error de 3,2e-25 frente a un margen de 6,9e-28 (Fable); un Log de bases cerca de 1 certificaba 0, y el valor verdadero es -1 (Codex). Ninguna fila del corpus cambia | **Aceptado.** `lnOf` acota cada logaritmo con su margen antes de dividirlo o multiplicarlo, solo en la lectura exacta. Un denominador que llega a 0 queda ambiguo. Son dos controles nuevos |
+| R2-2 (medio, Codex) | `roundTraditional` usaba `Div`, que redondea a 16 cifras sin marcarlo | `Round(0.1234567890123456789, 19)` daba `0.1234567890123457`. El corpus redondea a 8 cifras como mucho | **Aceptado:** se escala con `Shift`, en forma exacta. Es un control nuevo |
+
+Mutaciones nuevas: un logaritmo acotado después de dividirlo, y `Round` por `Div`. Corridas completas: 106 de 106 en el 003 y 30 de 30 en el 002.
+
+### Review del PR 6, ronda 3 (Codex y Fable): converge
+
+Ninguno de los dos dejó hallazgos. Lo que verificaron:
+- **Codex** repitió sus contraejemplos de la ronda 2. El Log de bases cerca de 1 queda ambiguo, y una cuenta a 90 cifras da −1,99…, que se trunca a −1. El Round a 19 cifras certifica 0. El valor a 90 cifras de `Power(1.0000000000001, 99999999999999.5)` cae dentro de su intervalo.
+- **Fable** midió contra 70 cifras que los intervalos de `Log(2, 1.00000001)`, `Log(0.12345678, 0.99999999)` y `Power(1.00001, 4000000.5)` contienen el valor, y que Ln y ExpTaylor a 40 cifras se apartan menos de 1,1e-40 de su valor a 70: el margen de 10^-35 alcanza. La lectura de la especificación es idéntica byte a byte a HEAD en las 800 definiciones: las 66 con Round redondean a 8 cifras como mucho. `go test ./...` pasa.

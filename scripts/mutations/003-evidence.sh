@@ -25,6 +25,9 @@ INTEGER = "testdata/snapshots/integer.divergences.tsv"
 DIVISION = "testdata/snapshots/division.divergences.tsv"
 REFS = ["go", "test", "-count=1", "-run", "TestAnswersMatchTheReferences", "."]
 CONSISTENT = ["go", "test", "-count=1", "-run", "TestTheDivergencesAreConsistent", "."]
+TYPES_VERDICTS = ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."]
+FHIR_VERDICTS = ["go", "test", "-count=1", "-run", "TestTheFHIRVerdictsFollowTheOracle", "."]
+ARITHMETIC_VERDICTS = ["go", "test", "-count=1", "-run", "TestTheArithmeticVerdictsFollowTheOracle", "."]
 APPEND = "append"
 WRITE = "write"
 DELETE = "delete"
@@ -52,6 +55,19 @@ def edits(*steps):
         for step in steps:
             step(copy)
     return run
+
+
+# No divergence is undecided since PR 6: the mutations of an undecided row
+# make one of D380 js, with the two readings it had before ADR 003 decided it,
+# and their control checks that the row passes as it is made.
+D380_READINGS = ("reading 1: Decimal 65499, as the reference answers [source: testdata/snapshots/arithmetic.js.json] | "
+                 "reading 2: Decimal 65500, as this engine answers [source: testdata/snapshots/arithmetic.answers.tsv]; "
+                 "the arithmetic oracle (engine_arithmetic_oracle_test.go) does not decide: a truncated quotient at a whole number")
+
+
+def undecided_d380(copy):
+    for column, value in ((2, "undecided"), (3, ""), (4, D380_READINGS)):
+        set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", column, lambda f, v=value: v)(copy)
 
 
 def replace(path, old, new):
@@ -86,8 +102,8 @@ mutations = [
     ("a verdict without evidence",
      set_field(INTEGER, "D0", "java", 4, lambda f: ""), CONSISTENT, "without evidence"),
     ("an undecided divergence without its two readings",
-     set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4, lambda f: "unknown"),
-     CONSISTENT, "records its two readings"),
+     edits(undecided_d380, set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4, lambda f: "unknown")),
+     CONSISTENT, "records its two readings", undecided_d380),
     ("a deliberate difference citing a plan that does not exist",
      set_field(DIVISION, "D11", "java", 4, lambda f: f[4].replace("docs/plans/001-decimal-division.md", "docs/plans/999-nonexistent.md")),
      CONSISTENT, "which is not in the repository"),
@@ -103,17 +119,17 @@ mutations = [
      replace(ORACLE, "\tif exact {\n\t\treturn false\n\t}\n\tda, okA", "\tif exact || true {\n\t\treturn false\n\t}\n\tda, okA"),
      ["go", "test", "-count=1", "-run", "TestAPinIsTheSameAcrossPlatforms", "."], "samePin"),
     ("a reading whose source is empty",
-     set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
-               lambda f: f[4].replace("[source: testdata/snapshots/arithmetic.answers.tsv]", "[source: ]")),
-     CONSISTENT, "records its two readings"),
+     edits(undecided_d380, set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
+               lambda f: f[4].replace("[source: testdata/snapshots/arithmetic.answers.tsv]", "[source: ]"))),
+     CONSISTENT, "records its two readings", undecided_d380),
     ("a reading whose source does not exist",
-     set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
-               lambda f: f[4].replace("[source: testdata/snapshots/arithmetic.answers.tsv]", "[source: testdata/snapshots/nothing.tsv]")),
-     CONSISTENT, "which is not in the repository"),
+     edits(undecided_d380, set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
+               lambda f: f[4].replace("[source: testdata/snapshots/arithmetic.answers.tsv]", "[source: testdata/snapshots/nothing.tsv]"))),
+     CONSISTENT, "which is not in the repository", undecided_d380),
     ("readings delimited by parentheses inside the answers",
-     set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
-               lambda f: 'reading 1: "x(y)" (); reading 2: "a(b)" ()'),
-     CONSISTENT, "records its two readings"),
+     edits(undecided_d380, set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
+               lambda f: 'reading 1: "x(y)" (); reading 2: "a(b)" ()')),
+     CONSISTENT, "records its two readings", undecided_d380),
     ("a deliberate difference citing a URL that holds a plan's name",
      set_field(DIVISION, "D11", "java", 4,
                lambda f: f[4].replace("(docs/plans/001-decimal-division.md)", "(https://example.invalid/docs/plans/001-decimal-division.md)")),
@@ -123,9 +139,9 @@ mutations = [
                lambda f: f[4].replace("docs/plans/001-decimal-division.md", "docs/plans/002-adr-semantica-cql.md")),
      CONSISTENT, "which does not name D11"),
     ("a reading whose source is a file outside the corpora",
-     set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
-               lambda f: f[4].replace("[source: testdata/snapshots/arithmetic.answers.tsv]", "[source: go.mod]")),
-     CONSISTENT, "which is not a file of testdata/snapshots"),
+     edits(undecided_d380, set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 4,
+               lambda f: f[4].replace("[source: testdata/snapshots/arithmetic.answers.tsv]", "[source: go.mod]"))),
+     CONSISTENT, "which is not a file of testdata/snapshots", undecided_d380),
     ("a deliberate difference citing a plan that names it only inside another name",
      edits(set_field("testdata/snapshots/scope.divergences.tsv", "D1", "js", 2, lambda f: "deliberate"),
            set_field("testdata/snapshots/scope.divergences.tsv", "D1", "js", 3, lambda f: f[6]),
@@ -140,14 +156,84 @@ mutations = [
      replace("engine_types_oracle_test.go", '"5L":                        {runtime: ptr(named("Long")), answer: "Long 5"},',
              '"5L":                        {runtime: ptr(named("Integer")), answer: "Integer 5"},'),
      ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."], "the oracle gives"),
-    ("the types oracle deciding null's run-time type",
-     replace("engine_types_oracle_test.go",
-             'return typesVerdict{undecided: true, reason: "the specification does not say what null\'s run-time type is"}, nil',
-             'return typesVerdict{expected: "false", reason: "null is of nothing"}, nil'),
-     ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."], "the oracle gives"),
+    ("ADR 003: null is of every type",
+     replace("engine_types_oracle_test.go", 'return typesVerdict{expected: "false", decided: true,', 'return typesVerdict{expected: "true", decided: true,'),
+     TYPES_VERDICTS, "the oracle gives"),
+    ("ADR 003: null is T is null",
+     replace("engine_types_oracle_test.go", 'return typesVerdict{expected: "false", decided: true,', 'return typesVerdict{expected: "null", decided: true,'),
+     TYPES_VERDICTS, "the oracle gives"),
+    ("ADR 003: a reading of null taken for a reference defect",
+     replace("engine_types_oracle_test.go", 'if expectedMatches(d.Expected, d.Engine) && v.decided && !strings.HasPrefix(d.Reference, "error") {',
+             'if expectedMatches(d.Expected, d.Engine) && false {'),
+     TYPES_VERDICTS, "the oracle gives"),
+    ("ADR 003: the Java engine's error on is Any taken for a reading",
+     replace("engine_types_oracle_test.go", 'if expectedMatches(d.Expected, d.Engine) && v.decided && !strings.HasPrefix(d.Reference, "error") {',
+             'if expectedMatches(d.Expected, d.Engine) && v.decided {'),
+     TYPES_VERDICTS, "the oracle gives"),
+    ("ADR 003: a fhir null is of every type",
+     replace("engine_fhir_oracle_test.go", 'return fhirVerdict{expected: "System.Boolean false", decided: true, unrelated: unrelated,',
+             'return fhirVerdict{expected: "System.Boolean true", decided: true, unrelated: unrelated,'),
+     FHIR_VERDICTS, "the oracle gives"),
+    ("ADR 003: a cast of null fails",
+     replace("engine_fhir_oracle_test.go", 'return fhirVerdict{expected: "null", decided: true, unrelated: unrelated,',
+             'return fhirVerdict{expected: runTimeError, decided: true, unrelated: unrelated,'),
+     FHIR_VERDICTS, "the oracle gives"),
+    ("ADR 003: an aggregate taking its signature by the static type",
+     replace("engine_fhir_oracle_test.go", "if sig.cost >= elementwise {", "if false && sig.cost >= elementwise {"),
+     FHIR_VERDICTS, "the oracle gives"),
+    ("ADR 003: an element that reaches no signature fails",
+     replace("engine_fhir_oracle_test.go", 'r := c.operateOnNull(op, reason+": no signature takes a "+v.runtime.String())',
+             'r := fhirVerdict{expected: runTimeError, reason: reason}'),
+     ["go", "test", "-count=1", "-run", "TestTheFHIROracleAgreesWithTheReferencesWhereAllAgree", "."], "the oracle expects"),
+    ("ADR 003: two conversions in a row refused",
+     replace("engine_fhir_oracle_test.go", 'reason += " through two conversions in a row (" + undecidedADR + ", decision 4)"',
+             'return fhirVerdict{expected: translationError, reason: reason}, nil'),
+     FHIR_VERDICTS, "the oracle gives"),
+    ("ADR 003: the Java engine's run-time error taken for a reading",
+     replace("engine_fhir_oracle_test.go", "case v.decided && refText != runTimeError:", "case v.decided:"),
+     FHIR_VERDICTS, "the oracle gives"),
+    ("ADR 003: the exact reading widened as the specification's",
+     replace("engine_arithmetic_oracle_test.go", "\tif r.exact {\n\t\tif c.rounded {", "\tif false && r.exact {\n\t\tif c.rounded {"),
+     ARITHMETIC_VERDICTS, "the oracle gives"),
+    ("ADR 003: the exact reading floored at the scale",
+     replace("engine_arithmetic_oracle_test.go", "v.exactReading = exactly.conform(n)", "v.exactReading = aConform{typ: v.policy.typ, lo: v.policy.v, hi: v.policy.v}"),
+     ARITHMETIC_VERDICTS, "the oracle gives"),
+    ("ADR 003: the exact reading without its margin",
+     replace("engine_arithmetic_oracle_test.go", "return decimal.Max(d.Abs(), decimal.NewFromInt(1)).Mul(oracleMargin)", "return decimal.Zero"),
+     ["go", "test", "-count=1", "-run", "TestTheExactReadingHoldsItsControls", "."], "want undecided"),
+    ("ADR 003: a reference off the exact reading not taken for a defect",
+     replace("engine_arithmetic_oracle_test.go", "case isExact(engine) && !isExact(reference):", "case isExact(engine) && isExact(reference):"),
+     ARITHMETIC_VERDICTS, "the oracle gives"),
+    ("ADR 003: this engine off the policy where the exact reading decides",
+     replace("testdata/snapshots/arithmetic.answers.tsv", "D380\tDecimal 65500", "D380\tDecimal 65501"),
+     ARITHMETIC_VERDICTS, "the oracle gives"),
+    ("ADR 003: a types cast of null fails",
+     replace("engine_types_oracle_test.go", 'return typesVerdict{expected: "null", decided: true,', 'return typesVerdict{expected: "error", decided: true,'),
+     ["go", "test", "-count=1", "-run", "TestTheTypesOracleAgreesWhereAllAgree", "."], "the oracle expects"),
+    ("ADR 003: a types cast of null left undecided",
+     replace("engine_types_oracle_test.go", 'return typesVerdict{expected: "null", decided: true,', 'return typesVerdict{undecided: true,'),
+     ["go", "test", "-count=1", "-run", "TestTheTypesOracleAgreesWhereAllAgree", "."], "leaves undecided what it should decide"),
+    ("ADR 003: a rounded quotient taken for an exact one",
+     replace("engine_arithmetic_oracle_test.go", "rounded = rounded || !q.Mul(y).Equal(x)", "rounded = rounded || false && !q.Mul(y).Equal(x)"),
+     ["go", "test", "-count=1", "-run", "TestTheExactReadingHoldsItsControls", "."], "want undecided"),
+    ("ADR 003: a quotient truncated without its margin",
+     replace("engine_arithmetic_oracle_test.go", "\tif r.exact {\n\t\tq = r.widen(q)\n\t}\n", ""),
+     ["go", "test", "-count=1", "-run", "TestTheExactReadingHoldsItsControls", "."], "want undecided"),
+    ("ADR 003: the exact reading taking exp past where it computes",
+     replace("engine_arithmetic_oracle_test.go", "if r.exact && e.lo.LessThan(expFloor) {", "if false && r.exact && e.lo.LessThan(expFloor) {"),
+     ["go", "test", "-count=1", "-run", "TestTheExactReadingHoldsItsControls", "."], "want undecided"),
+    ("ADR 003: a logarithm bounded after it is divided",
+     replace("engine_arithmetic_oracle_test.go", "rounded: true}\n\tif r.exact {\n\t\tc = r.widen(c)\n\t}\n", "rounded: true}\n"),
+     ["go", "test", "-count=1", "-run", "TestTheExactReadingHoldsItsControls", "."], "want undecided"),
+    ("ADR 003: Round by a division at 16 digits",
+     replace("engine_arithmetic_oracle_test.go", "return m.Shift(-places) // exactly", "return m.Div(shift) //"),
+     ["go", "test", "-count=1", "-run", "TestTheExactReadingHoldsItsControls", "."], "want Decimal 0"),
+    ("ADR 003 not naming a row it decides",
+     replace("docs/adr/003-lo-que-la-especificacion-no-decide.md", "D129 D172 D265", "D172 D265"),
+     ["go", "test", "-count=1", "-run", "TestTheUndecidedADRNamesItsRows", "."], "names other types rows"),
     ("the types oracle swapping the classes",
-     replace("engine_types_oracle_test.go", "\td.Class = ownDefect\n\tif expectedMatches(d.Expected, d.Engine) {\n\t\td.Class = referenceDefect",
-             "\td.Class = referenceDefect\n\tif expectedMatches(d.Expected, d.Engine) {\n\t\td.Class = ownDefect"),
+     replace("engine_types_oracle_test.go", "\tif expectedMatches(d.Expected, d.Engine) {\n\t\td.Class = referenceDefect",
+             "\tif !expectedMatches(d.Expected, d.Engine) {\n\t\td.Class = referenceDefect"),
      ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."], "the oracle gives"),
     ("the types oracle missing a literal of the corpus",
      replace("engine_types_oracle_test.go", '"5 \'mg\'":                    {runtime: ptr(named("Quantity")), answer: "5 \'mg\'"},', ""),
@@ -333,8 +419,8 @@ mutations = [
      replace("internal/referenceharness/answers/answers.go", "if v.Error == \"Translation\" {", "if false {"),
      ["go", "test", "-count=1", "-run", "TestAnswersMatchTheReferences", "."], "gone: D"),
     ("an undecided divergence that already expects an answer",
-     set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 3, lambda f: "Decimal 1"),
-     CONSISTENT, "expects nothing yet"),
+     edits(undecided_d380, set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", 3, lambda f: "Decimal 1")),
+     CONSISTENT, "expects nothing yet", undecided_d380),
 ]
 
 

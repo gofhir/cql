@@ -481,15 +481,18 @@ func decimalText(s string) string {
 }
 
 // fhirVerdict is the oracle's answer to a definition: the answer it expects,
-// as typed text, and why; or why it cannot say. A value is "Type value",
+// as typed text, and why. It decides every definition of the corpus, some
+// by ADR 003 (decided). A value is "Type value",
 // "null", "translation error" or "run-time error".
 type fhirVerdict struct {
 	expected, reason string
-	undecided        bool
 	// unrelated marks an as or a cast the Java translator refuses for its
 	// static types: the casts the user decided are valid CQL (PR 3,
 	// decision 1).
 	unrelated bool
+	// decided marks a verdict the specification leaves open and ADR 003
+	// decides: a reference that gives another answer reads it otherwise.
+	decided bool
 }
 
 const (
@@ -538,7 +541,12 @@ func (c *fhirCorpus) fhirExpected(expr string) (fhirVerdict, error) {
 		case "as-null":
 			return fhirVerdict{expected: "System.Boolean true", reason: "null as " + t.String() + " is null", unrelated: unrelated}, nil
 		}
-		return fhirVerdict{undecided: true, reason: "the specification does not say what null's run-time type is", unrelated: unrelated}, nil
+		if op == "is" {
+			return fhirVerdict{expected: "System.Boolean false", decided: true, unrelated: unrelated,
+				reason: "null is of no type, so null is " + t.String() + " is false (" + undecidedADR + ", decision 1)"}, nil
+		}
+		return fhirVerdict{expected: "null", decided: true, unrelated: unrelated,
+			reason: "null is of no type, so cast null as " + t.String() + " is null (" + undecidedADR + ", decision 2)"}, nil
 	}
 	of := c.model.derives(*v.runtime, t)
 	relation := " is not of "
@@ -712,15 +720,16 @@ func (c *fhirCorpus) operatorExpected(expr string) (fhirVerdict, error) {
 			reached[0].param.String() + " and " + reached[1].param.String() + " (Function Resolution)"}, nil
 	}
 	sig := reached[0]
-	switch {
-	case sig.cost >= elementwise:
-		return fhirVerdict{undecided: true, reason: name + " reaches " + sig.param.String() +
-			" only by converting each element, which the specification does not say a list does"}, nil
-	case sig.cost >= chainedCost:
-		return fhirVerdict{undecided: true, reason: name + " reaches " + sig.param.String() +
-			" only through two conversions in a row, which the specification does not say it takes"}, nil
+	if sig.cost >= elementwise {
+		return c.operateByElement(op, v, name)
 	}
 	reason := name + " is " + op + "(" + sig.param.String() + ")"
+	decided := sig.cost >= chainedCost
+	if decided {
+		// The specification does not say a call takes two conversions in a
+		// row; ADR 003 (decision 4) takes them.
+		reason += " through two conversions in a row (" + undecidedADR + ", decision 4)"
+	}
 	// A choice takes the signature through an implicit cast: a value of
 	// another of its types is null by then (Choice Types).
 	if v.runtime == nil || v.static.name == "Choice" && !slices.ContainsFunc(sig.from, func(s fType) bool {
@@ -730,17 +739,58 @@ func (c *fhirCorpus) operatorExpected(expr string) (fhirVerdict, error) {
 		}
 		return c.model.derives(*v.runtime, e)
 	}) {
-		return c.operateOnNull(op, reason)
+		r := c.operateOnNull(op, reason)
+		r.decided = decided
+		return r, nil
 	}
-	return c.operate(op, v, reason)
+	r, err := c.operate(op, v, reason)
+	r.decided = decided
+	return r, err
+}
+
+// operateByElement is an aggregate whose list reaches a signature only by
+// converting each element, which the specification does not say a list does.
+// ADR 003 (decision 4) takes the signature each element's run-time type
+// reaches: a Quantity is summed as one (D194), and an element that reaches
+// none is null (D374, D792).
+func (c *fhirCorpus) operateByElement(op string, v fhirOperand, name string) (fhirVerdict, error) {
+	reason := name + " takes the signature of its element's run-time type (" + undecidedADR + ", decision 4)"
+	if v.runtime == nil {
+		r := c.operateOnNull(op, reason)
+		r.decided = true
+		return r, nil
+	}
+	best, ties := unreachable, 0
+	var param fType
+	for _, p := range fhirOperators[op] {
+		q := parseQualified(p)
+		switch n := c.model.conversionsTo(*v.runtime, q.elem[0]); {
+		case n < 0:
+		case best < 0 || n < best:
+			best, ties, param = n, 1, q
+		case n == best:
+			ties++
+		}
+	}
+	switch {
+	case best < 0:
+		r := c.operateOnNull(op, reason+": no signature takes a "+v.runtime.String())
+		r.decided = true
+		return r, nil
+	case ties > 1:
+		return fhirVerdict{}, fmt.Errorf("%s: a %s reaches more than one signature at one cost", name, v.runtime)
+	}
+	r, err := c.operate(op, v, reason+": "+op+"("+param.String()+")")
+	r.decided = true
+	return r, err
 }
 
 // operateOnNull is an operator's result on null.
-func (c *fhirCorpus) operateOnNull(op, reason string) (fhirVerdict, error) {
+func (c *fhirCorpus) operateOnNull(op, reason string) fhirVerdict {
 	if op == "is null" {
-		return fhirVerdict{expected: "System.Boolean true", reason: reason}, nil
+		return fhirVerdict{expected: "System.Boolean true", reason: reason}
 	}
-	return fhirVerdict{expected: "null", reason: reason + ", on null"}, nil
+	return fhirVerdict{expected: "null", reason: reason + ", on null"}
 }
 
 // systemValue is a value converted to its System type, as FHIRHelpers does
@@ -1052,14 +1102,7 @@ func fhirEngineAnswers(t *testing.T, defs map[string]string) map[string]string {
 
 // classifiedByFHIROracle is the verdict the oracle gives a divergence.
 func classifiedByFHIROracle(key string, d divergence, v fhirVerdict, engine string, reference json.RawMessage) divergence {
-	name, ref, _ := strings.Cut(key, "\t")
-	if v.undecided {
-		d.Class, d.Expected = undecided, ""
-		d.Evidence = fmt.Sprintf("reading 1: %s, as the reference answers [source: testdata/snapshots/fhir.%s.json] | "+
-			"reading 2: %s, as this engine answers [source: testdata/snapshots/fhir.answers.tsv]; %s; %s",
-			d.Reference, ref, d.Engine, v.reason, fhirOracleRule)
-		return d
-	}
+	name, _, _ := strings.Cut(key, "\t")
 	evidence := "fhir oracle: " + v.reason + "; " + strings.TrimPrefix(fhirOracleRule, "fhir oracle (engine_fhir_oracle_test.go), ")
 	if engine != v.expected {
 		d.Class, d.Expected, d.Evidence = ownDefect, v.expected, evidence+"; this engine answers "+engine
@@ -1078,6 +1121,12 @@ func classifiedByFHIROracle(key string, d divergence, v fhirVerdict, engine stri
 	case refText == v.expected:
 		d.Class, d.Expected = unclassified, ""
 		d.Evidence = "the comparison reads the two answers apart, and typed they are one: " + v.expected + " (" + name + ")"
+	case v.decided && refText != runTimeError:
+		// The reference reads otherwise what the specification leaves
+		// open. A run-time error is no reading: it stays a defect (D688).
+		d.Class, d.Expected = deliberate, d.Engine
+		d.Evidence = "fhir oracle: " + v.reason + ", which the reference reads otherwise; " +
+			strings.TrimPrefix(fhirOracleRule, "fhir oracle (engine_fhir_oracle_test.go), ") + "; the reference answers " + refText
 	default:
 		d.Class, d.Expected, d.Evidence = referenceDefect, d.Engine, evidence+"; the reference answers "+refText
 	}
@@ -1134,8 +1183,7 @@ var fhirHiddenByTheComparison = map[string]string{
 
 // TestTheFHIROracleAgreesWithTheReferencesWhereAllAgree holds the oracle to the
 // definitions where this engine and the references give one answer: there,
-// each reference that answers gives what the oracle expects, typed, or the
-// oracle leaves it undecided. It checks the oracle on what no divergence
+// each reference that answers gives what the oracle expects, typed. It checks the oracle on what no divergence
 // reaches. This engine is held to it too, but for the definitions of
 // fhirHiddenByTheComparison, each with the answer it gives.
 func TestTheFHIROracleAgreesWithTheReferencesWhereAllAgree(t *testing.T) {
@@ -1157,9 +1205,6 @@ func TestTheFHIROracleAgreesWithTheReferencesWhereAllAgree(t *testing.T) {
 		v, err := c.fhirExpected(defs[name])
 		if err != nil {
 			t.Fatalf("%s: %v", name, err)
-		}
-		if v.undecided {
-			continue
 		}
 		for _, ref := range []string{"java", "js"} {
 			raw, answered := refs[ref][name]
@@ -1243,12 +1288,12 @@ func TestTheFHIRDecisionNamesItsCasts(t *testing.T) {
 // answer and it is not the specification's, with why.
 var fhirBothReferencesWrong = map[string]string{
 	"D797": "both fail on a cast to Any: the Java engine's failure is in testdata/reference/runtime.divergences.md, and cql-execution fails the same cast",
+	"D194": "both take the Integer signature of Sum by the choice's static type, and the Quantity is null by then; ADR 003 (decision 4) takes the signature of the element's run-time type",
 }
 
 // TestTheFHIROracleAgreesWhereTheReferencesAgree holds the oracle to every
 // definition where both references give one readable answer, whatever this
-// engine answers: there, the oracle expects that answer or leaves it
-// undecided. It reaches what the comparison of this engine cannot: a value of
+// engine answers: there, the oracle expects that answer. It reaches what the comparison of this engine cannot: a value of
 // an instance this engine builds wrong, which no definition where all three
 // agree holds.
 func TestTheFHIROracleAgreesWhereTheReferencesAgree(t *testing.T) {
@@ -1269,9 +1314,6 @@ func TestTheFHIROracleAgreesWhereTheReferencesAgree(t *testing.T) {
 		v, err := c.fhirExpected(defs[name])
 		if err != nil {
 			t.Fatalf("%s: %v", name, err)
-		}
-		if v.undecided {
-			continue
 		}
 		checked++
 		why, excepted := fhirBothReferencesWrong[name]
@@ -1317,7 +1359,7 @@ func TestTheFHIROracleValuesAreTheReferences(t *testing.T) {
 			wantType, _, _ := strings.Cut(v.expected, " ")
 			gotType, _, _ := strings.Cut(got, " ")
 			// A Boolean is a verdict, not a value read: the verdicts hold it.
-			if v.undecided || wantType == "System.Boolean" || gotType != wantType ||
+			if wantType == "System.Boolean" || gotType != wantType ||
 				!strings.HasPrefix(wantType, "FHIR.") && !strings.HasPrefix(wantType, "System.") {
 				continue
 			}

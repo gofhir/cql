@@ -12,8 +12,8 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 **Próximo paso concreto:**
 1. `make check` (665 s) y `make evidence` (422 s, `docs/evidence/2026-10-20.md`) quedaron en verde el 20-10. El PR 5 está abierto como #155; falta su merge, que pide el usuario, y publicar el issue de cql-execution si el usuario lo aprueba.
-2. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
-3. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío. Después del PR 5 quedarían 54 filas.
+2. **PR 6** (rama `test/decide-undecided`, sobre #155): el usuario decidió las 38 filas `undecided` el 20-10 (plan 003, «PR 6»). Está implementado **sin commit**. Lleva el ADR 003 (Aceptado), deja 16 filas pendientes de 54 y ninguna `undecided`, y detecta las 106 mutaciones del 003 y las 30 del 002. El review convergió en la ronda 3. `make check` (718 s, 1,29 GB) y `make evidence` (553 s, 1,13 GB; `docs/evidence/2026-10-20.md`) quedaron en verde el 20-10. Falta el commit y el PR, que pide el usuario. Después viene el PR 7: el arnés codifica Code, Concept, Tuple y los números de JS (las 16 filas), y entonces el ADR 001 pasa a «Aceptado». Las 16 `unclassified` del arnés van en un PR 7.
+3. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío. Después del PR 6 quedan 16 filas, todas del arnés (PR 7).
 
 ## Pendientes, en orden
 

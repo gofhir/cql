@@ -252,6 +252,11 @@ type aConform struct {
 	null      bool
 	ambiguous string
 	lo, hi    decimal.Decimal
+	// rounded marks an interval the oracle computed with a value it rounded
+	// at 40 digits: a quotient that is not exact, a logarithm, an
+	// exponential, a root or a capped power. The exact reading widens it by
+	// oracleMargin.
+	rounded bool
 }
 
 func (c aConform) exact() bool { return c.lo.Equal(c.hi) }
@@ -275,13 +280,56 @@ func isBinary(d decimal.Decimal) bool {
 	return ok && new(big.Rat).SetFloat64(f).Cmp(r) == 0
 }
 
+// aReading is how the oracle computes an interval. The specification's
+// reading holds what every implementation may give, in decimal or in
+// binary64. The exact one holds only the oracle's own rounding at 40 digits:
+// the value of an exact decimal computation, within a certified interval
+// (docs/adr/003-lo-que-la-especificacion-no-decide.md, decision 3).
+type aReading struct{ exact bool }
+
+var (
+	specification = aReading{}
+	exactly       = aReading{exact: true}
+)
+
+// oracleMargin bounds, relative to the value and at least absolutely, the
+// error of a value the oracle rounded at 40 digits: Ln and ExpTaylor at 40
+// digits are within 10^-40 of what they give at 70.
+var oracleMargin = decimal.New(1, -35)
+
+// quotients is the interval of the quotients of a and b at the oracle's
+// precision, rounded when one of them is not exact.
+func quotients(typ string, a, b []decimal.Decimal) aConform {
+	values := make([]decimal.Decimal, 0, len(a)*len(b))
+	rounded := false
+	for _, x := range a {
+		for _, y := range b {
+			q := quotient(x, y)
+			rounded = rounded || !q.Mul(y).Equal(x)
+			values = append(values, q)
+		}
+	}
+	c := span(typ, values...)
+	c.rounded = rounded
+	return c
+}
+
 // widen is the interval of what an implementation may give for the exact
 // interval of an operation's result. In decimal, a value past the scale is
 // rounded at a scale of 8 or more, of any mode: within 10^-8. In binary64, a
 // value that is no binary64 is within a few units in its last place. The two
 // are added: the interval holds both kinds of implementation.
-func widen(c aConform) aConform {
+func (r aReading) widen(c aConform) aConform {
 	if c.null || c.ambiguous != "" || c.typ != "Decimal" {
+		return c
+	}
+	if r.exact {
+		if c.rounded {
+			margin := func(d decimal.Decimal) decimal.Decimal {
+				return decimal.Max(d.Abs(), decimal.NewFromInt(1)).Mul(oracleMargin)
+			}
+			c.lo, c.hi, c.rounded = c.lo.Sub(margin(c.lo)), c.hi.Add(margin(c.hi)), false
+		}
 		return c
 	}
 	slack := func(d decimal.Decimal) decimal.Decimal {
@@ -339,23 +387,23 @@ func numericType(a, b string) string {
 func quotient(a, b decimal.Decimal) decimal.Decimal { return a.DivRound(b, precision) }
 
 // conform is the interval the specification allows a node to answer.
-func conform(n *aNode) aConform {
+func (r aReading) conform(n *aNode) aConform {
 	switch n.kind {
 	case "Integer", "Decimal":
 		d := decimal.RequireFromString(n.text)
-		return widen(aConform{typ: n.kind, lo: d, hi: d})
+		return r.widen(aConform{typ: n.kind, lo: d, hi: d})
 	case "null":
 		return cNull(n.text)
 	case "neg":
-		a := conform(n.args[0])
+		a := r.conform(n.args[0])
 		if a.null || a.ambiguous != "" {
 			return a
 		}
 		return inRange(aConform{typ: a.typ, lo: a.hi.Neg(), hi: a.lo.Neg()})
 	case "op":
-		return conformOperator(n.text, conform(n.args[0]), conform(n.args[1]))
+		return r.conformOperator(n.text, r.conform(n.args[0]), r.conform(n.args[1]))
 	case "call":
-		return conformCall(n)
+		return r.conformCall(n)
 	}
 	return cAmbiguous("", "a node the oracle does not know: "+n.kind)
 }
@@ -376,24 +424,24 @@ func undecidedOf(typ string, args ...aConform) (aConform, bool) {
 	return aConform{}, false
 }
 
-func conformOperator(op string, a, b aConform) aConform {
+func (r aReading) conformOperator(op string, a, b aConform) aConform {
 	typ := numericType(a.typ, b.typ)
 	if op == "/" {
 		typ = "Decimal"
 	}
 	if op == "^" {
-		return conformPower(a, b)
+		return r.conformPower(a, b)
 	}
 	if c, done := undecidedOf(typ, a, b); done {
 		return c
 	}
 	switch op {
 	case "+":
-		return inRange(widen(aConform{typ: typ, lo: a.lo.Add(b.lo), hi: a.hi.Add(b.hi)}))
+		return inRange(r.widen(aConform{typ: typ, lo: a.lo.Add(b.lo), hi: a.hi.Add(b.hi)}))
 	case "-":
-		return inRange(widen(aConform{typ: typ, lo: a.lo.Sub(b.hi), hi: a.hi.Sub(b.lo)}))
+		return inRange(r.widen(aConform{typ: typ, lo: a.lo.Sub(b.hi), hi: a.hi.Sub(b.lo)}))
 	case "*":
-		return inRange(widen(span(typ, a.lo.Mul(b.lo), a.lo.Mul(b.hi), a.hi.Mul(b.lo), a.hi.Mul(b.hi))))
+		return inRange(r.widen(span(typ, a.lo.Mul(b.lo), a.lo.Mul(b.hi), a.hi.Mul(b.lo), a.hi.Mul(b.hi))))
 	}
 	// `/`, `div` and `mod` are null on a divisor of 0.
 	switch {
@@ -402,20 +450,24 @@ func conformOperator(op string, a, b aConform) aConform {
 	case b.lo.Sign() <= 0 && b.hi.Sign() >= 0:
 		return cAmbiguous(typ, "a divisor that may be 0")
 	}
-	q := span("Decimal", quotient(a.lo, b.lo), quotient(a.lo, b.hi), quotient(a.hi, b.lo), quotient(a.hi, b.hi))
+	q := quotients("Decimal", []decimal.Decimal{a.lo, a.hi}, []decimal.Decimal{b.lo, b.hi})
 	if op == "/" {
-		return inRange(widen(q))
+		return inRange(r.widen(q))
 	}
 	// div truncates toward zero; mod is what it leaves, of the dividend's
-	// sign.
+	// sign. The exact reading truncates the quotient with its margin: a
+	// rounded quotient of 1 may be one just below it.
+	if r.exact {
+		q = r.widen(q)
+	}
 	whole := q.lo.Truncate(0)
 	if !whole.Equal(q.hi.Truncate(0)) {
-		return cAmbiguous(typ, "a truncated quotient at a whole number")
+		return cAmbiguous(typ, truncatedAtAWholeNumber)
 	}
 	if op == "div" {
 		return inRange(aConform{typ: typ, lo: whole, hi: whole})
 	}
-	return inRange(widen(aConform{typ: typ,
+	return inRange(r.widen(aConform{typ: typ,
 		lo: decimal.Min(a.lo.Sub(b.lo.Mul(whole)), a.lo.Sub(b.hi.Mul(whole))),
 		hi: decimal.Max(a.hi.Sub(b.lo.Mul(whole)), a.hi.Sub(b.hi.Mul(whole)))}))
 }
@@ -423,7 +475,7 @@ func conformOperator(op string, a, b aConform) aConform {
 // conformPower is a ^ b and Power(a, b): a whole-number exponent multiplies,
 // on a negative base too; any other exponent is exp(b ln a), of a positive
 // base.
-func conformPower(a, b aConform) aConform {
+func (r aReading) conformPower(a, b aConform) aConform {
 	typ := numericType(a.typ, b.typ)
 	if c, done := undecidedOf(typ, a, b); done {
 		return c
@@ -439,18 +491,23 @@ func conformPower(a, b aConform) aConform {
 			}
 			return cAmbiguous(typ, "a negative power of a base that may be 0")
 		}
+		rounded := false
 		power := func(d decimal.Decimal) decimal.Decimal {
 			p := cappedPower(d, n)
+			rounded = rounded || p.Abs().Equal(powerCap)
 			if n < 0 {
-				return quotient(decimal.NewFromInt(1), p)
+				q := quotient(decimal.NewFromInt(1), p)
+				rounded = rounded || !q.Mul(p).Equal(decimal.NewFromInt(1))
+				return q
 			}
 			return p
 		}
 		c := span(typ, power(a.lo), power(a.hi))
+		c.rounded = rounded
 		if n%2 == 0 && n > 0 && a.lo.Sign() < 0 && a.hi.Sign() > 0 {
 			c.lo = decimal.Zero
 		}
-		return inRange(widen(c))
+		return inRange(r.widen(c))
 	}
 	typ = "Decimal"
 	switch {
@@ -459,9 +516,21 @@ func conformPower(a, b aConform) aConform {
 	case a.lo.Sign() <= 0:
 		return cAmbiguous(typ, "a fractional power of a base that may be 0 or negative")
 	}
-	lnLo, lnHi := mustLn(a.lo), mustLn(a.hi)
-	e := span(typ, lnLo.Mul(b.lo), lnLo.Mul(b.hi), lnHi.Mul(b.lo), lnHi.Mul(b.hi))
-	return conformExp(e)
+	ln := r.lnOf(a)
+	e := span(typ, ln.lo.Mul(b.lo), ln.lo.Mul(b.hi), ln.hi.Mul(b.lo), ln.hi.Mul(b.hi))
+	return r.conformExp(e)
+}
+
+// lnOf is ln over an interval of positive values. The exact reading bounds
+// each logarithm by its margin before another operation takes it: a quotient
+// by a small logarithm, or a product by a large exponent, grows its error past
+// the margin of the result.
+func (r aReading) lnOf(a aConform) aConform {
+	c := aConform{typ: "Decimal", lo: mustLn(a.lo), hi: mustLn(a.hi), rounded: true}
+	if r.exact {
+		c = r.widen(c)
+	}
+	return c
 }
 
 func mustLn(d decimal.Decimal) decimal.Decimal {
@@ -473,11 +542,14 @@ func mustLn(d decimal.Decimal) decimal.Decimal {
 }
 
 // exp is e to a power, or past the Decimal range a value beyond it.
+// expFloor is where exp stops computing the exponential.
+var expFloor = decimal.NewFromInt(-60)
+
 func exp(d decimal.Decimal) decimal.Decimal {
 	if d.GreaterThan(decimal.NewFromInt(60)) {
 		return decimalMax.Mul(decimal.NewFromInt(10))
 	}
-	if d.LessThan(decimal.NewFromInt(-60)) {
+	if d.LessThan(expFloor) {
 		return decimal.New(1, -60) // below every step of the scale, and above 0
 	}
 	v, err := d.ExpTaylor(precision)
@@ -487,8 +559,15 @@ func exp(d decimal.Decimal) decimal.Decimal {
 	return v
 }
 
-func conformExp(e aConform) aConform {
-	return inRange(widen(aConform{typ: "Decimal", lo: exp(e.lo), hi: exp(e.hi)}))
+func (r aReading) conformExp(e aConform) aConform {
+	lo, hi := exp(e.lo), exp(e.hi)
+	if r.exact && e.lo.LessThan(expFloor) {
+		// exp gives a value below every step of the scale past -60, which
+		// the specification's reading needs, and not the exponential: the
+		// exact reading bounds it by 0 and e^-60.
+		lo, hi = decimal.Zero, exp(decimal.Max(e.hi, expFloor))
+	}
+	return inRange(r.widen(aConform{typ: "Decimal", lo: lo, hi: hi, rounded: true}))
 }
 
 // arithmeticFunctions is the other functions of the corpus.
@@ -498,13 +577,13 @@ var arithmeticFunctions = []string{"Abs", "Ln", "Exp", "Round", "Truncate", "Cei
 var aggregates = []string{"Avg", "Sum", "Product", "Median", "Variance", "StdDev",
 	"PopulationVariance", "PopulationStdDev", "Max", "Min"}
 
-func conformCall(n *aNode) aConform {
+func (r aReading) conformCall(n *aNode) aConform {
 	if slices.Contains(aggregates, n.text) {
-		return conformAggregate(n.text, n.args[0])
+		return r.conformAggregate(n.text, n.args[0])
 	}
 	args := make([]aConform, len(n.args))
 	for i, arg := range n.args {
-		args[i] = conform(arg)
+		args[i] = r.conform(arg)
 	}
 	if n.text == "Round" && len(args) > 1 && args[1].null {
 		args = args[:1] // "If precision is not specified or null, 0 is assumed"
@@ -512,7 +591,7 @@ func conformCall(n *aNode) aConform {
 	a := args[0]
 	switch n.text {
 	case "Power":
-		return conformPower(a, args[1])
+		return r.conformPower(a, args[1])
 	case "Log":
 		if c, done := undecidedOf("Decimal", args...); done {
 			return c
@@ -531,9 +610,13 @@ func conformCall(n *aNode) aConform {
 		case base.lo.LessThanOrEqual(one) && base.hi.GreaterThanOrEqual(one):
 			return cAmbiguous("Decimal", "a logarithm in a base that may be 1")
 		}
-		num, den := span("Decimal", mustLn(a.lo), mustLn(a.hi)), span("Decimal", mustLn(base.lo), mustLn(base.hi))
-		return inRange(widen(span("Decimal", quotient(num.lo, den.lo), quotient(num.lo, den.hi),
-			quotient(num.hi, den.lo), quotient(num.hi, den.hi))))
+		num, den := r.lnOf(a), r.lnOf(base)
+		if den.lo.Sign() <= 0 && den.hi.Sign() >= 0 {
+			return cAmbiguous("Decimal", "a logarithm in a base that may be 1")
+		}
+		q := quotients("Decimal", []decimal.Decimal{num.lo, num.hi}, []decimal.Decimal{den.lo, den.hi})
+		q.rounded = true // of logarithms
+		return inRange(r.widen(q))
 	}
 	typ := map[string]string{"Abs": a.typ, "Ln": "Decimal", "Exp": "Decimal", "Round": "Decimal",
 		"Truncate": "Integer", "Ceiling": "Integer", "Floor": "Integer"}[n.text]
@@ -556,9 +639,9 @@ func conformCall(n *aNode) aConform {
 		case a.lo.Sign() <= 0:
 			return cAmbiguous(typ, "a logarithm of a value that may be 0 or less")
 		}
-		return inRange(widen(aConform{typ: typ, lo: mustLn(a.lo), hi: mustLn(a.hi)}))
+		return inRange(r.widen(aConform{typ: typ, lo: mustLn(a.lo), hi: mustLn(a.hi), rounded: true}))
 	case "Exp":
-		return conformExp(a)
+		return r.conformExp(a)
 	}
 	// The functions to a whole number, or to a number of places: a step
 	// within the interval is undecided.
@@ -593,14 +676,14 @@ func roundTraditional(d decimal.Decimal, places int32) decimal.Decimal {
 	if d.Sign() < 0 {
 		m = m.Neg()
 	}
-	return m.Div(shift)
+	return m.Shift(-places) // exactly: Div rounds at 16 digits
 }
 
-func conformAggregate(name string, list *aNode) aConform {
+func (r aReading) conformAggregate(name string, list *aNode) aConform {
 	var items []aConform
 	typ := "Integer"
 	for _, e := range list.args {
-		c := conform(e)
+		c := r.conform(e)
 		typ = numericType(typ, c.typ)
 		if c.ambiguous != "" {
 			return cAmbiguous(typ, c.ambiguous)
@@ -628,7 +711,7 @@ func conformAggregate(name string, list *aNode) aConform {
 	chain := func(op string, cs []aConform) aConform {
 		acc := cs[0]
 		for _, c := range cs[1:] {
-			if acc = conformOperator(op, acc, c); acc.null || acc.ambiguous != "" {
+			if acc = r.conformOperator(op, acc, c); acc.null || acc.ambiguous != "" {
 				return acc
 			}
 		}
@@ -640,7 +723,7 @@ func conformAggregate(name string, list *aNode) aConform {
 	}
 	sum := chain("+", items)
 	sum.typ = numericType(typ, sum.typ)
-	mean := conformOperator("/", sum, count(len(items)))
+	mean := r.conformOperator("/", sum, count(len(items)))
 	switch name {
 	case "Sum":
 		return sum
@@ -675,7 +758,7 @@ func conformAggregate(name string, list *aNode) aConform {
 				m.typ = typ
 				return m
 			}
-			return conformOperator("/", conformOperator("+", cs[len(cs)/2-1], cs[len(cs)/2]), count(2))
+			return r.conformOperator("/", r.conformOperator("+", cs[len(cs)/2-1], cs[len(cs)/2]), count(2))
 		}
 		lo, hi := median(lows), median(highs)
 		switch {
@@ -701,13 +784,13 @@ func conformAggregate(name string, list *aNode) aConform {
 	}
 	squares := make([]aConform, len(items))
 	for i, c := range items {
-		squares[i] = conformPower(conformOperator("-", c, mean), count(2))
+		squares[i] = r.conformPower(r.conformOperator("-", c, mean), count(2))
 	}
-	v := conformOperator("/", chain("+", squares), den)
+	v := r.conformOperator("/", chain("+", squares), den)
 	if v.null || v.ambiguous != "" || name == "Variance" || name == "PopulationVariance" {
 		return v
 	}
-	return inRange(widen(aConform{typ: typ, lo: sqrt(v.lo), hi: sqrt(v.hi)}))
+	return inRange(r.widen(aConform{typ: typ, lo: sqrt(v.lo), hi: sqrt(v.hi), rounded: true}))
 }
 
 func sqrt(d decimal.Decimal) decimal.Decimal {
@@ -1179,14 +1262,26 @@ func arithmeticEngineAnswers(t *testing.T) map[string]string {
 type arithmeticVerdict struct {
 	conform aConform
 	policy  aPolicy
+	// exactReading is the exact reading of a definition the specification's
+	// reading leaves undecided at a truncated quotient (ADR 003, decision 3).
+	exactReading aConform
 }
+
+// truncatedAtAWholeNumber is why the specification's reading leaves a
+// quotient undecided: div and mod of a quotient an implementation may round
+// to either side of a whole number.
+const truncatedAtAWholeNumber = "a truncated quotient at a whole number"
 
 func arithmeticOracle(expr string) (arithmeticVerdict, error) {
 	n, err := parseArithmetic(expr)
 	if err != nil {
 		return arithmeticVerdict{}, err
 	}
-	return arithmeticVerdict{conform: conform(n), policy: policy(n)}, nil
+	v := arithmeticVerdict{conform: specification.conform(n), policy: policy(n)}
+	if v.conform.ambiguous == truncatedAtAWholeNumber {
+		v.exactReading = exactly.conform(n)
+	}
+	return v, nil
 }
 
 // arithmeticCorpusSize is the number of definitions of arithmetic.cql.
@@ -1297,6 +1392,26 @@ func classifiedByArithmeticOracle(key string, d divergence, v arithmeticVerdict,
 			d.Evidence = "arithmetic oracle (engine_arithmetic_oracle_test.go): " + why + reference.text +
 				"; " + arithmeticOracleRule + "; the reference answers " + d.Reference
 			return d
+		}
+		// ADR 003 (decision 3): at a truncated quotient, the exact decimal
+		// reading decides, when its whole interval gives one value.
+		if x := v.exactReading; x.ambiguous == "" && !x.null && x.typ != "" && x.exact() {
+			exact := x.typ + " " + x.lo.String()
+			isExact := func(a aAnswer) bool { return a.kind == "value" && a.typ == x.typ && a.v.Equal(x.lo) }
+			switch {
+			case isExact(reference) && !isExact(engine):
+				d.Class, d.Expected = deliberate, d.Engine
+				d.Evidence = "the exact decimal reading gives " + exact + ", as the reference answers, and this engine's " +
+					"Decimal scale takes the quotient to another whole number, decided in " + undecidedADR +
+					" (decision 3); " + arithmeticOracleRule
+				return d
+			case isExact(engine) && !isExact(reference):
+				d.Class, d.Expected = referenceDefect, d.Engine
+				d.Evidence = "arithmetic oracle (engine_arithmetic_oracle_test.go): the exact decimal reading gives " + exact +
+					", as this engine answers (" + undecidedADR + ", decision 3); " + arithmeticOracleRule +
+					"; the reference answers " + d.Reference
+				return d
+			}
 		}
 		d.Class, d.Expected = undecided, ""
 		d.Evidence = fmt.Sprintf("reading 1: %s, as the reference answers [source: testdata/snapshots/arithmetic.%s.json] | "+
@@ -1443,7 +1558,7 @@ func TestTheArithmeticDecisionNamesItsRows(t *testing.T) {
 	recorded := readDivergences(t, filepath.Join("testdata", "snapshots", "arithmetic.divergences.tsv"))
 	var names []string
 	for key, d := range recorded {
-		if name, _, _ := strings.Cut(key, "\t"); d.Class == deliberate && !slices.Contains(names, name) {
+		if name, _, _ := strings.Cut(key, "\t"); d.Class == deliberate && cites(d, arithmeticDecisionPlan) && !slices.Contains(names, name) {
 			names = append(names, name)
 		}
 	}
@@ -1527,6 +1642,52 @@ func TestTheScalePolicyHoldsItsControls(t *testing.T) {
 		}
 		if answer := readEngineArithmetic(text); !follows(answer, v) {
 			t.Errorf("%s: this engine answers %s; ADR 002 gives %s", expr, answer.text, want)
+		}
+	}
+}
+
+// exactReadingControls are quotients at a whole number, each with what the
+// exact reading gives, worked by hand: a value it certifies, or "undecided"
+// where the oracle's rounding at 40 digits may fall on either side, as 1/3
+// times 3 does (ADR 003, decision 3).
+var exactReadingControls = map[string]string{
+	"(1.0 mod 0.1)":                     "Decimal 0",  // 1.0 is 10 times 0.1 exactly
+	"(3 div 0.1)":                       "Decimal 30", // so is 3, 30 times
+	"(Log(3, 0.33333333) div Abs(0.1))": "Decimal -9", // ln 3 / ln 0.33333333 is -0.99999999089…
+	"((1.0 / 3.0) * 3.0) div 1.0":       "undecided",  // 1 exactly, from a quotient rounded at 40 digits
+	"((2.0 / 3.0) * 3.0) mod 1.0":       "undecided",
+	"Ln(Exp(2.0)) div 1.0":              "undecided", // 2 exactly, from a logarithm rounded at 40 digits
+	// Just below 1, a quotient the oracle rounds to 1 at 40 digits.
+	"(99999999999999999998.999999999999999999999 div 99999999999999999999.0)": "undecided",
+	// 3.2…, from an exponential past where exp computes it.
+	"((Exp(-61) * 10000000000000000000.0) div 0.00000001)": "undecided",
+	// -1.99…: a quotient of two small logarithms, each rounded.
+	"((Log(1.0000000000000000000000000002, 1.0000000000000000000000000001) - 2.0) div 0.00000000000000000000000000005)": "undecided",
+	// ln 2 / ln 1.00000001 is 69314718.40…: certified once each logarithm
+	// carries its margin.
+	"(Log(2, 1.00000001) div 1.0)": "Decimal 69314718",
+	// 0: Round to 19 places is exact.
+	"((Round(0.1234567890123456789, 19) - 0.1234567890123456789) div 0.000000000000000001)": "Decimal 0",
+}
+
+// TestTheExactReadingHoldsItsControls holds the exact reading to its
+// controls: it decides a quotient only when its whole interval gives one
+// value.
+func TestTheExactReadingHoldsItsControls(t *testing.T) {
+	for _, expr := range slices.Sorted(maps.Keys(exactReadingControls)) {
+		n, err := parseArithmetic(expr)
+		if err != nil {
+			t.Fatalf("%s: %v", expr, err)
+		}
+		c, got := exactly.conform(n), "undecided"
+		switch {
+		case c.ambiguous == "" && !c.null && c.exact():
+			got = c.typ + " " + c.lo.String()
+		case c.ambiguous != truncatedAtAWholeNumber:
+			got = "undecided by " + c.String()
+		}
+		if want := exactReadingControls[expr]; got != want {
+			t.Errorf("%s: the exact reading gives %s (%s); want %s", expr, got, c, want)
 		}
 	}
 }
