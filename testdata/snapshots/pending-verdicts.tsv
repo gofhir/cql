@@ -1,48 +1,14 @@
 # area	name	reference: the divergences with no verdict yet, unclassified or undecided (docs/adr/001,
 # docs/plans/003-clasificar-divergencias.md). An entry can only be removed, when its divergence gets a
 # verdict: see TestThePendingVerdictsDoNotGrow and scripts/debt-only-shrinks.sh.
-arithmetic	D380	js
-arithmetic	D450	js
-arithmetic	D80	js
-fhir	D112	java
-fhir	D117	java
-fhir	D134	java
-fhir	D17	java
-fhir	D194	java
-fhir	D194	js
-fhir	D239	java
-fhir	D244	java
-fhir	D275	java
-fhir	D298	java
-fhir	D326	java
 fhir	D345	js
-fhir	D354	java
-fhir	D554	java
-fhir	D577	java
-fhir	D590	java
-fhir	D635	java
-fhir	D649	java
-fhir	D655	java
-fhir	D677	java
-fhir	D688	java
-fhir	D739	java
 fhir	D788	js
-fhir	D824	java
-fhir	D84	java
-fhir	D874	java
-fhir	D881	java
-types	D129	java
 types	D151	js
-types	D172	java
 types	D223	js
-types	D265	java
-types	D317	java
 types	D393	js
-types	D435	java
 types	D44	java
 types	D44	js
 types	D482	js
-types	D483	java
 types	D486	js
 types	D690	java
 types	D690	js
@@ -50,8 +16,4 @@ types	D70	js
 types	D79	js
 types	D800	js
 types	D836	js
-types	D857	java
 types	D873	js
-types	D881	java
-types	D92	java
-types	D99	java

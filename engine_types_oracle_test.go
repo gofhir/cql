@@ -32,8 +32,9 @@ import (
 //     Integer, Integer is not Decimal; "list type List<E'> is a subtype of list
 //     type List<E>" when E' is of E, and an interval type likewise; choice
 //     types are compatible when the choices of one are a subset of the other's.
-//   - Neither says what null's run-time type is: `null is T` and
-//     `cast null as T` are undecided, with the two readings the references give.
+//   - Neither says what null's run-time type is. The user decided that null
+//     is of no type: `null is T` is false and `cast null as T` is null
+//     (docs/adr/003-lo-que-la-especificacion-no-decide.md, decisions 1 and 2).
 const typesOracleRule = "types oracle (engine_types_oracle_test.go), CQL 1.5.3 (cql.hl7.org/N1A): " +
 	"Appendix B, Type Operators (Is, As, cast) and Developer's Guide, Types, Type Testing"
 
@@ -139,12 +140,19 @@ var (
 	typesCast   = regexp.MustCompile(`^\(cast \(List<Any>\{ (.*) \}\)\[0\] as (\S+)\)$`)
 )
 
+// emptyListUndecided is the one question of the area the oracle leaves
+// open.
+const emptyListUndecided = "the specification does not say whether an empty list's specifier is its run-time type"
+
 // typesVerdict is the oracle's answer to a definition: the answer the
 // specification expects, how it was reached, or why it cannot say.
 type typesVerdict struct {
 	expected, reason string
 	undecided        bool
 	prefix           bool // expected is a prefix of the answer, for a structure the comparison cannot read
+	// decided marks a verdict the specification leaves open and ADR 003
+	// decides: a reference that gives another answer reads it otherwise.
+	decided bool
 }
 
 func typesExpected(expr string) (typesVerdict, error) {
@@ -173,14 +181,17 @@ func typesExpected(expr string) (typesVerdict, error) {
 		case "as-null":
 			return typesVerdict{expected: "true", reason: "null as " + t.String() + " is null"}, nil
 		}
-		return typesVerdict{undecided: true, reason: "the specification does not say what null's run-time type is"}, nil
+		if op == "is" {
+			return typesVerdict{expected: "false", decided: true, reason: "null is of no type, so null is " + t.String() + " is false (" + undecidedADR + ", decision 1)"}, nil
+		}
+		return typesVerdict{expected: "null", decided: true, reason: "null is of no type, so cast null as " + t.String() + " is null (" + undecidedADR + ", decision 2)"}, nil
 	}
 	// An empty list has no element to give it a type at run time. Its
 	// specifier gives it List<Integer> statically, and the specification does
 	// not say whether that is its run-time type: all three engines take an
 	// empty list for a list of any element (D104, D823 agree on it).
 	if lit == "List<Integer>{}" && t.name == "List" && !derivesFrom(named("Integer"), t.element[0]) {
-		return typesVerdict{undecided: true, reason: "the specification does not say whether an empty list's specifier is its run-time type"}, nil
+		return typesVerdict{undecided: true, reason: emptyListUndecided}, nil
 	}
 	of := derivesFrom(*value.runtime, t)
 	relation := " is not of "
@@ -232,7 +243,7 @@ func (v typesVerdict) storedExpected() string {
 // expected answer, the class that follows from it — this engine's answer is
 // the expected one, or it is not — and the evidence that says so. Which rows
 // it holds does not depend on their class or on what their evidence cites:
-// the area has no deliberate difference, and one would change this test.
+// a deliberate difference is computed by the oracle too, from ADR 003.
 func TestTheTypesVerdictsFollowTheOracle(t *testing.T) {
 	defs := typesDefinitions(t)
 	path := filepath.Join("testdata", "snapshots", "types.divergences.tsv")
@@ -279,6 +290,10 @@ func TestTheTypesOracleAgreesWhereAllAgree(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}
+		if v.undecided && v.reason != emptyListUndecided {
+			// ADR 003 decides the rest: an undecided verdict would drop it from this test.
+			t.Errorf("%s: the oracle leaves undecided what it should decide (%s)", name, v.reason)
+		}
 		if answer := pinned(answers.Reference(raw).Text); !v.undecided && !expectedMatches(v.storedExpected(), answer) {
 			t.Errorf("%s: all three answer %q; the oracle expects %q (%s)", name, oneLine(answer), v.storedExpected(), v.reason)
 		}
@@ -309,6 +324,14 @@ func classifiedByTypesOracle(t *testing.T, defs map[string]string, key string, d
 	}
 	d.Expected = v.storedExpected()
 	d.Class = ownDefect
+	if expectedMatches(d.Expected, d.Engine) && v.decided && !strings.HasPrefix(d.Reference, "error") {
+		// The reference reads otherwise what the specification leaves
+		// open. An error is no reading: it stays a defect (D483).
+		d.Class = deliberate
+		d.Evidence = "types oracle: " + v.reason + ", which the reference reads otherwise; " +
+			strings.TrimPrefix(typesOracleRule, "types oracle ")
+		return d
+	}
 	if expectedMatches(d.Expected, d.Engine) {
 		d.Class = referenceDefect
 		if v.expected != "error" && v.expected != "null" && unencoded.MatchString(d.Reference) {

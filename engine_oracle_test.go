@@ -252,6 +252,10 @@ func writeDivergences(t *testing.T, path string, found map[string]answerPair, re
 	}
 }
 
+// decisionCited finds the ADR or plan a verdict's evidence cites first: the
+// one that decided a deliberate difference.
+var decisionCited = regexp.MustCompile(`(?:^|[\s(])(docs/(?:adr|plans)/\d{3}-[a-z0-9-]+\.md)`)
+
 // namesWord reports whether doc names name as a word of its own: D1 is not
 // named by a document that names D11.
 func namesWord(doc []byte, name string) bool {
@@ -314,7 +318,6 @@ func TestTheDivergencesAreConsistent(t *testing.T) {
 	// It is cited as a path of the repository, not inside a URL, and the file
 	// names the divergence it decided: a document that exists and decides
 	// something else is not the decision.
-	decision := regexp.MustCompile(`(?:^|[\s(])(docs/(?:adr|plans)/\d{3}-[a-z0-9-]+\.md)`)
 	// An undecided divergence records the two readings the specification
 	// leaves, each with the file of the repository it comes from. The fields
 	// are delimited by brackets and a bar, which answers do not hold: a
@@ -338,7 +341,7 @@ func TestTheDivergencesAreConsistent(t *testing.T) {
 						where, d.Engine, d.Reference, d.Expected)
 				}
 			case deliberate:
-				m := decision.FindStringSubmatch(d.Evidence)
+				m := decisionCited.FindStringSubmatch(d.Evidence)
 				if m == nil {
 					t.Errorf("%s: a deliberate difference cites the ADR or plan that decided it, by its whole name", where)
 				} else if doc, err := os.ReadFile(m[1]); err != nil {
