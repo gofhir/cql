@@ -8,10 +8,10 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 **Estado al 19-10-2026:**
 - **PRs 1 a 4 mergeados** con squash: #151 (esquema), #152 (`types`), #153 (`fhir`) y #154 (`arithmetic`, ADR 002). `main` está en 093572c. Como cada squash rompe la pila, el PR siguiente se rebasó con `--onto` antes de cada merge.
-- **PR 5, `scope`:** está implementado **sin commit** en la rama `test/classify-scope`. El usuario aprobó el diseño. Las 180 filas son `reference defect`, y la deuda baja de 234 a 54. Se detectan las 84 mutaciones de `003-evidence.sh` y las 30 del 002. El issue de cql-execution está redactado y sin publicar. El review convergió en la ronda 2. Registro: plan 003, «Implementación del PR 5» y «Review del PR 5».
+- **PR 5, `scope`:** está en el PR #155 (rama `test/classify-scope`), sin merge. El usuario aprobó el diseño. Las 180 filas son `reference defect`, y la deuda baja de 234 a 54. Se detectan las 84 mutaciones de `003-evidence.sh` y las 30 del 002. El issue de cql-execution está redactado y sin publicar. El review convergió en la ronda 2. Registro: plan 003, «Implementación del PR 5» y «Review del PR 5».
 
 **Próximo paso concreto:**
-1. `make check` (665 s) y `make evidence` (422 s, `docs/evidence/2026-10-20.md`) quedaron en verde el 20-10. Falta el commit y el PR del PR 5, que pide el usuario, y publicar el issue de cql-execution si el usuario lo aprueba.
+1. `make check` (665 s) y `make evidence` (422 s, `docs/evidence/2026-10-20.md`) quedaron en verde el 20-10. El PR 5 está abierto como #155; falta su merge, que pide el usuario, y publicar el issue de cql-execution si el usuario lo aprueba.
 2. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
 3. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío. Después del PR 5 quedarían 54 filas.
 
