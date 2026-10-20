@@ -4,13 +4,15 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-Ninguno. **002, el ADR único,** se cerró el 18-10-2026 y sigue sin commit: [002-adr-semantica-cql.md](002-adr-semantica-cql.md).
+**003: clasificar las divergencias sin clasificar.** Plan: [003-clasificar-divergencias.md](003-clasificar-divergencias.md).
 
-**Próximo paso concreto:** el commit, el push y el PR del 002, cuando el usuario lo pida. Después, el 003.
+**Paso:** el PR 1 (el esquema de la evidencia y la guarda) está cerrado, sin commit. Siguen el PR 2 (`types`), el PR 3 (`fhir`) y el PR 4 (`arithmetic`), cada uno con su review.
+
+**Próximo paso concreto:** el commit, el push y el PR del PR 1, cuando el usuario lo pida; después, el PR 2.
 
 ## Pendientes, en orden
 
-1. **003:** clasificar las 855 divergencias sin clasificar (`types`, `arithmetic` y `fhir`). Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
+1. **003:** dar veredicto a las 1485 divergencias pendientes de `testdata/snapshots/pending-verdicts.tsv`: 855 `unclassified` y 630 `undecided`. Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.
 3. **D4a, identidad de tipo:** un descriptor `{modelo, nombre}` en vez del texto de `Type()`. Ver [arquitectura-verificacion-2026-10-18.md](../arquitectura-verificacion-2026-10-18.md) §4.
 4. **ELM oficial:** el documento completo del traductor y los 54 de 115 tipos de nodo que faltan. Ya hay un arreglo listo para entrar cuando sea: `Abs` se importa como `OpPositive`.
@@ -28,7 +30,7 @@ Ninguno. **002, el ADR único,** se cerró el 18-10-2026 y sigue sin commit: [00
 | PR | Qué |
 |---|---|
 | #148 | 001: la división Decimal y los oráculos que distinguen el tipo de los números |
-| — | 002: el ADR 001 (Propuesto), su gobierno en CI, la procedencia de la suite y la deuda de divergencias (sin commit) |
+| #150 | 002: el ADR 001 (Propuesto), su gobierno en CI, la procedencia de la suite y la deuda de divergencias |
 
 ## Cerrados el 18-10-2026, antes de adoptar el §10
 

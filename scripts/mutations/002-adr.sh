@@ -5,7 +5,14 @@
 # Usage: sh scripts/mutations/002-adr.sh [work-directory]
 set -eu
 repo=$(cd "$(dirname "$0")/../.." && pwd)
-work=${1:-$(mktemp -d)}
+if [ $# -ge 1 ]; then
+    work=$1
+else
+    # A directory of its own, removed when the script ends: each run copied the
+    # repository into one and left it, until the disk was full.
+    work=$(mktemp -d)
+    trap 'chmod -R u+w "$work" 2>/dev/null; rm -rf "$work"' EXIT
+fi
 python3 -I - "$repo" "$work" <<'PY'
 import hashlib, os, shutil, subprocess, sys
 
@@ -49,7 +56,7 @@ def commit_all(copy, message):
 
 
 def debt_without_a_base_control(copy):
-    debt = os.path.join(copy, "testdata", "snapshots", "unclassified-debt.tsv")
+    debt = os.path.join(copy, "testdata", "snapshots", "pending-verdicts.tsv")
     content = open(debt).read()
     subprocess.run(["git", "init", "-q"], cwd=copy, check=True)
     os.remove(debt)
@@ -61,7 +68,7 @@ def debt_without_a_base_control(copy):
 def debt_without_a_base(copy):
     # The base has no debt file, and the change adds one that is not the
     # recorded debt: the bootstrap is accepted for that content only.
-    debt = os.path.join(copy, "testdata", "snapshots", "unclassified-debt.tsv")
+    debt = os.path.join(copy, "testdata", "snapshots", "pending-verdicts.tsv")
     content = open(debt).read()
     subprocess.run(["git", "init", "-q"], cwd=copy, check=True)
     os.remove(debt)
@@ -74,7 +81,7 @@ def push_of_two(copy, debt_line):
     subprocess.run(["git", "init", "-q"], cwd=copy, check=True)
     commit_all(copy, "base")
     before = subprocess.run(["git", "rev-parse", "HEAD"], cwd=copy, capture_output=True, text=True, check=True).stdout.strip()
-    with open(os.path.join(copy, "testdata", "snapshots", "unclassified-debt.tsv"), "a") as debt:
+    with open(os.path.join(copy, "testdata", "snapshots", "pending-verdicts.tsv"), "a") as debt:
         debt.write(debt_line)
     with open(os.path.join(copy, "CHANGELOG.md"), "a") as changelog:
         changelog.write("\n")
@@ -115,8 +122,8 @@ def add_to_debt_against_the_base(copy):
     subprocess.run(git + ["commit", "-qm", "base"], cwd=copy, check=True)
     manifest = os.path.join(copy, "testdata", "snapshots", "integer.divergences.tsv")
     text = open(manifest).read()
-    open(manifest, "w").write(text.replace("D0\tjava\tthe Java engine departs", "D0\tjava\tunclassified: the Java engine departs", 1))
-    with open(os.path.join(copy, "testdata", "snapshots", "unclassified-debt.tsv"), "a") as debt:
+    open(manifest, "w").write(text.replace("D0\tjava\treference defect\t", "D0\tjava\tunclassified\t", 1))
+    with open(os.path.join(copy, "testdata", "snapshots", "pending-verdicts.tsv"), "a") as debt:
         debt.write("integer\tD0\tjava\n")
     subprocess.run(git + ["commit", "-qam", "change"], cwd=copy, check=True)
 
@@ -203,16 +210,16 @@ mutations = [
      [("testdata/snapshots/integer.java.json", '"engine" : "3.26.0"', '"engine" : "FAKE-0.0"')],
      ["go", "test", "-count=1", "-run", "TestTheReferencesAreOfTheirCorpus", "."], "the harness pins"),
     ("a classified divergence becomes unclassified",
-     [("testdata/snapshots/integer.divergences.tsv", "D0\tjava\tthe Java engine departs",
-       "D0\tjava\tunclassified: the Java engine departs")],
-     ["go", "test", "-count=1", "-run", "TestTheUnclassifiedDivergencesDoNotGrow", "."],
-     "is unclassified and not in unclassified-debt.tsv"),
+     [("testdata/snapshots/integer.divergences.tsv", "D0\tjava\treference defect\t",
+       "D0\tjava\tunclassified\t")],
+     ["go", "test", "-count=1", "-run", "TestThePendingVerdictsDoNotGrow", "."],
+     "has no verdict and is not in pending-verdicts.tsv"),
     ("debt swapped: one divergence classified, another unclassified in its place",
-     [("testdata/snapshots/integer.divergences.tsv", "D0\tjava\tthe Java engine departs",
-       "D0\tjava\tunclassified: the Java engine departs"),
-      ("testdata/snapshots/types.divergences.tsv", "D1\tjs\tunclassified", "D1\tjs\tdeliberate")],
-     ["go", "test", "-count=1", "-run", "TestTheUnclassifiedDivergencesDoNotGrow", "."],
-     "is unclassified and not in unclassified-debt.tsv"),
+     [("testdata/snapshots/integer.divergences.tsv", "D0\tjava\treference defect\t",
+       "D0\tjava\tunclassified\t"),
+      ("testdata/snapshots/types.divergences.tsv", "D1\tjs\tunclassified\t", "D1\tjs\tundecided\t")],
+     ["go", "test", "-count=1", "-run", "TestThePendingVerdictsDoNotGrow", "."],
+     "has no verdict and is not in pending-verdicts.tsv"),
     ("an ADR names a test behind a build tag go test does not set",
      [("conformance/tagged_test.go", WRITE,
        "//go:build never\n\npackage conformance\n\nimport \"testing\"\n\nfunc TestGhostTagged(t *testing.T) {}\n"),
