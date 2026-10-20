@@ -13,17 +13,17 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
   - El oráculo está en `engine_fhir_oracle_test.go`, con siete tests. La deuda baja de 1037 a 471 (en `fhir`, de 593 a 27).
   - Se detectan las 47 mutaciones de `003-evidence.sh` y las 30 del 002.
   - Registro: plan 003, «Implementación del PR 3».
-  - Al clasificar `arithmetic` (PR 4), la mutación de canje del 002 (`arithmetic` D0 java) hay que moverla a otra fila pendiente.
+  - La mutación de canje del 002 ya se movió a `types` D151 js (PR 4).
 
 **Próximo paso concreto:**
 1. PR 3 = #153 (apilado sobre el #152), abierto el 19-10-2026. Falta seguir el CI de #151, #152 y #153, y mergear (lo hace el usuario).
-2. El PR 4, `arithmetic`, con 240.
+2. **PR 4, `arithmetic`:** implementado sin commit en la rama `test/classify-arithmetic`, apilada sobre la del PR 3. El usuario aprobó el diseño y tomó tres decisiones. El ADR 002 está escrito, la deuda total baja de 471 a 234 (en `arithmetic`, a 3) y se detectan las 66 mutaciones. Registro: plan 003, «Implementación del PR 4» y «Review del PR 4». La ronda 3 no convergió, y el usuario eligió simplificar: sin alternativas por ulp y sin envolturas. Los hallazgos de la ronda 4 están corregidos (69 mutaciones). `make check` (602 s) y `make evidence` (393 s) quedaron en verde el 19-10. Se cerró sin ronda 5. Commit bd8995d, **PR #154** (base test/classify-fhir). **Próximo paso:** el PR 5, área `scope` (180 filas pendientes), para poder aceptar ADR 001. Detalle en el plan 003, rondas 1 a 4.
 3. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
 4. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío.
 
 ## Pendientes, en orden
 
-1. **003:** dar veredicto a las divergencias pendientes de `testdata/snapshots/pending-verdicts.tsv`: eran 1485 (855 `unclassified` y 630 `undecided`); con el PR 2 quedaron 1037, y con el PR 3, 471. Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
+1. **003:** dar veredicto a las divergencias pendientes de `testdata/snapshots/pending-verdicts.tsv`: eran 1485 (855 `unclassified` y 630 `undecided`); con el PR 2 quedaron 1037, con el PR 3, 471, y con el PR 4, 234. De esas 234, 180 son de `scope`, un área que el 003 no planificó: hace falta un PR 5 para que el ADR 001 pase a «Aceptado». Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
 1b. **El arnés de referencia no codifica** Code ni Concept (Java y JS), ni Tuple ni los números de JS: escribe `Unencoded:`. Deja 14 filas de `types` sin veredicto (003, PR 2).
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s.** El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.

@@ -453,3 +453,238 @@ Ninguno de los dos deja hallazgos de severidad media o mayor. Los dos corrieron 
 | R2-F2 | F3: si el motor arregla D216, la fila java quedaría `reference defect` y la js `unclassified` | **Se mantiene el rechazo:** `TestTheFHIRVerdictsFollowTheOracle` falla en ese momento, y la fila se revisa entonces. |
 
 Se detectan las 47 mutaciones de `003-evidence.sh`.
+
+## PR 4: el área `arithmetic` (diseño, 19-10-2026, pendiente de ronda adversarial)
+
+**Qué hay.**
+- **El corpus:** 800 definiciones de una gramática cerrada (`gen`, `arithmetic`). Son literales Integer y Decimal, nulls tipados y divisiones por cero, anidados con `+ - * / ^ div mod`, `Abs`, `Negate`, `Ln`, `Exp`, `Round`, `Truncate`, `Ceiling`, `Floor`, `Log`, `Power` y diez agregados.
+- **Las divergencias:** 240 pendientes (125 java y 115 js) y 3 `reference defect` del 001. En 189 de las 243 filas aparece `Ln`, `Exp`, `Log`, `Power`, una raíz o una potencia negativa.
+
+**Los grupos, medidos:**
+
+| Filas | Referencia | Motor | Qué es |
+|---|---|---|---|
+| 85 | js Decimal con más cifras | Decimal a escala 8 | cql-execution usa flotantes y no recorta |
+| 50 | java `Division by zero` | null o un valor | `mod` y `/` por cero en Java |
+| 23 | java otro Decimal | Decimal | recortes distintos: dónde se aplica la escala |
+| 16 | java `Character N is neither…` | null o un valor | Java convierte un NaN a BigDecimal |
+| 11 | java `Infinite or NaN` | null | potencia de base negativa con exponente fraccionario |
+| 10 + 6 | null | Decimal | `Product` o `Sum` con un null, entre otros |
+| 6 | js null | error del motor | `Ln(0)` y `Exp` que desborda |
+| 5 | java `Non-terminating decimal` | Decimal o null | `3 ^ -3` en BigDecimal |
+| 11 | js `{…` o `Unencoded` | null o Decimal | el arnés no codifica la respuesta |
+| el resto | tipo Integer frente a Decimal y casos sueltos | | |
+
+**La especificación** (Appendix B, Arithmetic Operators, verificado en cql.hl7.org/N1A):
+- «operations that cause arithmetic overflow or underflow, or otherwise cannot be performed (such as division by 0) will result in null, rather than a run-time error»;
+- en cada operador, «If the result … cannot be represented … the result is null», y para `/`, `div` y `mod` también «or the right argument is 0»;
+- el tipo Decimal tiene precisión 28 y escala 8, y «implementations must support at least the 28 digits of precision and 8 digits of scale, but may support more precise values».
+
+**La última frase es la que decide el diseño:** una referencia con más cifras que la escala 8 no está, por eso, fuera de la especificación. El motor recorta a 8 con FLOOR en las operaciones que fija el #134. Esa es una decisión del usuario («igual que Java»), y sus excepciones están en `decidedRuntimeAnswers`: `Ln` sin recortar, la media geométrica exacta, las potencias enteras exactas, `Log` cerca de un entero y el flotante leído por su decimal más corto.
+
+**El oráculo** (`engine_arithmetic_oracle_test.go`) lee las 800 definiciones con su propio parser de la gramática y evalúa cada una con dos modelos:
+- **(a) el modelo decidido:** escala 8 con FLOOR en las operaciones del #134, y sus excepciones. `Ln`, `Exp`, `Log` y `Power` fraccionario van por `math` de Go, como decide `DecimalPowerShortestFloat`; el resto, en decimal exacto. Es lo que se espera del motor.
+- **(b) el modelo exacto:** la misma expresión con 40 cifras y sin recortar, con las funciones trascendentes a alta precisión. Es lo que da una implementación con más escala, que la especificación permite.
+
+Los dos modelos aplican igual las reglas de null de la especificación: argumento null, divisor 0, resultado no representable (fuera del rango Decimal o del Integer de 32 bits), y `Ln` o `Log` de un no positivo. Los agregados descartan los null, y la lista vacía da null.
+
+**Las clases:**
+- **La regla de null decide:** el motor se equivoca → `own defect`; la referencia se equivoca → `reference defect`. Es el caso de la división por cero, el NaN, el desborde y el error en ejecución donde corresponde null.
+- **El motor no da (a)** → `own defect`.
+- **El motor da (a) y la referencia da (b), a su precisión** (la de un flotante para js, la exacta para Java) → `deliberate`, con la decisión del #134. **Hace falta la decisión del usuario**, y el plan nombraría las definiciones que cubre.
+- **El motor da (a) y la referencia no da ni (a) ni (b)** (otro tipo o otro valor) → `reference defect`.
+- **La especificación no fija el resultado:** por ejemplo, `Round` de un .5 negativo, si la especificación lo dejara abierto (está por verificar), o un tipo de resultado que no decide → `undecided`, con las dos lecturas.
+- **El arnés no codifica la respuesta** → `unclassified`, como en los PRs 2 y 3.
+
+**Las guardas,** como en el PR 3:
+- toda fila sigue al oráculo;
+- el oráculo lee el corpus entero;
+- donde los tres motores coinciden, cada referencia da (a) o (b);
+- donde las dos referencias coinciden, el oráculo da (b);
+- mutaciones: FLOOR cambiado por redondeo, una regla de null desactivada, la lista de operaciones que recortan, un literal corrupto, el parser y la tolerancia del flotante.
+
+**Lo que no entra:** cambiar el motor. Los defectos propios quedan registrados.
+
+**La mutación de canje del 002** usa `arithmetic` D0 java, y ese PR la clasifica: hay que moverla a una fila que siga pendiente (de `types` o de `fhir`).
+
+**Riesgos que veo:**
+1. Los flotantes de (a) difieren en la última cifra entre amd64 y arm64 (memoria de float por plataforma). Para los valores sin recortar, la comparación con (a) tolera 1e-13 relativo, igual que el snapshot.
+2. La tolerancia entre (b) y un flotante de js tiene que ser lo bastante estricta como para no tomar por buena una respuesta equivocada.
+3. El modelo (a) reproduce una decisión que el motor implementa. El riesgo es copiar el código del motor; el oráculo se escribe desde la lista de decisiones, no desde `funcs`.
+
+### Ronda adversarial del PR 4 (Codex y Fable)
+
+Los dos revisores midieron con sondas en sus copias. Todos los hallazgos se aceptan; el diseño de dos modelos se descarta.
+
+| # | Hallazgo | Evidencia | Resolución |
+|---|---|---|---|
+| 1 | (a) y (b) no cubren toda política de precisión válida: Java da `Ln` exacto recortado a 8, que no es ni (a) ni (b) | D214, D309, D341, D354, D449, D472, D546, D584 y D53 (ambos), y también D441 y D557 | **Aceptado:** la respuesta válida es un conjunto, no un punto |
+| 2 | Java pasa por double en `Power`, `Log` y `Exp`: no es «exacto» | D456 (Fable). Además, `answers.Same` ya tolera 1e-13 relativo, así que la lista de divergencias viene filtrada | **Aceptado** |
+| 3 | «Las dos referencias coinciden» no es una guarda segura | D52 y D696: `Log` de base 0 da 0 en las dos referencias y null en el motor | **Aceptado:** la guarda se quita, y la base 0 es una decisión |
+| 4 | El rango contradice la cláusula «may support more precise values» | El motor da `Exp(100)` = 2,69e43, pero null para 1e24 (D558). Pasan el rango, en el motor D427, D379, D699, D780 y D4, y en Java D261, D535, D558, D65 y D755 | **Aceptado:** es una decisión |
+| 5 | `Round` no está abierto: «less than or equal to -0.5 and greater than -1.0 will round to -1» | Fable lo citó de Appendix B | **Aceptado:** es regla de la especificación |
+| 6 | `^(Integer, Integer) Integer` con exponente negativo | La conformance exige `Power(10,-7) = 0.0000001`, un Decimal (runtime.divergences.md:119). En D25 (`1000 ^ -3`), js da un Integer | **Aceptado:** el tipo lo fija la conformance, y el valor es cuestión de precisión |
+| 7 | El modelo (a) no está escrito: «las operaciones del #134» es un puntero, y el ADR 001 no menciona Decimal | D615: la resta y `Exp` no se recortan | **Aceptado:** la política de escala va a un ADR (002) con la tabla por operación, y el oráculo se escribe desde esa tabla |
+| 8 | La decisión cambia valores más allá de la cifra 8 | D380 da 65500 frente a 65499 exacto; también D450, D617, D455 y D80 | **Aceptado:** el conjunto válido lo decide |
+| 9 | `Product` con null: «geometric product of the elements», a diferencia de Sum, que dice «non-null elements» | Fable lo citó; son 12 filas de Java | **Aceptado:** se citan las dos frases, y se va a `undecided` si no alcanzan |
+| 10 | Las 11 «no codificadas» son NaN tipados, defectos de la referencia; y D711, un crash de js | D223, D241, D276 y otras | **Aceptado** |
+| 11 | El signo de `div` y `mod`: trunca hacia cero, y el resto lleva el signo del dividendo | 11 filas con operandos negativos | **Aceptado**, con controles `-7 div 3 = -2` y `-7 mod 3 = -1` |
+| 12 | Flotantes por plataforma: un flotante recortado a 1 ulp de la grilla cambia la cifra 8 | El CI corre solo en amd64 | **Aceptado:** esas filas se marcan ambiguas |
+| 13 | La tolerancia relativa general esconde defectos o inventa otros | D456 acepta un error de 10 000; falla con cancelaciones | **Aceptado:** cotas por operación, propagadas |
+| 14 | Los recuentos | Son 51 de Java por división por cero (D312 es `0 mod 0`) y 12 filas no codificadas | **Aceptado** |
+
+### El diseño del PR 4, ajustado
+
+**El oráculo calcula, para cada definición, un intervalo con todas las respuestas conformes, y la respuesta del motor por la política decidida.**
+
+1. **Las reglas discretas son exactas,** desde la especificación:
+   - el tipo de cada operación (con la conformance para `^` con exponente negativo);
+   - los null: argumento null, divisor 0, dominio de `Ln` y `Log`, fuera de rango según la decisión 2;
+   - los agregados sin null, y la lista sin elementos no null da null;
+   - `Variance` y `StdDev` de un elemento dan null: la muestral divide por n-1, y la inferencia queda escrita;
+   - `Round` según Appendix B, y `div`/`mod` truncados.
+
+   Un NaN o un Infinito nunca son un Decimal.
+2. **El conjunto conforme.** Para cada operación con valor exacto x (con 50 cifras de precisión), una implementación conforme da x redondeado a una escala k ≥ 8, de cualquier modo; o, si pasa por double, x(1 ± ε). El oráculo propaga ese intervalo por la expresión. En una operación monótona usa los extremos; en `Abs`, `^`, `Max`, `Min` y `Median`, los extremos y los puntos críticos.
+   - Si el intervalo cruza una discontinuidad (`Floor`, `Ceiling`, `Truncate`, `Round`, `div`, `mod`, el orden en `Max`, `Min` o `Median`, o la frontera del rango), la definición es **ambigua**: `undecided`, salvo que la referencia caiga fuera de todas las ramas.
+3. **La respuesta del motor** sale de la política del ADR 002, una tabla de operaciones y cómo se recorta cada una, escrita desde las decisiones del #134 y no desde `funcs`. Para los valores sin recortar se compara con 1e-13 relativo.
+
+**Las clases:**
+- Una regla discreta decide la fila: el motor se equivoca → `own defect`; la referencia se equivoca → `reference defect`.
+- El motor no da la política del ADR 002 → `own defect`.
+- El motor la da y la referencia cae en el intervalo conforme → `deliberate`: la especificación permite las dos, y el motor eligió su escala (decisión 1). El plan nombra las filas.
+- El motor la da y la referencia cae fuera del intervalo → `reference defect`.
+- Lo ambiguo, o la especificación sin texto → `undecided`.
+
+**Las guardas:**
+- toda fila sigue al oráculo;
+- se lee el corpus entero;
+- donde coinciden los tres motores, cada respuesta cae en el intervalo, con las excepciones nombradas;
+- la respuesta del motor por la política coincide fuera de las divergencias, y las excepciones se fijan;
+- la decisión nombra sus filas.
+
+Mutaciones: FLOOR por redondeo, una regla de null apagada, la tabla del ADR alterada, un literal corrupto, una cota ε demasiado ancha y `div` euclídea.
+
+**ADR 002, la escala de Decimal:** recoge las decisiones del #134 (FLOOR a 8, las operaciones que recortan y sus excepciones) en un documento con su tabla y su verificación. NUCLEO lo exige («nada hardcodeado sin ADR»), y el ADR 001 no lo cubre.
+
+### Aprobación del PR 4 y decisiones del usuario (19-10-2026)
+
+El usuario aprobó el diseño ajustado y el ADR 002, y tomó tres decisiones:
+1. **La precisión:** si la respuesta de una referencia cae en el intervalo conforme y el motor da su escala (FLOOR a 8), la fila es `deliberate`. El plan nombra las filas que cubre.
+2. **El rango:** un valor fuera del rango Decimal, |x| > (10^28−1)/10^8, es null («cannot be represented»). «May support more precise values» habla de cifras, no de magnitud.
+3. **`Log` en base 0:** es null. Las dos referencias, que dan 0, son `reference defect` (D52 y D696).
+
+   Las filas que cubre la decisión 1, escritas por `-classify-arithmetic`:
+
+<!-- arithmetic decision 1, written by -classify-arithmetic: begin -->
+D10 D103 D107 D108 D117 D120 D122 D127 D133 D137 D142 D144 D147 D166 D169 D190 D202 D203 D208 D214 D23 D233 D24 D249 D25 D256 D260 D265 D267 D282 D29 D298 D309 D310 D316 D332 D336 D340 D341 D354 D361 D363 D385 D397 D405 D431 D441 D448 D449 D455 D457 D459 D461 D463 D465 D468 D471 D472 D480 D484 D491 D516 D524 D53 D545 D546 D557 D56 D570 D584 D590 D600 D611 D615 D617 D622 D634 D646 D651 D653 D667 D674 D676 D677 D68 D680 D69 D697 D705 D707 D713 D723 D729 D735 D737 D747 D752 D762 D778 D8
+<!-- arithmetic decision 1: end -->
+
+### Implementación del PR 4
+
+**El oráculo** (`engine_arithmetic_oracle_test.go`) lee las 800 definiciones con su propio parser. Para cada una calcula dos cosas:
+- **El intervalo conforme.** El valor exacto con 40 cifras, ensanchado en cada operación por el redondeo a una escala de 8 o más (10^-8, solo si el valor pasa la escala) y por el error de binary64 (4·10^-16 relativo, solo si el valor no es un binary64 exacto). Los literales se ensanchan igual. Un escalón dentro del intervalo (`Floor`, `div` y los demás), un divisor que puede ser 0 o el borde del rango dejan la definición `undecided`.
+- **La respuesta por la política del ADR 002** (`docs/adr/002-escala-decimal.md`), que es nuevo.
+
+**La especificación, verificada:**
+- **Los agregados ignoran los null:** «In general, nulls encountered during aggregation are ignored» (Author's Guide). Esto zanjó 45 filas que el diseño dejaba `undecided`.
+- **`Variance` y `StdDev` dividen por n-1,** según los ejemplos de Appendix B. Una muestra de uno da null.
+
+**Las guardas:**
+- `TestTheArithmeticVerdictsFollowTheOracle`.
+- `TestTheArithmeticOracleReadsTheWholeCorpus`.
+- `TestTheScalePolicyIsConformant`: la política cae en el intervalo en todas las definiciones que la especificación decide.
+- `TestTheEngineFollowsTheScalePolicy`: el motor sigue la política fuera de las divergencias, y no hay ninguna excepción.
+- `TestTheScalePolicyHoldsItsControls`: 14 controles escritos a mano para las filas de la tabla que el corpus no alcanza (la resta pasada la escala, `Round` de las mitades, `div` y `mod` negativos, el cociente negativo), contra la política y contra el motor.
+- `TestTheArithmeticOracleAllowsWhatAllAgreeOn`: tiene 10 excepciones nombradas. En todas, Java y el motor dan error con un infinito, o un valor fuera de rango; el defecto del motor queda en la fila js.
+- `TestTheArithmeticDecisionNamesItsRows`.
+
+**Resultado:** las 243 filas tienen veredicto. La deuda de `arithmetic` baja de 240 a 5 `undecided`:
+- 4 por un cociente truncado en un número entero (D380, D450 y D80, las que la escala lleva a otro entero);
+- 1 por una potencia negativa de una base que puede ser 0 (D520).
+
+La evidencia está en `docs/evidence/2026-10-19.md` (`make evidence`).
+
+**Defectos propios del motor, en `arithmetic`** (12 filas):
+- `Ln(0)` y el desborde de `Exp` dan error en ejecución, y deberían dar null: D114, D115, D17, D212, D573 y D7;
+- `Exp` fuera del rango Decimal da un valor, y debería dar null (decisión 2): D379, D427, D699 y D780;
+- D4, en las dos filas.
+
+**La mutación de canje del 002** pasó a `types` D151 js, que sigue pendiente.
+
+**Mutaciones** (se agregaron 14 al script; se detectan las 60 de `003-evidence.sh` y las 30 del 002):
+- FLOOR cambiado por redondeo;
+- la resta recortada;
+- la división por cero que no da null;
+- un literal corrupto;
+- un error binary64 mucho más ancho;
+- ningún redondeo de escala;
+- `div` euclídea;
+- `Round` de la mitad hacia arriba;
+- los null de un agregado conservados;
+- una respuesta de cql-execution corrida en una millonésima;
+- una excepción que ya no lo es;
+- una fila menos en la decisión;
+- el motor fuera de la política donde no llega ninguna divergencia.
+
+### Review del PR 4, ronda 1 (Codex y Fable)
+
+| # | Hallazgo | Resolución |
+|---|---|---|
+| C1 (alto) | El ensanche admite un signo que ningún redondeo da: Codex cambió D25 java a -0.000000001 y la fila siguió `deliberate` | **Aceptado.** Redondear nunca cruza el 0. Mutación «a Java answer of a sign no rounding gives». |
+| C2 (alto) | Una fila ambigua se clasifica antes de mirar las respuestas: los errores de Java en D520 y D80 quedaban `undecided`, y lo mismo D380 con un valor imposible | **Aceptado.** Una fila ambigua es `own defect` si el motor no sigue la política. Es `reference defect` si la referencia da un error o un NaN (la aritmética nunca da error en ejecución), un tipo distinto, o un valor fuera de todas las ramas (`hull`, para un escalón). Mutación «an undecided reference answer outside every branch». D520 java y D80 java pasan a `reference defect`. |
+| C3 | `Median` pierde los null y la ambigüedad del par central | **Aceptado.** Se propagan. |
+| C4 / F1 | El tope de las potencias pierde la paridad, y `exp` por debajo de -60 da un 0 exacto | **Aceptado.** `cappedPower` conserva el signo y `exp` da 10^-60. Controles `Power((-1000.0), -15)` y `Exp(-70)`, y dos mutaciones. |
+| C5 | `Round` con precisión null da null; la especificación dice «If precision is not specified or null, 0 is assumed» | **Aceptado**, con su control y su mutación. |
+| C6 | `Avg` de Integers desborda antes de convertir | **Aceptado en el intervalo,** que era el que fallaba; la política ya convertía en `add`. Control `Avg({2000000000, 2000000000})` y mutación. |
+| F2 | Los flotantes por plataforma: la tolerancia no se propagaba por `Abs`, `-` y `*`, y un flotante recortado puede moverse un paso | **Aceptado.** La política se evalúa también con cada flotante movido una ulp de cada lado (`floatNudge`), y la tolerancia es lo que eso mueve. Con eso se resuelve el hallazgo adversarial 12. Fuera de los flotantes, la comparación es exacta. |
+| F3 | Un nombre de función desconocido se leía como `Round` | **Aceptado.** El parser lo rechaza. |
+| F4 | Reglas que el corpus no ejercita: el Integer de 32 bits, `Log` en base 1, la varianza de uno, la potencia par, la potencia exacta de `Log` | **Aceptado.** Hay un control escrito a mano para cada una (`scalePolicyControls`, ahora 24), contra la política, el intervalo y el motor. Las dos inferencias (`Log` en base 1 y la varianza de uno) quedan escritas como inferencias en el comentario del archivo. |
+| F5 | `Product` con null: la evidencia tiene que citar la frase de Appendix B que la guía resuelve | **Aceptado**, en el comentario de la regla. |
+
+**Resultado:** la deuda de `arithmetic` baja a 3 filas (D380 js, D450 js y D80 js), y la total a 234. Se detectan las 66 mutaciones de `003-evidence.sh` y las 30 del 002.
+
+### Review del PR 4, ronda 2 (Codex y Fable)
+
+| # | Hallazgo | Resolución |
+|---|---|---|
+| R2-C1 / R2-F1 (alto) | La tolerancia por ulp acepta respuestas equivocadas. Codex: la raíz exacta de D191 aceptaba 0.50000001. Fable: el rango de D116 aceptaba 2.5 entre 0 y 4.99999999 | **Aceptado.** Solo se mueven los floats de `Exp`, `Log` y `Pow`, cuyo libm no está bien redondeado; la raíz y la aritmética de binary64 sí lo están. La respuesta tiene que ser una de las tres evaluaciones (sin mover, +1 ulp, −1 ulp), no algo entre ellas. Mutaciones de D191 y D116. |
+| R2-C2 / R2-F2 | `Median` de la política sumaba los Integers centrales antes de convertirlos | **Aceptado**, con el control `Median({2000000000, 2000000000})`. |
+| R2-C3 | Una referencia null en una fila ambigua cuya envoltura no tiene ninguna rama null quedaba `undecided` | **Aceptado.** Una envoltura (`hull`) es de un escalón de un valor conocido, y ahí ninguna rama es null. Mutación con D380 js null. |
+| R2-F3 | En una fila ambigua, el tipo salía del intervalo, que lo da antes de decidir el tipo | **Aceptado.** El tipo se toma de la política, cuyas reglas de tipo son las de la especificación. |
+| R2-F4 (bajo) | Mover todos los floats para el mismo lado subestima los casos mixtos | **Se mantiene:** el revisor midió que en el peor caso produce un `own defect` espurio en la otra plataforma, nunca una aceptación falsa. |
+
+Se detectan las 69 mutaciones de `003-evidence.sh` y las 30 del 002.
+
+### Review del PR 4, ronda 3 (Codex y Fable): no converge
+
+Se llegó al tope de tres rondas con hallazgos de severidad media o mayor. Por el proceso §10, el trabajo se detiene y se consulta al usuario. Ningún hallazgo cambia hoy un veredicto del corpus: todos son holguras de las guardas, verificadas con mutaciones en las copias.
+
+| # | Hallazgo | Evidencia |
+|---|---|---|
+| R3-C1 (alto) | `Pow(x, 0.5)` se mueve por ulp aunque Go lo calcula con `Sqrt`, que está bien redondeado | D734 acepta 9.99990001, y `Power(4.0, 0.5)` acepta 1.99999999 |
+| R3-F1 (medio) | Las alternativas no se someten al intervalo conforme. Los casos exactos por IEEE (`Exp(0)`, `Pow(1, y)`) se mueven igual | D702 acepta 0.99999999, y D27 acepta 1.0000000000000002 |
+| R3-C2 (medio) | La envoltura de una fila ambigua pierde la restricción de cada rama: un `div` admite valores no enteros, y un producto de restos no negativos admite un negativo | D450 acepta -9.5, y D80 acepta -0.05 |
+| R3-F2 (medio) | `docs/evidence/2026-10-19.md` está desactualizado | Se regenera al cierre |
+| R3-F3 (pregunta) | D380 js y D450 js cumplen la condición de la decisión 1 (una rama conforme, y el motor en su escala) y quedan `undecided` | ¿Se extiende la decisión 1 a las envolturas? |
+
+**La señal de diseño:** los hallazgos de las rondas 2 y 3 vienen todos de dos mecanismos, las alternativas por ulp y las envolturas de las filas ambiguas. Los dos intentan aceptar más respuestas que el modelo exacto, y cada corrección dejó otra holgura.
+
+### Decisión del usuario tras la ronda 3: simplificar (19-10-2026)
+
+El usuario eligió quitar los dos mecanismos que originaban los hallazgos, en vez de corregirlos o cerrar con holguras conocidas.
+- **Las alternativas por ulp se van.** El motor se compara exactamente con la política, y la única excepción es un float de `Ln` o `Exp` sin recortar (también a través de `-`, `Abs` y `Negate`), que tolera 1e-13 relativo, como el snapshot. Si el libm de otra plataforma da otro último dígito en un valor recortado, el test falla a la vista, y se decide entonces.
+- **Las envolturas se van.** Una fila ambigua solo se decide si el motor no sigue la política (`own defect`), o si la referencia da un error, un NaN o un tipo distinto (`reference defect`). Qué valor da cada rama no se decide.
+- **Medido:** los 243 veredictos son idénticos a los de antes de simplificar, y la deuda de `arithmetic` sigue en 3. Se quitaron las dos mutaciones de las envolturas, y se detectan las 67 restantes de `003-evidence.sh` y las 30 del 002.
+
+### Review del PR 4, ronda 4 (Codex y Fable), sobre la simplificación
+
+| # | Hallazgo | Resolución |
+|---|---|---|
+| R4-C1 (medio) | La tolerancia de 1e-13 de un float sin recortar pasa más allá de lo conforme: D27 (`Exp(0)`) acepta 1.0000000000000002. Fable encontró lo mismo en D508, donde el 1e-13 relativo de un valor grande admite el valor recortado | **Aceptado.** La respuesta de un float sin recortar tiene que estar también en el intervalo conforme (`follows`). Mutación con D27. |
+| R4-C2 (medio) | El oráculo leía el snapshot, que tolera 1e-13: un cambio del motor en un valor recortado pasaba sin verse | **Aceptado.** `TestTheEngineFollowsTheScalePolicy` evalúa el motor en vivo (0,4 s, 200 MB). En cada definición, el motor sigue la política exactamente donde la sigue el snapshot. Mutación en `funcs/math_ops.go`: la potencia fraccionaria movida un float. |
+| R4-F1 (medio, condicional) | 21 veredictos guardaban los 16–17 dígitos del float de la política, y la comparación de texto exacta los rompería en una plataforma cuyo libm dé otro último dígito | **Aceptado.** El texto de un valor sin recortar guarda 13 cifras significativas («about …»). |
+| R4-F3 (cosmético) | El nombre de la mutación de D116 describía las alternativas que se quitaron | **Aceptado.** |
+| R3-F2 / R4-C3 (bajo) | `docs/evidence/2026-10-19.md` desactualizado | Lo regenera `make evidence`. |
+
+Los veredictos no cambian (243 idénticos). Se detectan las 69 mutaciones de `003-evidence.sh` y las 30 del 002.

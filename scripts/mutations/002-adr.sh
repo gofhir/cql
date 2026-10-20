@@ -228,7 +228,7 @@ mutations = [
     ("debt swapped: one divergence classified, another unclassified in its place",
      [("testdata/snapshots/integer.divergences.tsv", "D0\tjava\treference defect\t",
        "D0\tjava\tunclassified\t"),
-      ("testdata/snapshots/arithmetic.divergences.tsv", "D0\tjava\tunclassified\t", "D0\tjava\treference defect\t")],
+      ("testdata/snapshots/types.divergences.tsv", "D151\tjs\tunclassified\t", "D151\tjs\treference defect\t")],
      ["go", "test", "-count=1", "-run", "TestThePendingVerdictsDoNotGrow", "."],
      "has no verdict and is not in pending-verdicts.tsv"),
     ("an ADR names a test behind a build tag go test does not set",
