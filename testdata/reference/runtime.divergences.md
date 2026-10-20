@@ -224,13 +224,21 @@ reference that agrees. The test fails the day cql-execution agrees, and the
 rows then leave the list. If the Java engine changes instead, it fails with a
 different message, since that reopens the dispute rather than settling it.
 
-## Disputed: the scope of a definition
+## Settled: the scope of a definition
 
 A definition evaluates in the scope of its library, as the Java engine has
 it. cql-execution resolves the names in it in the scope it is referenced from,
 so a query alias, a let or a function operand of the same name stands in for
 them: `({10}) Y return D`, with `define Y: 1` and `define D: Y + 1`, is {11}
 there and {2} here (`DefinitionUnderAnAlias`).
+
+The specification decides it. CQL 1.5.3, Logical Specification, ExpressionRef:
+"The result of evaluating an ExpressionReference is the result of evaluating
+the referenced NamedExpression". An alias or a let is referenced "within the
+scope of a query" (AliasRef, QueryLetRef). The reference translator resolves the
+names that way, and cql-execution runs that same ELM. The `scope` area holds
+the same rule to 600 definitions with an oracle of its own
+(`engine_scope_oracle_test.go`, plan 003, PR 5).
 
 The rows — `DefinitionUnderAnAlias`, `DefinitionUnderALet`,
 `DefinitionUnderAWhere` and `DefinitionUnderAnOperand` — stay in
