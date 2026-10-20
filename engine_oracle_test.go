@@ -3,6 +3,7 @@ package cql
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"maps"
@@ -132,7 +133,14 @@ func snapshotEngineAnswer(engine *Engine, src, name string, patient json.RawMess
 		}
 	}()
 	v, err := engine.EvaluateExpression(context.Background(), src, name, patient, nil)
-	if err != nil {
+	// A library this engine refuses before running it is a translator's
+	// refusal, not a run-time error: the two are different answers.
+	var semantic *ErrSemantic
+	var syntax *ErrSyntaxError
+	switch {
+	case errors.As(err, &semantic), errors.As(err, &syntax):
+		return answers.Refused(err)
+	case err != nil:
 		return answers.Failed(err, false)
 	}
 	return answers.Value(v)

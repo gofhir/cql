@@ -25,7 +25,7 @@ import (
 // string, null, an error, a FHIR value, a list of those, or anything else as
 // its text.
 type Answer struct {
-	Kind     string // "number", "boolean", "string", "null", "error", "fhir", "list", "other"
+	Kind     string // "number", "boolean", "string", "null", "error", "refused", "fhir", "list", "other"
 	Text     string
 	Num      decimal.Decimal
 	Panicked bool
@@ -52,6 +52,9 @@ func Reference(raw json.RawMessage) Answer {
 	var v referenceValue
 	if err := json.Unmarshal(raw, &v); err != nil {
 		return Answer{Kind: "other", Text: string(raw)}
+	}
+	if v.Error == "Translation" {
+		return Answer{Kind: "refused", Text: "error: " + v.Message}
 	}
 	if v.Error != "" {
 		return Answer{Kind: "error", Text: "error: " + v.Message}
@@ -227,7 +230,7 @@ func Same(a, b Answer) bool {
 		}
 		scale := decimal.Max(a.Num.Abs(), b.Num.Abs())
 		return a.Num.Sub(b.Num).Abs().LessThanOrEqual(scale.Mul(floatTolerance))
-	case a.Kind == "error", a.Kind == "null":
+	case a.Kind == "error", a.Kind == "refused", a.Kind == "null":
 		return true
 	}
 	return a.Text == b.Text
@@ -299,6 +302,13 @@ func Failed(err error, panicked bool) Answer {
 		return Answer{Kind: "error", Text: fmt.Sprintf("PANIC: %v", err), Panicked: true}
 	}
 	return Answer{Kind: "error", Text: "error: " + err.Error()}
+}
+
+// Refused is the answer of a definition whose library does not compile: a
+// refusal before it runs, which is not the same answer as an error it meets
+// while it runs.
+func Refused(err error) Answer {
+	return Answer{Kind: "refused", Text: "error: " + err.Error()}
 }
 
 // floatDigits is the significant digits a float64 holds for certain, and
