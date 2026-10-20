@@ -268,9 +268,11 @@ const elementTypeSettled = "a list is a List<T>, and an interval an Interval<T>,
 
 // scopeSettled is how the rows on the scope of a definition were settled.
 const scopeSettled = "a definition evaluates in the scope of its library, not in the query or the function it " +
-	"is referenced from: an expression definition is a library-level declaration, and the names in it are the " +
-	"library's. The Java engine evaluates it so; cql-execution resolves its names in the caller's scope, where an " +
-	"alias, a let or an operand of the same name stands in for them"
+	"is referenced from: CQL 1.5.3, Logical Specification, ExpressionRef: \"The result of evaluating an " +
+	"ExpressionReference is the result of evaluating the referenced NamedExpression\", and an alias or a let is " +
+	"referenced \"within the scope of a query\" (AliasRef, QueryLetRef). The Java engine evaluates it so; " +
+	"cql-execution looks its names up through the context it is referenced from, where an alias, a let or an " +
+	"operand of the same name stands in for them (docs/plans/003-clasificar-divergencias.md, PR 5)"
 
 // overflowDecided is why a result past its type is null where neither
 // reference answers so.

@@ -7,19 +7,13 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 **003: dar veredicto a las divergencias pendientes.** Plan y registro: [003-clasificar-divergencias.md](003-clasificar-divergencias.md). Son cuatro PRs: el esquema, `types`, `fhir` y `arithmetic`.
 
 **Estado al 19-10-2026:**
-- **PR 1 (#151) y PR 2 (#152):** abiertos el 19-10-2026; el #152 está apilado sobre el #151. Falta seguir su CI y mergear (lo hace el usuario).
-- **PR 3, `fhir`:** implementado **sin commit** en la rama `test/classify-fhir`, apilada sobre la del PR 2. El usuario aprobó el diseño y tomó las dos decisiones (plan 003, «Aprobación del PR 3»).
-  - El comparador separa el rechazo del traductor del error en ejecución (`answers.Refused`). Aparecen 160 filas nuevas en `fhir`, y entran todas clasificadas.
-  - El oráculo está en `engine_fhir_oracle_test.go`, con siete tests. La deuda baja de 1037 a 471 (en `fhir`, de 593 a 27).
-  - Se detectan las 47 mutaciones de `003-evidence.sh` y las 30 del 002.
-  - Registro: plan 003, «Implementación del PR 3».
-  - La mutación de canje del 002 ya se movió a `types` D151 js (PR 4).
+- **PRs 1 a 4 mergeados** con squash: #151 (esquema), #152 (`types`), #153 (`fhir`) y #154 (`arithmetic`, ADR 002). `main` está en 093572c. Como cada squash rompe la pila, el PR siguiente se rebasó con `--onto` antes de cada merge.
+- **PR 5, `scope`:** está implementado **sin commit** en la rama `test/classify-scope`. El usuario aprobó el diseño. Las 180 filas son `reference defect`, y la deuda baja de 234 a 54. Se detectan las 84 mutaciones de `003-evidence.sh` y las 30 del 002. El issue de cql-execution está redactado y sin publicar. El review convergió en la ronda 2. Registro: plan 003, «Implementación del PR 5» y «Review del PR 5».
 
 **Próximo paso concreto:**
-1. PR 3 = #153 (apilado sobre el #152), abierto el 19-10-2026. Falta seguir el CI de #151, #152 y #153, y mergear (lo hace el usuario).
-2. **PR 4, `arithmetic`:** implementado sin commit en la rama `test/classify-arithmetic`, apilada sobre la del PR 3. El usuario aprobó el diseño y tomó tres decisiones. El ADR 002 está escrito, la deuda total baja de 471 a 234 (en `arithmetic`, a 3) y se detectan las 66 mutaciones. Registro: plan 003, «Implementación del PR 4» y «Review del PR 4». La ronda 3 no convergió, y el usuario eligió simplificar: sin alternativas por ulp y sin envolturas. Los hallazgos de la ronda 4 están corregidos (69 mutaciones). `make check` (602 s) y `make evidence` (393 s) quedaron en verde el 19-10. Se cerró sin ronda 5. Commit bd8995d, **PR #154** (base test/classify-fhir). **Próximo paso:** el PR 5, área `scope` (180 filas pendientes), para poder aceptar ADR 001. Detalle en el plan 003, rondas 1 a 4.
-3. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
-4. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío.
+1. `make check` (665 s) y `make evidence` (422 s, `docs/evidence/2026-10-20.md`) quedaron en verde el 20-10. Falta el commit y el PR del PR 5, que pide el usuario, y publicar el issue de cql-execution si el usuario lo aprueba.
+2. Las filas `undecided` que la especificación no decide se le presentan al usuario por grupo.
+3. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío. Después del PR 5 quedarían 54 filas.
 
 ## Pendientes, en orden
 

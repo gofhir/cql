@@ -688,3 +688,154 @@ El usuario eligió quitar los dos mecanismos que originaban los hallazgos, en ve
 | R3-F2 / R4-C3 (bajo) | `docs/evidence/2026-10-19.md` desactualizado | Lo regenera `make evidence`. |
 
 Los veredictos no cambian (243 idénticos). Se detectan las 69 mutaciones de `003-evidence.sh` y las 30 del 002.
+
+## PR 5: el área `scope` (diseño, 19-10-2026, pendiente de ronda adversarial)
+
+El 003 no planificó este PR. Con los PRs 1 a 4 mergeados (#151–#154), quedan 234 filas pendientes, y 180 son de `scope`.
+
+### Revisión previa
+
+- **Qué son las 180 filas:** todas son de cql-execution (`js`) y están `undecided`, con el mismo texto: «cql-execution resolves a definition's names in the caller's scope; disputed (runtime.divergences.md)». Java no tiene ninguna fila: coincide con este motor en las 600 definiciones.
+- **El corpus:** `gen -area scope -seed 1 -n 600`, con el preámbulo `scopePreamble` (`internal/referenceharness/differential/gen/main.go`). Las definiciones `A`, `B`, `C`, `DA`, `DB`, `DAB`, `DList` y `DQuery`, y las funciones `F`, `G`, `H` y `Up`. Las consultas ligan `A`, `B`, `C` y `Q` como alias, `let` y operandos, y así ocultan los nombres de las definiciones. La gramática es chica: literales enteros, `+`, `-`, `*`, las llamadas, `Sum`, `Count` y `Max`, y consultas con `let`, `where` y `return`. El motor responde 500 Integer y 100 null.
+- **Qué hace la referencia:** el traductor de referencia ya resolvió cada nombre al traducir. En `DQuery` (`({ 2, 3 }) A return A + B`), el ELM tiene `Add(AliasRef A, ExpressionRef B)`, medido traduciendo `scope.cql` con `Translate.java` el 19-10-2026. cql-execution ejecuta **ese mismo ELM** (`evaluate.js`), y aun así busca el nombre en la cadena de contextos de quien llama. Un ejemplo es `D4` (`Sum((({ 3, 4 }) C where G(2) > 5 return Max(DList)))`): Java y este motor dan 100, y cql-execution da 10, porque toma el alias `C` para el `C` de `DList`. *(Corregido en la ronda adversarial: el ejemplo era `D5`, que da 25 en los tres motores.)*
+- **La especificación** (CQL 1.5.3, Logical Specification, Reusing Logic y Queries) dice:
+  - ExpressionRef: «The result of evaluating an ExpressionReference is the result of evaluating the referenced NamedExpression».
+  - AliasRef: «allows for the reference of a specific source within the scope of a query».
+  - QueryLetRef: «a specific let definition within the scope of a query».
+  - OperandRef: «the value of an operand to be referenced as part of an expression within the body of a function definition».
+
+  De ahí se infiere (es una inferencia, no una frase de la especificación) que el resultado de una referencia no depende de quién la llama. El ámbito de un alias es su consulta, y el de un operando, el cuerpo de su función.
+- **`gofhir/server`:** no aplica. Usa esta librería y no evalúa CQL por su cuenta.
+- **El registro anterior** (`testdata/reference/runtime.divergences.md`, «Disputed: the scope of a definition») dejó la diferencia como disputa, sin cita. Las cuatro filas de `disputedRuntimeAnswers` son del corpus `runtime`, y quedan fuera de este PR.
+
+### El oráculo
+
+`engine_scope_oracle_test.go` tiene un parser de la gramática del corpus, que rechaza lo que no conoce, y un evaluador con **ámbito léxico**:
+- Una definición se evalúa en el ámbito vacío de la biblioteca.
+- Una función se evalúa solo con sus operandos.
+- Un alias y un `let` se ven solo dentro de su consulta.
+
+Reglas que toma de la especificación, cada una con su cita en un comentario:
+- **`return` es distinct** si no dice `all` (Queries, Return clause).
+- **`where`** se queda solo con los elementos cuya condición es true: null descarta.
+- **`Sum` y `Max`** ignoran los null y dan null sobre una lista vacía. **`Count`** cuenta los no null.
+- **La aritmética con null** da null.
+- **El Integer es de 32 bits** (ADR 002): un desborde da null.
+
+### Veredictos
+
+- El motor distinto del oráculo es `own defect`.
+- La referencia distinta del oráculo es `reference defect`, y la evidencia cita la regla de ExpressionRef y el ELM.
+- Una referencia que no se puede leer queda `unclassified`.
+
+No se espera ninguna fila `deliberate` ni `undecided`.
+
+### Guardas y mutaciones
+
+- `TestTheScopeOracleReadsTheWholeCorpus`: el parser lee las 600 definiciones.
+- `TestTheScopeOracleAgreesWithJava`: el oráculo da la respuesta de Java en las 600. Es una segunda opinión independiente del motor.
+- `TestTheEngineFollowsTheScopeOracle`: el motor, evaluado en vivo, da la respuesta del oráculo en las 600.
+- `TestTheScopeVerdictsFollowTheOracle`: cada fila tiene el veredicto que computa el oráculo, regenerable con `-classify-scope`.
+- Mutaciones en `003-evidence.sh`:
+  - un oráculo con ámbito dinámico, es decir, el defecto de cql-execution;
+  - `return` sin distinct;
+  - un `where` que deja pasar el null;
+  - un `Sum` vacío que da 0;
+  - una respuesta de Java corrupta;
+  - el motor con una definición evaluada en el ámbito de quien llama;
+  - un veredicto cambiado.
+
+### Criterio de salida
+
+Las 180 filas de `scope` tienen veredicto y `pending-verdicts.tsv` las suelta: la deuda baja de 234 a 54. Pasan `make check` y `make evidence`, y se detectan todas las mutaciones.
+
+### Lo que queda fuera
+
+- Las cuatro filas de `disputedRuntimeAnswers` del corpus `runtime`, que caben en la misma regla y van en un PR propio.
+- Las 54 filas pendientes de otras áreas: 24 de `types`, 27 de `fhir` y 3 de `arithmetic`. Sin ellas, el ADR 001 no puede pasar a «Aceptado».
+- Reportarle el defecto a cql-execution: se redacta el issue, y se publica solo si el usuario lo aprueba (principio 10).
+
+### Ronda adversarial del PR 5 (Codex y Fable)
+
+Los dos confirman la lectura de ámbito léxico de la especificación. Fable, con un evaluador independiente en Python, midió que el modelo léxico, Java y este motor coinciden en las 600 definiciones.
+
+| # | Hallazgo | Resolución |
+|---|---|---|
+| A1 (alto, los dos) | El ejemplo `D5` es falso: da 25 en los tres motores y no tiene fila de divergencia | **Aceptado.** El ejemplo pasa a ser `D4`, medido (100 contra 10). |
+| A2 (alto, Fable) | El mecanismo no es solo «el ámbito de quien llama». cql-execution busca el nombre en la cadena de contextos (`ctx.get`) **y memoiza** el primer valor de la definición en ese contexto. Sin la memoización, el modelo explica 65 de las 180 filas. Depende además del arnés: `evaluate.js` corre cada definición en un contexto nuevo | **Aceptado, y verificado con su sonda:** con memoización, 0 de 180 filas no coinciden; sin ella, 115. La evidencia de los veredictos y el issue de cql-execution describen los dos efectos. |
+| A3 (alto, los dos) | Hay reglas que el corpus no ejercita, y sus mutaciones no se pueden detectar: el desborde nunca ocurre, `Count` y `Max` solo reciben `DList` y `DQuery` (sin null ni lista vacía), `Sum` con un null nunca cambia una fila, y una función que ve el ámbito de quien llama no cambia ninguna | **Aceptado como lo propone Codex**, igual que en el PR 4: hay controles escritos a mano, con su cita de la especificación, para el null, las listas mixtas y vacías, una proyección null, un `Max` de negativos y un desborde intermedio. Se comparan contra el oráculo y contra el motor en vivo, y cada regla tiene su mutación. La mutación de ámbito dinámico es de **definiciones** (210 filas); la de funciones se prueba con un control. |
+| A4 (medio, Codex) | Faltan casos de ligado: un `let` que oculta un alias exterior, un alias exterior correlacionado, la fuente evaluada antes de ligar su alias, el inicializador de un `let` evaluado antes de ligarlo (`D16`, `let B: B`), y el receptor fluido evaluado en el ámbito de quien llama | **Aceptado.** Cada uno es un control escrito a mano, porque el generador excluye un `let` que oculte un nombre ya ligado. |
+| A5 (medio, los dos) | Independencia: el oráculo tiene que leer de `scope.cql` el preámbulo (ocho definiciones y cuatro cuerpos), rechazar la sintaxis desconocida y el texto sobrante, y no llamar al parser ni al evaluador del motor | **Aceptado.** El oráculo lee el preámbulo del archivo, y hay una mutación del preámbulo. `TestTheScopeOracleAgreesWithJava` es la segunda opinión; los valores esperados salen del oráculo. |
+| A6 (medio y bajo) | Las cuatro filas de `runtime` ya tienen veredicto (`scopeSettled`); les falta la cita | **Aceptado en este PR**, porque es solo el texto: `scopeSettled` y `runtime.divergences.md` citan ExpressionRef y dejan de decir «Disputed». Los pines quedan como están. |
+| A7 (bajo, Fable) | No citar ExpressionDef: su contexto es Patient o Unfiltered, no el ámbito léxico | **Aceptado.** |
+
+### Aprobación del PR 5 (19-10-2026)
+
+El usuario aprobó el diseño ajustado, y pidió dejar redactado el issue para cql-execution sin publicarlo.
+
+### Implementación del PR 5
+
+- **`engine_scope_oracle_test.go`:**
+  - Parser de la gramática del corpus, que rechaza la sintaxis desconocida y el texto sobrante. Lee de `scope.cql` el preámbulo, sus 8 definiciones y sus 4 funciones.
+  - Evaluador con ámbito léxico, que no comparte código con el motor.
+  - 21 controles escritos a mano, cada uno con su regla.
+- **Seis tests:**
+  - `TestTheScopeOracleReadsTheWholeCorpus`;
+  - `TestTheScopeOracleAgreesWithJava`, que da las 600 iguales;
+  - `TestTheEngineFollowsTheScopeOracle`, en vivo y contra el snapshot;
+  - `TestTheScopeOracleHoldsItsControls`, contra el oráculo y el motor en vivo;
+  - `TestTheScopeVerdictsFollowTheOracle`, regenerable con `-classify-scope`;
+  - el test de los rechazos, dentro de `ReadsTheWholeCorpus`.
+- **Veredictos:** las 180 filas son `reference defect`. La deuda total baja de 234 a **54**: 24 de `types`, 27 de `fhir` y 3 de `arithmetic`.
+- **`runtime`:** `scopeSettled` y `runtime.divergences.md` («Settled: the scope of a definition») citan ExpressionRef.
+- **Mutaciones:** 12 nuevas en `003-evidence.sh`. Ocho son del oráculo: ámbito dinámico de definiciones, `return` sin distinct, `where` que deja pasar el null, agregado vacío igual a 0, `Count` que cuenta los null, Integer sin límite de 32 bits, alias ligado antes que su fuente, y `let` ligado antes que su valor. Las otras cuatro son el preámbulo mal leído, una respuesta de Java corrupta, el motor con una definición evaluada en el ámbito de quien llama (`eval/evaluator.go`) y un veredicto cambiado. Seis mutaciones antiguas usaban como ejemplo de `undecided` la fila D1 js de `scope`, y pasaron a D380 js de `arithmetic`. Se detectaban entonces las 81 de `003-evidence.sh` y las 30 del 002; después de la ronda 1 son 84.
+- **Lo que no se puede verificar:** una función que viera el ámbito de quien llama no cambia ninguna respuesta. Los cuerpos del preámbulo solo nombran sus operandos y definiciones, así que esa regla queda sin mutación detectable.
+
+### Issue para cql-execution (redactado, sin publicar)
+
+No hay duplicado abierto. El #46 («Scoping Issue in CoffeeScript CQL Execution», cerrado en 2021) trataba de un alias dentro de una función, y se atribuyó al traductor.
+
+> **A definition's value depends on the scope it is first referenced from**
+>
+> cql-execution 3.3.2, with the ELM of the reference translator (cql-to-elm, the same version as engine 3.26.0):
+>
+> ```cql
+> library Repro version '1.0'
+> define C: 100
+> define DList: { 1, C }
+> define Test: ({ 3 }) C return Max(DList)
+> ```
+>
+> ```js
+> const lib = new cql.Library(elm);
+> (await new cql.Executor(lib).exec(new cql.PatientSource([]))).unfilteredResults.Test; // [100]
+> await lib.expressions.Test.exec(new cql.UnfilteredContext(lib, new cql.Results(), undefined, {})); // [3]
+> ```
+>
+> The Java engine gives `{ 100 }` either way. The translator resolves the `C` in `DList` as `ExpressionRef C`. When `DList` is first evaluated from inside the query, cql-execution looks `C` up through the context it is referenced from, where the alias `C` stands in for it, and keeps the value `DList` took there for the rest of the evaluation. `Executor.exec` hides this whenever the definition was evaluated earlier at the top level, in an empty scope, so the result depends on the order of evaluation.
+>
+> CQL 1.5.3, Logical Specification, ExpressionRef: "The result of evaluating an ExpressionReference is the result of evaluating the referenced NamedExpression". An alias is referenced "within the scope of a query" (AliasRef). In a differential of 600 generated definitions, each evaluated on its own, 180 differ from the Java engine. Looking the name up in the caller's context alone explains 65 of them; with the kept value, it explains all 180.
+>
+> The fix is probably to evaluate the expression of an `ExpressionRef` in a context holding only the library's definitions and parameters, not the aliases, lets and operands of the context it is referenced from.
+
+Medido el 19-10-2026, con `Translate.java`, `Evaluate.java` y un script de `cql-execution` 3.3.2 en el arnés: Java da `{ 100 }`. cql-execution da `[100]` con `Executor.exec` y `[3]` con `Test` evaluado solo. Este último detalle lo aportó la ronda 1 del review (Codex).
+
+### Review del PR 5, ronda 1 (Codex y Fable)
+
+Fable no deja hallazgos medios ni altos. Codex deja tres medios.
+
+| # | Hallazgo | Resolución |
+|---|---|---|
+| C1 (medio) | Ningún control tiene un `let` que oculte un alias exterior (A4): un oráculo que dejara el alias en su lugar pasaba todo | **Aceptado.** Control `Sum(({ 9 }) B return Sum(({ 1 }) Q let B: Q return B))` = 1, y su mutación. |
+| C2 / F2 (medio) | El distinct de los null no se verifica: los agregados ignoran los null | **Aceptado.** Los controles pueden ser listas, escritas como las escribe el motor: `({ 1, 2 }) Q return null` es `List {null}`, y `({ 3, 4, 3 }) Q return Q` es `List {3, 4}`. Hay mutación. |
+| C3 (medio) | El issue de cql-execution no se reproduce con `Executor.exec`, porque las definiciones de arriba llenan su caché | **Aceptado y medido:** `Executor.exec` da `[100]`, y `Test` evaluado solo da `[3]`. El issue trae las dos invocaciones y la dependencia del orden de evaluación. La evidencia de las 180 filas dice que el arnés evalúa cada definición en un contexto propio. |
+| F1 (bajo) | La precedencia no se ejercita: el generador pone paréntesis en todo | **Aceptado:** control `(1 + 2 * 3)` = 7. |
+| F3 (bajo) | `Count(null)` = 0 no tiene control | **Aceptado:** controles `Count(null)`, `Sum(null)` y `Max(null)`, y una mutación. |
+| F4 (bajo) | El oráculo aceptaba lo que CQL rechaza: un literal fuera del rango de Integer y un `where` que no es Boolean | **Aceptado:** los dos dan error, y están en la lista de rechazos. |
+| F5 (nit) | `regexp.MustCompile` dentro de los bucles | **Aceptado.** |
+
+Se detectan las 84 mutaciones de `003-evidence.sh`.
+
+### Review del PR 5, ronda 2 (Codex y Fable): converge
+
+Ninguno de los dos deja hallazgos medios ni altos. Codex volvió a traducir y ejecutar el corpus con cql-execution: las 600 respuestas son las del snapshot, con las mismas 180 divergencias, y la reproducción del issue (`[100]` con `Executor.exec` y `[3]` evaluado solo) se repite. Fable dejó dos bajos, aceptados: un agregado rechaza un elemento que no es Integer ni null (`Count({ 1 > 0 })` y `Sum({ { 1 } })` se suman a la lista de rechazos), y la cifra de mutaciones del registro de la implementación quedó corregida. Se detectan las 84 mutaciones.
