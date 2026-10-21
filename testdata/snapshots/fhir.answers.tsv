@@ -95,7 +95,7 @@ D182	error: CQL semantic error: error: in D182: FHIR.Patient is not a number
 D183	null
 D184	Boolean false
 D185	Boolean false
-D186	Code{system: "", code: "", display: "", version: ""}
+D186	Code{system: null, code: null, display: null, version: null}
 D187	Boolean true
 D188	error: CQL evaluation error: cast failed: cannot convert Quantity to dateTime
 D189	error: CQL evaluation error: cast failed: cannot convert String to code
@@ -241,7 +241,7 @@ D313	null
 D314	error: CQL evaluation error: cast failed: cannot convert Integer to Quantity
 D315	error: CQL semantic error: error: in D315: Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is not a number
 D316	null
-D317	Code{system: "", code: "", display: "", version: ""}
+D317	Code{system: null, code: null, display: null, version: null}
 D318	Boolean false
 D319	error: CQL semantic error: error: in D319: System.ValueSet is not a number
 D32	error: CQL evaluation error: DateTime is not a number or a quantity
@@ -261,7 +261,7 @@ D331	error: CQL evaluation error: ValueSet is not a number or a quantity
 D332	null
 D333	error: CQL evaluation error: cast failed: cannot convert String to Quantity
 D334	Boolean true
-D335	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D335	Coding{code: Code{system: null, code: null, display: null, version: null}}
 D336	Boolean false
 D337	Boolean false
 D338	null
@@ -399,7 +399,7 @@ D456	error: CQL evaluation error: cast failed: cannot convert Quantity to date
 D457	null
 D458	null
 D459	Boolean true
-D46	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D46	Coding{code: Code{system: null, code: null, display: null, version: null}}
 D460	Boolean true
 D461	error: CQL semantic error: error: in D461: Choice<System.ValueSet, System.Quantity> is not a number
 D462	error: CQL evaluation error: cast failed: cannot convert Coding to integer
@@ -446,7 +446,7 @@ D499	error: CQL evaluation error: cast failed: cannot convert DateTime to Domain
 D5	String "{\"start\": \"2020-01-01\", \"end\": \"2020-01-03T10:00:00Z\"}"
 D50	Quantity 6 'mg'
 D500	Boolean true
-D501	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D501	Coding{code: Code{system: null, code: null, display: null, version: null}}
 D502	String "2020-02-02"
 D503	Boolean true
 D504	Boolean false
@@ -509,7 +509,7 @@ D555	Boolean true
 D556	Quantity 5 'mg'
 D557	DateTime 2020-02-02
 D558	null
-D559	Code{system: "", code: "", display: "", version: ""}
+D559	Code{system: null, code: null, display: null, version: null}
 D56	error: CQL evaluation error: cast failed: cannot convert String to Resource
 D560	Boolean true
 D561	Boolean false
@@ -681,7 +681,7 @@ D71	error: CQL evaluation error: cast failed: cannot convert String to Period
 D710	Boolean true
 D711	Boolean true
 D712	null
-D713	Code{system: "", code: "", display: "", version: ""}
+D713	Code{system: null, code: null, display: null, version: null}
 D714	String "1980-01-01"
 D715	null
 D716	error: CQL evaluation error: cast failed: cannot convert List to Element
@@ -727,7 +727,7 @@ D751	error: CQL evaluation error: cast failed: cannot convert Quantity to Domain
 D752	null
 D753	Boolean false
 D754	error: CQL semantic error: error: in D754: Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is not a number
-D755	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D755	Coding{code: Code{system: null, code: null, display: null, version: null}}
 D756	error: CQL evaluation error: cast failed: cannot convert Coding to DomainResource
 D757	Integer 7
 D758	Boolean true
@@ -752,7 +752,7 @@ D774	null
 D775	null
 D776	String "abc"
 D777	Quantity 5 'mg'
-D778	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D778	Coding{code: Code{system: null, code: null, display: null, version: null}}
 D779	Boolean true
 D78	Boolean false
 D780	error: CQL semantic error: error: in D780: Choice<FHIR.boolean, FHIR.dateTime> is not a number
@@ -820,7 +820,7 @@ D835	null
 D836	null
 D837	error: CQL evaluation error: cast failed: cannot convert Quantity to Resource
 D838	error: CQL evaluation error: cast failed: cannot convert CodeableConcept to Code
-D839	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D839	Coding{code: Code{system: null, code: null, display: null, version: null}}
 D84	Boolean false
 D840	null
 D841	Boolean true
@@ -855,7 +855,7 @@ D867	Boolean true
 D868	Boolean false
 D869	Boolean true
 D87	String "abc"
-D870	Coding{code: Code{system: "", code: "", display: "", version: ""}}
+D870	Coding{code: Code{system: null, code: null, display: null, version: null}}
 D871	null
 D872	Boolean true
 D873	error: CQL evaluation error: cast failed: cannot convert Code to Quantity

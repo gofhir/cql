@@ -52,7 +52,7 @@ D143	null
 D144	Boolean true
 D145	Boolean true
 D146	Boolean true
-D147	Code{system: "", code: "x", display: "", version: ""}
+D147	Code{system: null, code: "x", display: null, version: null}
 D148	null
 D149	error: CQL evaluation error: cast failed: cannot convert Interval to Integer
 D15	Boolean true
@@ -92,7 +92,7 @@ D18	Boolean false
 D180	Boolean true
 D181	Boolean true
 D182	Boolean true
-D183	Code{system: "", code: "x", display: "", version: ""}
+D183	Code{system: null, code: "x", display: null, version: null}
 D184	null
 D185	Boolean false
 D186	Time 10:00:00
@@ -101,7 +101,7 @@ D188	Boolean false
 D189	Boolean true
 D19	null
 D190	Boolean false
-D191	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D191	Concept{codes: [Code{system: null, code: "x", display: null, version: null}], display: null}
 D192	null
 D193	DateTime 2020-01-01T10:00:00.000Z
 D194	Boolean false
@@ -127,7 +127,7 @@ D210	Boolean false
 D211	Boolean true
 D212	Boolean true
 D213	null
-D214	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D214	Concept{codes: [Code{system: null, code: "x", display: null, version: null}], display: null}
 D215	Boolean true
 D216	Boolean false
 D217	Boolean true
@@ -143,7 +143,7 @@ D225	Boolean false
 D226	error: CQL evaluation error: cast failed: cannot convert List to Date
 D227	null
 D228	Boolean true
-D229	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D229	Concept{codes: [Code{system: null, code: "x", display: null, version: null}], display: null}
 D23	Boolean true
 D230	Boolean false
 D231	Boolean false
@@ -312,7 +312,7 @@ D378	null
 D379	error: CQL evaluation error: cast failed: cannot convert Date to Long
 D38	Boolean true
 D380	Boolean false
-D381	Code{system: "", code: "x", display: "", version: ""}
+D381	Code{system: null, code: "x", display: null, version: null}
 D382	Boolean false
 D383	error: CQL evaluation error: cast failed: cannot convert Time to Decimal
 D384	Boolean false
@@ -377,7 +377,7 @@ D436	Boolean true
 D437	Boolean true
 D438	Boolean true
 D439	Boolean true
-D44	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D44	Concept{codes: [Code{system: null, code: "x", display: null, version: null}], display: null}
 D440	Boolean true
 D441	Decimal 5
 D442	null
@@ -424,7 +424,7 @@ D479	null
 D48	Boolean false
 D480	Interval[Integer 1, null]
 D481	null
-D482	Code{system: "", code: "x", display: "", version: ""}
+D482	Code{system: null, code: "x", display: null, version: null}
 D483	Boolean false
 D484	Boolean false
 D485	Boolean true
@@ -455,7 +455,7 @@ D506	Boolean false
 D507	Boolean false
 D508	Boolean true
 D509	null
-D51	Code{system: "", code: "x", display: "", version: ""}
+D51	Code{system: null, code: "x", display: null, version: null}
 D510	List[String "a"]
 D511	DateTime 2020-01-01T10:00:00.000Z
 D512	Boolean true
@@ -638,7 +638,7 @@ D671	Boolean false
 D672	null
 D673	Boolean true
 D674	Boolean true
-D675	Concept{codes: [Code{system: "", code: "x", display: "", version: ""}], display: ""}
+D675	Concept{codes: [Code{system: null, code: "x", display: null, version: null}], display: null}
 D676	Boolean true
 D677	Boolean true
 D678	Boolean false
@@ -655,7 +655,7 @@ D687	Boolean false
 D688	Boolean false
 D689	null
 D69	Boolean true
-D690	Code{system: "", code: "x", display: "", version: ""}
+D690	Code{system: null, code: "x", display: null, version: null}
 D691	null
 D692	null
 D693	null
@@ -666,7 +666,7 @@ D697	Boolean false
 D698	List[]
 D699	error: CQL evaluation error: cast failed: cannot convert Interval to Integer
 D7	Boolean false
-D70	Code{system: "", code: "x", display: "", version: ""}
+D70	Code{system: null, code: "x", display: null, version: null}
 D700	null
 D701	null
 D702	Boolean true
@@ -765,7 +765,7 @@ D786	Boolean true
 D787	Boolean true
 D788	Boolean true
 D789	List[]
-D79	Code{system: "", code: "x", display: "", version: ""}
+D79	Code{system: null, code: "x", display: null, version: null}
 D790	Boolean true
 D791	Boolean false
 D792	Boolean true

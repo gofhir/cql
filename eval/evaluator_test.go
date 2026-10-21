@@ -932,7 +932,7 @@ func TestEvalInCodeSystem(t *testing.T) {
 	ctx := NewContext(context.Background(), lib)
 	ev := NewEvaluator(ctx)
 
-	code := cqltypes.NewCode("http://loinc.org", "12345-6", "Test")
+	code := cqltypes.NewCode(cqltypes.Str("http://loinc.org"), cqltypes.Str("12345-6"), cqltypes.Str("Test"), nil)
 	result, err := ev.evalInCodeSystem(code, &ast.IdentifierRef{Name: "LOINC"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -940,7 +940,7 @@ func TestEvalInCodeSystem(t *testing.T) {
 	assertBoolean(t, result, true, "InCodeSystem(matching)")
 
 	// Different system → false
-	code2 := cqltypes.NewCode("http://snomed.info/sct", "123", "Test")
+	code2 := cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("123"), cqltypes.Str("Test"), nil)
 	result, err = ev.evalInCodeSystem(code2, &ast.IdentifierRef{Name: "LOINC"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1046,8 +1046,8 @@ func TestAnyInCodeSystem_ListWithMatch(t *testing.T) {
 	ev := NewEvaluator(ctx)
 
 	codes := cqltypes.NewList(fptypes.Collection{
-		cqltypes.NewCode("http://loinc.org", "12345-6", "Test"),
-		cqltypes.NewCode("http://snomed.info/sct", "123", "Other"),
+		cqltypes.NewCode(cqltypes.Str("http://loinc.org"), cqltypes.Str("12345-6"), cqltypes.Str("Test"), nil),
+		cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("123"), cqltypes.Str("Other"), nil),
 	})
 	result, err := ev.evalAnyInCodeSystem(codes, "LOINC")
 	if err != nil {
@@ -1096,7 +1096,7 @@ func TestAnyInCodeSystem_NoMatch(t *testing.T) {
 	ev := NewEvaluator(ctx)
 
 	codes := cqltypes.NewList(fptypes.Collection{
-		cqltypes.NewCode("http://snomed.info/sct", "123", "Test"),
+		cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("123"), cqltypes.Str("Test"), nil),
 	})
 	result, err := ev.evalAnyInCodeSystem(codes, "LOINC")
 	if err != nil {
@@ -1145,7 +1145,7 @@ func TestAnyInCodeSystem_BuiltinDispatch(t *testing.T) {
 
 	// Construct AST: AnyInCodeSystem(Code{loinc, 12345}, "LOINC")
 	// We need to use a literal that will evaluate to a Code — use IdentifierRef pointing to a definition
-	ctx.Definitions["myCode"] = cqltypes.NewCode("http://loinc.org", "12345-6", "Test")
+	ctx.Definitions["myCode"] = cqltypes.NewCode(cqltypes.Str("http://loinc.org"), cqltypes.Str("12345-6"), cqltypes.Str("Test"), nil)
 	fc := &ast.FunctionCall{
 		Name: "AnyInCodeSystem",
 		Operands: []ast.Expression{
@@ -1166,7 +1166,7 @@ func TestResolveCodeRef(t *testing.T) {
 			{Name: "LOINC", ID: "http://loinc.org"},
 		},
 		Codes: []*ast.CodeDef{
-			{Name: "HeartRate", ID: "8867-4", Display: "Heart rate", System: "LOINC"},
+			{Name: "HeartRate", ID: "8867-4", Display: cqltypes.Str("Heart rate"), System: "LOINC"},
 		},
 	}
 	ctx := NewContext(context.Background(), lib)
@@ -1180,11 +1180,11 @@ func TestResolveCodeRef(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected Code, got %T", result)
 	}
-	if code.Code != "8867-4" {
-		t.Errorf("code = %q, want %q", code.Code, "8867-4")
+	if cqltypes.Deref(code.Code) != "8867-4" {
+		t.Errorf("code = %q, want %q", cqltypes.Deref(code.Code), "8867-4")
 	}
-	if code.System != "http://loinc.org" {
-		t.Errorf("system = %q, want %q", code.System, "http://loinc.org")
+	if cqltypes.Deref(code.System) != "http://loinc.org" {
+		t.Errorf("system = %q, want %q", cqltypes.Deref(code.System), "http://loinc.org")
 	}
 }
 
@@ -1200,7 +1200,7 @@ func TestResolveCodeRef_NotFound(t *testing.T) {
 
 func TestExtractCodeComponents(t *testing.T) {
 	// From Code type
-	code := cqltypes.NewCode("http://loinc.org", "12345-6", "Test")
+	code := cqltypes.NewCode(cqltypes.Str("http://loinc.org"), cqltypes.Str("12345-6"), cqltypes.Str("Test"), nil)
 	system, codeVal := extractCodeComponents(code)
 	if system != "http://loinc.org" {
 		t.Errorf("system = %q, want http://loinc.org", system)

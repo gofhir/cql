@@ -179,6 +179,20 @@ func containerVerdict(left, right fptypes.Value) (elementVerdict, bool) {
 		}
 		return verdictOf([][2]fptypes.Value{{l.Low, r.Low}, {l.High, r.High}}), true
 
+	case cqltypes.Code:
+		r, ok := right.(cqltypes.Code)
+		if !ok {
+			return elementsUnequal, false
+		}
+		return codeVerdict(l, r), true
+
+	case cqltypes.Concept:
+		r, ok := right.(cqltypes.Concept)
+		if !ok {
+			return elementsUnequal, false
+		}
+		return conceptVerdict(l, r), true
+
 	case cqltypes.Ratio:
 		r, ok := right.(cqltypes.Ratio)
 		if !ok {
@@ -190,6 +204,64 @@ func containerVerdict(left, right fptypes.Value) (elementVerdict, bool) {
 		}), true
 	}
 	return elementsUnequal, false
+}
+
+// codeVerdict is `=` on two Codes. CQL 1.5 compares a structured type as "a
+// conjunction of equality comparisons" of its elements, so, unlike the walk of
+// a list, order does not decide: an element that differs makes it false
+// wherever it is, and only then an element null on one side makes it null.
+// The Java engine 3.26.0 answers null whenever an element is null on one side;
+// plan 004 follows the specification.
+func codeVerdict(a, b cqltypes.Code) elementVerdict {
+	return conjunction(
+		elementTextVerdict(a.Code, b.Code),
+		elementTextVerdict(a.Display, b.Display),
+		elementTextVerdict(a.System, b.System),
+		elementTextVerdict(a.Version, b.Version),
+	)
+}
+
+// conceptVerdict is `=` on two Concepts: the conjunction of their codes, a
+// list compared in order, and their displays.
+func conceptVerdict(a, b cqltypes.Concept) elementVerdict {
+	codes := elementsUnequal
+	if len(a.Codes) == len(b.Codes) {
+		verdicts := make([]elementVerdict, len(a.Codes))
+		for i := range a.Codes {
+			verdicts[i] = codeVerdict(a.Codes[i], b.Codes[i])
+		}
+		codes = conjunction(verdicts...)
+	}
+	return conjunction(codes, elementTextVerdict(a.Display, b.Display))
+}
+
+// elementTextVerdict compares two String elements: null on both sides is the
+// same, null on one side is unknown, and texts compare exactly.
+func elementTextVerdict(a, b *string) elementVerdict {
+	switch {
+	case a == nil && b == nil:
+		return elementsEqual
+	case a == nil || b == nil:
+		return elementsUnknown
+	case *a == *b:
+		return elementsEqual
+	}
+	return elementsUnequal
+}
+
+// conjunction is the three-valued and of element comparisons: false if any
+// is false, else null if any is null, else true.
+func conjunction(verdicts ...elementVerdict) elementVerdict {
+	result := elementsEqual
+	for _, v := range verdicts {
+		switch v {
+		case elementsUnequal:
+			return elementsUnequal
+		case elementsUnknown:
+			result = elementsUnknown
+		}
+	}
+	return result
 }
 
 // containerEquality is containerVerdict as the `=` operator answers it.
@@ -1009,13 +1081,13 @@ func (e *Evaluator) elementOf(v fptypes.Value, name string, at ast.Expression) (
 	case cqltypes.Code:
 		switch name {
 		case "code":
-			return optionalString(src.Code), true
+			return optionalElement(src.Code), true
 		case "system":
-			return optionalString(src.System), true
+			return optionalElement(src.System), true
 		case "display":
-			return optionalString(src.Display), true
+			return optionalElement(src.Display), true
 		case "version":
-			return optionalString(src.Version), true
+			return optionalElement(src.Version), true
 		}
 	case cqltypes.Concept:
 		switch name {
@@ -1026,7 +1098,7 @@ func (e *Evaluator) elementOf(v fptypes.Value, name string, at ast.Expression) (
 			}
 			return cqltypes.NewList(codes), true
 		case "display":
-			return optionalString(src.Display), true
+			return optionalElement(src.Display), true
 		}
 	}
 	// A System.Quantity has value and unit elements. FHIRHelpers.ToQuantity
@@ -6028,12 +6100,18 @@ func (e *Evaluator) evalTupleExpr(n *ast.TupleExpression) (fptypes.Value, error)
 	return cqltypes.NewTuple(elements), nil
 }
 
-// optionalString answers null for an element the value does not carry.
-//
-// These structs hold plain strings, so absent and empty are the same thing to
-// them; answering with the empty string would make `code.display is null` false
-// for a Code that never had a display, which is not what CQL says about a
-// missing element.
+// optionalElement is an element of a Code or a Concept as CQL reads it: nil is
+// null, and the empty String is a String.
+func optionalElement(s *string) fptypes.Value {
+	if s == nil {
+		return nil
+	}
+	return fptypes.NewString(*s)
+}
+
+// optionalString answers null for an element the value does not carry, held
+// as a plain string: there absent and empty are the same thing, and answering
+// with the empty string would make the element read as set when it never was.
 func optionalString(s string) fptypes.Value {
 	if s == "" {
 		return nil
@@ -6073,27 +6151,27 @@ func isSystemPrimitive(v fptypes.Value) bool {
 // spelled "{a, b}", which no terminology server will ever match — a silently
 // false membership check rather than a visible mistake. A one-element
 // collection is its element, since that is what a singleton repeat means.
-func stringElem(elements map[string]fptypes.Value, name string) string {
+func stringElem(elements map[string]fptypes.Value, name string) *string {
 	v, ok := elements[name]
 	if !ok || v == nil {
-		return ""
+		return nil
 	}
 	if list, ok := v.(cqltypes.List); ok {
 		if list.Values.Count() != 1 {
-			return ""
+			return nil
 		}
 		v = list.Values[0]
 		if v == nil {
-			return ""
+			return nil
 		}
 	}
 	if s, ok := v.(fptypes.String); ok {
-		return s.Value()
+		return cqltypes.Str(s.Value())
 	}
 	if _, isList := v.(cqltypes.List); isList {
-		return ""
+		return nil
 	}
-	return v.String()
+	return cqltypes.Str(v.String())
 }
 
 // buildCode materializes a System.Code instance selector.
@@ -6179,12 +6257,12 @@ func (e *Evaluator) evalListExpr(n *ast.ListExpression) (fptypes.Value, error) {
 }
 
 func (e *Evaluator) evalCodeExpr(n *ast.CodeExpression) (fptypes.Value, error) {
-	system := n.System
 	// Resolve system name to URL if it's a codesystem reference
-	if cs, ok := e.ctx.CodeSystems[system]; ok {
-		system = cs.System
+	system, version := e.ctx.codeSystemOf(n.System)
+	if system == nil && n.System != "" {
+		system = cqltypes.Str(n.System)
 	}
-	return cqltypes.NewCode(system, n.Code, n.Display), nil
+	return cqltypes.NewCode(system, cqltypes.Str(n.Code), n.Display, version), nil
 }
 
 func (e *Evaluator) evalConceptExpr(n *ast.ConceptExpression) (fptypes.Value, error) {

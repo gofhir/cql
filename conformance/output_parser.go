@@ -426,7 +426,7 @@ func (p outputParser) parseConcept(s string) (fptypes.Value, error) {
 		return nil, fmt.Errorf("splitting Concept elements: %w", err)
 	}
 	var codes []cqltypes.Code
-	display := ""
+	var display *string
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		colonIdx := strings.Index(part, ":")
@@ -454,7 +454,7 @@ func (p outputParser) parseConcept(s string) (fptypes.Value, error) {
 			}
 		case "display":
 			if strings.HasPrefix(valStr, "'") && strings.HasSuffix(valStr, "'") {
-				display = valStr[1 : len(valStr)-1]
+				display = cqltypes.Str(valStr[1 : len(valStr)-1])
 			}
 		}
 	}
@@ -475,9 +475,7 @@ func parseCode(s string) (fptypes.Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("splitting Code elements: %w", err)
 	}
-	code := ""
-	system := ""
-	display := ""
+	var code, system, display *string
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		colonIdx := strings.Index(part, ":")
@@ -491,12 +489,12 @@ func parseCode(s string) (fptypes.Value, error) {
 		}
 		switch key {
 		case "code":
-			code = valStr
+			code = cqltypes.Str(valStr)
 		case "system":
-			system = valStr
+			system = cqltypes.Str(valStr)
 		case "display":
-			display = valStr
+			display = cqltypes.Str(valStr)
 		}
 	}
-	return cqltypes.NewCode(system, code, display), nil
+	return cqltypes.NewCode(system, code, display, nil), nil
 }

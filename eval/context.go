@@ -377,6 +377,17 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 	return c
 }
 
+// codeSystemOf is the URL and the version of a declared code system, which a
+// code declared from it carries, as the Java engine 3.26.0 answers it (plan
+// 004: `"A".version` is the code system's); nil for a name no code system
+// declares.
+func (c *Context) codeSystemOf(name string) (system, version *string) {
+	if cs, ok := c.CodeSystems[name]; ok {
+		return cs.System, cs.Version
+	}
+	return nil, nil
+}
+
 // loadDeclarations populates the terminology a library declares. It is separate
 // from NewContext because an included library's own code has to run against its
 // own declarations, not the including library's.
@@ -385,7 +396,7 @@ func (c *Context) loadDeclarations(lib *ast.Library) {
 		return
 	}
 	for _, cs := range lib.CodeSystems {
-		c.CodeSystems[cs.Name] = &cqltypes.Code{System: cs.ID}
+		c.CodeSystems[cs.Name] = &cqltypes.Code{System: cqltypes.Str(cs.ID), Version: cs.Version}
 	}
 	for _, vs := range lib.ValueSets {
 		c.ValueSets[vs.Name] = vs.ID
@@ -396,11 +407,11 @@ func (c *Context) loadDeclarations(lib *ast.Library) {
 	// answered with the name as a String — so `O.code ~ "SBP"` compared a
 	// Code against the text "SBP" and was quietly always false.
 	for _, cd := range lib.Codes {
-		system := cd.System
-		if cs, ok := c.CodeSystems[cd.System]; ok {
-			system = cs.System
+		system, version := c.codeSystemOf(cd.System)
+		if system == nil && cd.System != "" {
+			system = cqltypes.Str(cd.System)
 		}
-		c.Definitions[cd.Name] = cqltypes.NewCode(system, cd.ID, cd.Display)
+		c.Definitions[cd.Name] = cqltypes.NewCode(system, cqltypes.Str(cd.ID), cd.Display, version)
 	}
 	for _, cd := range lib.Concepts {
 		codes := make([]cqltypes.Code, 0, len(cd.Codes))

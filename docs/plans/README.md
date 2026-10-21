@@ -4,21 +4,29 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**003: dar veredicto a las divergencias pendientes.** Plan y registro: [003-clasificar-divergencias.md](003-clasificar-divergencias.md). Son cuatro PRs: el esquema, `types`, `fhir` y `arithmetic`.
+**004: los campos de Code y Concept distinguen null de `''`.** Plan: [004-campos-de-code.md](004-campos-de-code.md). Son dos PRs: la representación y lectura, y la igualdad y equivalencia.
 
-**Estado al 19-10-2026:**
-- **PRs 1 a 4 mergeados** con squash: #151 (esquema), #152 (`types`), #153 (`fhir`) y #154 (`arithmetic`, ADR 002). `main` está en 093572c. Como cada squash rompe la pila, el PR siguiente se rebasó con `--onto` antes de cada merge.
-- **PR 5, `scope`:** está en el PR #155 (rama `test/classify-scope`), sin merge. El usuario aprobó el diseño. Las 180 filas son `reference defect`, y la deuda baja de 234 a 54. Se detectan las 84 mutaciones de `003-evidence.sh` y las 30 del 002. El issue de cql-execution está redactado y sin publicar. El review convergió en la ronda 2. Registro: plan 003, «Implementación del PR 5» y «Review del PR 5».
+**Estado al 21-10-2026:**
+- El 003 está cerrado: los PRs 1 a 7 están mergeados (#151–#157), `main` está en 5be6763, `pending-verdicts.tsv` está vacío y el ADR 001 está «Aceptado».
+- El usuario eligió los campos `*string`.
+- Plan aprobado el 21-10-2026, con A1 a A12. La igualdad sigue la especificación, y sale como v1.24.0. Rama: `fix/code-empty-field`.
 
-**Próximo paso concreto:**
-1. PRs 1 a 6 mergeados (#151–#156); `main` en b508841. ADR 003 aceptado.
-2. **PR 7** (rama `test/harness-encodes-all`): el arnés codifica Code, Concept, los números de JS sin tipo estático y los objetos planos, para las 16 filas `unclassified`. Implementado. El review no convergió en 3 rondas, y el usuario decidió R3-2: el campo vacío del motor se escribe como el null que responde. `make check` (725 s, 1,15 GB) y `make evidence` (651 s, 1,24 GB) en verde el 20-10-2026. Falta el commit y el PR, si el usuario los pide.
-3. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío, al cerrar el PR 7.
+**Próximo paso concreto:** el PR 1 está terminado y sin commit. El review convergió en la ronda 3, y `make check` y `make evidence` están en verde (docs/evidence/2026-10-21.md). Falta que el usuario apruebe el commit (`feat:`, para v1.24.0) y el PR. Después viene el PR 2: `distinct`, operaciones de conjuntos, `in` y `contains`, y el parser de conformidad (A11).
 
 ## Pendientes, en orden
 
 1. **003:** cerrado con el PR 7. `pending-verdicts.tsv` está vacío y el ADR 001 está «Aceptado».
 1b. **Un `''` explícito en un Code se vuelve null:** `Code{code:'x', system: ''}.system is null` da true (sonda del 20-10-2026, R3-2 del PR 7). `types.Code` y `types.Concept` guardan sus campos como `string`, así que no distinguen `''` de null. Ninguna definición del corpus lo ejercita. Es un cambio del motor y va en su propio PR. Pasa lo mismo con `Concept.codes` null, que se vuelve `{}`.
+1c2. **Igualdad de listas con un par indeciso y otro desigual:** la especificación no lo decide, y no es un defecto. Hay tres lecturas:
+  - la del motor y Java, que recorren en orden y se detienen en el primer par indeciso;
+  - la de JS, que da false si un Code difiere;
+  - la de los tres motores con un elemento null, que dan null.
+  Lo decide el usuario. Es el mismo frente que `tupleEqual` (A1 del plan 004). Ver «Review, ronda 1» del plan 004 (D334, D593).
+1c3. **Restos del 004 que no son de su alcance:**
+  - un codesystem de una librería incluida (`Code '1' from H."CS"`, o un code declarado así) no se resuelve: da `system` "H.CS" y `version` null;
+  - `buildConcept` descarta un `(null as Code)` de `codes`;
+  - `~` entre Code y Concept es asimétrico;
+  - sema acepta un code de un codesystem no declarado.
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s.** El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.
 3. **D4a, identidad de tipo:** un descriptor `{modelo, nombre}` en vez del texto de `Type()`. Ver [arquitectura-verificacion-2026-10-18.md](../arquitectura-verificacion-2026-10-18.md) §4.

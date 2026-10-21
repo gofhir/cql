@@ -57,7 +57,7 @@ type IncludeDef struct {
 type CodeSystemDef struct {
 	Name        string // identifier
 	ID          string // OID or URL
-	Version     string
+	Version     *string
 	AccessLevel AccessLevel
 }
 
@@ -75,7 +75,7 @@ type CodeDef struct {
 	Name        string
 	ID          string
 	System      string // codesystem identifier reference
-	Display     string
+	Display     *string
 	AccessLevel AccessLevel
 }
 
@@ -83,7 +83,7 @@ type CodeDef struct {
 type ConceptDef struct {
 	Name        string
 	Codes       []string // code identifier references
-	Display     string
+	Display     *string
 	AccessLevel AccessLevel
 }
 
@@ -723,7 +723,7 @@ type CodeExpression struct {
 	positioned
 	Code    string
 	System  string
-	Display string
+	Display *string
 }
 
 func (*CodeExpression) expression() {}
@@ -732,7 +732,7 @@ func (*CodeExpression) expression() {}
 type ConceptExpression struct {
 	positioned
 	Codes   []*CodeExpression
-	Display string
+	Display *string
 }
 
 func (*ConceptExpression) expression() {}

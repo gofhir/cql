@@ -229,24 +229,20 @@ func ToConcept(v fptypes.Value) (fptypes.Value, error) {
 		return c, nil
 	}
 	if c, ok := v.(cqltypes.Code); ok {
-		return cqltypes.NewConcept([]cqltypes.Code{c}, ""), nil
+		// The Concept has a display of its own, which a conversion leaves
+		// null (the Java engine 3.26.0 agrees).
+		return cqltypes.NewConcept([]cqltypes.Code{c}, nil), nil
 	}
 	// Handle Tuple with TypeOverride="Code" (from instance expressions like Code { code: '...' })
 	if t, ok := v.(cqltypes.Tuple); ok && strings.EqualFold(t.Type(), "Code") {
-		code := ""
-		system := ""
-		display := ""
-		if cv, ok := t.Get("code"); ok && cv != nil {
-			code = cv.String()
+		element := func(name string) *string {
+			if field, ok := t.Get(name); ok && field != nil {
+				return cqltypes.Str(field.String())
+			}
+			return nil
 		}
-		if sv, ok := t.Get("system"); ok && sv != nil {
-			system = sv.String()
-		}
-		if dv, ok := t.Get("display"); ok && dv != nil {
-			display = dv.String()
-		}
-		c := cqltypes.NewCode(system, code, display)
-		return cqltypes.NewConcept([]cqltypes.Code{c}, display), nil
+		c := cqltypes.NewCode(element("system"), element("code"), element("display"), element("version"))
+		return cqltypes.NewConcept([]cqltypes.Code{c}, nil), nil
 	}
 	return nil, fmt.Errorf("cannot convert %s to Concept", v.Type())
 }

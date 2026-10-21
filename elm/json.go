@@ -61,7 +61,7 @@ type expressionNodeJSON struct {
 	FunctionName        string                `json:"functionName,omitempty"`
 	CodeValue           string                `json:"code,omitempty"`
 	System              *ExpressionNode       `json:"system,omitempty"`
-	Display             string                `json:"display,omitempty"`
+	Display             *string               `json:"display,omitempty"`
 	IsTypeSpecifier     *TypeSpecifier        `json:"isTypeSpecifier,omitempty"`
 	AsTypeSpecifier     *TypeSpecifier        `json:"asTypeSpecifier,omitempty"`
 	Strict              bool                  `json:"strict,omitempty"`

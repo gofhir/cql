@@ -36,7 +36,17 @@ func (e *Evaluator) evalExpandValueSet(vsURL string) (fptypes.Value, error) {
 	}
 	vals := make(fptypes.Collection, len(codes))
 	for i, c := range codes {
-		vals[i] = cqltypes.NewCode(c.System, c.Code, c.Display)
+		// An expansion holds plain strings: an empty one is read as null, as
+		// before plan 004, which leaves terminology out.
+		vals[i] = cqltypes.NewCode(textOrNull(c.System), textOrNull(c.Code), textOrNull(c.Display), nil)
 	}
 	return cqltypes.NewList(vals), nil
+}
+
+// textOrNull is a plain string as an element of a Code: "" is null.
+func textOrNull(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

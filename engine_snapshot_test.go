@@ -45,6 +45,7 @@ var snapshotAreas = []struct {
 	{"scope", 600, false},      // gen -area scope -seed 1 -n 600
 	{"types", 900, false},      // gen -area types -seed 1 -n 900
 	{"fhir", 900, false},       // gen -area fhir -seed 1 -n 900, on testdata/snapshots/fhir-data.json
+	{"codes", 600, true},       // gen -area codes -seed 1 -n 600
 	// Written by hand, not generated: the cases of docs/plans/001-decimal-division.md.
 	{"division", 29, true},
 }
@@ -179,13 +180,14 @@ func snapshotText(v fptypes.Value) string {
 		}
 		return x.Type() + "{" + strings.Join(parts, ", ") + "}"
 	case cqltypes.Code:
-		return fmt.Sprintf("Code{system: %q, code: %q, display: %q, version: %q}", x.System, x.Code, x.Display, x.Version)
+		return fmt.Sprintf("Code{system: %s, code: %s, display: %s, version: %s}",
+			snapshotElement(x.System), snapshotElement(x.Code), snapshotElement(x.Display), snapshotElement(x.Version))
 	case cqltypes.Concept:
 		parts := make([]string, len(x.Codes))
 		for i, c := range x.Codes {
 			parts[i] = snapshotText(c)
 		}
-		return fmt.Sprintf("Concept{codes: [%s], display: %q}", strings.Join(parts, ", "), x.Display)
+		return fmt.Sprintf("Concept{codes: [%s], display: %s}", strings.Join(parts, ", "), snapshotElement(x.Display))
 	case *fptypes.ObjectValue:
 		return x.Type() + " " + string(x.Data())
 	}
@@ -465,4 +467,13 @@ func translationRefused(answer json.RawMessage) bool {
 		Error string `json:"error"`
 	}
 	return json.Unmarshal(answer, &e) == nil && e.Error == "Translation"
+}
+
+// snapshotElement is an element of a Code or a Concept: null, or its text
+// quoted, so that the empty String and null read apart (plan 004).
+func snapshotElement(s *string) string {
+	if s == nil {
+		return "null"
+	}
+	return fmt.Sprintf("%q", *s)
 }
