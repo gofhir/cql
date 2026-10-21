@@ -1,5 +1,5 @@
 #!/bin/sh
-# Mutations of the fields of Code and Concept, increment 004 PR 1
+# Mutations of the fields of Code and Concept, increment 004 PRs 1 and 2
 # (docs/plans/004-campos-de-code.md). Each is applied to a copy of the
 # repository; the command it names has to fail, and its output has to say why.
 # Usage: sh scripts/mutations/004-code-fields.sh [work-directory]
@@ -26,6 +26,9 @@ ANSWERS = "internal/referenceharness/answers/answers.go"
 SNAPSHOT = "engine_snapshot_test.go"
 ORACLE = "engine_codes_oracle_test.go"
 CORPUS = "testdata/snapshots/codes.cql"
+SETS_CORPUS = "testdata/snapshots/codesets.cql"
+MODE = "funcs/list_advanced.go"
+PARSER_GO = "conformance/output_parser.go"
 
 
 def run(*names):
@@ -33,7 +36,8 @@ def run(*names):
 
 
 # What the engine answers: the cases written by hand and the differential.
-ENGINE = run("TestCodeFieldsKeepNullApartFromEmpty", "TestAnswersMatchTheReferences")
+ENGINE = run("TestCodeFieldsKeepNullApartFromEmpty", "TestCodeOperationsTellCodesApart", "TestAnswersMatchTheReferences")
+PARSER = ["go", "test", "-count=1", "-run", "TestParseExpectedOutput", "./conformance"]
 SNAPSHOTS = run("TestAnswersMatchTheSnapshots")
 # What the oracle computes: the verdicts, where all agree, and the whole corpus.
 ORACLE_TESTS = run("TestTheCodesVerdictsFollowTheOracle", "TestTheCodesOracleAgreesWhereAllAgree",
@@ -98,6 +102,30 @@ mutations = [
     ("an expansion's empty element is a String",
      ("eval/terminology_expand.go", "\tif s == \"\" {\n\t\treturn nil\n\t}\n\treturn &s", "\treturn &s"),
      ["go", "test", "-count=1", "-run", "TestExpandValueSet_EmptyIsNull", "./eval"], "FAIL"),
+    # PR 2: the operations that hold values.
+    ("A5: the operations compare a Code by system and code only",
+     (TYPES, "\treturn SameText(c.System, o.System) && SameText(c.Code, o.Code) &&\n\t\tSameText(c.Display, o.Display) && SameText(c.Version, o.Version)",
+      "\treturn SameText(c.System, o.System) && SameText(c.Code, o.Code)"), ENGINE, "FAIL"),
+    ("the operations ignore a Code's version",
+     (TYPES, "SameText(c.Display, o.Display) && SameText(c.Version, o.Version)", "SameText(c.Display, o.Display)"), ENGINE, "FAIL"),
+    ("the operations ignore a Concept's display",
+     (TYPES, "if len(c.Codes) != len(o.Codes) || !SameText(c.Display, o.Display) {", "if len(c.Codes) != len(o.Codes) {"), ENGINE, "FAIL"),
+    ("Mode keys an Integer by its type, apart from an equal Decimal",
+     (MODE, "\t\twriteNumberKey(b, decimal.NewFromInt(x.Value()))", "\t\tb.WriteString(\"Integer:\" + x.String())"), ENGINE, "FAIL"),
+    ("Mode counts a Code by its String",
+     (MODE, "\tcase cqltypes.Code:\n\t\twriteCodeKey(b, x)", "\tcase cqltypes.Code:\n\t\tb.WriteString(x.String())"), ENGINE, "FAIL"),
+    ("Mode keys a null element as the empty String",
+     (MODE, "\tif s == nil {\n\t\tb.WriteString(\"-;\")\n\t\treturn\n\t}", "\tif s == nil {\n\t\tb.WriteString(\"\\\"\\\";\")\n\t\treturn\n\t}"), ENGINE, "FAIL"),
+    ("Mode keys a tuple by its String",
+     (MODE, "\tcase cqltypes.Tuple:\n\t\tnames := make", "\tcase cqltypes.Tuple:\n\t\tb.WriteString(x.String())\n\t\treturn\n\t\tnames := make"),
+     ENGINE, "FAIL"),
+    ("Mode keys a list by its String",
+     (MODE, "\tcase cqltypes.List:\n\t\tb.WriteByte('[')", "\tcase cqltypes.List:\n\t\tb.WriteString(x.String())\n\t\treturn\n\t\tb.WriteByte('[')"),
+     ENGINE, "FAIL"),
+    ("A11: the conformance parser reads null as the text null",
+     (PARSER_GO, "\tif s == \"null\" {\n\t\treturn nil\n\t}", ""), PARSER, "FAIL"),
+    ("A11: the conformance parser ignores the version",
+     (PARSER_GO, "\t\tcase \"version\":\n\t\t\tversion = value\n", ""), PARSER, "FAIL"),
     # The harness: how an answer is written.
     ("the harness writes the empty String as null",
      (ANSWERS, "func stringField(s *string) Answer {\n\tif s == nil {", "func stringField(s *string) Answer {\n\tif s == nil || *s == \"\" {"),
@@ -130,6 +158,38 @@ mutations = [
     ("the oracle: a Code selector without its code system's version",
      (ORACLE, "fields: [4]*string{&code, cs.fields[1], nil, cs.fields[3]}", "fields: [4]*string{&code, cs.fields[1], nil, nil}"),
      ORACLE_TESTS, "the oracle"),
+    ("the oracle: an unknown equality is a match",
+     (ORACLE, "\treturn codesEqual(a, b) == triTrue\n}", "\treturn codesEqual(a, b) != triFalse\n}"), ORACLE_TESTS, "the oracle"),
+    ("the oracle: union keeps the repeated values",
+     (ORACLE, "return codesValue{kind: \"list\", codes: distinctCodes(append(slices.Clone(a.codes), b.codes...))}",
+      "return codesValue{kind: \"list\", codes: append(slices.Clone(a.codes), b.codes...)}"), ORACLE_TESTS, "the oracle"),
+    ("the oracle: intersect and except keep the repeated values",
+     (ORACLE, "return codesValue{kind: \"list\", codes: distinctCodes(kept)}", "return codesValue{kind: \"list\", codes: kept}"), ORACLE_TESTS, "the oracle"),
+    ("the oracle: a query's return is not distinct",
+     (ORACLE, "\t\t\tv = codesValue{kind: \"list\", codes: distinctCodes(v.codes)}\n\t\t\tr.reason = \"a query's", "\t\t\tr.reason = \"a query's"),
+     ORACLE_TESTS, "the oracle"),
+    ("the oracle: Mode takes the last distinct value",
+     (ORACLE, "\tif tie {\n\t\tpanic(", "\tif d := distinctCodes(list); len(d) > 0 {\n\t\tbest = d[len(d)-1]\n\t}\n\tif tie {\n\t\tpanic("),
+     ORACLE_TESTS, "the oracle"),
+    ("the oracle: IndexOf by equivalence",
+     (ORACLE, "\t\tif sameCodesValue(x, v) {\n\t\t\treturn i", "\t\tif codesEquivalent(x, v) {\n\t\t\treturn i"), ORACLE_TESTS, "the oracle"),
+    ("the oracle: Count counts the nulls",
+     (ORACLE, "\t\t\tif x.kind != \"null\" {\n\t\t\t\tn++", "\t\t\tif x.kind != \"null\" || true {\n\t\t\t\tn++"), ORACLE_TESTS, "the oracle"),
+    ("the oracle: IndexOf of a null is -1",
+     (ORACLE, "\t\tif v.kind == \"null\" {\n\t\t\tr.reason = \"IndexOf of a null is null\"", "\t\tif false {\n\t\t\tr.reason = \"IndexOf of a null is null\""),
+     ORACLE_TESTS, "the oracle"),
+    ("the oracle: Mode counts the nulls",
+     (ORACLE, "\t\t\tif x.kind != \"null\" {\n\t\t\t\tpresent = append", "\t\t\tif true {\n\t\t\t\tpresent = append"),
+     ORACLE_TESTS, "the oracle"),
+    ("ADR 003, decision 5: a reference by equivalence taken for a defect",
+     (ORACLE, "\tif d.Class == referenceDefect && v.decided && v.alternative != \"\" && d.Reference == v.alternative {",
+      "\tif false && d.Class == referenceDefect && v.decided && v.alternative != \"\" && d.Reference == v.alternative {"),
+     run("TestTheModeDecisionIsTheOnlyReadingLeftAside"), "FAIL"),
+    ("ADR 003, decision 5: the equivalence reading not computed",
+     (ORACLE, "\t\t\tif r.mode && r.alternative == \"\" {", "\t\t\tif false && r.mode && r.alternative == \"\" {"),
+     run("TestTheModeDecisionIsTheOnlyReadingLeftAside"), "FAIL"),
+    ("the codesets corpus is not the one the references answered",
+     (SETS_CORPUS, "define D0: ", "define D0: Count({ Code { code: 'a' } }) + "), run("TestAnswersMatchTheReferences"), "FAIL"),
     ("the corpus is not the one the references answered",
      (CORPUS, "define D0: ", "define D0: (Code { code: 'a' }).code = 'a' or "), run("TestAnswersMatchTheReferences"), "FAIL"),
 ]

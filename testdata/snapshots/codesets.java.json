@@ -1,0 +1,1569 @@
+{
+  "library" : "corpus codesets.cql",
+  "sourceSha256" : "c8e7fea149e4018714a9e488ac8228edbb42de5b100ece986b0c8041e437bc96",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D1" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D2" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D3" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D4" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D5" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D6" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D7" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D8" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D9" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D10" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D11" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D12" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D13" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D14" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D15" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D16" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D17" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D18" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D19" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D20" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D21" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "D22" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D23" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D24" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D25" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D26" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D27" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D28" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D29" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D30" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D31" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D32" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D33" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D34" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D35" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D36" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D37" : null,
+    "D38" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D39" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D40" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D41" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D42" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "D43" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D44" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D45" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D46" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D47" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D48" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D49" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D50" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D51" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D52" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D53" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D54" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D55" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D56" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D57" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D58" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D59" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D60" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D61" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D62" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D63" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D64" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D65" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D66" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D67" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D68" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D69" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D70" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D71" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D72" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D73" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D74" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D75" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D76" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D77" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D78" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D79" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D80" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D81" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D82" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D83" : null,
+    "D84" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D85" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D86" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D87" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D88" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D89" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D90" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D91" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D92" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D93" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D94" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D95" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D96" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D97" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D98" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "D99" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D100" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D101" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D102" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D103" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D104" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D105" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D106" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D107" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D108" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D109" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D110" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D111" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D112" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D113" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D114" : null,
+    "D115" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D116" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D117" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D118" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D119" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D120" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D121" : null,
+    "D122" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D123" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D124" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D125" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D126" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D127" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D128" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D129" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D130" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D131" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D132" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D133" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D134" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D135" : null,
+    "D136" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D137" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D138" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D139" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "D140" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D141" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D142" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D143" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D144" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D145" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D146" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D147" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D148" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D149" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D150" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D151" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D152" : null,
+    "D153" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D154" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D155" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D156" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D157" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D158" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D159" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D160" : null,
+    "D161" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D162" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D163" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D164" : null,
+    "D165" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D166" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D167" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D168" : null,
+    "D169" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D170" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D171" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D172" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D173" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D174" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D175" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D176" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D177" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D178" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D179" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "D180" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D181" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D182" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D183" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D184" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D185" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D186" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D187" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D188" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D189" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D190" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D191" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D192" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D193" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D194" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D195" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D196" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D197" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D198" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D199" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D200" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D201" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D202" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D203" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D204" : null,
+    "D205" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D206" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D207" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D208" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D209" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D210" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D211" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D212" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D213" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D214" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D215" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D216" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D217" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D218" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D219" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D220" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D221" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D222" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D223" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D224" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D225" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D226" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D227" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D228" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D229" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D230" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D231" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D232" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D233" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D234" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D235" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D236" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D237" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D238" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D239" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D240" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D241" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D242" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D243" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D244" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D245" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D246" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D247" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D248" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D249" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D250" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D251" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D252" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D253" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D254" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D255" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D256" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D257" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D258" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D259" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D260" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D261" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D262" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D263" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D264" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D265" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D266" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D267" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D268" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D269" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D270" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D271" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D272" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D273" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D274" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D275" : null,
+    "D276" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D277" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D278" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D279" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D280" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D281" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D282" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D283" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D284" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D285" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D286" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D287" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D288" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D289" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D290" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D291" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D292" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D293" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D294" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D295" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D296" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D297" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D298" : null,
+    "D299" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D300" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D301" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D302" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D303" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D304" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D305" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D306" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D307" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D308" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D309" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D310" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D311" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D312" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D313" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D314" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D315" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D316" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D317" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D318" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D319" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D320" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D321" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D322" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D323" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D324" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D325" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D326" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D327" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D328" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D329" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D330" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "D331" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D332" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D333" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D334" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D335" : {
+      "type" : "Integer",
+      "value" : "3"
+    },
+    "D336" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D337" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D338" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D339" : {
+      "type" : "Integer",
+      "value" : "4"
+    },
+    "D340" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D341" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D342" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D343" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D344" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D345" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D346" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D347" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D348" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D349" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D350" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D351" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D352" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D353" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D354" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D355" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D356" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D357" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D358" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D359" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D360" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D361" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D362" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D363" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D364" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D365" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D366" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D367" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D368" : {
+      "type" : "Integer",
+      "value" : "-1"
+    },
+    "D369" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D370" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D371" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D372" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D373" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D374" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D375" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D376" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D377" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D378" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D379" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D380" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D381" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D382" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D383" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D384" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D385" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D386" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D387" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D388" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D389" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D390" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D391" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D392" : null,
+    "D393" : {
+      "error" : "InvalidComparison",
+      "message" : "Type org.opencds.cqf.cql.engine.runtime.Code is not comparable"
+    },
+    "D394" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D395" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D396" : {
+      "type" : "Integer",
+      "value" : "1"
+    },
+    "D397" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D398" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D399" : {
+      "type" : "Integer",
+      "value" : "0"
+    }
+  }
+}

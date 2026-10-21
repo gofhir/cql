@@ -46,6 +46,7 @@ var snapshotAreas = []struct {
 	{"types", 900, false},      // gen -area types -seed 1 -n 900
 	{"fhir", 900, false},       // gen -area fhir -seed 1 -n 900, on testdata/snapshots/fhir-data.json
 	{"codes", 600, true},       // gen -area codes -seed 1 -n 600
+	{"codesets", 400, true},    // gen -area codesets -seed 1 -n 400
 	// Written by hand, not generated: the cases of docs/plans/001-decimal-division.md.
 	{"division", 29, true},
 }

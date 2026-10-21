@@ -38,14 +38,16 @@ var areas = map[string]area{
 	"types":      types,
 	"fhir":       fhirArea,
 	"codes":      codes,
+	"codesets":   codeSets,
 }
 
 // preambles are the definitions an area's expressions refer to, written once
 // ahead of them.
 var preambles = map[string]string{
-	"scope": scopePreamble,
-	"fhir":  fhirPreamble,
-	"codes": codesPreamble,
+	"scope":    scopePreamble,
+	"fhir":     fhirPreamble,
+	"codes":    codesPreamble,
+	"codesets": codesPreamble,
 }
 
 type generator struct {
@@ -538,6 +540,53 @@ func (g *generator) conceptOf(display string, codes ...[]string) string {
 		s += ", display: " + display
 	}
 	return s + " }"
+}
+
+// codeSets is the operations that compare Codes without `=` — distinct,
+// union, intersect, except, in, contains, IndexOf, Mode and a query's return —
+// over lists of Codes that differ in little, so that two Codes of another
+// display, version or case, or of a null against an empty String, meet, and
+// null elements, which these operations take as equal. Mode is asked of a
+// list written { a, a, b }, which has no tie.
+func codeSets(g *generator, _ int) string {
+	base := g.codeFields()
+	list := func() string {
+		items := make([]string, 1+g.rnd.Intn(3))
+		for i := range items {
+			items[i] = g.code(g.nearCode(base))
+			if g.chance(0.15) {
+				items[i] = "(null as Code)"
+			}
+		}
+		if len(items) > 1 && g.chance(0.4) {
+			// The same Code twice, which distinct and return keep once.
+			items[len(items)-1] = items[0]
+		}
+		return "{ " + strings.Join(items, ", ") + " }"
+	}
+	// one is a Code an operation looks for, null as often as an element.
+	one := func() string {
+		if g.chance(0.15) {
+			return "(null as Code)"
+		}
+		return g.code(g.nearCode(base))
+	}
+	switch g.pick("distinct", "union", "intersect", "except", "in", "contains", "IndexOf", "Mode", "return") {
+	case "distinct":
+		return "Count(distinct " + list() + ")"
+	case "union", "intersect", "except":
+		return "Count(" + list() + " " + g.pick("union", "intersect", "except") + " " + list() + ")"
+	case "in":
+		return "(" + one() + " in " + list() + ")"
+	case "contains":
+		return "(" + list() + " contains " + one() + ")"
+	case "IndexOf":
+		return "IndexOf(" + list() + ", " + one() + ")"
+	case "Mode":
+		a := one()
+		return "Mode({ " + a + ", " + a + ", " + one() + " })." + g.pick(codeFields...)
+	}
+	return "Count((" + list() + ") C return C)"
 }
 
 // unbound is the names that are not among bound.

@@ -60,13 +60,17 @@ func (c Code) Type() string {
 	return "Code"
 }
 
-// Equal checks exact equality (system and code must match).
+// Equal reports whether two Codes are the same value: the same four elements,
+// each null on both sides or the same text. It is the equality the operations
+// that hold values use (distinct, union, in, IndexOf...), which have no null to
+// answer: a Code whose `=` is unknown counts as another value (plan 004).
 func (c Code) Equal(other fptypes.Value) bool {
 	o, ok := other.(Code)
 	if !ok {
 		return false
 	}
-	return SameText(c.System, o.System) && SameText(c.Code, o.Code)
+	return SameText(c.System, o.System) && SameText(c.Code, o.Code) &&
+		SameText(c.Display, o.Display) && SameText(c.Version, o.Version)
 }
 
 // Equivalent checks equivalence (system and code, case-insensitive).
@@ -119,13 +123,14 @@ func (c Concept) Type() string {
 	return "Concept"
 }
 
-// Equal checks exact equality (all codes must match).
+// Equal reports whether two Concepts are the same value: the same codes, in
+// order, by Code's Equal, and the same display.
 func (c Concept) Equal(other fptypes.Value) bool {
 	o, ok := other.(Concept)
 	if !ok {
 		return false
 	}
-	if len(c.Codes) != len(o.Codes) {
+	if len(c.Codes) != len(o.Codes) || !SameText(c.Display, o.Display) {
 		return false
 	}
 	for i, code := range c.Codes {
