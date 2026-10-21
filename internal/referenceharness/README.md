@@ -292,6 +292,14 @@ ELM the translator wrote. What the three engines answer is inventoried in
 `testdata/snapshots/fhir.divergences.md`; the references are held to the
 corpus by `TestTheFHIRReferencesAreOfThisCorpus`.
 
+`codes` covers the fields of Code and Concept: selectors whose elements are
+left out, null, the empty String or Strings that differ by case, declared codes
+whose version comes from their code system, and `=`, `!=`, `~`, `!~`, field
+access and `is null` over them and over lists of Codes. Both references run it
+with `-each`, as `fhir` above, without data (`-` for the data file). Its oracle,
+`engine_codes_oracle_test.go`, computes every answer from the specification:
+the Java engine answers null where the conjunction of the elements gives false.
+
 ## Answer snapshots
 
 The differential says which answers are right; it needs a reference that can

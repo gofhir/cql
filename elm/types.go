@@ -87,10 +87,10 @@ type CodeSystemDefs struct {
 
 // CodeSystemDef represents a code system definition.
 type CodeSystemDef struct {
-	Name        string `json:"name,omitempty"`
-	ID          string `json:"id,omitempty"`
-	Version     string `json:"version,omitempty"`
-	AccessLevel string `json:"accessLevel,omitempty"`
+	Name        string  `json:"name,omitempty"`
+	ID          string  `json:"id,omitempty"`
+	Version     *string `json:"version,omitempty"`
+	AccessLevel string  `json:"accessLevel,omitempty"`
 }
 
 // ValueSetDefs wraps the list of value set definitions.
@@ -116,7 +116,7 @@ type CodeDefs struct {
 type CodeDef struct {
 	Name        string         `json:"name,omitempty"`
 	ID          string         `json:"id,omitempty"`
-	Display     string         `json:"display,omitempty"`
+	Display     *string        `json:"display,omitempty"`
 	AccessLevel string         `json:"accessLevel,omitempty"`
 	CodeSystem  *CodeSystemRef `json:"codeSystem,omitempty"`
 }
@@ -129,7 +129,7 @@ type ConceptDefs struct {
 // ConceptDef represents a concept definition.
 type ConceptDef struct {
 	Name        string     `json:"name,omitempty"`
-	Display     string     `json:"display,omitempty"`
+	Display     *string    `json:"display,omitempty"`
 	AccessLevel string     `json:"accessLevel,omitempty"`
 	Code        []*CodeRef `json:"code,omitempty"`
 }
@@ -299,7 +299,7 @@ type ExpressionNode struct {
 	// -- Code/Concept constructors --
 	CodeValue string          `json:"code,omitempty"`
 	System    *ExpressionNode `json:"system,omitempty"`
-	Display   string          `json:"display,omitempty"`
+	Display   *string         `json:"display,omitempty"`
 
 	// -- Type operations --
 	IsTypeSpecifier *TypeSpecifier `json:"isTypeSpecifier,omitempty"`

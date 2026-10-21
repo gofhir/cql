@@ -1,0 +1,1820 @@
+{
+  "library" : "corpus codes.cql",
+  "sourceSha256" : "9a6f621004338546725c22364c4158cb56be627919403c92e12371c4c55fe06e",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : null,
+    "D1" : null,
+    "D2" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D3" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D4" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D5" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D6" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D7" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D8" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D9" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D10" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D11" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D12" : null,
+    "D13" : null,
+    "D14" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D15" : null,
+    "D16" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D17" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D18" : null,
+    "D19" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D20" : null,
+    "D21" : null,
+    "D22" : null,
+    "D23" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D24" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D25" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D26" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D27" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D28" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D29" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D30" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D31" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D32" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D33" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D34" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D35" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D36" : null,
+    "D37" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D38" : null,
+    "D39" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D40" : null,
+    "D41" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D42" : null,
+    "D43" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D44" : null,
+    "D45" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D46" : null,
+    "D47" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D48" : null,
+    "D49" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D50" : null,
+    "D51" : null,
+    "D52" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D53" : null,
+    "D54" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D55" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D56" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D57" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D58" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D59" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D60" : null,
+    "D61" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D62" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D63" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D64" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D65" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D66" : null,
+    "D67" : null,
+    "D68" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D69" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D70" : null,
+    "D71" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D72" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D73" : null,
+    "D74" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D75" : null,
+    "D76" : null,
+    "D77" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D78" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D79" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D80" : null,
+    "D81" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D82" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D83" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D84" : null,
+    "D85" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D86" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D87" : null,
+    "D88" : null,
+    "D89" : null,
+    "D90" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D91" : null,
+    "D92" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D93" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D94" : null,
+    "D95" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D96" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D97" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D98" : null,
+    "D99" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D100" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D101" : null,
+    "D102" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D103" : null,
+    "D104" : null,
+    "D105" : null,
+    "D106" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D107" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D108" : null,
+    "D109" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D110" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D111" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D112" : null,
+    "D113" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D114" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D115" : null,
+    "D116" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D117" : null,
+    "D118" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D119" : null,
+    "D120" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D121" : null,
+    "D122" : null,
+    "D123" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D124" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D125" : null,
+    "D126" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D127" : null,
+    "D128" : null,
+    "D129" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D130" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D131" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D132" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D133" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D134" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D135" : null,
+    "D136" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D137" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D138" : null,
+    "D139" : null,
+    "D140" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D141" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D142" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D143" : null,
+    "D144" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D145" : null,
+    "D146" : null,
+    "D147" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D148" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D149" : null,
+    "D150" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D151" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D152" : null,
+    "D153" : null,
+    "D154" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D155" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D156" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D157" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D158" : null,
+    "D159" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D160" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D161" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D162" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D163" : null,
+    "D164" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D165" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D166" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D167" : null,
+    "D168" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D169" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D170" : null,
+    "D171" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D172" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D173" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D174" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D175" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D176" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D177" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D178" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D179" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D180" : null,
+    "D181" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D182" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D183" : null,
+    "D184" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D185" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D186" : null,
+    "D187" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D188" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D189" : null,
+    "D190" : null,
+    "D191" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D192" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D193" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D194" : null,
+    "D195" : null,
+    "D196" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D197" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D198" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D199" : null,
+    "D200" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D201" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D202" : null,
+    "D203" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D204" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D205" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D206" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D207" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D208" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D209" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D210" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D211" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D212" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D213" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D214" : null,
+    "D215" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D216" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D217" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D218" : null,
+    "D219" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D220" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D221" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D222" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D223" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D224" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D225" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D226" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D227" : null,
+    "D228" : null,
+    "D229" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D230" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D231" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D232" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D233" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D234" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D235" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D236" : null,
+    "D237" : null,
+    "D238" : null,
+    "D239" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D240" : null,
+    "D241" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D242" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D243" : null,
+    "D244" : null,
+    "D245" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D246" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D247" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D248" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D249" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D250" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D251" : null,
+    "D252" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D253" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D254" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D255" : null,
+    "D256" : null,
+    "D257" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D258" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D259" : null,
+    "D260" : null,
+    "D261" : null,
+    "D262" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D263" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D264" : null,
+    "D265" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D266" : null,
+    "D267" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D268" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D269" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D270" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D271" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D272" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D273" : null,
+    "D274" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D275" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D276" : null,
+    "D277" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D278" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D279" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D280" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D281" : null,
+    "D282" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D283" : null,
+    "D284" : null,
+    "D285" : null,
+    "D286" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D287" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D288" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D289" : null,
+    "D290" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D291" : null,
+    "D292" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D293" : null,
+    "D294" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D295" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D296" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D297" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D298" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D299" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D300" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D301" : null,
+    "D302" : null,
+    "D303" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D304" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D305" : null,
+    "D306" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D307" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D308" : null,
+    "D309" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D310" : null,
+    "D311" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D312" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D313" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D314" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D315" : null,
+    "D316" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D317" : null,
+    "D318" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D319" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D320" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D321" : null,
+    "D322" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D323" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D324" : null,
+    "D325" : null,
+    "D326" : null,
+    "D327" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D328" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D329" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D330" : null,
+    "D331" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D332" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D333" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D334" : null,
+    "D335" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D336" : null,
+    "D337" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D338" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D339" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D340" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D341" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D342" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D343" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D344" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D345" : null,
+    "D346" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D347" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D348" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D349" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D350" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D351" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D352" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D353" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D354" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D355" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D356" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D357" : null,
+    "D358" : null,
+    "D359" : null,
+    "D360" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D361" : null,
+    "D362" : null,
+    "D363" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D364" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D365" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D366" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D367" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D368" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D369" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D370" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D371" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D372" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D373" : null,
+    "D374" : null,
+    "D375" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D376" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D377" : null,
+    "D378" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D379" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D380" : null,
+    "D381" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D382" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D383" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D384" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D385" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D386" : null,
+    "D387" : null,
+    "D388" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D389" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D390" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D391" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D392" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D393" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D394" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D395" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D396" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D397" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D398" : null,
+    "D399" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D400" : null,
+    "D401" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D402" : null,
+    "D403" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D404" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D405" : null,
+    "D406" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D407" : null,
+    "D408" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D409" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D410" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D411" : null,
+    "D412" : null,
+    "D413" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D414" : null,
+    "D415" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D416" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D417" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D418" : null,
+    "D419" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D420" : null,
+    "D421" : null,
+    "D422" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D423" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D424" : null,
+    "D425" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D426" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D427" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D428" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D429" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D430" : null,
+    "D431" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D432" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D433" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D434" : null,
+    "D435" : null,
+    "D436" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D437" : null,
+    "D438" : null,
+    "D439" : null,
+    "D440" : null,
+    "D441" : null,
+    "D442" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D443" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D444" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D445" : null,
+    "D446" : null,
+    "D447" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D448" : null,
+    "D449" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D450" : null,
+    "D451" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D452" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D453" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D454" : null,
+    "D455" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D456" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D457" : null,
+    "D458" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D459" : null,
+    "D460" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D461" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D462" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D463" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D464" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D465" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D466" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D467" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D468" : null,
+    "D469" : null,
+    "D470" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D471" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D472" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D473" : null,
+    "D474" : null,
+    "D475" : null,
+    "D476" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D477" : null,
+    "D478" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D479" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D480" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D481" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D482" : null,
+    "D483" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D484" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D485" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D486" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D487" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D488" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D489" : null,
+    "D490" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D491" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D492" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D493" : null,
+    "D494" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D495" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D496" : null,
+    "D497" : null,
+    "D498" : null,
+    "D499" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D500" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D501" : null,
+    "D502" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D503" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D504" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D505" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D506" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D507" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D508" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D509" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D510" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D511" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D512" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D513" : null,
+    "D514" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D515" : null,
+    "D516" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D517" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D518" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D519" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D520" : null,
+    "D521" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D522" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D523" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D524" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D525" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D526" : null,
+    "D527" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D528" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D529" : null,
+    "D530" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D531" : null,
+    "D532" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D533" : null,
+    "D534" : null,
+    "D535" : null,
+    "D536" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D537" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D538" : null,
+    "D539" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D540" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D541" : {
+      "type" : "String",
+      "value" : "b"
+    },
+    "D542" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D543" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D544" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D545" : null,
+    "D546" : null,
+    "D547" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D548" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D549" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D550" : null,
+    "D551" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D552" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D553" : null,
+    "D554" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D555" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D556" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D557" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D558" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D559" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D560" : null,
+    "D561" : {
+      "type" : "String",
+      "value" : "a"
+    },
+    "D562" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D563" : null,
+    "D564" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D565" : null,
+    "D566" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D567" : null,
+    "D568" : null,
+    "D569" : null,
+    "D570" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D571" : null,
+    "D572" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D573" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D574" : null,
+    "D575" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D576" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D577" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D578" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D579" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D580" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D581" : null,
+    "D582" : null,
+    "D583" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D584" : null,
+    "D585" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D586" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D587" : null,
+    "D588" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D589" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D590" : null,
+    "D591" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D592" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D593" : null,
+    "D594" : null,
+    "D595" : null,
+    "D596" : {
+      "type" : "String",
+      "value" : "A"
+    },
+    "D597" : null,
+    "D598" : null,
+    "D599" : null
+  }
+}

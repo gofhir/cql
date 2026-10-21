@@ -37,6 +37,7 @@ var areas = map[string]area{
 	"scope":      scope,
 	"types":      types,
 	"fhir":       fhirArea,
+	"codes":      codes,
 }
 
 // preambles are the definitions an area's expressions refer to, written once
@@ -44,6 +45,7 @@ var areas = map[string]area{
 var preambles = map[string]string{
 	"scope": scopePreamble,
 	"fhir":  fhirPreamble,
+	"codes": codesPreamble,
 }
 
 type generator struct {
@@ -364,6 +366,178 @@ func fhirArea(g *generator, _ int) string {
 		return "((" + v + " as " + t + ") is null)"
 	}
 	return "(cast " + v + " as " + t + ")"
+}
+
+// codesPreamble declares codes and concepts whose fields come from their
+// declarations: a code system's version, an empty display and none.
+const codesPreamble = `codesystem "CS": 'a' version 'b'
+codesystem "S": 'a'
+code "X": 'a' from "CS"
+code "Y": 'a' from "S" display ''
+code "Z": 'A' from "S" display 'b'
+concept "K": { "X", "Z" } display ''
+concept "L": { "Y" }
+`
+
+// The values a field of a Code or Concept is drawn from: left out, null, the
+// empty String and Strings that differ by case, so that null stands beside the empty one
+// and equality beside equivalence.
+var (
+	fieldTexts   = []string{"", "null", "''", "'a'", "'b'", "'A'"}
+	codeFields   = []string{"code", "system", "display", "version"}
+	codeNames    = []string{`"X"`, `"Y"`, `"Z"`}
+	conceptNames = []string{`"K"`, `"L"`}
+)
+
+// codes is reading the fields of Codes and Concepts and comparing them with
+// =, !=, ~ and !~, alone and in lists: where null and the empty String are told apart.
+func codes(g *generator, _ int) string {
+	switch g.pick("field", "is-null", "code", "code", "list", "concept", "concept-field") {
+	case "field":
+		return "(" + g.fieldOperand() + ")." + g.pick(codeFields...)
+	case "is-null":
+		return "((" + g.fieldOperand() + ")." + g.pick(codeFields...) + " is null)"
+	case "code":
+		a := g.codeFields()
+		return "(" + g.code(a) + " " + g.pick("=", "!=", "~", "!~") + " " + g.code(g.nearCode(a)) + ")"
+	case "list":
+		// One Code each, or a null in the same place before it: what the
+		// specification decides. Two Codes, one unknown and one unequal, it
+		// does not (plan 004, backlog 1c2).
+		a := g.codeFields()
+		left, right := "{ "+g.code(a)+" }", "{ "+g.code(g.nearCode(a))+" }"
+		if g.chance(0.3) {
+			left, right = "{ (null as Code), "+g.code(a)+" }", "{ (null as Code), "+g.code(g.nearCode(a))+" }"
+		}
+		return "(" + left + " " + g.pick("=", "!=") + " " + right + ")"
+	case "concept-field":
+		k := g.concept(2)
+		if g.chance(0.5) {
+			return "((" + k + ").display is null)"
+		}
+		return "(" + k + ").display"
+	}
+	op := g.pick("=", "!=", "~", "!~")
+	// Equal of Concepts of two codes each could hold one pair unknown and
+	// another unequal, which the specification does not decide (plan 004,
+	// backlog 1c2): equality compares Concepts of one code, or declared ones.
+	pair := 2
+	if op == "=" || op == "!=" {
+		pair = 1
+	}
+	left, right := g.concept(pair), g.concept(pair)
+	if g.chance(0.5) {
+		a, b, display := g.codeFields(), g.codeFields(), g.pick(fieldTexts...)
+		codes, near := [][]string{a, b}[:pair], [][]string{g.nearCode(a), g.nearCode(b)}[:pair]
+		left = g.conceptOf(display, codes...)
+		right = g.conceptOf(display, near...)
+		if g.chance(0.5) {
+			right = g.conceptOf(g.pick(fieldTexts...), near...)
+		}
+	}
+	return "(" + left + " " + op + " " + right + ")"
+}
+
+// fieldOperand is a Code whose fields are read: as often a declared code or a
+// selector from a declared code system, whose system and version come from
+// the declaration.
+func (g *generator) fieldOperand() string {
+	if g.chance(0.3) {
+		return g.selectorCode()
+	}
+	if g.chance(0.3) {
+		return g.pick(codeNames...)
+	}
+	return g.code(nil)
+}
+
+// selectorCode is a Code selector from a declared code system.
+func (g *generator) selectorCode() string {
+	s := "Code " + g.pick("'a'", "'A'", "''") + " from " + g.pick(`"CS"`, `"S"`)
+	if d := g.pick(fieldTexts...); d != "" && d != "null" {
+		s += " display " + d
+	}
+	return s
+}
+
+// codeFields draws the text of each field of a Code selector, "" for one left
+// out; nil is a declared code or a null Code.
+func (g *generator) codeFields() []string {
+	if g.chance(0.25) {
+		return nil
+	}
+	f := make([]string, len(codeFields))
+	for i := range f {
+		f[i] = g.pick(fieldTexts...)
+	}
+	return f
+}
+
+// nearCode is a Code like fields, one field drawn again, so that two Codes
+// compared differ in little, or as often a Code drawn afresh.
+func (g *generator) nearCode(fields []string) []string {
+	if fields == nil || g.chance(0.3) {
+		return g.codeFields()
+	}
+	near := slices.Clone(fields)
+	near[g.rnd.Intn(len(near))] = g.pick(fieldTexts...)
+	return near
+}
+
+// code writes a Code: a selector of fields, or, for nil fields, a declared
+// code, a Code selector from a declared code system, or a null Code.
+func (g *generator) code(fields []string) string {
+	return g.codeOr(fields, "(null as Code)")
+}
+
+// codeOr is code with other in place of the null Code: a Concept holds no
+// null among its codes (plan 004, out of scope).
+func (g *generator) codeOr(fields []string, other ...string) string {
+	if fields == nil {
+		fields = g.codeFields()
+	}
+	if fields == nil {
+		if g.chance(0.6) {
+			return g.selectorCode()
+		}
+		return g.pick(append(slices.Clone(codeNames), other...)...)
+	}
+	var set []string
+	for i, text := range fields {
+		if text != "" {
+			set = append(set, codeFields[i]+": "+text)
+		}
+	}
+	if len(set) == 0 {
+		set = []string{"code: " + g.pick(fieldTexts[1:]...)}
+	}
+	return "Code { " + strings.Join(set, ", ") + " }"
+}
+
+// concept writes a Concept: a selector of up to most Codes and a display, a
+// declared concept, or a null one.
+func (g *generator) concept(most int) string {
+	if g.chance(0.2) {
+		return g.pick(append(slices.Clone(conceptNames), "(null as Concept)")...)
+	}
+	list := [][]string{g.codeFields()}
+	if most > 1 && g.chance(0.4) {
+		list = append(list, g.codeFields())
+	}
+	return g.conceptOf(g.pick(fieldTexts...), list...)
+}
+
+// conceptOf writes a Concept selector of codes and a display, "" for none.
+func (g *generator) conceptOf(display string, codes ...[]string) string {
+	list := make([]string, len(codes))
+	for i, c := range codes {
+		list[i] = g.codeOr(c)
+	}
+	s := "Concept { codes: { " + strings.Join(list, ", ") + " }"
+	if display != "" {
+		s += ", display: " + display
+	}
+	return s + " }"
 }
 
 // unbound is the names that are not among bound.

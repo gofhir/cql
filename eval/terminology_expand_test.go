@@ -23,6 +23,9 @@ func (m *mockValueSetExpander) ExpandValueSet(_ context.Context, url string) ([]
 			{System: "http://example.org", Code: "blue", Display: "Blue"},
 		}, nil
 	}
+	if url == "http://example.org/vs/plain" {
+		return []ExpandedCode{{Code: "x"}}, nil
+	}
 	return nil, nil
 }
 
@@ -100,7 +103,7 @@ func TestExpandValueSet_WithExpander(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected Code, got %T", list.Values[0])
 	}
-	if code0.System != "http://example.org" || code0.Code != "red" || code0.Display != "Red" {
+	if cqltypes.Deref(code0.System) != "http://example.org" || cqltypes.Deref(code0.Code) != "red" || cqltypes.Deref(code0.Display) != "Red" {
 		t.Errorf("unexpected first code: %+v", code0)
 	}
 	// Verify second code
@@ -108,8 +111,27 @@ func TestExpandValueSet_WithExpander(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected Code, got %T", list.Values[1])
 	}
-	if code1.System != "http://example.org" || code1.Code != "blue" || code1.Display != "Blue" {
+	if cqltypes.Deref(code1.System) != "http://example.org" || cqltypes.Deref(code1.Code) != "blue" || cqltypes.Deref(code1.Display) != "Blue" {
 		t.Errorf("unexpected second code: %+v", code1)
+	}
+}
+
+// TestExpandValueSet_EmptyIsNull holds an expansion to plan 004: it holds plain
+// strings, so an element it leaves empty is null, as before (terminology is out
+// of the plan's scope).
+func TestExpandValueSet_EmptyIsNull(t *testing.T) {
+	ctx := NewContext(context.Background(), nil)
+	ctx.TerminologyProvider = &mockValueSetExpander{}
+	val, err := NewEvaluator(ctx).Eval(&ast.FunctionCall{
+		Name:     "expandValueSet",
+		Operands: []ast.Expression{&ast.Literal{ValueType: ast.LiteralString, Value: "http://example.org/vs/plain"}},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	code := val.(cqltypes.List).Values[0].(cqltypes.Code)
+	if code.System != nil || code.Display != nil || cqltypes.Deref(code.Code) != "x" {
+		t.Errorf("got system %v, code %v, display %v; want null, x, null", code.System, cqltypes.Deref(code.Code), code.Display)
 	}
 }
 

@@ -97,9 +97,9 @@ func TestTuple_GetAndEqual(t *testing.T) {
 }
 
 func TestCode_Equal(t *testing.T) {
-	a := NewCode("http://loinc.org", "12345-6", "Test")
-	b := NewCode("http://loinc.org", "12345-6", "Test")
-	c := NewCode("http://loinc.org", "99999-9", "Other")
+	a := NewCode(Str("http://loinc.org"), Str("12345-6"), Str("Test"), nil)
+	b := NewCode(Str("http://loinc.org"), Str("12345-6"), Str("Test"), nil)
+	c := NewCode(Str("http://loinc.org"), Str("99999-9"), Str("Other"), nil)
 
 	if !a.Equal(b) {
 		t.Error("equal codes should be equal")
@@ -131,14 +131,14 @@ func TestList_Operations(t *testing.T) {
 
 func TestConcept_Equal(t *testing.T) {
 	a := NewConcept([]Code{
-		NewCode("http://example.org", "A", "Code A"),
-	}, "Concept A")
+		NewCode(Str("http://example.org"), Str("A"), Str("Code A"), nil),
+	}, Str("Concept A"))
 	b := NewConcept([]Code{
-		NewCode("http://example.org", "A", "Code A"),
-	}, "Concept A")
+		NewCode(Str("http://example.org"), Str("A"), Str("Code A"), nil),
+	}, Str("Concept A"))
 	c := NewConcept([]Code{
-		NewCode("http://example.org", "B", "Code B"),
-	}, "Concept B")
+		NewCode(Str("http://example.org"), Str("B"), Str("Code B"), nil),
+	}, Str("Concept B"))
 
 	if !a.Equal(b) {
 		t.Error("equal concepts should be equal")

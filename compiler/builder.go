@@ -168,6 +168,14 @@ func (b *builder) visitTypeSpecifier(ctx grammar.ITypeSpecifierContext) ast.Type
 	return ts
 }
 
+// unquotedText is unquoteString for an element that may be absent: a
+// display or a version is null when the clause is missing, and the empty
+// String when it says so.
+func unquotedText(s string) *string {
+	u := unquoteString(s)
+	return &u
+}
+
 func unquoteString(s string) string {
 	if len(s) >= 2 {
 		if (s[0] == '\'' && s[len(s)-1] == '\'') || (s[0] == '"' && s[len(s)-1] == '"') {
@@ -508,7 +516,7 @@ func (b *builder) VisitCodesystemDefinition(ctx *grammar.CodesystemDefinitionCon
 		cs.ID = unquoteString(csid.GetText())
 	}
 	if vs := ctx.VersionSpecifier(); vs != nil {
-		cs.Version = unquoteString(vs.GetText())
+		cs.Version = unquotedText(vs.GetText())
 	}
 	if am := ctx.AccessModifier(); am != nil {
 		cs.AccessLevel = b.visitAccessModifier(am)
@@ -554,7 +562,7 @@ func (b *builder) VisitCodeDefinition(ctx *grammar.CodeDefinitionContext) interf
 		cd.System = undelimitedIdentifier(csid.Identifier(), csid)
 	}
 	if dc := ctx.DisplayClause(); dc != nil {
-		cd.Display = unquoteString(dc.STRING().GetText())
+		cd.Display = unquotedText(dc.STRING().GetText())
 	}
 	if am := ctx.AccessModifier(); am != nil {
 		cd.AccessLevel = b.visitAccessModifier(am)
@@ -571,7 +579,7 @@ func (b *builder) VisitConceptDefinition(ctx *grammar.ConceptDefinitionContext) 
 		cp.Codes = append(cp.Codes, undelimitedIdentifier(cid.Identifier(), cid))
 	}
 	if dc := ctx.DisplayClause(); dc != nil {
-		cp.Display = unquoteString(dc.STRING().GetText())
+		cp.Display = unquotedText(dc.STRING().GetText())
 	}
 	if am := ctx.AccessModifier(); am != nil {
 		cp.AccessLevel = b.visitAccessModifier(am)
@@ -1761,10 +1769,11 @@ func (b *builder) VisitCodeSelector(ctx *grammar.CodeSelectorContext) interface{
 		ce.Code = unquoteString(s.GetText())
 	}
 	if csid := ctx.CodesystemIdentifier(); csid != nil {
-		ce.System = csid.GetText()
+		// As a code definition names it: `from "CS"` is the code system CS.
+		ce.System = undelimitedIdentifier(csid.Identifier(), csid)
 	}
 	if dc := ctx.DisplayClause(); dc != nil {
-		ce.Display = unquoteString(dc.STRING().GetText())
+		ce.Display = unquotedText(dc.STRING().GetText())
 	}
 	return ce
 }
@@ -1778,7 +1787,7 @@ func (b *builder) VisitConceptSelector(ctx *grammar.ConceptSelectorContext) inte
 		}
 	}
 	if dc := ctx.DisplayClause(); dc != nil {
-		ce.Display = unquoteString(dc.STRING().GetText())
+		ce.Display = unquotedText(dc.STRING().GetText())
 	}
 	return ce
 }

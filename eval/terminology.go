@@ -119,17 +119,14 @@ func (e *Evaluator) resolveCodeRef(ref cqltypes.CodeRef) fptypes.Value {
 	}
 	for _, codeDef := range e.ctx.Library.Codes {
 		if codeDef.Name == ref.Name {
-			// Resolve the CodeSystem
-			system := ""
-			if codeDef.System != "" {
-				for _, cs := range e.ctx.Library.CodeSystems {
-					if cs.Name == codeDef.System {
-						system = cs.ID
-						break
-					}
+			var system, version *string
+			for _, cs := range e.ctx.Library.CodeSystems {
+				if codeDef.System != "" && cs.Name == codeDef.System {
+					system, version = cqltypes.Str(cs.ID), cs.Version
+					break
 				}
 			}
-			return cqltypes.NewCode(system, codeDef.ID, codeDef.Display)
+			return cqltypes.NewCode(system, cqltypes.Str(codeDef.ID), codeDef.Display, version)
 		}
 	}
 	return nil
@@ -227,7 +224,9 @@ func codeMembers(v fptypes.Value) ([]fptypes.Value, bool) {
 func extractCodeComponents(v fptypes.Value) (system, code string) {
 	switch c := v.(type) {
 	case cqltypes.Code:
-		return c.System, c.Code
+		// The provider takes plain strings, so null and '' meet here (plan
+		// 004 leaves terminology out).
+		return cqltypes.Deref(c.System), cqltypes.Deref(c.Code)
 	case fptypes.String:
 		return "", c.Value()
 	case *fptypes.ObjectValue:

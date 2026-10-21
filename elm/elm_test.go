@@ -257,13 +257,13 @@ func TestTranslate_Query(t *testing.T) {
 func TestTranslate_Definitions(t *testing.T) {
 	lib := &ast.Library{
 		CodeSystems: []*ast.CodeSystemDef{
-			{Name: "LOINC", ID: "http://loinc.org", Version: "2.72"},
+			{Name: "LOINC", ID: "http://loinc.org", Version: ptr("2.72")},
 		},
 		ValueSets: []*ast.ValueSetDef{
 			{Name: "Diabetes VS", ID: "http://example.org/vs/diabetes"},
 		},
 		Codes: []*ast.CodeDef{
-			{Name: "A1C", ID: "4548-4", System: "LOINC", Display: "Hemoglobin A1c"},
+			{Name: "A1C", ID: "4548-4", System: "LOINC", Display: ptr("Hemoglobin A1c")},
 		},
 		Parameters: []*ast.ParameterDef{
 			{Name: "MeasurementPeriod", Type: &ast.IntervalType{PointType: &ast.NamedType{Name: "DateTime"}}},

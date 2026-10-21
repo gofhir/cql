@@ -278,15 +278,13 @@ func partsValue(v fptypes.Value) (Answer, bool) {
 	return Answer{}, false
 }
 
-// stringField is a field this engine holds as a Go string, which has no null:
-// it holds null as "", and reads "" as null (`Code { code: 'x' }.system is
-// null` is true), so "" is written as the null it answers. That an explicit
-// ” reads as null too is a defect of its own (docs/plans/README.md).
-func stringField(s string) Answer {
-	if s == "" {
+// stringField is an element of this engine's Code or Concept: nil is null,
+// and the empty String is a String (plan 004).
+func stringField(s *string) Answer {
+	if s == nil {
 		return Answer{Kind: "null", Text: "null"}
 	}
-	return Answer{Kind: "string", Text: strconv.Quote(s)}
+	return Answer{Kind: "string", Text: strconv.Quote(*s)}
 }
 
 // list is a list of answers, as one text both engines' lists come to:

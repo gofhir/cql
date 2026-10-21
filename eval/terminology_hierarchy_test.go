@@ -29,8 +29,8 @@ func (m *mockTermOnlyProvider) InValueSet(_ context.Context, _, _, _ string) (bo
 
 func TestSubsumes_NilProvider(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
-	ctx.Definitions["codeA"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
-	ctx.Definitions["codeB"] = cqltypes.NewCode("http://snomed.info/sct", "child", "")
+	ctx.Definitions["codeA"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
+	ctx.Definitions["codeB"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("child"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	val, err := ev.Eval(&ast.FunctionCall{
@@ -51,8 +51,8 @@ func TestSubsumes_NilProvider(t *testing.T) {
 func TestSubsumes_ProviderWithoutSubsumesChecker(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
 	ctx.TerminologyProvider = &mockTermOnlyProvider{}
-	ctx.Definitions["codeA"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
-	ctx.Definitions["codeB"] = cqltypes.NewCode("http://snomed.info/sct", "child", "")
+	ctx.Definitions["codeA"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
+	ctx.Definitions["codeB"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("child"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	val, err := ev.Eval(&ast.FunctionCall{
@@ -73,7 +73,7 @@ func TestSubsumes_ProviderWithoutSubsumesChecker(t *testing.T) {
 func TestSubsumes_NilCodes(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
 	ctx.TerminologyProvider = &mockSubsumesProvider{}
-	ctx.Definitions["codeA"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
+	ctx.Definitions["codeA"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	// nil left
@@ -110,8 +110,8 @@ func TestSubsumes_NilCodes(t *testing.T) {
 func TestSubsumes_DifferentSystems(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
 	ctx.TerminologyProvider = &mockSubsumesProvider{}
-	ctx.Definitions["codeA"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
-	ctx.Definitions["codeB"] = cqltypes.NewCode("http://loinc.org", "child", "")
+	ctx.Definitions["codeA"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
+	ctx.Definitions["codeB"] = cqltypes.NewCode(cqltypes.Str("http://loinc.org"), cqltypes.Str("child"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	val, err := ev.Eval(&ast.FunctionCall{
@@ -130,8 +130,8 @@ func TestSubsumes_DifferentSystems(t *testing.T) {
 func TestSubsumes_ParentChild(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
 	ctx.TerminologyProvider = &mockSubsumesProvider{}
-	ctx.Definitions["codeA"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
-	ctx.Definitions["codeB"] = cqltypes.NewCode("http://snomed.info/sct", "child", "")
+	ctx.Definitions["codeA"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
+	ctx.Definitions["codeB"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("child"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	val, err := ev.Eval(&ast.FunctionCall{
@@ -150,8 +150,8 @@ func TestSubsumes_ParentChild(t *testing.T) {
 func TestSubsumes_NonParent(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
 	ctx.TerminologyProvider = &mockSubsumesProvider{}
-	ctx.Definitions["codeA"] = cqltypes.NewCode("http://snomed.info/sct", "child", "")
-	ctx.Definitions["codeB"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
+	ctx.Definitions["codeA"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("child"), nil, nil)
+	ctx.Definitions["codeB"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	val, err := ev.Eval(&ast.FunctionCall{
@@ -170,8 +170,8 @@ func TestSubsumes_NonParent(t *testing.T) {
 func TestSubsumedBy_Reversal(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
 	ctx.TerminologyProvider = &mockSubsumesProvider{}
-	ctx.Definitions["child"] = cqltypes.NewCode("http://snomed.info/sct", "child", "")
-	ctx.Definitions["parent"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
+	ctx.Definitions["child"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("child"), nil, nil)
+	ctx.Definitions["parent"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	// SubsumedBy(child, parent) should be true because it calls Subsumes(parent, child)
@@ -191,8 +191,8 @@ func TestSubsumedBy_Reversal(t *testing.T) {
 func TestSubsumedBy_NotSubsumed(t *testing.T) {
 	ctx := NewContext(context.Background(), nil)
 	ctx.TerminologyProvider = &mockSubsumesProvider{}
-	ctx.Definitions["parent"] = cqltypes.NewCode("http://snomed.info/sct", "parent", "")
-	ctx.Definitions["child"] = cqltypes.NewCode("http://snomed.info/sct", "child", "")
+	ctx.Definitions["parent"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("parent"), nil, nil)
+	ctx.Definitions["child"] = cqltypes.NewCode(cqltypes.Str("http://snomed.info/sct"), cqltypes.Str("child"), nil, nil)
 	ev := NewEvaluator(ctx)
 
 	// SubsumedBy(parent, child) should be false

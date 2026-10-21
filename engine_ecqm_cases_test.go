@@ -182,10 +182,10 @@ func directCodes(v interface{}) []codeVal {
 	var out []codeVal
 	switch c := v.(type) {
 	case cqltypes.Code:
-		out = append(out, codeVal{system: c.System, code: c.Code})
+		out = append(out, codeVal{system: cqltypes.Deref(c.System), code: cqltypes.Deref(c.Code)})
 	case cqltypes.Concept:
 		for _, cc := range c.Codes {
-			out = append(out, codeVal{system: cc.System, code: cc.Code})
+			out = append(out, codeVal{system: cqltypes.Deref(cc.System), code: cqltypes.Deref(cc.Code)})
 		}
 	case cqltypes.List:
 		for _, item := range c.Values {

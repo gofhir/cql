@@ -298,7 +298,7 @@ func TestTranslate_CodeExpression(t *testing.T) {
 	node := TranslateExpression(&ast.CodeExpression{
 		Code:    "1234-5",
 		System:  "LOINC",
-		Display: "Hemoglobin A1c",
+		Display: ptr("Hemoglobin A1c"),
 	})
 	if node.Type != "Code" {
 		t.Errorf("expected Code, got %s", node.Type)
@@ -309,8 +309,8 @@ func TestTranslate_CodeExpression(t *testing.T) {
 	if node.System == nil || node.System.Name != "LOINC" {
 		t.Error("expected LOINC system")
 	}
-	if node.Display != "Hemoglobin A1c" {
-		t.Errorf("expected Hemoglobin A1c, got %s", node.Display)
+	if node.Display == nil || *node.Display != "Hemoglobin A1c" {
+		t.Errorf("expected Hemoglobin A1c, got %s", deref(node.Display))
 	}
 }
 
@@ -319,7 +319,7 @@ func TestImport_CodeExpression(t *testing.T) {
 		Type:      "Code",
 		CodeValue: "1234-5",
 		System:    &ExpressionNode{Type: "CodeSystemRef", Name: "LOINC"},
-		Display:   "Hemoglobin A1c",
+		Display:   ptr("Hemoglobin A1c"),
 	})
 	ce, ok := node.(*ast.CodeExpression)
 	if !ok {
@@ -335,7 +335,7 @@ func TestImport_CodeExpression(t *testing.T) {
 
 func TestTranslate_ConceptExpression(t *testing.T) {
 	node := TranslateExpression(&ast.ConceptExpression{
-		Display: "Diabetes",
+		Display: ptr("Diabetes"),
 		Codes: []*ast.CodeExpression{
 			{Code: "73211009", System: "SNOMED"},
 			{Code: "E11", System: "ICD10"},
@@ -344,8 +344,8 @@ func TestTranslate_ConceptExpression(t *testing.T) {
 	if node.Type != "Concept" {
 		t.Errorf("expected Concept, got %s", node.Type)
 	}
-	if node.Display != "Diabetes" {
-		t.Errorf("expected Diabetes display, got %s", node.Display)
+	if node.Display == nil || *node.Display != "Diabetes" {
+		t.Errorf("expected Diabetes display, got %s", deref(node.Display))
 	}
 	if len(node.Element) != 2 {
 		t.Errorf("expected 2 code elements, got %d", len(node.Element))
@@ -355,7 +355,7 @@ func TestTranslate_ConceptExpression(t *testing.T) {
 func TestImport_ConceptExpression(t *testing.T) {
 	node := ImportExpression(&ExpressionNode{
 		Type:    "Concept",
-		Display: "Diabetes",
+		Display: ptr("Diabetes"),
 		Element: []*ExpressionNode{
 			{Type: "Code", CodeValue: "73211009", System: &ExpressionNode{Type: "CodeSystemRef", Name: "SNOMED"}},
 		},
@@ -364,8 +364,8 @@ func TestImport_ConceptExpression(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected ConceptExpression, got %T", node)
 	}
-	if ce.Display != "Diabetes" {
-		t.Errorf("expected Diabetes, got %s", ce.Display)
+	if deref(ce.Display) != "Diabetes" {
+		t.Errorf("expected Diabetes, got %s", deref(ce.Display))
 	}
 	if len(ce.Codes) != 1 || ce.Codes[0].Code != "73211009" {
 		t.Error("expected 1 code with 73211009")
@@ -877,4 +877,13 @@ func TestImport_NilExpression(t *testing.T) {
 	if node != nil {
 		t.Error("expected nil for nil input")
 	}
+}
+
+func ptr(s string) *string { return &s }
+
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
