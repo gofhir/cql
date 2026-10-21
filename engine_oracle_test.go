@@ -42,7 +42,11 @@ var updateDivergences = flag.Bool("update-divergences", false,
 func TestAnswersMatchTheReferences(t *testing.T) {
 	for _, a := range snapshotAreas {
 		t.Run(a.area, func(t *testing.T) {
-			got := referenceDivergences(t, a.area, a.exact)
+			got, untyped := referenceDivergences(t, a.area, a.exact)
+			if problems := unconfirmedUntypedMatches(t, a.area, untyped); len(problems) > 0 {
+				t.Errorf("%d answers of %s match a reference that does not write their type, and no oracle "+
+					"confirms the type they have:\n%s", len(problems), a.area, strings.Join(problems, "\n"))
+			}
 			path := filepath.Join("testdata", "snapshots", a.area+".divergences.tsv")
 			recorded := readDivergences(t, path)
 			if *updateDivergences {
@@ -76,8 +80,10 @@ func TestAnswersMatchTheReferences(t *testing.T) {
 }
 
 // referenceDivergences is every definition of an area and reference engine
-// whose answers differ, keyed "D17\tjava", with both answers as its value.
-func referenceDivergences(t *testing.T, area string, exact bool) map[string]answerPair {
+// whose answers differ, keyed "D17\tjava", with both answers as its value; and,
+// keyed alike, this engine's answer where it matches one that holds a value
+// of no type.
+func referenceDivergences(t *testing.T, area string, exact bool) (divergences map[string]answerPair, untyped map[string]answers.Answer) {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", area+".cql"))
 	if err != nil {
@@ -105,7 +111,7 @@ func referenceDivergences(t *testing.T, area string, exact bool) map[string]answ
 	if exact {
 		same = answers.SameExactly
 	}
-	divergences := map[string]answerPair{}
+	divergences, untyped = map[string]answerPair{}, map[string]answers.Answer{}
 	for _, m := range snapshotDefine.FindAllStringSubmatch(src, -1) {
 		name := m[1]
 		answer := snapshotEngineAnswer(engine, header+m[0]+"\n", name, patient)
@@ -116,12 +122,15 @@ func referenceDivergences(t *testing.T, area string, exact bool) map[string]answ
 			}
 			reference := answers.Reference(raw)
 			if same(reference, answer) && !answer.Panicked {
+				if answers.HoldsUntyped(reference) {
+					untyped[name+"\t"+engineName] = answer
+				}
 				continue
 			}
 			divergences[name+"\t"+engineName] = answerPair{Reference: pinned(reference.Text), Engine: pinned(answer.Text)}
 		}
 	}
-	return divergences
+	return divergences, untyped
 }
 
 // snapshotEngineAnswer is this engine's answer to a definition, read as the

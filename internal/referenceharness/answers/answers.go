@@ -12,6 +12,8 @@ package answers
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -25,10 +27,20 @@ import (
 // string, null, an error, a FHIR value, a list of those, or anything else as
 // its text.
 type Answer struct {
-	Kind     string // "number", "boolean", "string", "null", "error", "refused", "fhir", "list", "other"
+	Kind     string // "number", "boolean", "string", "null", "error", "refused", "fhir", "list", "structure", "untyped", "other"
 	Text     string
 	Num      decimal.Decimal
 	Panicked bool
+	// Untyped is a value whose type the reference did not write, only what
+	// is known of it: a Number, a Text or an Object of cql-execution.
+	Untyped bool
+	// Parts are a list's elements, an interval's bounds, or a structure's
+	// fields, named by Names in their order.
+	Parts []Answer
+	Names []string
+	// form is "list" or "interval" for an answer list or interval built,
+	// whatever its Kind says of its elements.
+	form string
 }
 
 // referenceValue is one value as the reference engines encode it.
@@ -43,6 +55,14 @@ type referenceValue struct {
 	HighClosed bool              `json:"highClosed"`
 	Error      string            `json:"error"`
 	Message    string            `json:"message"`
+	// A Code's, a Concept's and a tuple's own: each written plain, a Code's
+	// fields as JSON strings or null.
+	Fields  map[string]json.RawMessage `json:"fields"`
+	Codes   []json.RawMessage          `json:"codes"`
+	Code    json.RawMessage            `json:"code"`
+	System  json.RawMessage            `json:"system"`
+	Version json.RawMessage            `json:"version"`
+	Display json.RawMessage            `json:"display"`
 }
 
 func Reference(raw json.RawMessage) Answer {
@@ -81,7 +101,79 @@ func Reference(raw json.RawMessage) Answer {
 	if a, ok := referenceScalar(v); ok {
 		return a
 	}
+	if a, ok := referenceStructure(v); ok {
+		return a
+	}
 	return Answer{Kind: "other", Text: string(raw)}
+}
+
+// referenceStructure is a reference value that is a Code, a Concept or a
+// tuple, or one the reference could not type: cql-execution keeps Integer and
+// Decimal as one number, String and Long as one text, and a tuple or an
+// instance read as Any as a plain object.
+func referenceStructure(v referenceValue) (Answer, bool) {
+	var s string
+	switch v.Type {
+	case "Code":
+		return code(plainString(v.Code), plainString(v.Display), plainString(v.System), plainString(v.Version)), true
+	case "Concept":
+		if v.Codes == nil {
+			// codes null, which is not codes empty.
+			return concept(Answer{Kind: "null", Text: "null"}, plainString(v.Display)), true
+		}
+		codes := make([]Answer, len(v.Codes))
+		for i, c := range v.Codes {
+			codes[i] = Reference(c)
+		}
+		return concept(list(codes), plainString(v.Display)), true
+	case "Tuple", "Object":
+		names := slices.Sorted(maps.Keys(v.Fields))
+		fields := make([]Answer, len(names))
+		for i, n := range names {
+			fields[i] = Reference(v.Fields[n])
+		}
+		a := structure(v.Type, names, fields)
+		a.Untyped = v.Type == "Object"
+		return a, true
+	case "Number":
+		if json.Unmarshal(v.Value, &s) == nil {
+			if d, err := decimal.NewFromString(s); err == nil {
+				return Answer{Kind: "untyped", Text: "Number " + s, Num: d, Untyped: true}, true
+			}
+		}
+	case "Text":
+		if json.Unmarshal(v.Value, &s) == nil {
+			return Answer{Kind: "untyped", Text: "Text " + strconv.Quote(s), Untyped: true}, true
+		}
+	}
+	return Answer{}, false
+}
+
+// plainString is a field the reference writes as a JSON string or null.
+func plainString(raw json.RawMessage) Answer {
+	var s *string
+	if json.Unmarshal(raw, &s) != nil || s == nil {
+		return Answer{Kind: "null", Text: "null"}
+	}
+	return Answer{Kind: "string", Text: strconv.Quote(*s)}
+}
+
+// code is a Code by its four fields, each a string or null.
+func code(codeField, display, system, version Answer) Answer {
+	return structure("Code", []string{"code", "display", "system", "version"}, []Answer{codeField, display, system, version})
+}
+
+func concept(codes, display Answer) Answer {
+	return structure("Concept", []string{"codes", "display"}, []Answer{codes, display})
+}
+
+// structure is a value of a type by its named fields, sorted by name.
+func structure(typ string, names []string, fields []Answer) Answer {
+	parts := make([]string, len(names))
+	for i, n := range names {
+		parts[i] = n + ": " + partText(fields[i])
+	}
+	return Answer{Kind: "structure", Text: typ + "{" + strings.Join(parts, ", ") + "}", Parts: fields, Names: names}
 }
 
 // referenceScalar is a reference value that is one of CQL's System scalars, or
@@ -150,14 +242,51 @@ func Value(v fptypes.Value) Answer {
 		return Answer{Kind: "boolean", Text: fmt.Sprint(n.Bool())}
 	case fptypes.String:
 		return Answer{Kind: "string", Text: strconv.Quote(n.Value())}
+	}
+	if a, ok := partsValue(v); ok {
+		return a
+	}
+	return Answer{Kind: "other", Text: v.Type() + " " + v.String()}
+}
+
+// partsValue is Value for a value of parts: a list, a Code, a Concept or a
+// tuple.
+func partsValue(v fptypes.Value) (Answer, bool) {
+	switch n := v.(type) {
 	case cqltypes.List:
 		items := make([]Answer, len(n.Values))
 		for i, e := range n.Values {
 			items[i] = Value(e)
 		}
-		return list(items)
+		return list(items), true
+	case cqltypes.Code:
+		return code(stringField(n.Code), stringField(n.Display), stringField(n.System), stringField(n.Version)), true
+	case cqltypes.Concept:
+		codes := make([]Answer, len(n.Codes))
+		for i, c := range n.Codes {
+			codes[i] = Value(c)
+		}
+		return concept(list(codes), stringField(n.Display)), true
+	case cqltypes.Tuple:
+		names := slices.Sorted(maps.Keys(n.Elements))
+		fields := make([]Answer, len(names))
+		for i, name := range names {
+			fields[i] = Value(n.Elements[name])
+		}
+		return structure(n.Type(), names, fields), true
 	}
-	return Answer{Kind: "other", Text: v.Type() + " " + v.String()}
+	return Answer{}, false
+}
+
+// stringField is a field this engine holds as a Go string, which has no null:
+// it holds null as "", and reads "" as null (`Code { code: 'x' }.system is
+// null` is true), so "" is written as the null it answers. That an explicit
+// ” reads as null too is a defect of its own (docs/plans/README.md).
+func stringField(s string) Answer {
+	if s == "" {
+		return Answer{Kind: "null", Text: "null"}
+	}
+	return Answer{Kind: "string", Text: strconv.Quote(s)}
 }
 
 // list is a list of answers, as one text both engines' lists come to:
@@ -170,16 +299,21 @@ func list(items []Answer) Answer {
 	kind := "list"
 	for i, it := range items {
 		switch it.Kind {
-		case "number":
-			parts[i] = numberText(it)
-		case "null", "boolean", "string", "fhir", "list", "quantity", "temporal", "interval":
-			parts[i] = it.Text
+		case "number", "null", "boolean", "string", "fhir", "list", "quantity", "temporal", "interval", "structure", "untyped":
 		default:
 			kind = "other"
-			parts[i] = it.Text
 		}
+		parts[i] = partText(it)
 	}
-	return Answer{Kind: kind, Text: "{" + strings.Join(parts, ", ") + "}"}
+	return Answer{Kind: kind, Text: "{" + strings.Join(parts, ", ") + "}", Parts: items, form: "list"}
+}
+
+// partText is an answer inside a list, an interval or a structure.
+func partText(a Answer) string {
+	if a.Kind == "number" {
+		return numberText(a)
+	}
+	return a.Text
 }
 
 // Same compares numbers by value within their kind, and everything else by kind
@@ -201,6 +335,12 @@ func list(items []Answer) Answer {
 // 183.09405819371818 on a developer's machine, where the Java engine wrote the
 // second. Compared exactly, which reference agreed depended on the machine.
 func Same(a, b Answer) bool {
+	return compare(a, b, sameValue)
+}
+
+// sameValue is Same for two answers the text compares: no structure and
+// nothing untyped in either.
+func sameValue(a, b Answer) bool {
 	switch {
 	case a.Kind != b.Kind:
 		return false
@@ -242,10 +382,100 @@ func Same(a, b Answer) bool {
 // by its digits alone — 10000000000000000000 and 10000000000000100000 are
 // within it, a quotient off by a hundred thousand.
 func SameExactly(a, b Answer) bool {
+	return compare(a, b, sameExactValue)
+}
+
+func sameExactValue(a, b Answer) bool {
 	if a.Kind == "number" && b.Kind == "number" {
 		return isDecimal(a) == isDecimal(b) && a.Num.Equal(b.Num)
 	}
-	return Same(a, b)
+	return sameValue(a, b)
+}
+
+// compare compares by the text, with leaf for numbers, unless either answer
+// holds a structure or a value of no type: those it compares part by part.
+// Only those, so that every answer the text compared before is compared as
+// before.
+func compare(a, b Answer, leaf func(a, b Answer) bool) bool {
+	if !structured(a) && !structured(b) {
+		return leaf(a, b)
+	}
+	if b.Untyped && !a.Untyped {
+		a, b = b, a
+	}
+	if a.Untyped {
+		return compareUntyped(a, b, leaf)
+	}
+	switch {
+	case a.form != b.form:
+		return false
+	case a.form == "list":
+		return sameParts(a, b, leaf)
+	case a.form == "interval":
+		return a.Text[len("Interval")] == b.Text[len("Interval")] && a.Text[len(a.Text)-1] == b.Text[len(b.Text)-1] &&
+			sameParts(a, b, leaf)
+	case a.Kind != b.Kind:
+		return false
+	case a.Kind == "structure":
+		return structureType(a) == structureType(b) && sameParts(a, b, leaf)
+	}
+	return leaf(a, b)
+}
+
+// compareUntyped is compare for a, a value of no type.
+func compareUntyped(a, b Answer, leaf func(a, b Answer) bool) bool {
+	switch {
+	case b.Untyped:
+		return a.Kind == b.Kind && a.Text == b.Text
+	case a.Kind == "untyped" && strings.HasPrefix(a.Text, "Number "):
+		// A number of no type is the same as a number of either, by its value
+		// as one of that type. Its type is confirmed elsewhere: see
+		// TestAnUntypedMatchIsConfirmed.
+		if b.Kind != "number" {
+			return false
+		}
+		typ, _, _ := strings.Cut(b.Text, " ")
+		return leaf(Answer{Kind: "number", Text: typ + " " + a.Num.String(), Num: a.Num}, b)
+	case a.Kind == "untyped":
+		// A text of no type: a String or a Long, and this engine has no Long
+		// at run time (D4c).
+		return b.Kind == "string" && b.Text == strings.TrimPrefix(a.Text, "Text ")
+	}
+	// An object of no type is the same as a structure of any type with the
+	// same fields.
+	return b.Kind == "structure" && sameParts(a, b, leaf)
+}
+
+// structured reports whether an answer holds a structure or a value of no
+// type, at any depth.
+func structured(a Answer) bool {
+	if a.Untyped || a.Kind == "structure" {
+		return true
+	}
+	return slices.ContainsFunc(a.Parts, structured)
+}
+
+func structureType(a Answer) string {
+	typ, _, _ := strings.Cut(a.Text, "{")
+	return typ
+}
+
+func sameParts(a, b Answer, leaf func(a, b Answer) bool) bool {
+	if !slices.Equal(a.Names, b.Names) || len(a.Parts) != len(b.Parts) {
+		return false
+	}
+	for i := range a.Parts {
+		if !compare(a.Parts[i], b.Parts[i], leaf) {
+			return false
+		}
+	}
+	return true
+}
+
+// HoldsUntyped reports whether an answer holds a value of no type, at any
+// depth: a match it takes part in needs its type confirmed by an oracle.
+func HoldsUntyped(a Answer) bool {
+	return a.Untyped || slices.ContainsFunc(a.Parts, HoldsUntyped)
 }
 
 // canonicalJSON is a JSON document read and written back, with its keys
@@ -282,18 +512,13 @@ func interval(low, high Answer, lowClosed, highClosed bool) Answer {
 	kind := "interval"
 	for _, b := range []Answer{low, high} {
 		switch b.Kind {
-		case "number", "null", "temporal", "quantity":
+		case "number", "null", "temporal", "quantity", "untyped":
 		default:
 			kind = "other"
 		}
 	}
-	text := func(b Answer) string {
-		if b.Kind == "number" {
-			return numberText(b)
-		}
-		return b.Text
-	}
-	return Answer{Kind: kind, Text: "Interval" + open + text(low) + ", " + text(high) + closeBracket}
+	return Answer{Kind: kind, Text: "Interval" + open + partText(low) + ", " + partText(high) + closeBracket,
+		Parts: []Answer{low, high}, form: "interval"}
 }
 
 // Failed is the answer of a definition that failed to evaluate, or panicked.

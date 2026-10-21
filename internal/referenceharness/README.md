@@ -82,8 +82,11 @@ value, since `1.0 = 1` in CQL, and so it does not check scale. A DateTime keeps 
 also an `instant` in full ISO 8601. That field is the one to compare, because
 the engine's `toString()` drops the offset at some precisions and keeps it at
 others. null is JSON null and an empty list is still a list. A tuple's elements
-go under `fields`, not `elements`, so the key always means one thing. A value
-with no encoding is recorded as `Unencoded:<class>` instead of being guessed at.
+go under `fields`, not `elements`, so the key always means one thing. A Code
+writes its four fields and a Concept its codes and display, each field even
+when it is null: an absent field and a null one are one value, and an empty one
+is another. A value with no encoding is recorded as `Unencoded:<class>` instead
+of being guessed at, and `TestTheReferencesHoldNothingUnencoded` fails on one.
 The SHA-256 of the `.cql` is recorded too.
 
 Evaluation time is fixed at `2026-01-01T00:00:00-03:00`, so `Now()` and
@@ -102,9 +105,14 @@ evaluation time.
 `cql-execution` differs from the Java engine in three representations, and
 the encoding accounts for each:
 
-- **Integer and Decimal** are one JavaScript number. A number's type is read
-  from the static type the translator annotated, so `cql-execution` is not
-  consulted on a row about the type itself (`ListIntDec`).
+- **Integer and Decimal** are one JavaScript number, and **String and Long**
+  one JavaScript string. A number's type is read from the static type the
+  translator annotated, so `cql-execution` is not consulted on a row about the
+  type itself (`ListIntDec`). Where that type is Any, it is not guessed: the
+  value is written as a `Number` or a `Text`, and a tuple or an instance as an
+  `Object` with its fields. The comparison matches them by value and fields
+  only, and `TestAnswersMatchTheReferences` fails on such a match unless the
+  area's oracle confirms the type this engine gives.
 - **A Decimal** is computed in binary floating point, so `0.1 + 0.2` is
   `0.30000000000000004` there. It is recorded as held, not rounded to the
   scale of 8. Rounding would put an answer in its mouth: `10.0 / 3.0 =
@@ -206,12 +214,15 @@ is gone. The reference engine's answers only need computing once per library:
 they do not change with this engine.
 
 `compare` evaluates at the fixed evaluation time `Evaluate.java` uses. It
-compares numbers by value and sorts each difference into one of three:
+compares numbers by value and sorts each difference into one of four:
 
 - `engine-panic`: always a defect, and reported even where the reference
   failed too.
 - `reference-error`: the reference threw and this engine answered.
 - `different`: the two engines gave different answers.
+- `type-unconfirmed`: the value is the same, but cql-execution wrote no type
+  for it (a `Number`, a `Text` or an `Object`), and `compare` has no oracle to
+  say the type.
 
 Two runs of different areas, or of two seeds, cover more than one large run of
 one.

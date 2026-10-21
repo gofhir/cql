@@ -43,8 +43,18 @@
     },
     "D45": null,
     "D46": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "code": {
+          "type": "Object",
+          "fields": {
+            "value": {
+              "type": "Text",
+              "value": "x"
+            }
+          }
+        }
+      }
     },
     "D47": {
       "type": "Boolean",
@@ -219,8 +229,13 @@
       "value": false
     },
     "D186": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "value": {
+          "type": "Text",
+          "value": "x"
+        }
+      }
     },
     "D190": {
       "type": "Boolean",
@@ -388,8 +403,13 @@
       "value": "p"
     },
     "D317": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "value": {
+          "type": "Text",
+          "value": "x"
+        }
+      }
     },
     "D318": {
       "type": "Boolean",
@@ -413,8 +433,18 @@
     },
     "D327": null,
     "D335": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "code": {
+          "type": "Object",
+          "fields": {
+            "value": {
+              "type": "Text",
+              "value": "x"
+            }
+          }
+        }
+      }
     },
     "D336": {
       "type": "Boolean",
@@ -434,8 +464,13 @@
       "value": false
     },
     "D345": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "id": {
+          "type": "Text",
+          "value": "x"
+        }
+      }
     },
     "D350": null,
     "D355": {
@@ -447,8 +482,13 @@
       "value": "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
     },
     "D358": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "value": {
+          "type": "Text",
+          "value": "x"
+        }
+      }
     },
     "D359": {
       "type": "Boolean",
@@ -936,8 +976,18 @@
       "value": false
     },
     "D755": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "code": {
+          "type": "Object",
+          "fields": {
+            "value": {
+              "type": "Text",
+              "value": "x"
+            }
+          }
+        }
+      }
     },
     "D760": null,
     "D761": {
@@ -968,8 +1018,18 @@
       "unit": "mg"
     },
     "D778": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "code": {
+          "type": "Object",
+          "fields": {
+            "value": {
+              "type": "Text",
+              "value": "x"
+            }
+          }
+        }
+      }
     },
     "D782": {
       "type": "Integer",
@@ -984,8 +1044,13 @@
       "value": "p"
     },
     "D788": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "id": {
+          "type": "Text",
+          "value": "x"
+        }
+      }
     },
     "D792": null,
     "D793": null,
@@ -1002,8 +1067,13 @@
       "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<{urn:hl7-org:elm-types:r1}Integer> as {urn:hl7-org:elm-types:r1}Any\n\tCQL Library:\tD797|1.0\n\tExpression:\tAs\n\tELM Local ID:\t217\n\tCQL Locator:\t5:14-5:37\n"
     },
     "D798": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "value": {
+          "type": "Text",
+          "value": "x"
+        }
+      }
     },
     "D802": {
       "type": "Boolean",
@@ -1042,8 +1112,18 @@
       "value": false
     },
     "D839": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "code": {
+          "type": "Object",
+          "fields": {
+            "value": {
+              "type": "Text",
+              "value": "x"
+            }
+          }
+        }
+      }
     },
     "D842": {
       "type": "Boolean",

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -25,7 +27,9 @@ func TestReferenceAnswersAreReadAsEvaluateWritesThem(t *testing.T) {
 		`{"error":"CqlException","message":"NaN"}`: "error",
 		`{"error":"Translation","message":"x"}`:    "refused",
 		`{"type":"List","elements":[]}`:            "list",
-		`{"type":"Tuple","fields":{}}`:             "other",
+		`{"type":"Tuple","fields":{}}`:             "structure",
+		`{"type":"Number","value":"1"}`:            "untyped",
+		`{"type":"Unencoded:Foo","value":"x"}`:     "other",
 	} {
 		if got := Reference(json.RawMessage(raw)).Kind; got != want {
 			t.Errorf("%s read as %s, want %s", raw, got, want)
@@ -265,5 +269,129 @@ func TestAFloat64sNumbersAreTheSameAcrossPlatforms(t *testing.T) {
 	}
 	if Same(long("9223372036854775807"), long("9223372036854775806")) {
 		t.Error("two Longs a unit apart were reported the same")
+	}
+}
+
+// TestStructuresAndUntypedValuesAreComparedByTheirParts covers what the
+// reference harness writes for a Code, a Concept and a tuple, and what
+// cql-execution writes where it does not know the type: a Number (Integer or
+// Decimal), a Text (String or Long) and an Object (a tuple or an instance). A
+// Code selector leaves the elements it does not set null (CQL 1.5, Code), and
+// this engine answers them null, though it holds them as empty strings.
+func TestStructuresAndUntypedValuesAreComparedByTheirParts(t *testing.T) {
+	ref := func(raw string) Answer { return Reference(json.RawMessage(raw)) }
+	eng := func(expr string) Answer {
+		return evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: "+expr+"\n", "R")
+	}
+	fullCode := `{"type":"Code","code":"x","system":"s","version":"1","display":"d"}`
+	for _, tt := range []struct {
+		name string
+		a, b Answer
+		same bool
+	}{
+		{"a Code with every field", ref(fullCode), eng("Code { code: 'x', system: 's', version: '1', display: 'd' }"), true},
+		{"a Code of another system", ref(fullCode), eng("Code { code: 'x', system: 't', version: '1', display: 'd' }"), false},
+		{"a Code's null fields against those this engine leaves unset", ref(`{"type":"Code","code":"x","system":null,"version":null,"display":null}`),
+			eng("Code { code: 'x' }"), true},
+		{"a Code's empty field against one this engine leaves unset", ref(`{"type":"Code","code":"x","system":"","version":null,"display":null}`),
+			eng("Code { code: 'x' }"), false},
+		{"a Concept", ref(`{"type":"Concept","codes":[` + fullCode + `],"display":"c"}`),
+			eng("Concept { codes: { Code { code: 'x', system: 's', version: '1', display: 'd' } }, display: 'c' }"), true},
+		{"a Concept short of a code", ref(`{"type":"Concept","codes":[` + fullCode + `],"display":"c"}`),
+			eng("Concept { codes: { Code { code: 'x', system: 's', version: '1', display: 'd' }, " +
+				"Code { code: 'y', system: 's', version: '1', display: 'd' } }, display: 'c' }"), false},
+		{"a Concept of null codes is not one of none", ref(`{"type":"Concept","codes":null,"display":"d"}`),
+			eng("Concept { codes: List<Code>{}, display: 'd' }"), false},
+		{"a Concept of no codes", ref(`{"type":"Concept","codes":[],"display":"d"}`),
+			eng("Concept { codes: List<Code>{}, display: 'd' }"), true},
+		{"a typed tuple", ref(`{"type":"Tuple","fields":{"a":{"type":"Integer","value":"1"}}}`), eng("Tuple { a: 1 }"), true},
+		{"a typed tuple with a Decimal for an Integer", ref(`{"type":"Tuple","fields":{"a":{"type":"Decimal","value":"1"}}}`),
+			eng("Tuple { a: 1 }"), false},
+		{"an Object as a tuple", ref(`{"type":"Object","fields":{"a":{"type":"Number","value":"1"}}}`), eng("Tuple { a: 1 }"), true},
+		{"an Object with a field more", ref(`{"type":"Object","fields":{"a":{"type":"Number","value":"1"},"b":null}}`),
+			eng("Tuple { a: 1 }"), false},
+		{"an Object with a field renamed", ref(`{"type":"Object","fields":{"b":{"type":"Number","value":"1"}}}`),
+			eng("Tuple { a: 1 }"), false},
+		{"an Object as an instance", ref(`{"type":"Object","fields":{"id":{"type":"Text","value":"x"}}}`),
+			eng("System.ValueSet { id: 'x' }"), true},
+		{"a typed tuple is no instance", ref(`{"type":"Tuple","fields":{"id":{"type":"String","value":"x"}}}`),
+			eng("System.ValueSet { id: 'x' }"), false},
+		{"an empty Object is no empty list", ref(`{"type":"Object","fields":{}}`), eng("List<Integer>{}"), false},
+		{"a Code of another display", ref(fullCode), eng("Code { code: 'x', system: 's', version: '1', display: 'e' }"), false},
+		{"a Code of another version", ref(fullCode), eng("Code { code: 'x', system: 's', version: '2', display: 'd' }"), false},
+		{"a Number as an Integer", ref(`{"type":"Number","value":"1"}`), eng("1"), true},
+		{"a Number as a Decimal", ref(`{"type":"Number","value":"2.5"}`), eng("2.5"), true},
+		{"a Number of another value", ref(`{"type":"Number","value":"2"}`), eng("1"), false},
+		{"a Number is no String", ref(`{"type":"Number","value":"1"}`), eng("'1'"), false},
+		{"a Text as a String", ref(`{"type":"Text","value":"a"}`), eng("'a'"), true},
+		{"a Text is no number", ref(`{"type":"Text","value":"5"}`), eng("5"), false},
+		{"Numbers in a list", ref(`{"type":"List","elements":[{"type":"Number","value":"1"},{"type":"Number","value":"2"}]}`),
+			eng("{ 1, 2 }"), true},
+		{"Numbers in a list, one changed", ref(`{"type":"List","elements":[{"type":"Number","value":"1"},{"type":"Number","value":"3"}]}`),
+			eng("{ 1, 2 }"), false},
+		{"Numbers in a list, one short", ref(`{"type":"List","elements":[{"type":"Number","value":"1"}]}`), eng("{ 1, 2 }"), false},
+		{"a Number in an interval", ref(`{"type":"Interval","low":{"type":"Number","value":"1"},"high":null,"lowClosed":true,"highClosed":true}`),
+			eng("Interval[1, null]"), true},
+		{"a Number in an interval closed otherwise", ref(`{"type":"Interval","low":{"type":"Number","value":"1"},"high":null,"lowClosed":true,"highClosed":false}`),
+			eng("Interval[1, null]"), false},
+	} {
+		if got := Same(tt.a, tt.b); got != tt.same {
+			t.Errorf("%s: Same(%s, %s) = %v, want %v", tt.name, tt.a.Text, tt.b.Text, got, tt.same)
+		}
+		if got := Same(tt.b, tt.a); got != tt.same {
+			t.Errorf("%s, reversed: Same = %v, want %v", tt.name, got, tt.same)
+		}
+		if got := SameExactly(tt.a, tt.b); got != tt.same {
+			t.Errorf("%s: SameExactly = %v, want %v", tt.name, got, tt.same)
+		}
+	}
+	if !HoldsUntyped(ref(`{"type":"List","elements":[{"type":"Number","value":"1"}]}`)) || HoldsUntyped(eng("{ 1 }")) {
+		t.Error("HoldsUntyped misreads a list")
+	}
+}
+
+// TestAnIntervalOfTextsIsComparedByItsBounds covers an interval whose bounds
+// cql-execution writes as Text: an interval of Strings is no interval the
+// text compares, and its bounds still are.
+func TestAnIntervalOfTextsIsComparedByItsBounds(t *testing.T) {
+	ref := Reference(json.RawMessage(`{"type":"Interval","low":{"type":"Text","value":"a"},"high":{"type":"Text","value":"b"},` +
+		`"lowClosed":true,"highClosed":true}`))
+	if !Same(ref, evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: Interval['a', 'b']\n", "R")) {
+		t.Error("an interval of Texts is not the same as one of the same Strings")
+	}
+	if Same(ref, evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: Interval['a', 'c']\n", "R")) {
+		t.Error("an interval of Texts is the same as one of other Strings")
+	}
+}
+
+// TestTheRuntimeReferencesTuplesAreReadAsTuples covers the tuples both
+// reference engines answered in the runtime corpus, read as the harness wrote
+// them, against this engine's: a tuple of the same fields is the same, and
+// one with a field of another value is not.
+func TestTheRuntimeReferencesTuplesAreReadAsTuples(t *testing.T) {
+	for _, file := range []string{"runtime.expected.json", "runtime.expected.js.json"} {
+		raw, err := os.ReadFile(filepath.Join("..", "..", "..", "testdata", "reference", file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var doc struct {
+			Results map[string]json.RawMessage `json:"results"`
+		}
+		if err := json.Unmarshal(raw, &doc); err != nil {
+			t.Fatal(err)
+		}
+		for name, expr := range map[string]string{
+			"ReturnTuple":         "({1, 1}) X return Tuple { v: X }",
+			"MultiSourceNoReturn": "from ({1, 1}) A, ({2}) B",
+		} {
+			ref := Reference(doc.Results[name])
+			if !Same(ref, evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: "+expr+"\n", "R")) {
+				t.Errorf("%s %s: %s is not this engine's", file, name, ref.Text)
+			}
+		}
+		wrong := evaluate(cql.NewEngine(), "library T version '1.0'\ndefine R: { Tuple { v: 2 } }\n", "R")
+		if Same(Reference(doc.Results["ReturnTuple"]), wrong) {
+			t.Errorf("%s ReturnTuple is the same as a tuple of another value", file)
+		}
 	}
 }

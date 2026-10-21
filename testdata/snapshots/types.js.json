@@ -148,8 +148,17 @@
       "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast List<Choice<{urn:hl7-org:elm-types:r1}Integer, {urn:hl7-org:elm-types:r1}String>> as List<{urn:hl7-org:elm-types:r1}Integer>\n\tCQL Library:\tD43|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:13-2:64\n"
     },
     "D44": {
-      "type": "Unencoded:Concept",
-      "value": "[object Object]"
+      "type": "Concept",
+      "codes": [
+        {
+          "type": "Code",
+          "code": "x",
+          "system": null,
+          "version": null,
+          "display": null
+        }
+      ],
+      "display": null
     },
     "D45": null,
     "D46": {
@@ -213,8 +222,11 @@
       "value": true
     },
     "D70": {
-      "type": "Unencoded:Code",
-      "value": "[object Object]"
+      "type": "Code",
+      "code": "x",
+      "system": null,
+      "version": null,
+      "display": null
     },
     "D71": {
       "error": "AnnotatedError",
@@ -252,8 +264,11 @@
       "value": true
     },
     "D79": {
-      "type": "Unencoded:Code",
-      "value": "[object Object]"
+      "type": "Code",
+      "code": "x",
+      "system": null,
+      "version": null,
+      "display": null
     },
     "D80": {
       "type": "Boolean",
@@ -354,7 +369,7 @@
       "value": true
     },
     "D112": {
-      "type": "String",
+      "type": "Text",
       "value": "5"
     },
     "D113": {
@@ -489,7 +504,7 @@
     "D151": {
       "type": "Interval",
       "low": {
-        "type": "Unencoded:number",
+        "type": "Number",
         "value": "1"
       },
       "lowClosed": true,
@@ -543,7 +558,7 @@
       "value": false
     },
     "D168": {
-      "type": "String",
+      "type": "Text",
       "value": "a"
     },
     "D169": {
@@ -640,7 +655,7 @@
     },
     "D199": null,
     "D200": {
-      "type": "String",
+      "type": "Text",
       "value": "5"
     },
     "D201": {
@@ -715,7 +730,7 @@
     "D221": null,
     "D222": null,
     "D223": {
-      "type": "Unencoded:number",
+      "type": "Number",
       "value": "2.5"
     },
     "D224": null,
@@ -791,8 +806,11 @@
       "value": true
     },
     "D247": {
-      "type": "Unencoded:Code",
-      "value": "[object Object]"
+      "type": "Code",
+      "code": "x",
+      "system": null,
+      "version": null,
+      "display": null
     },
     "D248": {
       "type": "Boolean",
@@ -1060,8 +1078,11 @@
     "D336": null,
     "D337": null,
     "D338": {
-      "type": "Unencoded:Code",
-      "value": "[object Object]"
+      "type": "Code",
+      "code": "x",
+      "system": null,
+      "version": null,
+      "display": null
     },
     "D339": {
       "type": "DateTime",
@@ -1207,14 +1228,23 @@
     "D384": null,
     "D385": null,
     "D386": {
-      "type": "Unencoded:Concept",
-      "value": "[object Object]"
+      "type": "Concept",
+      "codes": [
+        {
+          "type": "Code",
+          "code": "x",
+          "system": null,
+          "version": null,
+          "display": null
+        }
+      ],
+      "display": null
     },
     "D387": {
       "type": "List",
       "elements": [
         {
-          "type": "String",
+          "type": "Text",
           "value": "a"
         }
       ]
@@ -1240,8 +1270,13 @@
       "value": false
     },
     "D393": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "a": {
+          "type": "Number",
+          "value": "1"
+        }
+      }
     },
     "D394": null,
     "D395": null,
@@ -1400,7 +1435,7 @@
       "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot cast {urn:hl7-org:elm-types:r1}Code as {urn:hl7-org:elm-types:r1}Integer\n\tCQL Library:\tD447|1.0\n\tExpression:\tAs\n\tELM Local ID:\t209\n\tCQL Locator:\t2:14-2:66\n"
     },
     "D448": {
-      "type": "String",
+      "type": "Text",
       "value": "5"
     },
     "D449": {
@@ -1502,8 +1537,11 @@
     },
     "D481": null,
     "D482": {
-      "type": "Unencoded:Code",
-      "value": "[object Object]"
+      "type": "Code",
+      "code": "x",
+      "system": null,
+      "version": null,
+      "display": null
     },
     "D483": {
       "type": "Boolean",
@@ -1521,11 +1559,11 @@
       "type": "List",
       "elements": [
         {
-          "type": "Unencoded:number",
+          "type": "Number",
           "value": "1"
         },
         {
-          "type": "Unencoded:number",
+          "type": "Number",
           "value": "2"
         }
       ]
@@ -1714,8 +1752,13 @@
       "value": true
     },
     "D542": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "a": {
+          "type": "Number",
+          "value": "1"
+        }
+      }
     },
     "D543": {
       "type": "Boolean",
@@ -2039,12 +2082,12 @@
     "D645": {
       "type": "Interval",
       "low": {
-        "type": "String",
+        "type": "Text",
         "value": "a"
       },
       "lowClosed": true,
       "high": {
-        "type": "String",
+        "type": "Text",
         "value": "b"
       },
       "highClosed": true
@@ -2115,7 +2158,7 @@
       "type": "List",
       "elements": [
         {
-          "type": "String",
+          "type": "Text",
           "value": "a"
         }
       ]
@@ -2195,8 +2238,11 @@
     },
     "D689": null,
     "D690": {
-      "type": "Unencoded:Code",
-      "value": "[object Object]"
+      "type": "Code",
+      "code": "x",
+      "system": null,
+      "version": null,
+      "display": null
     },
     "D691": null,
     "D692": null,
@@ -2561,11 +2607,11 @@
       "type": "List",
       "elements": [
         {
-          "type": "Unencoded:number",
+          "type": "Number",
           "value": "1"
         },
         {
-          "type": "Unencoded:number",
+          "type": "Number",
           "value": "2"
         }
       ]
@@ -2672,8 +2718,13 @@
       "value": true
     },
     "D836": {
-      "type": "Unencoded:Object",
-      "value": "[object Object]"
+      "type": "Object",
+      "fields": {
+        "a": {
+          "type": "Number",
+          "value": "1"
+        }
+      }
     },
     "D837": {
       "type": "Boolean",
@@ -2713,8 +2764,17 @@
       "value": true
     },
     "D847": {
-      "type": "Unencoded:Concept",
-      "value": "[object Object]"
+      "type": "Concept",
+      "codes": [
+        {
+          "type": "Code",
+          "code": "x",
+          "system": null,
+          "version": null,
+          "display": null
+        }
+      ],
+      "display": null
     },
     "D848": {
       "type": "Boolean",
@@ -2798,12 +2858,12 @@
     "D873": {
       "type": "Interval",
       "low": {
-        "type": "Unencoded:number",
+        "type": "Number",
         "value": "1"
       },
       "lowClosed": true,
       "high": {
-        "type": "Unencoded:number",
+        "type": "Number",
         "value": "2"
       },
       "highClosed": true
@@ -2871,7 +2931,7 @@
       "value": false
     },
     "D893": {
-      "type": "Unencoded:number",
+      "type": "Number",
       "value": "2.5"
     },
     "D894": {

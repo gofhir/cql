@@ -277,6 +277,18 @@ public class Evaluate {
             m.put("type", "Interval");
             m.put("low", encode(i.getLow())); m.put("lowClosed", i.getLowClosed());
             m.put("high", encode(i.getHigh())); m.put("highClosed", i.getHighClosed());
+        } else if (v instanceof Code c) {
+            // Every field is written, null included: an absent field and a null
+            // one are one value, and an empty one is another.
+            m.put("type", "Code"); m.put("code", c.getCode()); m.put("system", c.getSystem());
+            m.put("version", c.getVersion()); m.put("display", c.getDisplay());
+        } else if (v instanceof Concept co) {
+            List<Object> codes = null;
+            if (co.getCodes() != null) {
+                codes = new ArrayList<>();
+                for (Code c : co.getCodes()) codes.add(encode(c));
+            }
+            m.put("type", "Concept"); m.put("codes", codes); m.put("display", co.getDisplay());
         } else if (v instanceof Tuple tu) {
             Map<String, Object> el = new TreeMap<>();
             tu.getElements().forEach((k, x) -> el.put(k, encode(x)));
