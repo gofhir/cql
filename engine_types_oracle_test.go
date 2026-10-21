@@ -68,8 +68,7 @@ func (t cqlType) String() string {
 // answer as the comparison writes it when an `as` or a cast hands it back.
 type typedLiteral struct {
 	runtime *cqlType // nil for null
-	answer  string   // the comparison's text; a prefix where the value is a structure it cannot read
-	prefix  bool
+	answer  string   // the comparison's text
 }
 
 // typesLiterals is every literal the generator draws (internal/referenceharness/differential/gen,
@@ -88,10 +87,13 @@ var typesLiterals = map[string]typedLiteral{
 	"5 'mg'":                    {runtime: ptr(named("Quantity")), answer: "5 'mg'"},
 	"{ 1, 2 }":                  {runtime: ptr(cqlType{"List", []cqlType{named("Integer")}}), answer: "{1, 2}"},
 	"Interval[1, 2]":            {runtime: ptr(cqlType{"Interval", []cqlType{named("Integer")}}), answer: "Interval[1, 2]"},
-	"Tuple{ a: 1 }":             {runtime: ptr(named("Tuple")), answer: "Tuple", prefix: true},
-	"Code{ code: 'x' }":         {runtime: ptr(named("Code")), answer: "Code ", prefix: true},
-	"Concept{ codes: { Code{ code: 'x' } } }": {runtime: ptr(named("Concept")), answer: "Concept ", prefix: true},
-	"(null as Integer)":                       {},
+	"Tuple{ a: 1 }":             {runtime: ptr(named("Tuple")), answer: "Tuple{a: 1}"},
+	// A Code selector leaves the elements it does not set null (CQL 1.5,
+	// Clinical Values: Code), and a Concept's display too.
+	"Code{ code: 'x' }": {runtime: ptr(named("Code")), answer: `Code{code: "x", display: null, system: null, version: null}`},
+	"Concept{ codes: { Code{ code: 'x' } } }": {runtime: ptr(named("Concept")),
+		answer: `Concept{codes: {Code{code: "x", display: null, system: null, version: null}}, display: null}`},
+	"(null as Integer)": {},
 	"{ 1, 'a' }": {runtime: ptr(cqlType{"List", []cqlType{{"Choice", []cqlType{named("Integer"), named("String")}}}}),
 		answer: `{1, "a"}`},
 	"{ 'a' }":            {runtime: ptr(cqlType{"List", []cqlType{named("String")}}), answer: `{"a"}`},
@@ -149,7 +151,6 @@ const emptyListUndecided = "the specification does not say whether an empty list
 type typesVerdict struct {
 	expected, reason string
 	undecided        bool
-	prefix           bool // expected is a prefix of the answer, for a structure the comparison cannot read
 	// decided marks a verdict the specification leaves open and ADR 003
 	// decides: a reference that gives another answer reads it otherwise.
 	decided bool
@@ -208,34 +209,21 @@ func typesExpected(expr string) (typesVerdict, error) {
 		if !of {
 			return typesVerdict{expected: "null", reason: reason}, nil
 		}
-		return typesVerdict{expected: value.answer, prefix: value.prefix, reason: reason}, nil
+		return typesVerdict{expected: value.answer, reason: reason}, nil
 	}
 	if !of {
 		return typesVerdict{expected: "error", reason: reason}, nil
 	}
-	return typesVerdict{expected: value.answer, prefix: value.prefix, reason: reason}, nil
+	return typesVerdict{expected: value.answer, reason: reason}, nil
 }
 
 // expectedMatches reports whether a pinned answer is the expected one, read as
-// the comparison reads answers: every error is one answer, and a structure the
-// comparison cannot read is matched by its kind.
+// the comparison reads answers: every error is one answer.
 func expectedMatches(expected, pin string) bool {
-	switch {
-	case expected == "error":
+	if expected == "error" {
 		return strings.HasPrefix(pin, "error")
-	case strings.HasSuffix(expected, "…"):
-		return strings.HasPrefix(pin, strings.TrimSuffix(expected, "…"))
 	}
 	return expected == pin
-}
-
-// storedExpected is a verdict's expected answer as a manifest writes it: a
-// prefix ends in "…".
-func (v typesVerdict) storedExpected() string {
-	if v.prefix {
-		return v.expected + "…"
-	}
-	return v.expected
 }
 
 // TestTheTypesVerdictsFollowTheOracle holds every verdict of the types area
@@ -294,18 +282,14 @@ func TestTheTypesOracleAgreesWhereAllAgree(t *testing.T) {
 			// ADR 003 decides the rest: an undecided verdict would drop it from this test.
 			t.Errorf("%s: the oracle leaves undecided what it should decide (%s)", name, v.reason)
 		}
-		if answer := pinned(answers.Reference(raw).Text); !v.undecided && !expectedMatches(v.storedExpected(), answer) {
-			t.Errorf("%s: all three answer %q; the oracle expects %q (%s)", name, oneLine(answer), v.storedExpected(), v.reason)
+		if answer := pinned(answers.Reference(raw).Text); !v.undecided && !expectedMatches(v.expected, answer) {
+			t.Errorf("%s: all three answer %q; the oracle expects %q (%s)", name, oneLine(answer), v.expected, v.reason)
 		}
 	}
 	if agreed == 0 {
 		t.Fatal("no definition where all three agree: the oracle is checked on nothing")
 	}
 }
-
-// unencoded finds a value the reference harness could not encode, which it
-// writes as an object of type "Unencoded:<the engine's own type>".
-var unencoded = regexp.MustCompile(`"type"\s*:\s*"Unencoded:`)
 
 // classifiedByTypesOracle is the verdict the oracle gives a divergence.
 func classifiedByTypesOracle(t *testing.T, defs map[string]string, key string, d divergence) divergence {
@@ -322,7 +306,7 @@ func classifiedByTypesOracle(t *testing.T, defs map[string]string, key string, d
 			d.Reference, reference, d.Engine, v.reason, typesOracleRule)
 		return d
 	}
-	d.Expected = v.storedExpected()
+	d.Expected = v.expected
 	d.Class = ownDefect
 	if expectedMatches(d.Expected, d.Engine) && v.decided && !strings.HasPrefix(d.Reference, "error") {
 		// The reference reads otherwise what the specification leaves
@@ -334,14 +318,6 @@ func classifiedByTypesOracle(t *testing.T, defs map[string]string, key string, d
 	}
 	if expectedMatches(d.Expected, d.Engine) {
 		d.Class = referenceDefect
-		if v.expected != "error" && v.expected != "null" && unencoded.MatchString(d.Reference) {
-			// The harness could not write the reference's value down, so
-			// nothing says the reference is wrong: a value is expected and
-			// it gave one. No verdict until the harness reads it.
-			d.Class, d.Expected = unclassified, ""
-			d.Evidence = "the reference harness cannot encode the reference's answer; types oracle expects " + v.storedExpected()
-			return d
-		}
 	}
 	d.Evidence = "types oracle: " + v.reason + "; " + strings.TrimPrefix(typesOracleRule, "types oracle ")
 	return d

@@ -11,14 +11,14 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 - **PR 5, `scope`:** está en el PR #155 (rama `test/classify-scope`), sin merge. El usuario aprobó el diseño. Las 180 filas son `reference defect`, y la deuda baja de 234 a 54. Se detectan las 84 mutaciones de `003-evidence.sh` y las 30 del 002. El issue de cql-execution está redactado y sin publicar. El review convergió en la ronda 2. Registro: plan 003, «Implementación del PR 5» y «Review del PR 5».
 
 **Próximo paso concreto:**
-1. `make check` (665 s) y `make evidence` (422 s, `docs/evidence/2026-10-20.md`) quedaron en verde el 20-10. El PR 5 está abierto como #155; falta su merge, que pide el usuario, y publicar el issue de cql-execution si el usuario lo aprueba.
-2. **PR 6** (rama `test/decide-undecided`, sobre #155): el usuario decidió las 38 filas `undecided` el 20-10 (plan 003, «PR 6»). Está en el **PR #156** (base `test/classify-scope`, es decir, apilado sobre #155), sin merge. Lleva el ADR 003 (Aceptado), deja 16 filas pendientes de 54 y ninguna `undecided`, y detecta las 106 mutaciones del 003 y las 30 del 002. El review convergió en la ronda 3. `make check` (718 s, 1,29 GB) y `make evidence` (553 s, 1,13 GB; `docs/evidence/2026-10-20.md`) quedaron en verde el 20-10. Falta el merge, que pide el usuario. Después viene el PR 7: el arnés codifica Code, Concept, Tuple y los números de JS (las 16 filas), y entonces el ADR 001 pasa a «Aceptado». Las 16 `unclassified` del arnés van en un PR 7.
-3. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío. Después del PR 6 quedan 16 filas, todas del arnés (PR 7).
+1. PRs 1 a 6 mergeados (#151–#156); `main` en b508841. ADR 003 aceptado.
+2. **PR 7** (rama `test/harness-encodes-all`): el arnés codifica Code, Concept, los números de JS sin tipo estático y los objetos planos, para las 16 filas `unclassified`. Implementado. El review no convergió en 3 rondas, y el usuario decidió R3-2: el campo vacío del motor se escribe como el null que responde. `make check` (725 s, 1,15 GB) y `make evidence` (651 s, 1,24 GB) en verde el 20-10-2026. Falta el commit y el PR, si el usuario los pide.
+3. El ADR 001 pasa a «Aceptado» cuando `pending-verdicts.tsv` quede vacío, al cerrar el PR 7.
 
 ## Pendientes, en orden
 
-1. **003:** dar veredicto a las divergencias pendientes de `testdata/snapshots/pending-verdicts.tsv`: eran 1485 (855 `unclassified` y 630 `undecided`); con el PR 2 quedaron 1037, con el PR 3, 471, y con el PR 4, 234. De esas 234, 180 son de `scope`, un área que el 003 no planificó: hace falta un PR 5 para que el ADR 001 pase a «Aceptado». Con eso, el ADR 001 pasa a «Aceptado» (decisión del usuario, 18-10-2026).
-1b. **El arnés de referencia no codifica** Code ni Concept (Java y JS), ni Tuple ni los números de JS: escribe `Unencoded:`. Deja 14 filas de `types` sin veredicto (003, PR 2).
+1. **003:** cerrado con el PR 7. `pending-verdicts.tsv` está vacío y el ADR 001 está «Aceptado».
+1b. **Un `''` explícito en un Code se vuelve null:** `Code{code:'x', system: ''}.system is null` da true (sonda del 20-10-2026, R3-2 del PR 7). `types.Code` y `types.Concept` guardan sus campos como `string`, así que no distinguen `''` de null. Ninguna definición del corpus lo ejercita. Es un cambio del motor y va en su propio PR. Pasa lo mismo con `Concept.codes` null, que se vuelve `{}`.
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s.** El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.
 3. **D4a, identidad de tipo:** un descriptor `{modelo, nombre}` en vez del texto de `Type()`. Ver [arquitectura-verificacion-2026-10-18.md](../arquitectura-verificacion-2026-10-18.md) §4.

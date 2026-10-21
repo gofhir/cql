@@ -181,33 +181,45 @@ function encode(v, spec) {
   if (nameOf(spec) === 'Long' && ['string', 'number', 'bigint'].includes(typeof v)) {
     return { type: 'Long', value: String(v) };
   }
-  if (typeof v === 'string') return { type: 'String', value: v };
+  // With no static type to read — a definition of type Any, an element of a
+  // List<Any>, or of a choice, which nameOf does not name — a text may be a String or a Long, and a number an Integer or
+  // a Decimal. Which one is not guessed at: Text and Number say what is known.
+  const untyped = spec == null || nameOf(spec) == null || nameOf(spec) === 'Any';
+  if (typeof v === 'string') return { type: untyped ? 'Text' : 'String', value: v };
   if (typeof v === 'number') {
     const name = nameOf(spec);
     if (name === 'Integer') return { type: 'Integer', value: String(v) };
     if (name === 'Decimal') return { type: 'Decimal', value: decimalText(v) };
-    // A number with no static type to read: left visible, not guessed at.
-    return { type: 'Unencoded:number', value: String(v) };
+    return { type: 'Number', value: decimalText(v) };
   }
   if (Array.isArray(v)) {
     const el = elementTypeOf(spec);
     return { type: 'List', elements: v.map((x) => encode(x, el)) };
   }
-  if (v.isQuantity) return { type: 'Quantity', value: decimalText(v.value), unit: v.unit };
+  // By class, not by a marker a tuple's field could carry.
+  if (v instanceof cql.Quantity) return { type: 'Quantity', value: decimalText(v.value), unit: v.unit };
   // Before isDateTime: cql-execution represents a Time as a DateTime with no
   // date, and its isDateTime is true too.
-  if (typeof v.isTime === 'function' && v.isTime()) {
+  if (v instanceof cql.DateTime && v.isTime()) {
     return { type: 'Time', value: v.toString(), precision: v.getPrecision() };
   }
-  if (v.isDateTime) return encodeDateTime(v);
-  if (v.isDate) return { type: 'Date', value: v.toString(), precision: v.getPrecision() };
-  if (v.isInterval) {
+  if (v instanceof cql.DateTime) return encodeDateTime(v);
+  if (v instanceof cql.Date) return { type: 'Date', value: v.toString(), precision: v.getPrecision() };
+  if (v instanceof cql.Interval) {
     const point = spec && spec.type === 'IntervalTypeSpecifier' ? spec.pointType : null;
     return {
       type: 'Interval',
       low: encode(v.low, point), lowClosed: v.lowClosed,
       high: encode(v.high, point), highClosed: v.highClosed,
     };
+  }
+  // Every field is written, null when cql-execution leaves it undefined, as
+  // Evaluate.java writes it: an absent field and a null one are one value.
+  if (v instanceof cql.Code) {
+    return { type: 'Code', code: v.code ?? null, system: v.system ?? null, version: v.version ?? null, display: v.display ?? null };
+  }
+  if (v instanceof cql.Concept) {
+    return { type: 'Concept', codes: v.codes == null ? null : v.codes.map((c) => encode(c, null)), display: v.display ?? null };
   }
   // A tuple is a plain object there. Only a value the translator typed as a
   // tuple is encoded as one: any other plain object stays Unencoded, rather
@@ -219,6 +231,13 @@ function encode(v, spec) {
     const fields = {};
     for (const k of Object.keys(v).sort()) fields[k] = encode(v[k], declared[k] || null);
     return { type: 'Tuple', fields };
+  }
+  // A plain object the translator did not type as a tuple: a tuple or an
+  // instance read as Any. Its fields are known, its type is not.
+  if (Object.getPrototypeOf(v) === Object.prototype) {
+    const fields = {};
+    for (const k of Object.keys(v).sort()) fields[k] = encode(v[k], null);
+    return { type: 'Object', fields };
   }
   return { type: 'Unencoded:' + (v.constructor ? v.constructor.name : typeof v), value: String(v) };
 }

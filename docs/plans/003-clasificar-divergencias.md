@@ -961,3 +961,152 @@ Mutaciones nuevas: un logaritmo acotado después de dividirlo, y `Round` por `Di
 Ninguno de los dos dejó hallazgos. Lo que verificaron:
 - **Codex** repitió sus contraejemplos de la ronda 2. El Log de bases cerca de 1 queda ambiguo, y una cuenta a 90 cifras da −1,99…, que se trunca a −1. El Round a 19 cifras certifica 0. El valor a 90 cifras de `Power(1.0000000000001, 99999999999999.5)` cae dentro de su intervalo.
 - **Fable** midió contra 70 cifras que los intervalos de `Log(2, 1.00000001)`, `Log(0.12345678, 0.99999999)` y `Power(1.00001, 4000000.5)` contienen el valor, y que Ln y ExpTaylor a 40 cifras se apartan menos de 1,1e-40 de su valor a 70: el margen de 10^-35 alcanza. La lectura de la especificación es idéntica byte a byte a HEAD en las 800 definiciones: las 66 con Round redondean a 8 cifras como mucho. `go test ./...` pasa.
+
+## PR 7: el arnés escribe lo que hoy deja «Unencoded» (diseño, 20-10-2026)
+
+Con el PR 6 (#156), quedan 16 filas pendientes. Todas son `unclassified` porque el arnés no codifica la respuesta de la referencia: 14 de `types` y 2 de `fhir`. Con este PR, `pending-verdicts.tsv` queda vacío y el ADR 001 pasa a «Aceptado».
+
+### Revisión previa
+
+- **Qué escribe hoy cada arnés:**
+  - `Evaluate.java` no codifica `Code` ni `Concept` del motor de Java: escribe `Unencoded:org.opencds.cqf.cql.engine.runtime.Code` (D44 y D690).
+  - `evaluate.js` no codifica `Code` ni `Concept` de cql-execution. Un número sin tipo estático, cuando la definición es `as Any` o es un elemento de `List<Any>`, queda `Unencoded:number`. Un objeto plano sin un `TupleTypeSpecifier` queda `Unencoded:Object` (las tuplas `as Any` y la instancia de `ValueSet`).
+- **Dónde aparece** (medido sobre los manifiestos): solo en `types` (`types.java.json` y `types.js.json`) y en `fhir` (`fhir.js.json`). Son 16 filas `unclassified` y 15 ya clasificadas con una respuesta `Unencoded`: en `fhir`, 9 `own defect` de js; en `types`, 6 `reference defect` de js. En `runtime`, `probe` y las demás áreas no aparece.
+- **La comparación** (`internal/referenceharness/answers`): la tupla, Code y Concept del motor salen como `other` con su `String()`, y la `Tuple` que escribe Java sale como `other` con su JSON. Las dos nunca coinciden. Hoy no hay ninguna fila de Java con una tupla codificada, así que la pérdida no se ve.
+- **cql-execution:** `Code` tiene `code`, `system`, `version` y `display`; `Concept` tiene `codes` y `display` (`lib/datatypes/clinical.js`). Un número es un `number` de JavaScript, y sin el tipo estático nada distingue 1 de 1.0. Ya el README dice que a cql-execution no se le consulta sobre el tipo de un número.
+- **Este motor:** `types.Code` guarda sus campos como `string`, así que no distingue un `display` vacío de uno null. `types.Tuple` lleva un `TypeOverride` para las instancias como `ValueSet`.
+- **`gofhir/server`:** no aplica.
+
+### Diseño
+
+1. **`Evaluate.java`** codifica `Code` como `{type: Code, code, system, version, display}` y `Concept` como `{type: Concept, codes: [Code…], display}`.
+2. **`evaluate.js`:**
+   - codifica `Code` y `Concept` igual que Java;
+   - un número sin tipo estático va como `{type: "Number", value}`: se sabe que es un número, y no se adivina si es Integer o Decimal;
+   - un objeto plano sin tipo estático de tupla va como `{type: "Object", fields}`, con los campos ordenados y codificados del mismo modo: se conoce su estructura, no su tipo.
+3. **`answers`:**
+   - lee `Code`, `Concept`, `Tuple`, `Object` y `Number` de las referencias, y `types.Code`, `types.Concept` y `types.Tuple` de este motor, a un texto canónico de sus campos, sin pasar por el `String()` del motor;
+   - `Same`: un `Number` coincide con un Integer o un Decimal del mismo valor. Un `Object` coincide con una estructura de cualquier tipo que tenga los mismos campos. Cuando los dos lados tienen tipo, el tipo se compara;
+   - en un Code, un campo vacío y uno null valen lo mismo. Es una pérdida conocida, porque este motor no los distingue, y queda documentada con un test.
+4. **Regenerar** `types.java.json`, `types.js.json` y `fhir.js.json` con Docker (hay que bajar de nuevo `maven:3-eclipse-temurin-21` y `node:20`, que se borraron). Un test comprueba que el diff contra lo anterior solo cambia valores que eran `Unencoded`; el hash del `.cql` no cambia.
+5. **Recalcular la comparación y los veredictos.** Una fila cuyas respuestas ahora coinciden deja de ser divergencia y sale del manifiesto y de la deuda. Las que siguen distintas reciben el veredicto de su oráculo. Se espera que salgan las 16 filas `unclassified`; las 15 clasificadas se revisan una por una.
+6. **ADR 001 → «Aceptado»**, cuando `pending-verdicts.tsv` quede vacío (decisión del usuario, 18-10-2026).
+
+### Guardas y mutaciones
+
+- Tests de `answers` con valores escritos a mano: un Code, un Concept, una tupla, un `Object` contra una tupla y contra un ValueSet, un `Number` contra un Integer y contra un Decimal, y un campo vacío frente a uno null.
+- Mutaciones:
+  - un `Number` que coincide con un String;
+  - un `Object` con un campo de más;
+  - un Code con el sistema cambiado;
+  - un Concept sin uno de sus codes;
+  - el arnés de JS que vuelve a escribir `Unencoded`;
+  - una referencia regenerada que cambia un valor que no era `Unencoded`.
+
+### Criterio de salida
+
+`pending-verdicts.tsv` queda vacío, y el ADR 001 pasa a «Aceptado». Pasan `make check` y `make evidence`, y se detectan todas las mutaciones.
+
+### Lo que queda fuera
+
+- Distinguir un campo null de uno vacío en `types.Code`: es un cambio del motor, y va a su propio PR si hace falta.
+- Regenerar las demás áreas, que no tienen ningún `Unencoded`.
+
+### Ronda adversarial del PR 7 (Codex y Fable)
+
+| # | Hallazgo | Evidencia | Resolución |
+|---|---|---|---|
+| B1 (alto, Fable; medio, Codex) | Tratar igual un campo vacío y uno null de un Code rodea un defecto de este motor: `types.Code` guarda `string`, y `Code{code:'x'} = Code{code:'x', system:''}` da true. Además, `types` espera un Code solo por prefijo, así que una referencia correcta quedaría `reference defect` | sonda de Fable; `engine_types_oracle_test.go`, `prefix: true` | **Aceptado:** ya no se normaliza. La decisión de qué veredicto llevan las filas es del usuario (ver abajo). El oráculo pasa a esperar el Code y el Concept completos, con sus campos null, en vez de un prefijo |
+| B2 (alto, Codex; medio, Fable) | Un `Number` que coincide por valor, o un `Object` que coincide por campos, pierde la evidencia de tipo. En D223, D345 y D788, Java da error, así que ninguna referencia confirmaría Decimal ni System.ValueSet | `answers.go`: comparar solo por valor ya ocultó un Integer erróneo | **Aceptado.** Una coincidencia sin tipo cuenta solo si el oráculo del área, que no depende del motor, espera la respuesta tipada del motor completa. Lo comprueba un test, y fuera de `types` y `fhir` una coincidencia así es un error |
+| B3 (medio, Fable) | Un Long de JS sin tipo estático sale como `String "5"` (D112, D200 y D448) | sonda con node: el Long es un `string` | **Aceptado:** un texto sin tipo estático va como `Text`, String o Long, bajo la misma regla que `Number` |
+| B4 (medio, los dos) | Otros lectores mandan lo nuevo a `other` o a «unreadable»: `list()`, `interval()`, `fhirReferenceText`, la regex `unencoded` de `types`, `compare/main.go` y el lector de tuplas del test de `runtime`. Y el texto canónico no alcanza: hace falta comparar en forma recursiva (D486, D800, D151, D873) | `answers.go:161, :175, :285`; `engine_fhir_oracle_test.go:968` | **Aceptado:** `answers` guarda un árbol (elementos, campos, tipo conocido o no) y lo compara nodo a nodo. Todos esos lectores pasan por `answers` |
+| B5 (bajo, los dos) | cql-execution deja `system`, `version` y `display` en `undefined`: `JSON.stringify` borra la clave, y Java escribe null | sonda con node | **Aceptado:** se escriben con `?? null`, y se lee una clave ausente como null |
+| B6 (bajo, Fable) | La guarda de la regeneración no tiene línea base después del merge | — | **Aceptado:** el diff de la regeneración queda como evidencia de una vez, y un test permanente exige que no haya ningún `Unencoded:` en `testdata/snapshots` ni en `testdata/reference` (hoy hay 34) |
+| B7 (bajo, los dos) | `runtime.expected{,.js}.json` sí tiene tuplas codificadas (`ReturnTuple` y `MultiSourceNoReturn`) | archivos | **Aceptado:** corregido el dato, y esas tuplas entran a los controles |
+
+**Medido por Codex** (simulación sobre los seis corpus, sin regenerar): si Code y Concept no se igualaran con su campo vacío, desaparecerían 14 filas y no 16. Ninguna fila cambia de clase, y no aparece ninguna divergencia nueva. Las 15 filas ya clasificadas conservan su clase: 9 `own defect` de `fhir` y 6 `reference defect` de `types`.
+
+### Aprobación del PR 7 y decisión del usuario (20-10-2026)
+
+- **Code y Concept con un campo null:** en D44, D690, D482, D70 y D79, Java escribe el campo null, y este motor, vacío. Esas filas son `own defect`: el motor no puede guardar un campo null. La comparación no lo rodea, y la corrección del motor (`types.Code` y `types.Concept`) va en su propio PR.
+- El usuario aprobó el diseño ajustado con B1–B7.
+
+### Implementación del PR 7 (20-10-2026)
+
+- **Arnés:**
+  - `Evaluate.java` y `evaluate.js` escriben `Code` (`code`, `system`, `version`, `display`) y `Concept` (`codes`, `display`), con cada campo aunque sea null; en JS, con `?? null`.
+  - Cuando el tipo estático es Any o falta, `evaluate.js` escribe `Number`, `Text` (un String o un Long, B3) y `Object` (con sus campos ordenados).
+- **Regeneración** con Docker, de `types.java.json`, `types.js.json` y `fhir.js.json`; `fhir.java.json` no cambió. La comparación contra lo anterior (un script de una vez, en el scratchpad) dio:
+  - ningún cambio de metadatos, y las mismas definiciones;
+  - las 34 hojas `Unencoded` reemplazadas: 2 en `types.java`, 21 en `types.js` y 11 en `fhir.js`;
+  - 8 cambios más, todos de `String` a `Text` en `types.js` (D112, D168, D200, D387, D448, D645 low y high, D666), como pide B3. Ningún otro valor cambió.
+- **`answers`:**
+  - guarda sus partes (`Parts`, `Names`, `Untyped` y la forma, lista o intervalo), y lee `Code`, `Concept`, `Tuple`, `Object`, `Number` y `Text`, además de `types.Code`, `types.Concept` y `types.Tuple` de este motor;
+  - el texto de las estructuras ya no pasa por el `String()` del motor;
+  - `Same` y `SameExactly` comparan parte por parte solo cuando alguna de las dos respuestas tiene una estructura o un valor sin tipo. Todo lo demás se compara como antes;
+  - `HoldsUntyped` marca las respuestas que necesitan que un oráculo confirme su tipo.
+- **Oráculo de `types`:** espera el Code, el Concept y la tupla completos. El campo que el selector no fija es null (CQL 1.5, Clinical Values). Se borraron la coincidencia por prefijo y la rama `unencoded`, que ya no tienen ningún caso.
+- **Guardas:**
+  - `unconfirmedUntypedMatches`, dentro de `TestAnswersMatchTheReferences`, exige que el oráculo confirme la respuesta tipada del motor cuando coincide con un valor sin tipo (B2). En `types` y `fhir` falla si no revisa nada, y en las demás áreas no admite ninguna coincidencia así;
+  - `TestTheReferencesHoldNothingUnencoded` revisa los 16 archivos de referencia (B6);
+  - `TestTheRuntimeReferencesTuplesAreReadAsTuples` lee `ReturnTuple` y `MultiSourceNoReturn` de los dos `runtime.expected*.json` (B7).
+- **Filas:**
+  - Desaparecen 9 de las 16: D151, D223, D393, D486, D800, D836 y D873 de js en `types`, y D345 y D788 de js en `fhir`.
+  - Las otras 7 (D44 java y js, D690 java y js, D482, D70 y D79 js) quedan `own defect`, según la decisión del usuario.
+  - D482, D70 y D79 de java pasan de `reference defect` a `own defect`. Java da error, y este motor tampoco da el Code que se espera, con sus campos null.
+  - Ninguna fila cambia de clase por otro motivo, y no aparece ninguna divergencia nueva.
+  - `pending-verdicts.tsv` queda vacío, y el ADR 001 pasa a «Aceptado».
+- **Mutaciones:** son 114 en `scripts/mutations/003-evidence.sh`, y se detectan todas.
+  - Salen 2 que ya no tienen objeto: la rama `unencoded` del oráculo de `types` y la fila D223 de js, que ya no es una divergencia.
+  - Entran 10:
+    - un Number que coincide con cualquier valor;
+    - un Object con un campo renombrado;
+    - un intervalo que se compara sin mirar si es abierto o cerrado;
+    - un campo null de un Code que se lee como vacío (el rodeo rechazado en B1);
+    - un Code de otro sistema en `types.java.json`;
+    - un Concept sin su code en `types.js.json`;
+    - un `Unencoded` que vuelve;
+    - una referencia regenerada que cambia un valor que sí estaba codificado (D168);
+    - el oráculo que espera otra tupla, donde la coincidencia no tiene tipo;
+    - la guarda de lo sin tipo apagada.
+
+### Review del PR 7
+
+**Ronda 1 (Codex y Fable).**
+
+| # | Hallazgo | Verificación | Resolución |
+|---|---|---|---|
+| R1-1 (alto, Codex; bajo, Fable) | `compare` tomaba una coincidencia sin tipo por acuerdo, sin ningún oráculo que confirmara el tipo | Codex mutó un Decimal a Integer: `compare` dio 0 diferencias contra `Number 5` | **Corregido:** la coincidencia sale como `type-unconfirmed` (11 en `types` contra js), y está en el README |
+| R1-2 (medio, Codex) | `evaluate.js` reconocía un Code por su marcador `isCode`, así que una tupla con ese campo pasaba por Code | sonda de Codex con node | **Corregido:** se usa `instanceof cql.Code` y `instanceof cql.Concept`. Regenerado: `types.js.json` y `fhir.js.json` salen byte a byte iguales |
+| R1-3 (medio, Fable) | La mitad `fhir` de la guarda de lo sin tipo no tenía ninguna mutación | mutación a mano: `go test` pasaba | **Corregido:** mutación nueva (el oráculo de `fhir` espera una tupla donde hay un ValueSet), que se detecta |
+| R1-4 (bajo, Fable) | La rama `Object` no tenía test de su `b.Kind == "structure"`: un `Object{}` era igual a la lista vacía | mutación a mano | **Corregido:** test y mutación nuevos, y además casos de un Code con otro display y otra versión |
+| R1-5 (bajo, Fable) | En `evaluate.js`, `untyped` también vale para una elección (`nameOf` da null), y el comentario solo hablaba de Any | lectura | **Corregido:** el código y el comentario lo dicen. La salida regenerada no cambia |
+| R1-6 (bajo, Fable) | `engineValueText` del oráculo de `fhir` sigue escribiendo el Code con `String()` (D186) | lectura | **Queda:** es el dominio de texto del oráculo de `fhir`, no una comparación. No cambia ningún veredicto |
+| R1-7 (info, Fable) | `ACCEPTED` en `002-adr.sh` reemplaza un texto por sí mismo | lectura | **Corregido:** el comentario dice que solo afirma que el ADR sigue «Aceptado» |
+
+Hay 116 mutaciones en el 003 y 30 en el 002, y se detectan todas. Lint: 0 issues.
+
+**Ronda 2.** Codex no dejó hallazgos y verificó R1-1 y R1-2. Fable confirmó R1-1 a R1-4, y trajo:
+
+| # | Hallazgo | Verificación | Resolución |
+|---|---|---|---|
+| R2-1 (medio, Fable) | R1-2 estaba incompleto: Quantity, Time, DateTime, Date e Interval también se reconocían por marcador (`isQuantity`, `isDate`…). Ya era así en `main` | sonda con node: `encode({isQuantity: true, …})` daba un Quantity | **Corregido:** `instanceof cql.Quantity`, `cql.DateTime`, `cql.Date` y `cql.Interval`. Las cuatro referencias regeneradas (`types` y `fhir`, Java y js) salen byte a byte iguales |
+| R2-2 (bajo, Fable) | Un Concept con `codes` null se escribía como lista vacía, en contra de lo que dice el README | lectura | **Corregido:** los dos arneses escriben null. La salida no cambia |
+| R2-3 (bajo, Fable) | La rama de `unconfirmedUntypedMatches` para un área sin oráculo no tenía ningún test | lectura | **Corregido:** `TestAnUntypedMatchWithNoOracleIsAProblem` |
+
+**Ronda 3: no converge.** Codex encontró un hallazgo medio, que ya está corregido. Fable encontró uno alto, que contradice la premisa de la decisión del usuario. Se llegó al tope de 3 rondas, así que corresponde consultar al usuario.
+
+| # | Hallazgo | Verificación | Resolución |
+|---|---|---|---|
+| R3-1 (medio, Codex; bajo, Fable) | `answers` leía `codes: null` de un Concept como la lista vacía | sonda: `Same` daba true | **Corregido:** se lee como null, y un test que falla con el código anterior lo fija |
+| R3-2 (alto, Fable) | Las 7 filas `own defect` de Code y Concept no son un defecto de lo que el motor responde, sino de cómo `answers` lo escribe. Escribe el campo vacío como `""`, y el motor lo trata como null | sonda (20-10-2026): `Code{code:'x'}.system is null` da true; `Code{code:'x'} = Code{code:'x', system: null}` da true. El defecto real es otro: `Code{code:'x', system: ''}.system is null` también da true, porque un `''` explícito se vuelve null. Ninguna definición del corpus lo ejercita | **Decisión del usuario (20-10-2026): leer el vacío como null.** `answers` escribe un campo vacío del motor como null, que es lo que su semántica responde. Las 7 filas pasan a coincidir y salen del manifiesto: D44 java y js, D690 java y js, D482, D70 y D79 js. D482, D70 y D79 java vuelven a `reference defect` (Java da error con Any, y el motor da el Code esperado). Cambian las respuestas fijadas de 19 filas de `types` y 18 de `fhir` (de `""` a null), y ninguna cambia de clase. El defecto de `''` va al backlog (README, 1b). Esto reemplaza la decisión del 20-10-2026 sobre `own defect`, que se había tomado sobre una premisa inexacta |
+
+### Cierre del PR 7 (20-10-2026)
+
+- `make check`: verde, en 725 s y con 1,15 GB de RSS. `make evidence`: verde, en 651 s y con 1,24 GB (`docs/evidence/2026-10-20.md`).
+- Mutaciones: se detectan las 116 del 003 y las 30 del 002.
+- Divergencias, por área:
+  - `types`: 458 (142 `own defect`, 307 `reference defect` y 9 `deliberate`);
+  - `fhir`: 751 (220, 91 y 440);
+  - ninguna `undecided` ni `unclassified`. `pending-verdicts.tsv` está vacío.
+- El review no convergió en 3 rondas. El hallazgo que quedaba (R3-2) lo decidió el usuario, y su corrección pasó las mutaciones completas y `make check`. No hubo una cuarta ronda.

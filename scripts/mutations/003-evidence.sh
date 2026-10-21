@@ -27,6 +27,8 @@ REFS = ["go", "test", "-count=1", "-run", "TestAnswersMatchTheReferences", "."]
 CONSISTENT = ["go", "test", "-count=1", "-run", "TestTheDivergencesAreConsistent", "."]
 TYPES_VERDICTS = ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."]
 FHIR_VERDICTS = ["go", "test", "-count=1", "-run", "TestTheFHIRVerdictsFollowTheOracle", "."]
+ANSWERS = "internal/referenceharness/answers/answers.go"
+ANSWERS_TESTS = ["go", "test", "-count=1", "./internal/referenceharness/answers"]
 ARITHMETIC_VERDICTS = ["go", "test", "-count=1", "-run", "TestTheArithmeticVerdictsFollowTheOracle", "."]
 APPEND = "append"
 WRITE = "write"
@@ -68,6 +70,17 @@ D380_READINGS = ("reading 1: Decimal 65499, as the reference answers [source: te
 def undecided_d380(copy):
     for column, value in ((2, "undecided"), (3, ""), (4, D380_READINGS)):
         set_field("testdata/snapshots/arithmetic.divergences.tsv", "D380", "js", column, lambda f, v=value: v)(copy)
+
+
+def json_result(path, name, value):
+    # Rewrites one definition's answer in a reference file.
+    def edit(copy):
+        import json
+        target = os.path.join(copy, path)
+        doc = json.load(open(target))
+        doc["results"][name] = value(doc["results"][name])
+        json.dump(doc, open(target, "w"), indent=2)
+    return edit
 
 
 def replace(path, old, new):
@@ -250,17 +263,47 @@ mutations = [
      replace("engine_types_oracle_test.go", "func derivesFrom(a, b cqlType) bool {\n",
              "func derivesFrom(a, b cqlType) bool {\n\tif a.name == \"Time\" && b.name == \"Date\" {\n\t\treturn true\n\t}\n"),
      ["go", "test", "-count=1", "-run", "TestTheTypesOracleAgreesWhereAllAgree", "."], "the oracle expects"),
-    ("the types oracle blaming a reference the harness cannot read",
-     replace("engine_types_oracle_test.go", "unencoded.MatchString(d.Reference)", "false"),
-     ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."], "the oracle gives"),
     ("a types verdict made deliberate to escape the oracle",
      edits(set_field("testdata/snapshots/types.divergences.tsv", "D13", "java", 2, lambda f: "deliberate"),
            set_field("testdata/snapshots/types.divergences.tsv", "D13", "java", 3, lambda f: f[6]),
            set_field("testdata/snapshots/types.divergences.tsv", "D13", "java", 4, lambda f: "see docs/plans/003-clasificar-divergencias.md")),
      ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."], "the oracle gives"),
-    ("a reference error that names Unencoded taken for an unreadable answer",
-     set_field("testdata/snapshots/types.divergences.tsv", "D223", "js", 5, lambda f: "error: Cannot process Unencoded: input"),
-     ["go", "test", "-count=1", "-run", "TestTheTypesVerdictsFollowTheOracle", "."], "the oracle gives"),
+    # PR 7: what the harness writes now that it writes everything.
+    ("a Number of no type matched whatever its value",
+     replace(ANSWERS, "return leaf(Answer{Kind: \"number\", Text: typ + \" \" + a.Num.String(), Num: a.Num}, b)",
+             "return leaf(Answer{Kind: \"number\", Text: typ + \" \" + b.Num.String(), Num: b.Num}, b)"),
+     ANSWERS_TESTS, "a Number of another value"),
+    ("an Object matched whatever its fields are named",
+     replace(ANSWERS, "if !slices.Equal(a.Names, b.Names) || len(a.Parts) != len(b.Parts) {", "if len(a.Parts) != len(b.Parts) {"),
+     ANSWERS_TESTS, "an Object with a field renamed"),
+    ("an interval of no type matched however it is closed",
+     replace(ANSWERS, "return a.Text[len(\"Interval\")] == b.Text[len(\"Interval\")] && a.Text[len(a.Text)-1] == b.Text[len(b.Text)-1] &&",
+             "return true &&"),
+     ANSWERS_TESTS, "closed otherwise"),
+    ("a Code's null field read as an empty one",
+     replace(ANSWERS, "if json.Unmarshal(raw, &s) != nil || s == nil {\n\t\treturn Answer{Kind: \"null\", Text: \"null\"}",
+             "if json.Unmarshal(raw, &s) != nil || s == nil {\n\t\treturn Answer{Kind: \"string\", Text: `\"\"`}"),
+     ANSWERS_TESTS, "null fields against those this engine leaves unset"),
+    ("a Code of another system in the Java reference",
+     json_result("testdata/snapshots/types.java.json", "D690", lambda v: {**v, "system": "s"}), REFS, "new: D690"),
+    ("a Concept short of its code in cql-execution's reference",
+     json_result("testdata/snapshots/types.js.json", "D44", lambda v: {**v, "codes": []}), REFS, "new: D44"),
+    ("a reference value the harness writes as Unencoded again",
+     json_result("testdata/snapshots/types.js.json", "D393", lambda v: {"type": "Unencoded:Object", "value": "[object Object]"}),
+     ["go", "test", "-count=1", "-run", "TestTheReferencesHoldNothingUnencoded", "."], "could not encode"),
+    ("a regenerated reference that moves a value that was encoded",
+     json_result("testdata/snapshots/types.js.json", "D168", lambda v: {**v, "value": "b"}), REFS, "new: D168"),
+    ("the types oracle expecting another tuple where a match has no type",
+     replace("engine_types_oracle_test.go", "answer: \"Tuple{a: 1}\"", "answer: \"Tuple{a: 2}\""),
+     REFS, "no oracle confirms the type"),
+    ("the fhir oracle expecting a tuple where a match has no type",
+     replace("engine_fhir_oracle_test.go", 'value: "System.ValueSet {id: System.String "', 'value: "System.Tuple {id: System.String "'),
+     REFS, "no oracle confirms the type"),
+    ("an Object matched by a value that is no structure",
+     replace(ANSWERS, "return b.Kind == \"structure\" && sameParts(a, b, leaf)", "return sameParts(a, b, leaf)"),
+     ANSWERS_TESTS, "an empty Object is no empty list"),
+    ("an untyped match never checked",
+     replace(ORACLE, "if answers.HoldsUntyped(reference) {", "if false {"), REFS, "checks nothing"),
     ("the types oracle reading no definition",
      replace("engine_types_oracle_test.go", "`(?m)^define (D\\d+): (.*)$`", "`(?m)^define (X\\d+): (.*)$`"),
      ["go", "test", "-count=1", "-run", "TestTheTypesOracleReadsTheWholeCorpus", "."], "definitions of types.cql"),

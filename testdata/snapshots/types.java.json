@@ -148,8 +148,15 @@
       } ]
     },
     "D44" : {
-      "type" : "Unencoded:org.opencds.cqf.cql.engine.runtime.Concept",
-      "value" : "Concept {\n\tCode { code: x, system: null, version: null, display: null }\n}"
+      "type" : "Concept",
+      "codes" : [ {
+        "type" : "Code",
+        "code" : "x",
+        "system" : null,
+        "version" : null,
+        "display" : null
+      } ],
+      "display" : null
     },
     "D45" : {
       "type" : "Boolean",
@@ -2233,8 +2240,11 @@
     },
     "D689" : null,
     "D690" : {
-      "type" : "Unencoded:org.opencds.cqf.cql.engine.runtime.Code",
-      "value" : "Code { code: x, system: null, version: null, display: null }"
+      "type" : "Code",
+      "code" : "x",
+      "system" : null,
+      "version" : null,
+      "display" : null
     },
     "D691" : null,
     "D692" : null,

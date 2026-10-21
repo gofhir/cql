@@ -139,6 +139,10 @@ func main() {
 		switch {
 		case answer.Panicked:
 			category = "engine-panic"
+		case answers.Same(reference, answer) && answers.HoldsUntyped(reference):
+			// cql-execution wrote no type for it, and here no oracle says
+			// which: the value matches, the type is not confirmed.
+			category = "type-unconfirmed"
 		case answers.Same(reference, answer):
 			continue
 		case reference.Kind == "error", reference.Kind == "refused":

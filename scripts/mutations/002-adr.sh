@@ -24,7 +24,10 @@ ADR = "docs/adr/001-semantica-cql-desde-su-especificacion.md"
 CI = ".github/workflows/ci.yml"
 ROOT = ["go", "test", "-count=1", "-run", "TestADRsHaveVerification", "."]
 CONF = ["go", "test", "-count=1", "-run", "TestTheConformanceSuiteIsTheVendoredOne", "./conformance/"]
-ACCEPTED = (ADR, "**Estado:** Propuesto.", "**Estado:** Aceptado.")
+# ADR 001 is accepted since 003 PR 7: the mutations of an accepted ADR apply
+# to it as it is, and this edit, the same text for the same, only asserts that
+# it still says so (apply fails on an anchor it does not find).
+ACCEPTED = (ADR, "**Estado:** Aceptado, el 20-10-2026.", "**Estado:** Aceptado, el 20-10-2026.")
 NO_TARGETS = [(ADR, "- `make conformance-provenance`: `SOURCE.tsv`", "- conformance-provenance: `SOURCE.tsv`"),
               (ADR, "sale de `make evidence`", "sale de make evidence")]
 APPEND = "append"   # old: append new to the file
@@ -154,7 +157,7 @@ mutations = [
     ("an ADR without its verification section",
      [(ADR, "## Verificación\n", "## Comprobación\n")], ROOT, "section"),
     ("an ADR without its state",
-     [(ADR, "**Estado:** Propuesto.", "**Situación:** Propuesto.")], ROOT, "no **Estado:**"),
+     [(ADR, "**Estado:** Aceptado,", "**Situación:** Aceptado,")], ROOT, "no **Estado:**"),
     ("an ADR names a test under testdata, which go test ./... never runs",
      [("testdata/ghost/ghost_test.go", WRITE, "package ghost\n\nimport \"testing\"\n\nfunc TestGhost(t *testing.T) {}\n"),
       (ADR, "`TestADRsHaveVerification`: este ADR", "`TestGhost`: este ADR")],
@@ -228,7 +231,9 @@ mutations = [
     ("debt swapped: one divergence classified, another unclassified in its place",
      [("testdata/snapshots/integer.divergences.tsv", "D0\tjava\treference defect\t",
        "D0\tjava\tunclassified\t"),
-      ("testdata/snapshots/types.divergences.tsv", "D151\tjs\tunclassified\t", "D151\tjs\treference defect\t")],
+      # The debt is empty since 003 PR 7: the entry an unclassified row takes
+      # is that of a row with a verdict.
+      ("testdata/snapshots/pending-verdicts.tsv", APPEND, "types\tD44\tjs\n")],
      ["go", "test", "-count=1", "-run", "TestThePendingVerdictsDoNotGrow", "."],
      "has no verdict and is not in pending-verdicts.tsv"),
     ("an ADR names a test behind a build tag go test does not set",
