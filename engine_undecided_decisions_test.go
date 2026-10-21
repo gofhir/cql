@@ -9,8 +9,9 @@ import (
 )
 
 // undecidedADR is where the user decided what the specification leaves
-// open: null's run-time type, a cast of null, a quotient at a whole number and
-// the conversions a call takes (plan 003, PR 6).
+// open: null's run-time type, a cast of null, a quotient at a whole number,
+// the conversions a call takes (plan 003, PR 6) and how Mode compares (plan
+// 004, PR 2).
 const undecidedADR = "docs/adr/003-lo-que-la-especificacion-no-decide.md"
 
 // cites reports whether a verdict's evidence cites a document first, the one
@@ -32,7 +33,7 @@ func TestTheUndecidedADRNamesItsRows(t *testing.T) {
 	for _, area := range []struct {
 		name    string
 		rewrite bool
-	}{{"types", *classifyTypes}, {"fhir", *classifyFHIR}, {"arithmetic", *classifyArithmetic}} {
+	}{{"types", *classifyTypes}, {"fhir", *classifyFHIR}, {"arithmetic", *classifyArithmetic}, {"codesets", *classifyCodeSets}} {
 		var names []string
 		for key, d := range readDivergences(t, filepath.Join("testdata", "snapshots", area.name+".divergences.tsv")) {
 			if name, _, _ := strings.Cut(key, "\t"); d.Class == deliberate && cites(d, undecidedADR) && !slices.Contains(names, name) {
@@ -56,7 +57,7 @@ func TestTheUndecidedADRNamesItsRows(t *testing.T) {
 				undecidedADR, area.name, got, want, area.name)
 		}
 	}
-	if *classifyTypes || *classifyFHIR || *classifyArithmetic {
+	if *classifyTypes || *classifyFHIR || *classifyArithmetic || *classifyCodeSets {
 		if err := os.WriteFile(undecidedADR, []byte(doc), 0o644); err != nil {
 			t.Fatal(err)
 		}

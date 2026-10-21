@@ -230,3 +230,71 @@ El usuario aprobó el plan rehecho, con A1 a A12, y decidió:
 - `make check`, en verde el 21-10-2026, después de la ronda 3: lint, `-race`, las seis zonas y las mutaciones de 001 a 004.
 - `make evidence`: [docs/evidence/2026-10-21.md](../evidence/2026-10-21.md). El área `codes` no tiene ninguna divergencia `unclassified`, y `004-code-fields.sh` termina con código 0.
 - **Al hacer el commit:** para que release-please publique v1.24.0, el commit tiene que ser `feat:`; un `fix:` daría v1.23.4. La ruptura de `types.Code` y `types.Concept` se anota a mano en el PR del release.
+
+## Implementación del PR 2 (21-10-2026, sin commit)
+
+- **La causa:**
+  - Las operaciones que guardan valores comparan con `sameValue`, que termina en `Code.Equal`, y `Code.Equal` comparaba solo el sistema y el código.
+  - `Mode` agrupaba por `Type()+String()`, y `String()` no lleva la versión y escribe el null como vacío.
+- **El cambio:**
+  - `Code.Equal` compara los cuatro elementos por presencia y texto (`SameText`).
+  - `Concept.Equal` compara además el display.
+  - `Mode` agrupa con `modeKey`, que cita cada elemento y marca el null.
+  - Un `=` indeterminado cuenta como distinto, como dicen las dos referencias.
+  - Las cubetas de `distinct` no cambian: los Codes no tienen cubeta y se comparan de a pares.
+- **A11:** `parseCode` lee `null` como null y lee la `version`, y el display de un Concept pasa por el mismo `codeElement`. El corpus de conformidad tiene una sola salida de Code (`CodeToConcept1`, solo `code`), así que la cubre `TestParseExpectedOutput`.
+- **Casos a mano:** `TestCodeOperationsTellCodesApart`, 34 casos. Las sondas de Java y JS del 21-10-2026 están en el scratchpad, en `ops.cql` y `ops2.cql`. En main fallaban 14.
+  - El IndexOf de Java compara por equivalencia (`IndexOf({Code{code:'X'}}, Code{code:'x'})` da 0), y el Mode de Codes falla («Code is not comparable»). Ahí manda JS, que coincide con la especificación («using equality semantics»).
+  - Mode no lo decide la especificación, sino la decisión 5 del ADR 003 (ver «Review del PR 2, ronda 1»).
+- **Corpus `codesets`:** `gen -area codesets -seed 1 -n 400`. Comparte el preámbulo y el oráculo con `codes`, y el oráculo lee sus operaciones. El oráculo rechaza un Mode con empate.
+  - Manifiesto, tras la ronda 2:
+    - Java, 52 `reference defect`: los errores de Mode y el IndexOf por equivalencia;
+    - JS, 31 `reference defect`: Mode. cql-execution 3.3.2 cuenta con `counts[elem]` (`lib/elm/aggregate.js`), y como Code no define `toString`, todo Code es la clave `"[object Object]"`: cuenta todos los Codes como un solo valor y devuelve el último;
+    - 10 `own defect` con cada referencia: `contains null` (ver la ronda 1).
+  - No queda ninguna sin clasificar.
+- **Mutaciones:** `004-code-fields.sh` tiene 45 (14 más que en el PR 1), y se detectan todas.
+  - Dos tuvieron que cambiar. La de «el `return` no es distinct» sobrevivía porque las listas casi nunca repetían un Code; ahora el generador repite uno.
+  - La de «Mode con `>=`» era equivalente al código correcto: con `{a, a, b}` no hay empate. Se reemplazó por «Mode toma el último valor distinto».
+  - La de «Mode guarda null como vacío» necesitó un caso a mano.
+- **Sin tocar:** `funcs.Distinct`, que solo usa su test.
+
+## Review del PR 2, ronda 1 (Codex y Fable, 21-10-2026)
+
+| Hallazgo | Verificación | Resolución |
+|---|---|---|
+| P2-1 (medio, los dos) | `modeKey` usaba `String()` dentro de una tupla o una lista: `Mode({Tuple{c: Code v1}, Tuple{c: Code v1}, Tuple{c: Code v2}}).c.version` daba '2' | **Corregido:** la clave es recursiva para tuplas y listas. Hay 3 casos a mano y 2 mutaciones |
+| P2-2 (bajo, Fable) | La sección Mode de la especificación no dice cómo compara ni cómo desempata (verificado en cql.hl7.org: solo «the statistical mode») | **Lo decidió el usuario** el 21-10-2026: Mode por igualdad, como `distinct`. Es la **decisión 5 del ADR 003**:<br>• el oráculo calcula también la lectura por equivalencia;<br>• una referencia que la da es `deliberate`;<br>• una que no da ninguna de las dos es `reference defect`;<br>• el bloque `codesets` del ADR queda vacío: con la forma `{a, a, b}` del generador, la lectura por equivalencia o coincide con la igualdad o tiene más de una respuesta, así que el corpus no llega a la rama (ronda 2, H2). `TestTheModeDecisionIsTheOnlyReadingLeftAside` cubre esa rama |
+| P2-3 (bajo, Fable) | El corpus no tenía elementos null ni Concepts | **Corregido en parte:**<br>• el generador pone `(null as Code)` en las listas y en lo que se busca, y el oráculo aplica las reglas de null de Count, IndexOf, In y Contains;<br>• los Concepts siguen solo en los casos a mano: en una lista de dos codes, la igualdad es la que no decide la especificación (1c2). Se sumó uno de `union` |
+
+**Lo que encontró el corpus con los null:**
+- `{ 1, 2 } contains (null as Integer)` y `(null as Integer) in { 1, 2 }` dan null. La especificación dice false («true if the list contains any null elements, and false otherwise»), y las dos referencias dan false.
+- Pasa con cualquier tipo y es anterior a este PR: va al backlog (1c4).
+- En `codesets` son 10 `own defect` con cada referencia, con su veredicto.
+
+Las mutaciones son 52, y se detectan todas.
+
+## Review del PR 2, ronda 2 (Codex y Fable, 21-10-2026)
+
+Codex no terminó: el disco del sistema se llenó (ENOSPC) mientras guardaba su estado. Antes dejó dos pruebas en su copia, y las dos se ejecutaron.
+
+| Hallazgo | Verificación | Resolución |
+|---|---|---|
+| R2-1 (medio, Codex) | La clave recursiva de Mode escribía el tipo de cada elemento: `Tuple{n: 1}` y `Tuple{n: 1.0}` son iguales (`=` da true, `distinct` da uno), pero Mode los contaba aparte. Su prueba fallaba: daba 2, no 1. La clave de la ronda 1 los agrupaba | **Corregido:** un Integer y un Decimal se escriben como el número. Hay un caso a mano y una mutación |
+| R2-2 (bajo, Codex; H3 de Fable) | Si la clase por equivalencia difiere en el elemento leído, el oráculo no tiene respuesta alternativa, y una referencia que diera uno de sus valores quedaría `reference defect` | **Rechazado, con evidencia:** aceptar cualquier valor de la clase reclasificó D13 y D326 de JS como `deliberate`. Pero cql-execution no lee por equivalencia: cuenta todos los Codes como uno (ver el manifiesto) y coincide por casualidad. Cuál valor de la clase se queda no es una lectura de la especificación. `TestTheModeDecisionIsTheOnlyReadingLeftAside` fija ese caso como `reference defect` |
+| H1 (medio, Fable) | El manifiesto atribuía los 31 de JS a «Mode con elementos null»: 30 no tienen ningún null | **Corregido:** la causa, verificada en el código de cql-execution, está en el manifiesto |
+| H2 (medio-bajo, Fable) | La tabla de la ronda 1 atribuía a JS que el bloque `codesets` quede vacío; es la forma del generador | **Corregido** en la tabla |
+| H4 (bajo, Fable) | `g.codeOr(x, "(null as Code)")` es `g.code(x)` | **Corregido;** el corpus regenerado es idéntico byte a byte |
+
+Las mutaciones son 53.
+
+## Review del PR 2, ronda 3 (Codex y Fable, 21-10-2026)
+
+**Converge:** ninguno deja hallazgos de este PR de severidad media o mayor. Los dos sondearon la clave numérica de Mode (Integer y Decimal, escala, cero negativo, Long, números en listas y tuplas anidadas, `as Any`): agrupa todo lo que `=` iguala, y main no agrupaba ninguno. También separa ahora un String de un número en una tupla (`'1'` y `1`), que main confundía. Las mutaciones dan 53 detectadas en las dos copias.
+
+| Hallazgo | Verificación | Resolución |
+|---|---|---|
+| Mode separa cantidades, Dates e intervalos iguales (medio para Codex; bajo, B1, para Fable) | `Mode({1 'mg', 1 'mg', 1.0 'mg', 1.0 'mg', 2 'mg', 2 'mg', 2 'mg'})` da `2 'mg'`; idéntico con la clave de main | **Al backlog (1c5):** es anterior al PR, y arreglarlo aquí ampliaría el review |
+| R2-2 (bajo, Codex) | Codex ejecutó cql-execution: D13 da `""`, D326 da null, y `{x, x, y}` da `y`. Una lectura por equivalencia que se quede con el último también daría D13 y D326 | **Se mantiene, con su fundamento:** la clasificación descansa en cómo está hecha la referencia (todo Code es `"[object Object]"`, verificado en su código y con el control), no en las dos filas solas |
+| B2 (bajo, Fable) | La decisión 5 decía «con los null iguales entre sí», y Mode ignora los null de la lista | **Corregido:** se refiere a los elementos null de un Code o de una tupla |
+| B3 (bajo, Fable) | El punto de reanudación nombraba la ronda 2 como pendiente | **Ya corregido** en el repo; la copia de review era anterior |
+

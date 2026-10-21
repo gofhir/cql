@@ -11,7 +11,7 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 - El usuario eligió los campos `*string`.
 - Plan aprobado el 21-10-2026, con A1 a A12. La igualdad sigue la especificación, y sale como v1.24.0. Rama: `fix/code-empty-field`.
 
-**Próximo paso concreto:** el PR 1 está terminado y sin commit. El review convergió en la ronda 3, y `make check` y `make evidence` están en verde (docs/evidence/2026-10-21.md). Falta que el usuario apruebe el commit (`feat:`, para v1.24.0) y el PR. Después viene el PR 2: `distinct`, operaciones de conjuntos, `in` y `contains`, y el parser de conformidad (A11).
+**Próximo paso concreto:** el PR 1 está MERGEADO como #158 (8a6d2f9). El PR 2 está implementado y sin commit, en la rama `fix/code-fields-sets`. Las rondas 1 y 2 de review están resueltas (ver el plan 004), y la decisión 5 del ADR 003 (Mode por igualdad) la tomó el usuario. Las mutaciones de 004 son 53, todas detectadas. La ronda 3 converge, y `make check` pasó. Falta `make evidence` y pedir el commit.
 
 ## Pendientes, en orden
 
@@ -27,6 +27,8 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
   - `buildConcept` descarta un `(null as Code)` de `codes`;
   - `~` entre Code y Concept es asimétrico;
   - sema acepta un code de un codesystem no declarado.
+1c4. **`in` y `contains` con un null:** `{1, 2} contains (null as Integer)` y `(null as Integer) in {1, 2}` dan null. La especificación (List Operators, In y Contains) dice false si la lista no tiene ningún null, y las dos referencias dan false. Pasa con todos los tipos y es anterior al 004. Son 10 `own defect` por referencia en `codesets`.
+1c5. **Mode no agrupa todo lo que `=` iguala:** fuera de los números y los Codes, la clave de Mode es el `String()` del valor, y separa valores iguales: `Mode({1 'mg', 1 'mg', 1.0 'mg', 1.0 'mg', 2 'mg', 2 'mg', 2 'mg'})` da `2 'mg'`, y `distinct` da dos. Pasa también con `1 'g'`/`1000 'mg'`, `1 week`/`7 days`, Dates de distinta precisión, DateTimes de distinto offset e intervalos cerrados y abiertos de los mismos puntos. Es anterior al 004 (idéntico en main) y lo encontraron Codex y Fable en la ronda 3 del PR 2.
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s.** El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.
 3. **D4a, identidad de tipo:** un descriptor `{modelo, nombre}` en vez del texto de `Type()`. Ver [arquitectura-verificacion-2026-10-18.md](../arquitectura-verificacion-2026-10-18.md) §4.

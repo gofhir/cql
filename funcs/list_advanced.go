@@ -3,9 +3,12 @@ package funcs
 import (
 	"math"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/shopspring/decimal"
 
+	cqltypes "github.com/gofhir/cql/types"
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
@@ -64,7 +67,7 @@ func Mode(c fptypes.Collection) fptypes.Value {
 		if item == nil {
 			continue
 		}
-		key := item.Type() + ":" + item.String()
+		key := modeKey(item)
 		counts[key]++
 		valMap[key] = item
 	}
@@ -80,6 +83,92 @@ func Mode(c fptypes.Collection) fptypes.Value {
 		}
 	}
 	return valMap[maxKey]
+}
+
+// modeKey is what Mode counts a value under. A Code or a Concept is keyed by
+// every element and whether it is null, and so is one held in a tuple or a
+// list: its String leaves the version out and writes a null as the empty
+// String, and Mode counted Codes of two versions, or a null system and an
+// empty one, as one value (plan 004).
+func modeKey(v fptypes.Value) string {
+	var b strings.Builder
+	writeModeKey(&b, v)
+	return b.String()
+}
+
+func writeModeKey(b *strings.Builder, v fptypes.Value) {
+	if v == nil {
+		b.WriteString("-;")
+		return
+	}
+	switch x := v.(type) {
+	case fptypes.Integer:
+		// An Integer and a Decimal of one value are equal, and so are the
+		// tuples that hold them: both are keyed as the number.
+		writeNumberKey(b, decimal.NewFromInt(x.Value()))
+		return
+	case fptypes.Decimal:
+		writeNumberKey(b, x.Value())
+		return
+	}
+	b.WriteString(v.Type())
+	b.WriteByte(':')
+	switch x := v.(type) {
+	case cqltypes.Code:
+		writeCodeKey(b, x)
+	case cqltypes.Concept:
+		for _, c := range x.Codes {
+			writeCodeKey(b, c)
+		}
+		writeElementKey(b, x.Display)
+	case cqltypes.Tuple:
+		names := make([]string, 0, len(x.Elements))
+		for name := range x.Elements {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		b.WriteByte('(')
+		for _, name := range names {
+			b.WriteString(strconv.Quote(name))
+			b.WriteByte('=')
+			writeModeKey(b, x.Elements[name])
+		}
+		b.WriteByte(')')
+	case cqltypes.List:
+		b.WriteByte('[')
+		for _, item := range x.Values {
+			writeModeKey(b, item)
+		}
+		b.WriteByte(']')
+	default:
+		b.WriteString(strconv.Quote(v.String()))
+		b.WriteByte(';')
+	}
+}
+
+func writeNumberKey(b *strings.Builder, d decimal.Decimal) {
+	b.WriteString("Number:")
+	b.WriteString(d.String())
+	b.WriteByte(';')
+}
+
+func writeCodeKey(b *strings.Builder, c cqltypes.Code) {
+	b.WriteByte('{')
+	for _, e := range []*string{c.System, c.Code, c.Display, c.Version} {
+		writeElementKey(b, e)
+	}
+	b.WriteByte('}')
+}
+
+// writeElementKey writes an element quoted, so that no text can read as
+// another or as null.
+func writeElementKey(b *strings.Builder, s *string) {
+	if s == nil {
+		b.WriteString("-;")
+		return
+	}
+	b.WriteString(strconv.Quote(*s))
+	b.WriteByte(';')
 }
 
 // Median returns the median value of a numeric collection.

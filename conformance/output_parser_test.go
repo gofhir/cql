@@ -28,6 +28,34 @@ func TestParseExpectedOutput(t *testing.T) {
 		}
 	})
 
+	// A Code's elements as the notation writes them (plan 004): null is null,
+	// '' is the empty String, and the version is read too.
+	t.Run("code elements", func(t *testing.T) {
+		v, err := parseNotation("Code { code: 'x', system: null, display: '', version: '2' }")
+		assertNoError(t, err)
+		c, ok := v.(cqltypes.Code)
+		if !ok {
+			t.Fatalf("expected a Code, got %T", v)
+		}
+		if cqltypes.Deref(c.Code) != "x" || c.System != nil || c.Display == nil || *c.Display != "" || cqltypes.Deref(c.Version) != "2" {
+			t.Errorf("got code %v, system %v, display %v, version %v", c.Code, c.System, c.Display, c.Version)
+		}
+	})
+
+	t.Run("concept display", func(t *testing.T) {
+		for _, tt := range []struct {
+			text  string
+			empty bool
+		}{{"Concept { codes: Code { code: 'x' }, display: '' }", true}, {"Concept { codes: Code { code: 'x' }, display: null }", false}} {
+			v, err := parseNotation(tt.text)
+			assertNoError(t, err)
+			k := v.(cqltypes.Concept)
+			if tt.empty != (k.Display != nil) || tt.empty && *k.Display != "" {
+				t.Errorf("%s: display %v", tt.text, k.Display)
+			}
+		}
+	})
+
 	t.Run("empty string", func(t *testing.T) {
 		v, err := parseNotation("")
 		assertNoError(t, err)

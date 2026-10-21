@@ -453,9 +453,7 @@ func (p outputParser) parseConcept(s string) (fptypes.Value, error) {
 				}
 			}
 		case "display":
-			if strings.HasPrefix(valStr, "'") && strings.HasSuffix(valStr, "'") {
-				display = cqltypes.Str(valStr[1 : len(valStr)-1])
-			}
+			display = codeElement(valStr)
 		}
 	}
 	return cqltypes.NewConcept(codes, display), nil
@@ -475,7 +473,7 @@ func parseCode(s string) (fptypes.Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("splitting Code elements: %w", err)
 	}
-	var code, system, display *string
+	var code, system, display, version *string
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		colonIdx := strings.Index(part, ":")
@@ -483,18 +481,29 @@ func parseCode(s string) (fptypes.Value, error) {
 			continue
 		}
 		key := strings.TrimSpace(part[:colonIdx])
-		valStr := strings.TrimSpace(part[colonIdx+1:])
-		if strings.HasPrefix(valStr, "'") && strings.HasSuffix(valStr, "'") {
-			valStr = valStr[1 : len(valStr)-1]
-		}
+		value := codeElement(strings.TrimSpace(part[colonIdx+1:]))
 		switch key {
 		case "code":
-			code = cqltypes.Str(valStr)
+			code = value
 		case "system":
-			system = cqltypes.Str(valStr)
+			system = value
 		case "display":
-			display = cqltypes.Str(valStr)
+			display = value
+		case "version":
+			version = value
 		}
 	}
-	return cqltypes.NewCode(system, code, display, nil), nil
+	return cqltypes.NewCode(system, code, display, version), nil
+}
+
+// codeElement is an element of a Code as the notation writes it: null is
+// null, and a quoted String is its text, the empty one included (plan 004).
+func codeElement(s string) *string {
+	if s == "null" {
+		return nil
+	}
+	if len(s) >= 2 && strings.HasPrefix(s, "'") && strings.HasSuffix(s, "'") {
+		s = s[1 : len(s)-1]
+	}
+	return cqltypes.Str(s)
 }

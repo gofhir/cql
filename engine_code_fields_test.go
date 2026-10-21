@@ -108,3 +108,77 @@ func TestCodeFieldsKeepNullApartFromEmpty(t *testing.T) {
 		})
 	}
 }
+
+// TestCodeOperationsTellCodesApart holds the operations that compare Codes
+// without the `=` operator to the equality of CQL 1.5.3 (cql.hl7.org/
+// 09-b-cqlreference.html): distinct, union, intersect, except, in, contains,
+// IndexOf and a query's return compare "using equality semantics", and Mode
+// does by decision (below). So two Codes that differ in display or version, or
+// in a null against an empty String, are two values, and one whose equality is
+// unknown counts as not equal, as both reference engines answer.
+//
+// Each answer is the Java engine's 3.26.0 and cql-execution's 3.3.2 (probes of
+// 21-10-2026, plan 004 PR 2), but for the ones marked: there Java compares by
+// equivalence (IndexOf) or fails (Mode, "Code is not comparable"), and the
+// answer is cql-execution's, which is the specification's. Mode's section says
+// nothing of how it compares elements: it counts by equality, as distinct does,
+// by the user's decision (docs/adr/003-lo-que-la-especificacion-no-decide.md,
+// decision 5).
+func TestCodeOperationsTellCodesApart(t *testing.T) {
+	const (
+		javaWrong = "Java compares by equivalence or fails; cql-execution and the specification agree"
+		modeByADR = "the specification does not say how Mode compares; ADR 003, decision 5, counts by equality"
+	)
+	engine := NewEngine()
+	for _, tt := range []struct {
+		name, expr, want, note string
+	}{
+		{"distinct keeps Codes of two displays", "Count(distinct { Code { code: 'x', system: 's', display: 'a' }, Code { code: 'x', system: 's', display: 'b' } })", "Integer 2", ""},
+		{"distinct keeps Codes of two versions", "Count(distinct { Code { code: 'x', system: 's', version: '1' }, Code { code: 'x', system: 's', version: '2' } })", "Integer 2", ""},
+		{"distinct keeps '' apart from null", "Count(distinct { Code { code: 'x', system: '' }, Code { code: 'x' } })", "Integer 2", ""},
+		{"distinct joins the same Code", "Count(distinct { Code { code: 'x', system: 's' }, Code { code: 'x', system: 's' } })", "Integer 1", ""},
+		{"distinct keeps codes that differ in case", "Count(distinct { Code { code: 'x', system: 's', display: 'a' }, Code { code: 'X', system: 's', display: 'a' } })", "Integer 2", ""},
+		{"distinct keeps declared codes of two displays", `Count(distinct { "A", "B" })`, "Integer 2", ""},
+		{"distinct keeps Concepts of two displays", "Count(distinct { Concept { codes: { Code { code: 'x' } }, display: 'a' }, Concept { codes: { Code { code: 'x' } }, display: 'b' } })", "Integer 2", ""},
+		{"distinct keeps Concepts whose codes differ", "Count(distinct { Concept { codes: { Code { code: 'x' } } }, Concept { codes: { Code { code: 'x', display: 'd' } } } })", "Integer 2", ""},
+		{"union keeps Concepts of two displays", "Count({ Concept { codes: { Code { code: 'x' } }, display: 'a' } } union { Concept { codes: { Code { code: 'x' } }, display: 'b' } })", "Integer 2", ""},
+		{"union keeps Codes of two displays", "Count({ Code { code: 'x', display: 'a' } } union { Code { code: 'x', display: 'b' } })", "Integer 2", ""},
+		{"union keeps '' apart from null", "Count({ Code { code: 'x', system: '' } } union { Code { code: 'x' } })", "Integer 2", ""},
+		{"intersect drops Codes of two displays", "Count({ Code { code: 'x', display: 'a' } } intersect { Code { code: 'x', display: 'b' } })", "Integer 0", ""},
+		{"intersect keeps the same Code", "Count({ Code { code: 'x', version: '1' } } intersect { Code { code: 'x', version: '1' } })", "Integer 1", ""},
+		{"except keeps a Code of another display", "Count({ Code { code: 'x', display: 'a' } } except { Code { code: 'x', display: 'b' } })", "Integer 1", ""},
+		{"except keeps null apart from ''", "Count({ Code { code: 'x' } } except { Code { code: 'x', system: '' } })", "Integer 1", ""},
+		{"in tells displays apart", "Code { code: 'x', display: 'a' } in { Code { code: 'x', display: 'b' } }", "false", ""},
+		{"in tells '' from null", "Code { code: 'x', system: '' } in { Code { code: 'x' } }", "false", ""},
+		{"in finds the same Code", "Code { code: 'x' } in { Code { code: 'x' } }", "true", ""},
+		{"in tells Concept displays apart", "Concept { codes: { Code { code: 'x' } }, display: 'a' } in { Concept { codes: { Code { code: 'x' } }, display: 'b' } }", "false", ""},
+		{"contains tells displays apart", "{ Code { code: 'x', display: 'b' } } contains Code { code: 'x', display: 'a' }", "false", ""},
+		{"IndexOf tells displays apart", "IndexOf({ Code { code: 'x', display: 'b' }, Code { code: 'x', display: 'a' } }, Code { code: 'x', display: 'a' })", "Integer 1", javaWrong},
+		{"IndexOf counts case", "IndexOf({ Code { code: 'X' } }, Code { code: 'x' })", "Integer -1", javaWrong},
+		{"IndexOf tells '' from null", "IndexOf({ Code { code: 'x', system: '' } }, Code { code: 'x' })", "Integer -1", ""},
+		{"Mode tells versions apart", "Mode({ Code { code: 'x', version: '1' }, Code { code: 'x', version: '2' }, Code { code: 'x', version: '2' } }).version", `"2"`, javaWrong},
+		{"Mode counts each version on its own", "Mode({ Code { code: 'x', version: '1' }, Code { code: 'x', version: '1' }, Code { code: 'x', version: '2' } }).version", `"1"`, javaWrong},
+		{"Mode tells '' from null", "Mode({ Code { code: 'x', system: '' }, Code { code: 'x', system: '' }, Code { code: 'x' } }).system is null", "false", modeByADR},
+		{"Mode tells Codes apart inside a tuple", "Mode({ Tuple { c: Code { code: 'x', version: '1' } }, Tuple { c: Code { code: 'x', version: '1' } }, Tuple { c: Code { code: 'x', version: '2' } } }).c.version", `"1"`, modeByADR},
+		{"Mode tells Codes apart inside a list", "Mode({ { Code { code: 'x', version: '1' } }, { Code { code: 'x', version: '1' } }, { Code { code: 'x', version: '2' } } })[0].version", `"1"`, modeByADR},
+		{"Mode counts an Integer and a Decimal of one value inside a tuple as one", "Mode({ Tuple { c: Code { code: 'x' }, n: 1 }, Tuple { c: Code { code: 'x' }, n: 1 }, Tuple { c: Code { code: 'x' }, n: 1.0 }, " +
+			"Tuple { c: Code { code: 'x' }, n: 1.0 }, Tuple { c: Code { code: 'x' }, n: 2 }, Tuple { c: Code { code: 'x' }, n: 2 }, " +
+			"Tuple { c: Code { code: 'x' }, n: 2 } }).n = 1", "true", modeByADR},
+		{"Mode tells '' from null inside a tuple", "Mode({ Tuple { c: Code { code: 'x' } }, Tuple { c: Code { code: 'x' } }, Tuple { c: Code { code: 'x', system: '' } } }).c.system is null", "true", modeByADR},
+		{"Mode tells displays apart", "Mode({ Code { code: 'x', display: 'a' }, Code { code: 'x', display: 'b' }, Code { code: 'x', display: 'b' } }).display", `"b"`, javaWrong},
+		{"a query's return keeps Codes of two displays", "Count(({ Code { code: 'x', display: 'a' }, Code { code: 'x', display: 'b' } }) C return C)", "Integer 2", ""},
+		{"a query's return keeps '' apart from null", "Count(({ Code { code: 'x', system: '' }, Code { code: 'x' } }) C return C)", "Integer 2", ""},
+		{"a query's return joins the same Code", "Count(({ Code { code: 'x', version: '1' }, Code { code: 'x', version: '1' } }) C return C)", "Integer 1", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			src := codeFieldsLibrary + "define R: " + tt.expr + "\n"
+			v, err := engine.EvaluateExpression(context.Background(), src, "R", nil, nil)
+			if err != nil {
+				t.Fatalf("%s: %v", tt.expr, err)
+			}
+			if got := answers.Value(v).Text; got != tt.want {
+				t.Errorf("%s = %s, want %s %s", tt.expr, got, tt.want, tt.note)
+			}
+		})
+	}
+}

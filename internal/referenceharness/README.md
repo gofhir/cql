@@ -300,6 +300,15 @@ with `-each`, as `fhir` above, without data (`-` for the data file). Its oracle,
 `engine_codes_oracle_test.go`, computes every answer from the specification:
 the Java engine answers null where the conjunction of the elements gives false.
 
+`codesets` covers the operations that compare Codes without `=` — distinct,
+union, intersect, except, in, contains, IndexOf, Mode and a query's return —
+over lists of Codes that differ in little, sometimes with one Code twice. It
+shares `codes`'s preamble and oracle. Mode is asked of `{ a, a, b }`, which
+has no tie, and counts by equality, as ADR 003's decision 5 decides. The Java
+engine fails on Mode of Codes ("not comparable") and answers IndexOf by
+equivalence; cql-execution counts every Code as one value in Mode (its key is
+`"[object Object]"`) and gives the last.
+
 ## Answer snapshots
 
 The differential says which answers are right; it needs a reference that can
