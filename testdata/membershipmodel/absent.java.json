@@ -1,0 +1,142 @@
+{
+  "library" : "corpus cases.cql",
+  "sourceSha256" : "c26c8a662273615bcd9adad3b0ddde5f67c9bdcf034b0ea848d0487a78a6f8ec",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D1" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D2" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D3" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D4" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D5" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D6" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D7" : null,
+    "D8" : null,
+    "D9" : null,
+    "D10" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D11" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D12" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D13" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D14" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D15" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D16" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D17" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D18" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D19" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D20" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D21" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D22" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D23" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D24" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,FHIR.Period)."
+    },
+    "D25" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.boolean,FHIR.integer>)."
+    },
+    "D26" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D27" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D28" : {
+      "error" : "CqlException",
+      "message" : "Error evaluating expression D28: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+    },
+    "D29" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D30" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D31" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D32" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D33" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D34" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D35" : null,
+    "D36" : null,
+    "D37" : null
+  }
+}

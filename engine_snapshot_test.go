@@ -40,14 +40,15 @@ var snapshotAreas = []struct {
 	// the references without the tolerance for a float's last digits.
 	exact bool
 }{
-	{"arithmetic", 800, false}, // gen -area arithmetic -seed 7 -n 800
-	{"integer", 1000, false},   // gen -area integer -seed 1 -n 1000
-	{"scope", 600, false},      // gen -area scope -seed 1 -n 600
-	{"types", 900, false},      // gen -area types -seed 1 -n 900
-	{"fhir", 900, false},       // gen -area fhir -seed 1 -n 900, on testdata/snapshots/fhir-data.json
-	{"codes", 600, true},       // gen -area codes -seed 1 -n 600
-	{"codesets", 400, true},    // gen -area codesets -seed 1 -n 400
-	{"membership", 400, true},  // gen -area membership -seed 1 -n 400
+	{"arithmetic", 800, false},    // gen -area arithmetic -seed 7 -n 800
+	{"integer", 1000, false},      // gen -area integer -seed 1 -n 1000
+	{"scope", 600, false},         // gen -area scope -seed 1 -n 600
+	{"types", 900, false},         // gen -area types -seed 1 -n 900
+	{"fhir", 900, false},          // gen -area fhir -seed 1 -n 900, on testdata/snapshots/fhir-data.json
+	{"codes", 600, true},          // gen -area codes -seed 1 -n 600
+	{"codesets", 400, true},       // gen -area codesets -seed 1 -n 400
+	{"membership", 400, true},     // gen -area membership -seed 1 -n 400
+	{"fhirmembership", 200, true}, // gen -area fhirmembership -seed 1 -n 200, on testdata/snapshots/fhir-data.json
 	// Written by hand, not generated: the cases of docs/plans/001-decimal-division.md.
 	{"division", 29, true},
 }
@@ -121,7 +122,7 @@ func snapshotAnswers(t *testing.T, area string) map[string]string {
 	header := src[:first[0]]
 	opts := []Option{WithEvaluationTimestamp(time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", -3*3600)))}
 	var patient json.RawMessage
-	if area == "fhir" {
+	if area == "fhir" || area == "fhirmembership" {
 		provider, subject := snapshotProvider(t)
 		opts = append(opts, WithDataProvider(provider))
 		patient = subject

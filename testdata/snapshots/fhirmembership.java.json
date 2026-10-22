@@ -1,0 +1,757 @@
+{
+  "library" : "corpus fhirmembership.cql",
+  "sourceSha256" : "be5d25002535123cf6532310ca7dc72ffce0af3ce126549dbcd57af8f93da8c5",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D1" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D2" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+    },
+    "D3" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D4" : null,
+    "D5" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D6" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D7" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D8" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D9" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D10" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D11" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator In with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D12" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D13" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+    },
+    "D14" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D15" : null,
+    "D16" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D17" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D18" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D19" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D20" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D21" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D22" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D23" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D24" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D25" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D26" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D27" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D28" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D29" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D30" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D31" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D32" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D33" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D34" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D35" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D36" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D37" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D38" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D39" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator In with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D40" : null,
+    "D41" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D42" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D43" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D44" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D45" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D46" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D47" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D48" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D49" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D50" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+    },
+    "D51" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D52" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D53" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D54" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D55" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D56" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D57" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Includes with signature (FHIR.Period,FHIR.date)."
+    },
+    "D58" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D59" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D60" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D61" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D62" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D63" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D64" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D65" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D66" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D67" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D68" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D69" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D70" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D71" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+    },
+    "D72" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D73" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D74" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D75" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D76" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D77" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D78" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D79" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D80" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D81" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D82" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D83" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D84" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D85" : null,
+    "D86" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D87" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D88" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D89" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D90" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator In with signature (FHIR.date,list<System.DateTime>)."
+    },
+    "D91" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D92" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator In with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D93" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D94" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D95" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D96" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D97" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D98" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D99" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D100" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D101" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Includes with signature (choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>,FHIR.date)."
+    },
+    "D102" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D103" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D104" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D105" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D106" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D107" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D108" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D109" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D110" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D111" : null,
+    "D112" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D113" : null,
+    "D114" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D115" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D116" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D117" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D118" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D119" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D120" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D121" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D122" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D123" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D124" : null,
+    "D125" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D126" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D127" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Includes with signature (FHIR.Period,FHIR.date)."
+    },
+    "D128" : null,
+    "D129" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D130" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D131" : null,
+    "D132" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D133" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D134" : null,
+    "D135" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D136" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D137" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+    },
+    "D138" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D139" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D140" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D141" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D142" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D143" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D144" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D145" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D146" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D147" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D148" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D149" : null,
+    "D150" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+    },
+    "D151" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D152" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D153" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D154" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D155" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D156" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D157" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,list<System.DateTime>)."
+    },
+    "D158" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+    },
+    "D159" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D160" : null,
+    "D161" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D162" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,FHIR.Period)."
+    },
+    "D163" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D164" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D165" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D166" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D167" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D168" : null,
+    "D169" : null,
+    "D170" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D171" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D172" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D173" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D174" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D175" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D176" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D177" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D178" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>)."
+    },
+    "D179" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D180" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D181" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D182" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D183" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D184" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D185" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D186" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D187" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D188" : null,
+    "D189" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D190" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D191" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D192" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D193" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D194" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D195" : null,
+    "D196" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D197" : null,
+    "D198" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D199" : {
+      "type" : "Boolean",
+      "value" : false
+    }
+  }
+}

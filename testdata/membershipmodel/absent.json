@@ -1,0 +1,5 @@
+{
+  "Patient": {"resourceType": "Patient", "id": "absent"},
+  "Encounter": [{"resourceType": "Encounter", "id": "e", "status": "finished"}],
+  "Observation": [{"resourceType": "Observation", "id": "o", "status": "final", "code": {"text": "x"}}]
+}

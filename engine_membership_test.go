@@ -371,34 +371,3 @@ func TestMembershipWithNullInAFHIRList(t *testing.T) {
 		}
 	}
 }
-
-// TestMembershipWithAModelConvertedElementStaysUndecided documents a known
-// loss (backlog 1c11): when the element or the container needs the model's
-// conversion for the two to meet, the evaluator does not see that conversion
-// and picks no overload. `in` and `contains` already answer false; `included in` and
-// `includes` stay null, where the list-singleton overload says false (List
-// Operators, In).
-func TestMembershipWithAModelConvertedElementStaysUndecided(t *testing.T) {
-	const header = "library T version '1.0'\nusing FHIR version '4.0.1'\ninclude FHIRHelpers version '4.0.1'\n" +
-		"context Patient\n"
-	engine := NewEngine()
-	for _, c := range []struct{ expr, want string }{
-		{"Patient.gender in { 'male', 'female' }", "false"},
-		{"{ 'male', 'female' } contains Patient.gender", "false"},
-		{"Patient.gender included in { 'male', 'female' }", "null"},
-		{"{ 'male', 'female' } includes Patient.gender", "null"},
-		// The container's elements need the model's conversion too (review
-		// round 2, Fable): Java answers false.
-		{"Patient.name.given contains (null as String)", "false"},
-		{"Patient.name.given includes (null as String)", "null"},
-	} {
-		v, err := engine.EvaluateExpression(context.Background(), header+"define R: "+c.expr+"\n", "R",
-			[]byte(`{"resourceType":"Patient","id":"none"}`), nil)
-		if err != nil {
-			t.Fatalf("%s: %v", c.expr, err)
-		}
-		if got := answers.Value(v).Text; got != c.want {
-			t.Errorf("%s = %s, want %s", c.expr, got, c.want)
-		}
-	}
-}

@@ -19,7 +19,7 @@ files = subprocess.run(["git", "-C", repo, "ls-files", "-co", "--exclude-standar
                        capture_output=True, text=True, check=True).stdout.split()
 
 EVAL = "eval/evaluator.go"
-SEMA = "sema/convert.go"
+OVERLOAD = "sema/overload.go"
 ORACLE = "engine_membership_oracle_test.go"
 CORPUS = "testdata/snapshots/membership.cql"
 
@@ -50,34 +50,34 @@ mutations = [
     ("ADR 003, decision 6: two nulls answer null",
      (EVAL, CONTAINS, "\tif left == nil && right == nil {\n\t\treturn nil, nil\n\t}\n" + CONTAINS), ENGINE, "FAIL"),
     ("includes and included in with a null keep the old answer",
-     (EVAL, "\tif (left != nil && right != nil) || op.Offset != \"\" || op.Properly || e.ctx.Plan == nil {",
-      "\tif true || (left != nil && right != nil) || op.Offset != \"\" || op.Properly || e.ctx.Plan == nil {"), ENGINE, "FAIL"),
+     (EVAL, "\tif (left != nil && right != nil) || e.ctx.Plan == nil {",
+      "\tif true || (left != nil && right != nil) || e.ctx.Plan == nil {"), ENGINE, "FAIL"),
+    # The overload, which the semantic phase decides since plan 006.
     ("the overload read from the value: every list is the membership one",
-     (EVAL, "\t\tif commonType(elem, t.Element) {\n\t\t\treturn elementOverload\n\t\t}",
-      "\t\tif true {\n\t\t\treturn elementOverload\n\t\t}"), ENGINE, "FAIL"),
+     (OVERLOAD, "\t\tif c.meets(element, t.Element) {\n\t\t\treturn ElementOverload\n\t\t}",
+      "\t\tif true {\n\t\t\treturn ElementOverload\n\t\t}"), ENGINE, "FAIL"),
     ("the list-list overload with a null answers as the membership one",
-     (EVAL, "\tcase listOverload:\n\t\treturn nil, true, nil", "\tcase listOverload:\n\t\treturn nil, false, nil"), ENGINE, "FAIL"),
+     (EVAL, "\tif o == sema.ListOverload {", "\tif false && o == sema.ListOverload {"), ENGINE, "FAIL"),
     ("an interval and its point are not the membership overload",
-     (EVAL, "\t\tif commonType(elem, t.Point) {", "\t\tif false && commonType(elem, t.Point) {"), ENGINE, "FAIL"),
+     (OVERLOAD, "\t\tif c.meets(element, t.Point) {", "\t\tif false && c.meets(element, t.Point) {"), ENGINE, "FAIL"),
     ("a precision keeps includes with a null from the membership overload",
-     (EVAL, "\tif (left != nil && right != nil) || op.Offset != \"\" || op.Properly || e.ctx.Plan == nil {",
-      "\tif (left != nil && right != nil) || op.Offset != \"\" || op.Precision != \"\" || op.Properly || e.ctx.Plan == nil {"), ENGINE, "FAIL"),
+     (OVERLOAD, "\tif c.speculative > 0 || op.Properly || op.Offset != \"\" {",
+      "\tif c.speculative > 0 || op.Properly || op.Offset != \"\" || op.Precision != \"\" {"), ENGINE, "FAIL"),
     ("properly includes is answered as includes",
-     (EVAL, "\tif (left != nil && right != nil) || op.Offset != \"\" || op.Properly || e.ctx.Plan == nil {",
-      "\tif (left != nil && right != nil) || op.Offset != \"\" || e.ctx.Plan == nil {"), ENGINE, "FAIL"),
+     (OVERLOAD, "\tif c.speculative > 0 || op.Properly || op.Offset != \"\" {",
+      "\tif c.speculative > 0 || op.Offset != \"\" {"), ENGINE, "FAIL"),
     ("an element that converts implicitly is not the membership overload",
-     (EVAL, "\t\tif commonType(elem, t.Element) {", "\t\tif sema.Equal(elem, t.Element) {"), ENGINE, "FAIL"),
+     (OVERLOAD, "\tif ImplicitlyConverts(from, to) {", "\tif Equal(from, to) {"), ENGINE, "FAIL"),
     ("a container that converts to the element is not the membership overload",
-     (EVAL, "\treturn sema.ImplicitlyConverts(a, b) || sema.ImplicitlyConverts(b, a)", "\treturn sema.ImplicitlyConverts(a, b)"),
-     ENGINE, "FAIL"),
+     (OVERLOAD, "\treturn c.reaches(a, b) || c.reaches(b, a)", "\treturn c.reaches(a, b)"), ENGINE, "FAIL"),
     ("the list-list overload needs equal list types",
-     (EVAL, "\t\tif commonType(elem, t) {", "\t\tif sema.Equal(elem, t) {"), ENGINE, "FAIL"),
+     (OVERLOAD, "\t\tif c.meets(element, t) {", "\t\tif Equal(element, t) {"), ENGINE, "FAIL"),
     ("a list does not convert element by element",
-     (SEMA, "\t\treturn ok && ImplicitlyConverts(f.Element, t.Element)", "\t\treturn ok && Equal(f.Element, t.Element)"),
+     (OVERLOAD, "\t\treturn ok && c.reaches(f.Element, t.Element)", "\t\treturn ok && Equal(f.Element, t.Element)"),
      ENGINE, "FAIL"),
-    ("a FHIR.Period is not read as the interval the model makes it",
-     (EVAL, "\tif conv, ok := e.ctx.Plan.Conversions[container]; ok && conv.Target != nil {",
-      "\tif conv, ok := e.ctx.Plan.Conversions[container]; false && ok && conv.Target != nil {"), ENGINE, "FAIL"),
+    ("a FHIR.Period branch of a choice is not read as the interval the model makes it",
+     (OVERLOAD, "\t\tif target, isInterval := ParseTypeName(mc.To).(*Interval); isInterval {",
+      "\t\tif target, isInterval := ParseTypeName(mc.To).(*Interval); false && isInterval {"), ENGINE, "FAIL"),
     # The oracle.
     ("the oracle: a null inside an element reads as a null element",
      (ORACLE, "\treturn item == \"null\" || memberTypedNull.MatchString(item)", "\treturn strings.Contains(item, \"null\")"),

@@ -54,6 +54,10 @@ type Result struct {
 	// answer there; only the phase that typed the operand knows.
 	Narrowings map[ast.Expression]Type
 
+	// Overloads is the overload of includes, included in and during the static
+	// types select, keyed by the timing expression (see Overload).
+	Overloads map[ast.Expression]Overload
+
 	// Diagnostics is everything found, in source order.
 	Diagnostics Diagnostics
 }
@@ -113,6 +117,7 @@ func Check(lib *ast.Library, m Model) *Result {
 		conversions:  map[ast.Expression]Conversion{},
 		convByDefine: map[string][]Conversion{},
 		narrowings:   map[ast.Expression]Type{},
+		overloads:    map[ast.Expression]Overload{},
 		defines:      map[string]Type{},
 		defNodes:     map[string]*ast.ExpressionDef{},
 		funcNodes:    map[string][]*ast.FunctionDef{},
@@ -125,6 +130,7 @@ func Check(lib *ast.Library, m Model) *Result {
 		Types:               c.types,
 		Conversions:         c.conversions,
 		Narrowings:          c.narrowings,
+		Overloads:           c.overloads,
 		ConversionsByDefine: c.convByDefine,
 		Defines:             c.defines,
 		Diagnostics:         c.diags.sorted(),
@@ -139,6 +145,7 @@ type checker struct {
 	types        map[ast.Expression]Type
 	conversions  map[ast.Expression]Conversion
 	narrowings   map[ast.Expression]Type
+	overloads    map[ast.Expression]Overload
 	convByDefine map[string][]Conversion
 	diags        Diagnostics
 
@@ -276,7 +283,13 @@ func (c *checker) typeOfDefine(name string) Type {
 		return Unknown
 	}
 	c.inProgress[name] = true
+	// This is the pass that owns the definition, whoever reaches it first: its
+	// type is memoized and no later pass visits it again. A speculative call
+	// site that gets here first would drop its findings for good.
+	savedSpeculative := c.speculative
+	c.speculative = 0
 	t := c.isolated(name, func() Type { return c.infer(def.Expression) })
+	c.speculative = savedSpeculative
 	delete(c.inProgress, name)
 
 	c.defines[name] = t
