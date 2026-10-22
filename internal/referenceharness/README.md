@@ -309,6 +309,18 @@ engine fails on Mode of Codes ("not comparable") and answers IndexOf by
 equivalence; cql-execution counts every Code as one value in Mode (its key is
 `"[object Object]"`) and gives the last.
 
+`membership` covers in, contains, includes, included in and during over a list
+or an interval, with a null element, a null list or interval, an empty list or
+none (plan 005). Every list is written with its type, `List<T>{ … }`, and every
+null with the type it stands for, so that the overload — the membership one or
+the list-list one — is in the text; values have one spelling and hold no null.
+Both references run it with `-each` and no data, as `codes`, and cql-execution
+needs FHIRHelpers' ELM beside it. Its oracle, `engine_membership_oracle_test.go`,
+computes every answer from the specification and ADR 003's decision 6. The Java
+engine answers the list-list overload with a null as the membership one (false,
+or true over a list that holds a null), where the specification and
+the conformance suite (`IncludesNullRight`) say null.
+
 ## Answer snapshots
 
 The differential says which answers are right; it needs a reference that can

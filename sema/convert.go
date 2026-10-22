@@ -81,6 +81,35 @@ var implicitConversions = map[string][]*Named{
 	"System.ValueSet": {Vocabulary},
 }
 
+// ImplicitlyConverts reports whether from is to, or reaches it by one of the
+// implicit conversions the specification declares between System types
+// (Integer to Decimal, Date to DateTime...), with no function of a model. A
+// list or an interval converts element by element, as the specification's
+// List and Interval conversions do.
+func ImplicitlyConverts(from, to Type) bool {
+	if Equal(from, to) {
+		return true
+	}
+	switch f := from.(type) {
+	case *List:
+		t, ok := to.(*List)
+		return ok && ImplicitlyConverts(f.Element, t.Element)
+	case *Interval:
+		t, ok := to.(*Interval)
+		return ok && ImplicitlyConverts(f.Point, t.Point)
+	}
+	named, ok := from.(*Named)
+	if !ok {
+		return false
+	}
+	for _, target := range implicitConversions[named.String()] {
+		if Equal(target, to) {
+			return true
+		}
+	}
+	return false
+}
+
 // Convertible reports how `from` reaches `to`, if it can.
 //
 // Unknown converts to and from anything at no cost. That is what keeps one

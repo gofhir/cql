@@ -1,6 +1,6 @@
 # ADR-003: lo que la especificación no decide
 
-**Estado:** Aceptado. El usuario tomó las decisiones 1 a 4 el 20-10-2026 (plan 003, PR 6) y la 5 el 21-10-2026 (plan 004, PR 2).
+**Estado:** Aceptado. El usuario tomó las decisiones 1 a 4 el 20-10-2026 (plan 003, PR 6), la 5 el 21-10-2026 (plan 004, PR 2) y la 6 el 21-10-2026 (plan 005).
 **Fecha:** 20-10-2026 · **Plan:** [`docs/plans/003-clasificar-divergencias.md`](../plans/003-clasificar-divergencias.md), PR 6
 
 ## Contexto
@@ -19,6 +19,7 @@ El ADR 001 pide que cada divergencia con las referencias tenga un veredicto. Los
    - así, dos Codes que solo difieren en display o versión son dos valores.
 
    Java falla en Mode de Codes («Code is not comparable»), y eso es `reference defect`. La lectura que se deja de lado es la equivalencia: el oráculo la calcula, y una referencia que responde por ella lee de otro modo lo que la especificación deja abierto.
+6. **Con los dos argumentos null, en la pertenencia a un intervalo, decide el contenedor.** Interval Operators, Contains, dice «If the first argument is null, the result is false. If the second argument is null, the result is null», e In dice lo inverso. Con los dos null, las dos frases chocan. `(null as Interval<Integer>) contains (null as Integer)` y `(null as Integer) in (null as Interval<Integer>)` dan false, como en List In y List Contains, donde las dos frases coinciden. Java 3.26.0 y cql-execution 3.3.2 dan false. La lectura que se deja de lado es la del punto null, que da null en los dos: Interval In dice null para un punto null como primer argumento, y Contains, como segundo. Lo decidió el usuario el 21-10-2026 (plan 005).
 
 Una referencia que responde otra cosa en estos casos lee de otro modo lo que la especificación deja abierto: la diferencia es `deliberate`. Estas son las filas `deliberate` que citan este ADR como su decisión, en cada área. Los 14 casts de null de `fhir` de la decisión 2 citan primero la decisión 1 del PR 3, y los nombra el plan 003:
 
@@ -41,8 +42,9 @@ D380 D450
 
 ## Verificación
 
-- `TestTheTypesVerdictsFollowTheOracle`, `TestTheFHIRVerdictsFollowTheOracle`, `TestTheArithmeticVerdictsFollowTheOracle` y `TestTheCodesVerdictsFollowTheOracle` (decisión 5): cada divergencia tiene el veredicto que el oráculo computa con estas decisiones.
+- `TestTheTypesVerdictsFollowTheOracle`, `TestTheFHIRVerdictsFollowTheOracle`, `TestTheArithmeticVerdictsFollowTheOracle`, `TestTheCodesVerdictsFollowTheOracle` (decisión 5) y `TestTheMembershipVerdictsFollowTheOracle` (decisión 6): cada divergencia tiene el veredicto que el oráculo computa con estas decisiones.
 - `TestTheTypesOracleAgreesWhereAllAgree` y `TestTheFHIROracleAgreesWithTheReferencesWhereAllAgree`: donde los tres motores coinciden, el oráculo da esa respuesta también en los casos que decide este ADR.
 - `TestTheExactReadingHoldsItsControls`: la lectura exacta decide un cociente solo cuando todo su intervalo da un valor; `(1.0 / 3.0) * 3.0` y `Ln(Exp(2.0))` quedan sin decidir.
+- `TestMembershipWithNullFollowsTheSpecification` (decisión 6): los dos casos de la decisión, escritos a mano, dan false.
 - `TestTheUndecidedADRNamesItsRows`: este ADR nombra cada fila `deliberate` que lo cita, y ninguna otra.
 - `TestTheDivergencesAreConsistent`: una fila `deliberate` cita el documento que la decidió, y ese documento la nombra.

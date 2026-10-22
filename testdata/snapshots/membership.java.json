@@ -1,0 +1,1572 @@
+{
+  "library" : "corpus membership.cql",
+  "sourceSha256" : "19f69a8e0ae0c90d4f2938baf54973e4abc6de28fa6d68133ad0fe3c793beec6",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D1" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D2" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D3" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D4" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D5" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D6" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D7" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D8" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D9" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D10" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D11" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D12" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D13" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D14" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D15" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D16" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D17" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D18" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D19" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D20" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D21" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D22" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D23" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D24" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D25" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D26" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D27" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D28" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D29" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D30" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D31" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D32" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D33" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D34" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D35" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D36" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D37" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D38" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D39" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D40" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D41" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D42" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D43" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D44" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D45" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D46" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D47" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D48" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D49" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D50" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D51" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D52" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D53" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D54" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D55" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D56" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D57" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D58" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D59" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D60" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D61" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D62" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D63" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D64" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D65" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D66" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D67" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D68" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D69" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D70" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D71" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D72" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D73" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D74" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D75" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D76" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D77" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D78" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D79" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D80" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D81" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D82" : null,
+    "D83" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D84" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D85" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D86" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D87" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D88" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D89" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D90" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D91" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D92" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D93" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D94" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D95" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D96" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D97" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D98" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D99" : null,
+    "D100" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D101" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D102" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D103" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D104" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D105" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D106" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D107" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D108" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D109" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D110" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D111" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D112" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D113" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D114" : null,
+    "D115" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D116" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D117" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D118" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D119" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D120" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D121" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D122" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D123" : null,
+    "D124" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D125" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D126" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D127" : null,
+    "D128" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D129" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D130" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D131" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D132" : null,
+    "D133" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D134" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D135" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D136" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D137" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D138" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D139" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D140" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D141" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D142" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D143" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D144" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D145" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D146" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D147" : null,
+    "D148" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D149" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D150" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D151" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D152" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D153" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D154" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D155" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D156" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D157" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D158" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D159" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D160" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D161" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D162" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D163" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D164" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D165" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D166" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D167" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D168" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D169" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D170" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D171" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D172" : null,
+    "D173" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D174" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D175" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D176" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D177" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D178" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D179" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D180" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D181" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D182" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D183" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D184" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D185" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D186" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D187" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D188" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D189" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D190" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D191" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D192" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D193" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D194" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D195" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D196" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D197" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D198" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D199" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D200" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D201" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D202" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D203" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D204" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D205" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D206" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D207" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D208" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D209" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D210" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D211" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D212" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D213" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D214" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D215" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D216" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D217" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D218" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D219" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D220" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D221" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D222" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D223" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D224" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D225" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D226" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D227" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D228" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D229" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D230" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D231" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D232" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D233" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D234" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D235" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D236" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D237" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D238" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D239" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D240" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D241" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D242" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D243" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D244" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D245" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D246" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D247" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D248" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D249" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D250" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D251" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D252" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D253" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D254" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D255" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D256" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D257" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D258" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D259" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D260" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D261" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D262" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D263" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D264" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D265" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D266" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D267" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D268" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D269" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D270" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D271" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D272" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D273" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D274" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D275" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D276" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D277" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D278" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D279" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D280" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D281" : null,
+    "D282" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D283" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D284" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D285" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D286" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D287" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D288" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D289" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D290" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D291" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D292" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D293" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D294" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D295" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D296" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D297" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D298" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D299" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D300" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D301" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D302" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D303" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D304" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D305" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D306" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D307" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D308" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D309" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D310" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D311" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D312" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D313" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D314" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D315" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D316" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D317" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D318" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D319" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D320" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D321" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D322" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D323" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D324" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D325" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D326" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D327" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D328" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D329" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D330" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D331" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D332" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D333" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D334" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D335" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D336" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D337" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D338" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D339" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D340" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D341" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D342" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D343" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D344" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D345" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D346" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D347" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D348" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D349" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D350" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D351" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D352" : null,
+    "D353" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D354" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D355" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D356" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D357" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D358" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D359" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D360" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D361" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D362" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D363" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D364" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D365" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D366" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D367" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D368" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D369" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D370" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D371" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D372" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D373" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D374" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D375" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D376" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D377" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D378" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D379" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D380" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D381" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D382" : null,
+    "D383" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D384" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D385" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D386" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D387" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D388" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D389" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D390" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D391" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D392" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D393" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D394" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D395" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D396" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D397" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D398" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D399" : null
+  }
+}

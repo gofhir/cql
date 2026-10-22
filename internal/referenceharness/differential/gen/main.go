@@ -39,6 +39,7 @@ var areas = map[string]area{
 	"fhir":       fhirArea,
 	"codes":      codes,
 	"codesets":   codeSets,
+	"membership": membership,
 }
 
 // preambles are the definitions an area's expressions refer to, written once
@@ -610,6 +611,93 @@ func (g *generator) integerUnary(a string) string {
 	default:
 		return f + "(" + a + ")"
 	}
+}
+
+// memberType is a type membership draws its elements from, with values that
+// each have one spelling, so that two of them are equal exactly when they are
+// written alike, and none holds a null. A point type can also be an interval's.
+type memberType struct {
+	name   string
+	values []string
+	point  bool
+}
+
+var memberTypes = []memberType{
+	{"Integer", []string{"1", "2", "3", "7"}, true},
+	{"Decimal", []string{"0.5", "1.5", "2.25"}, true},
+	{"String", []string{"'a'", "'b'", "'c'"}, false},
+	{"Boolean", []string{"true", "false"}, false},
+	{"Date", []string{"@2019-12-31", "@2020-01-01", "@2021-06-15"}, true},
+	{"DateTime", []string{"@2020-01-01T10:00:00.000Z", "@2020-01-01T11:30:00.000Z", "@2021-06-15T00:00:00.000Z"}, true},
+	{"Time", []string{"@T10:00:00.000", "@T11:30:00.000", "@T23:59:59.999"}, true},
+	{"Quantity", []string{"1 'mg'", "2 'mg'", "5 'mg'"}, true},
+	{"Code", []string{"Code { code: 'a', system: 's' }", "Code { code: 'b', system: 's' }", "Code { code: 'a', system: 't' }"}, false},
+	{"Interval<Integer>", []string{"Interval[1, 2]", "Interval[2, 5]", "Interval[1, 5)"}, false},
+	{"Tuple { a Integer }", []string{"Tuple { a: 1 }", "Tuple { a: 2 }"}, false},
+	{"List<Integer>", []string{"{ 1 }", "{ 1, 2 }", "{ 3 }"}, false},
+}
+
+// membership writes in, contains, includes, included in and during, over a
+// list or an interval, with a null on one side or none (plan 005). A list is
+// written with its type, List<T>{ … }, and a null with the type it stands
+// for, so that the overload — the membership one, or the list-list one — is
+// what the text says; a bare null appears only where no overload hangs on it.
+// Over an interval, a null is on one side at least: a point and an interval
+// both given are a comparison, not this area.
+func membership(g *generator, _ int) string {
+	t := memberTypes[g.rnd.Intn(len(memberTypes))]
+	value := func() string { return g.pick(t.values...) }
+	typedNull := func() string {
+		if g.chance(0.3) {
+			return "First(List<" + t.name + ">{})"
+		}
+		return "(null as " + t.name + ")"
+	}
+	op := g.pick("in", "contains", "includes", "included in", "during")
+	element, null := value(), g.chance(0.4)
+	if null {
+		element = typedNull()
+		if (op == "in" || op == "contains") && g.chance(0.25) {
+			element = "null"
+		}
+	}
+	container := g.memberContainer(t, null)
+	if op != "in" && op != "contains" && !strings.HasPrefix(container, "Interval") &&
+		!strings.HasPrefix(container, "(null as Interval") && g.chance(0.12) {
+		// The list-list overload with a null, which answers null.
+		element = "(null as List<" + t.name + ">)"
+	}
+	switch op {
+	case "contains", "includes":
+		return "(" + container + " " + op + " " + element + ")"
+	}
+	return "(" + element + " " + op + " " + container + ")"
+}
+
+// memberContainer is the list or interval membership looks in: over a point
+// type, sometimes an interval, given only when the element is null; otherwise
+// a null list, an empty one, or one of one to three elements, any of them null.
+func (g *generator) memberContainer(t memberType, null bool) string {
+	if t.point && g.chance(0.25) {
+		if null && g.chance(0.5) {
+			return "Interval[" + t.values[0] + ", " + t.values[len(t.values)-1] + "]"
+		}
+		return "(null as Interval<" + t.name + ">)"
+	}
+	if g.chance(0.12) {
+		return "(null as List<" + t.name + ">)"
+	}
+	if g.chance(0.12) {
+		return "List<" + t.name + ">{}"
+	}
+	items := make([]string, 1+g.rnd.Intn(3))
+	for i := range items {
+		items[i] = g.pick(t.values...)
+		if g.chance(0.2) {
+			items[i] = g.pick("null", "(null as "+t.name+")")
+		}
+	}
+	return "List<" + t.name + ">{ " + strings.Join(items, ", ") + " }"
 }
 
 func main() {

@@ -1,6 +1,6 @@
 D0	null
 D1	Integer 3
-D10	null
+D10	Boolean false
 D100	null
 D101	String "b"
 D102	Integer 1
@@ -29,7 +29,7 @@ D122	Integer 2
 D123	Integer -1
 D124	Integer 1
 D125	Integer 0
-D126	null
+D126	Boolean false
 D127	Boolean false
 D128	Integer 2
 D129	Integer 3
@@ -69,7 +69,7 @@ D159	Integer 3
 D16	Integer -1
 D160	null
 D161	Integer 1
-D162	null
+D162	Boolean false
 D163	Boolean false
 D164	null
 D165	String "b"
@@ -106,7 +106,7 @@ D192	Boolean false
 D193	Integer 0
 D194	Integer 0
 D195	String "a"
-D196	null
+D196	Boolean false
 D197	Integer 2
 D198	Integer 2
 D199	Integer 1
@@ -138,7 +138,7 @@ D220	null
 D221	Integer -1
 D222	Integer 1
 D223	Integer 0
-D224	null
+D224	Boolean false
 D225	Integer 0
 D226	Boolean false
 D227	Integer 3
@@ -234,7 +234,7 @@ D307	String "A"
 D308	Integer -1
 D309	Integer 3
 D31	String ""
-D310	null
+D310	Boolean false
 D311	Boolean false
 D312	Integer -1
 D313	Boolean false
@@ -247,7 +247,7 @@ D319	Integer 2
 D32	Integer 2
 D320	Integer 0
 D321	Integer 2
-D322	null
+D322	Boolean false
 D323	null
 D324	null
 D325	String "A"
@@ -259,11 +259,11 @@ D33	Integer -1
 D330	Integer 4
 D331	Integer 1
 D332	Boolean false
-D333	null
+D333	Boolean false
 D334	Integer 1
 D335	Integer 3
 D336	Boolean false
-D337	null
+D337	Boolean false
 D338	Integer 1
 D339	Integer 4
 D34	null
@@ -312,7 +312,7 @@ D378	Integer 1
 D379	Integer 1
 D38	Boolean false
 D380	Boolean false
-D381	null
+D381	Boolean false
 D382	Integer 1
 D383	Integer 0
 D384	Integer 1
