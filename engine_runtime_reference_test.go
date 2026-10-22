@@ -636,6 +636,12 @@ func runtimeMatches(t *testing.T, name string, want *runtimeRefValue, got fptype
 	case "String":
 		g, ok := got.(fptypes.String)
 		return ok && g.Value() == stringOf(t, name, want.Value), "String"
+	case "Text":
+		// A string cql-execution holds with no CQL type, as a value cast to
+		// Any: the reference says its text and not its type (js/evaluate.js),
+		// and a String of that text is the answer it gives.
+		g, ok := got.(fptypes.String)
+		return ok && g.Value() == stringOf(t, name, want.Value), "Text"
 	case "Quantity":
 		g, ok := got.(fptypes.Quantity)
 		return ok && g.Unit() == want.Unit &&

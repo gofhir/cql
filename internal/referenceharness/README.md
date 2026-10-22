@@ -396,6 +396,50 @@ read; none of them is excused by being listed.
 `TestTheReferencesAreOfTheirCorpus` holds every reference to its corpus by its
 SHA-256, and fails rather than skips when one is missing.
 
+A divergence is about a pair of answers: when a reference moves its answer to
+this engine's, the row goes, and with it any defect of this engine's it
+recorded. `TestTheEngineFollowsTheOracles` holds this engine to each area's
+oracle on every definition, without the references, against
+`<area>.own-defects.tsv`, the definitions where it is wrong with the answer it
+gives (plan 007). A defect fixed, or a new one, is a line of that file in the
+same diff:
+
+```sh
+go test -run TestTheEngineFollowsTheOracles -update-own-defects .
+```
+
+## Regenerating every reference
+
+```sh
+make references        # regenerates them twice, and fails listing what differs from testdata
+make references-write  # the same, and copies them to testdata
+```
+
+`scripts/references.sh` builds the harness from what it pins, and regenerates
+every file the tests compare against, twice, in two directories. The two runs
+have to be identical byte for byte: a reference that holds something of its
+run, and not of the answer, would make a verdict pinned to it unreproducible.
+`make references` fails too when a file differs from the one in testdata, or
+when testdata holds a reference the harness no longer writes. It also runs the
+mutations that need Docker
+(`scripts/mutations/007-references.sh` with `CQL_MUTATIONS_DOCKER=1`).
+
+`testdata/reference/encoder.cql` holds one definition per branch of the
+encoder of `Evaluate.java`, and `TestTheReferenceEncoderWritesEachValueAsItIs`
+holds what the harness wrote for it to answers written by hand, which do not
+depend on the reference's version. `TestTheReferenceMessagesAreOfTheAnswer`
+holds every error a reference file records to a message, with no Java object's
+identity in it.
+
+When the references move to another version, `differential/drift` is the
+report of how their answers moved, definition by definition, and of the
+verdicts that went with them:
+
+```sh
+go run ./internal/referenceharness/differential/drift -old <dir> -new testdata/snapshots \
+  -divergences arithmetic integer scope types fhir codes codesets membership fhirmembership division
+```
+
 ## Two things worth knowing
 
 `cql-to-elm-cli`'s published POM is invalid — it declares

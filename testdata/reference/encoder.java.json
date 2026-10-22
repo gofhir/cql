@@ -1,0 +1,175 @@
+{
+  "library" : "corpus encoder.cql",
+  "sourceSha256" : "134faec565c2735f1c5e3276dad4f3617a36ab52c646594f92a27ee37f2c0582",
+  "engine" : "3.26.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D1" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D2" : {
+      "type" : "Long",
+      "value" : "9007199254740993"
+    },
+    "D3" : {
+      "type" : "Decimal",
+      "value" : "1.50"
+    },
+    "D4" : {
+      "type" : "String",
+      "value" : "a \"b\""
+    },
+    "D5" : null,
+    "D6" : {
+      "type" : "Quantity",
+      "value" : "5.5",
+      "unit" : "mg"
+    },
+    "D7" : {
+      "type" : "DateTime",
+      "value" : "2020-01-02T03:04:05.006+02:00",
+      "precision" : "millisecond",
+      "offset" : "+02:00",
+      "instant" : "2020-01-02T03:04:05.006+02:00"
+    },
+    "D8" : {
+      "type" : "DateTime",
+      "value" : "2020-01",
+      "precision" : "month",
+      "offset" : "-03:00",
+      "instant" : "2020-01-01T00:00:00-03:00"
+    },
+    "D9" : {
+      "type" : "Date",
+      "value" : "2020-01-02",
+      "precision" : "day"
+    },
+    "D10" : {
+      "type" : "Time",
+      "value" : "10:11",
+      "precision" : "minute"
+    },
+    "D11" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "1"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "5"
+      },
+      "highClosed" : false
+    },
+    "D12" : {
+      "type" : "Interval",
+      "low" : null,
+      "lowClosed" : false,
+      "high" : {
+        "type" : "Date",
+        "value" : "2020-01-02",
+        "precision" : "day"
+      },
+      "highClosed" : true
+    },
+    "D13" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Integer",
+        "value" : "1"
+      }, null, {
+        "type" : "Integer",
+        "value" : "3"
+      } ]
+    },
+    "D14" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D15" : {
+      "type" : "Code",
+      "code" : "c",
+      "system" : "s",
+      "version" : "v",
+      "display" : "d"
+    },
+    "D16" : {
+      "type" : "Code",
+      "code" : "c",
+      "system" : null,
+      "version" : null,
+      "display" : null
+    },
+    "D17" : {
+      "type" : "Concept",
+      "codes" : [ {
+        "type" : "Code",
+        "code" : "c",
+        "system" : "s",
+        "version" : null,
+        "display" : null
+      } ],
+      "display" : "x"
+    },
+    "D18" : {
+      "type" : "Tuple",
+      "fields" : {
+        "a" : {
+          "type" : "Integer",
+          "value" : "1"
+        },
+        "b" : {
+          "type" : "String",
+          "value" : "x"
+        },
+        "c" : null
+      }
+    },
+    "D19" : {
+      "type" : "Tuple",
+      "fields" : {
+        "l" : {
+          "type" : "List",
+          "elements" : [ {
+            "type" : "Tuple",
+            "fields" : {
+              "x" : {
+                "type" : "Integer",
+                "value" : "1"
+              }
+            }
+          } ]
+        }
+      }
+    },
+    "D20" : {
+      "type" : "FHIR.string",
+      "value" : "a"
+    },
+    "D21" : {
+      "type" : "FHIR.date",
+      "value" : "1980-01-01"
+    },
+    "D22" : {
+      "type" : "FHIR.Coding",
+      "value" : "{\"extension\":[{\"url\":\"http://example.org/e\",\"valueString\":\"x\"}],\"system\":\"s\",\"code\":\"c\"}"
+    },
+    "D23" : {
+      "type" : "FHIR.Patient",
+      "value" : "{\"resourceType\":\"Patient\",\"id\":\"p\",\"gender\":\"male\",\"birthDate\":\"1980-01-01\",\"deceasedDateTime\":\"2020-02-02\"}"
+    },
+    "D24" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.date",
+        "value" : "1980-01-01"
+      } ]
+    }
+  }
+}

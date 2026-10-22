@@ -1,0 +1,12 @@
+# name	expected	engine answer	reason — see TestTheEngineFollowsTheOracles
+D114	null	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)	the scale policy gives null
+D115	null	error: CQL evaluation error: Exp: overflow for value 1001.5	the scale policy gives null
+D17	null	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)	the scale policy gives null
+D212	null	error: CQL evaluation error: Exp: overflow for value 1000	the scale policy gives null
+D379	null	Decimal 1907346572495099500000	the scale policy gives null
+D4	null	Decimal 1	the scale policy gives null
+D427	null	Decimal 26881171418161356000000000000000000000000000	the scale policy gives null
+D573	null	error: CQL evaluation error: Exp: overflow for value 1000	the scale policy gives null
+D699	null	Decimal 26881171149349810000000000000000000000000000	the scale policy gives null
+D7	null	error: CQL evaluation error: Exp: overflow for value 1000	the scale policy gives null
+D780	null	Decimal 26881171418161356000000000000000000000000000	the scale policy gives null

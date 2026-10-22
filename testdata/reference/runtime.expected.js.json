@@ -1164,7 +1164,7 @@
       ]
     },
     "AsAny": {
-      "type": "String",
+      "type": "Text",
       "value": "a"
     },
     "IsAny": {
@@ -1172,7 +1172,7 @@
       "value": true
     },
     "CastAsAny": {
-      "type": "String",
+      "type": "Text",
       "value": "a"
     },
     "AsAnyInArithmetic": {

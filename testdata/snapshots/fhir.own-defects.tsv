@@ -1,0 +1,174 @@
+# name	expected	engine answer	reason — see TestTheEngineFollowsTheOracles
+D104	null	translation error	- of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is -(System.Integer), on null
+D109	translation error	System.String Code '' from 	no signature of ToString takes a FHIR.code
+D111	System.DateTime 2020-02-03	translation error	+ 1 day of Choice<FHIR.boolean, FHIR.dateTime> is + 1 day(System.DateTime)
+D114	System.Boolean false	System.Boolean true	a FHIR.id is not of System.String
+D126	translation error	System.String {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}	ToString of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is ambiguous between System.Boolean and System.Integer (Function Resolution)
+D133	FHIR.dateTime 2020-02-02	System.DateTime 2020-02-02	a FHIR.dateTime is of System.Any
+D140	translation error	run-time error	no signature of Abs takes a Choice<FHIR.boolean, FHIR.dateTime>
+D143	System.Boolean true	System.Boolean false	a System.Quantity is not of FHIR.Quantity
+D145	System.Boolean true	System.Boolean false	a FHIR.string is of FHIR.Element
+D146	translation error	run-time error	no signature of Sum takes a List<FHIR.CodeableConcept>
+D147	translation error	null	no signature of same day as @2020-01-01T takes a System.Quantity
+D15	System.Boolean true	System.Boolean false	a FHIR.Quantity is not of System.Quantity
+D155	translation error	run-time error	no signature of + 1 day takes a List<System.Integer>
+D156	null	translation error	- of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is -(System.Integer), on null
+D16	run-time error	null	a FHIR.string is not of FHIR.integer
+D168	translation error	run-time error	no signature of Sum takes a List<List<System.Integer>>
+D169	translation error	run-time error	no signature of Abs takes a FHIR.date
+D177	translation error	null	no signature of same day as @2020-01-01T takes a FHIR.code
+D18	translation error	run-time error	no signature of Abs takes a System.ValueSet
+D184	translation error	System.Boolean false	no signature of same day as @2020-01-01T takes a List<System.Integer>
+D186	FHIR.code x	other Code Code '' from 	a FHIR.code is of System.Any
+D19	FHIR.date 1980-01-01	FHIR primitive of System.Date 1980-01-01	a FHIR.date is of FHIR.date
+D192	System.Boolean true	System.Boolean false	a FHIR.id is not of System.String
+D198	translation error	System.Boolean false	no signature of same day as @2020-01-01T takes a FHIR.Period
+D205	translation error	null	+ 1 day of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is ambiguous between System.DateTime and System.Time (Function Resolution)
+D207	System.Boolean true	System.Boolean false	a FHIR.AdministrativeGender is of FHIR.Element
+D213	translation error	run-time error	no signature of Sum takes a List<FHIR.Period>
+D216	FHIR.id p	null	a FHIR.id is of FHIR.Element
+D219	System.Boolean false	System.Boolean true	a FHIR.integer is of FHIR.Element
+D225	translation error	run-time error	+ 1 day of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is ambiguous between System.DateTime and System.Time (Function Resolution)
+D228	System.Boolean false	System.Boolean true	a FHIR.date is of FHIR.Element
+D229	translation error	null	no signature of same day as @2020-01-01T takes a FHIR.AdministrativeGender
+D231	translation error	run-time error	+ 1 'mg' of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is ambiguous between System.DateTime and System.Time (Function Resolution)
+D240	FHIR.AdministrativeGender male	null	a FHIR.AdministrativeGender is of FHIR.Element
+D250	FHIR.dateTime 2020-02-02	System.DateTime 2020-02-02	a FHIR.dateTime is of FHIR.dateTime
+D255	translation error	run-time error	no signature of Sum takes a List<FHIR.id>
+D258	run-time error	translation error	+ 1 'mg' of Choice<FHIR.boolean, FHIR.dateTime> is + 1 'mg'(System.DateTime): the unit of a quantity added to a date "must be one of" the time units (Appendix B, Date and Time Operators, Add), which a unit, a value, breaks only as the addition runs; both references fail there
+D263	run-time error	FHIR primitive of System.String abc	a FHIR.string is not of List<System.Any>
+D265	translation error	run-time error	+ 1 day of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is ambiguous between System.DateTime and System.Time (Function Resolution)
+D266	translation error	run-time error	no signature of Avg takes a List<List<System.Integer>>
+D267	FHIR.dateTime 2020-01-01	null	a FHIR.dateTime is of FHIR.Element
+D272	run-time error	System.String {"resourceType": "Patient", "id": "p", "gender": "male", "birthDate": "1980-01-01", "deceasedDateTime": "2020-02-02"}	a FHIR.Patient is not of FHIR.string
+D274	run-time error	FHIR.Period {"start":"2020-01-01"}	a FHIR.Period is not of Interval<System.DateTime>
+D278	FHIR.dateTime 2020-02-02	null	a FHIR.dateTime is of FHIR.Element
+D28	FHIR.AdministrativeGender male	FHIR primitive of System.String male	a FHIR.AdministrativeGender is of System.Any
+D282	null	FHIR primitive of System.String abc	a FHIR.string is not of System.String
+D283	translation error	run-time error	no signature of Avg takes a List<FHIR.AdministrativeGender>
+D287	FHIR.dateTime 2020-01-01	null	a FHIR.dateTime is of FHIR.Element
+D29	translation error	run-time error	no signature of + 1 'mg' takes a List<System.Integer>
+D296	null	translation error	+ 1 'mg' of Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is + 1 'mg'(System.DateTime), on null
+D299	System.DateTime 2020-01-02	translation error	+ 1 day of Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is + 1 day(System.DateTime)
+D3	translation error	run-time error	no signature of Sum takes a List<FHIR.date>
+D304	translation error	run-time error	no signature of Abs takes a FHIR.id
+D309	translation error	run-time error	no signature of Sum takes a List<Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant>>
+D310	translation error	System.String Tuple{code: Code '' from }	no signature of ToString takes a FHIR.Coding
+D316	FHIR.id p	null	a FHIR.id is of FHIR.Element
+D317	FHIR.code x	other Code Code '' from 	a FHIR.code is of FHIR.code
+D32	translation error	run-time error	no signature of Sum takes a List<Choice<FHIR.boolean, FHIR.dateTime>>
+D322	run-time error	System.String {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}	a FHIR.Quantity is not of FHIR.string
+D328	translation error	System.String 7	ToString of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is ambiguous between System.Boolean and System.Integer (Function Resolution)
+D33	translation error	null	no signature of same day as @2020-01-01T takes a System.Integer
+D331	translation error	run-time error	no signature of Sum takes a List<System.ValueSet>
+D335	FHIR.Coding {"code":"x"}	System.Coding {code: other Code Code '' from }	a FHIR.Coding is of System.Any
+D34	translation error	null	no signature of same day as @2020-01-01T takes a FHIR.CodeableConcept
+D346	translation error	null	+ 1 'mg' of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is ambiguous between System.DateTime and System.Time (Function Resolution)
+D358	FHIR.code x	null	a FHIR.code is of FHIR.Element
+D369	null	System.String {"start": "2020-01-01"}	ToString of Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is ToString(System.DateTime), on null
+D371	System.Boolean true	System.Boolean false	a FHIR.dateTime is of FHIR.Element
+D380	translation error	run-time error	no signature of Abs takes a FHIR.CodeableConcept
+D383	translation error	System.String p	no signature of ToString takes a FHIR.id
+D386	FHIR.dateTime 2020-02-02	run-time error	a FHIR.dateTime is of FHIR.Element
+D389	FHIR.dateTime 2020-01-01	System.DateTime 2020-01-01	a FHIR.dateTime is of FHIR.dateTime
+D390	null	translation error	+ 1 day of Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant> is + 1 day(System.DateTime), on null
+D395	translation error	run-time error	no signature of Avg takes a List<FHIR.dateTime>
+D398	translation error	run-time error	no signature of Abs takes a FHIR.dateTime
+D40	FHIR.string abc	run-time error	a FHIR.string is of FHIR.Element
+D405	translation error	run-time error	no signature of Avg takes a List<Choice<FHIR.boolean, FHIR.dateTime>>
+D419	translation error	System.String male	no signature of ToString takes a FHIR.AdministrativeGender
+D420	translation error	run-time error	no signature of Sum takes a List<FHIR.code>
+D427	translation error	run-time error	no signature of Sum takes a List<FHIR.dateTime>
+D428	translation error	run-time error	no signature of Abs takes a FHIR.AdministrativeGender
+D43	translation error	null	no signature of same day as @2020-01-01T takes a FHIR.Patient
+D435	System.Boolean true	System.Boolean false	a FHIR.dateTime is not of System.DateTime
+D447	translation error	System.String {"coding": [{"system": "s", "code": "c"}]}	no signature of ToString takes a FHIR.CodeableConcept
+D452	translation error	System.String Tuple{id: x}	no signature of ToString takes a System.ValueSet
+D46	FHIR.Coding {"code":"x"}	System.Coding {code: other Code Code '' from }	a FHIR.Coding is of FHIR.Element
+D470	run-time error	FHIR primitive of System.String male	a FHIR.AdministrativeGender is not of System.String
+D471	FHIR.dateTime 2020-01-01	System.DateTime 2020-01-01	a FHIR.dateTime is of System.Any
+D472	run-time error	System.String {"start": "2020-01-01"}	a FHIR.Period is not of System.String
+D490	translation error	System.String 2020-02-02	ToString of Choice<FHIR.boolean, FHIR.dateTime> is ambiguous between System.Boolean and System.DateTime (Function Resolution)
+D491	run-time error	FHIR primitive of System.String p	a FHIR.id is not of System.String
+D495	translation error	run-time error	no signature of Avg takes a List<Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant>>
+D5	translation error	System.String {"start": "2020-01-01", "end": "2020-01-03T10:00:00Z"}	no signature of ToString takes a FHIR.Period
+D501	run-time error	System.Coding {code: other Code Code '' from }	a FHIR.Coding is not of List<System.Any>
+D502	run-time error	System.String 2020-02-02	a FHIR.dateTime is not of FHIR.string
+D505	translation error	null	no signature of same day as @2020-01-01T takes a FHIR.Coding
+D509	null	System.Quantity 5 'mg'	Abs of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is Abs(System.Integer), on null
+D52	run-time error	null	a FHIR.id is not of System.Integer
+D527	FHIR.string abc	null	a FHIR.string is of FHIR.Element
+D53	System.Boolean true	System.Boolean false	a FHIR.id is of FHIR.Element
+D531	null	FHIR.Quantity {"code":"mg","system":"http://unitsofmeasure.org","unit":"mg","value":-5}	a FHIR.Quantity is not of System.Quantity
+D535	translation error	run-time error	no signature of Sum takes a List<FHIR.AdministrativeGender>
+D539	translation error	null	no signature of same day as @2020-01-01T takes a FHIR.id
+D54	FHIR.date 1980-01-01	FHIR primitive of System.Date 1980-01-01	a FHIR.date is of FHIR.date
+D540	run-time error	null	a FHIR.id is not of FHIR.dateTime
+D543	System.Boolean true	System.Boolean false	a FHIR.dateTime is of FHIR.Element
+D547	run-time error	FHIR primitive of System.Integer 7	a FHIR.integer is not of Interval<System.DateTime>
+D55	System.Boolean true	System.Boolean false	a FHIR.AdministrativeGender is not of System.String
+D556	null	System.Quantity 5 'mg'	a System.Quantity is not of FHIR.Quantity
+D557	run-time error	System.DateTime 2020-02-02	a FHIR.dateTime is not of Interval<System.DateTime>
+D559	null	other Code Code '' from 	a FHIR.code is not of System.Code
+D565	translation error	run-time error	no signature of Avg takes a List<Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant>>
+D57	translation error	run-time error	no signature of Avg takes a List<System.ValueSet>
+D574	translation error	System.String {1, 2}	no signature of ToString takes a List<System.Integer>
+D579	FHIR.Quantity {"code":"mg","system":"http://unitsofmeasure.org","unit":"mg","value":-5}	System.Quantity -5 'mg'	a FHIR.Quantity is of FHIR.Quantity
+D600	System.Boolean false	System.Boolean true	a FHIR.integer is not of System.Integer
+D604	translation error	null	no signature of same day as @2020-01-01T takes a System.ValueSet
+D606	System.Boolean true	System.Boolean false	a FHIR.dateTime is not of System.DateTime
+D612	translation error	run-time error	no signature of Avg takes a List<FHIR.Patient>
+D617	System.Boolean true	System.Boolean false	a FHIR.dateTime is of FHIR.Element
+D621	run-time error	System.DateTime 2020-02-02	a FHIR.dateTime is not of System.DateTime
+D627	run-time error	null	a FHIR.id is not of System.DateTime
+D634	System.Boolean false	System.Boolean true	a FHIR.dateTime is not of System.DateTime
+D637	run-time error	System.DateTime 2020-01-01	a FHIR.dateTime is not of List<System.Any>
+D643	translation error	run-time error	no signature of Sum takes a List<Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant>>
+D657	translation error	run-time error	no signature of Abs takes a FHIR.Coding
+D668	translation error	run-time error	no signature of Abs takes a List<System.Integer>
+D680	FHIR.dateTime 2020-01-01	System.DateTime 2020-01-01	a FHIR.dateTime is of System.Any
+D695	translation error	run-time error	no signature of Abs takes a FHIR.code
+D70	FHIR.integer 7	FHIR primitive of System.Integer 7	a FHIR.integer is of System.Any
+D701	run-time error	FHIR.Period {"end":"2020-01-03T10:00:00Z","start":"2020-01-01"}	a FHIR.Period is not of Interval<System.DateTime>
+D705	FHIR.dateTime 2020-02-02	System.DateTime 2020-02-02	a FHIR.dateTime is of System.Any
+D707	translation error	run-time error	no signature of Avg takes a List<FHIR.CodeableConcept>
+D713	run-time error	other Code Code '' from 	a FHIR.code is not of Interval<System.DateTime>
+D718	translation error	run-time error	no signature of Abs takes a Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant>
+D719	null	FHIR primitive of System.String p	a FHIR.id is not of System.String
+D722	run-time error	System.String {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}	a FHIR.Quantity is not of System.String
+D726	translation error	run-time error	no signature of Abs takes a Choice<FHIR.dateTime, FHIR.Period, FHIR.Timing, FHIR.instant>
+D74	translation error	run-time error	no signature of Sum takes a List<FHIR.Coding>
+D742	run-time error	null	a FHIR.string is not of System.DateTime
+D744	run-time error	null	a FHIR.AdministrativeGender is not of System.Integer
+D750	translation error	run-time error	no signature of Avg takes a List<FHIR.Period>
+D755	FHIR.Coding {"code":"x"}	System.Coding {code: other Code Code '' from }	a FHIR.Coding is of FHIR.Element
+D757	run-time error	FHIR primitive of System.Integer 7	a FHIR.integer is not of System.Integer
+D77	translation error	run-time error	no signature of Avg takes a List<FHIR.id>
+D772	FHIR.date 1980-01-01	null	a FHIR.date is of FHIR.Element
+D776	run-time error	FHIR primitive of System.String abc	a FHIR.string is not of Interval<System.DateTime>
+D778	FHIR.Coding {"code":"x"}	System.Coding {code: other Code Code '' from }	a FHIR.Coding is of FHIR.Element
+D782	System.Integer 7	FHIR primitive of System.Integer 7	Abs of Choice<FHIR.Quantity, FHIR.CodeableConcept, FHIR.string, FHIR.boolean, FHIR.integer, FHIR.Range, FHIR.Ratio, FHIR.SampledData, FHIR.time, FHIR.dateTime, FHIR.Period> is Abs(System.Integer)
+D787	FHIR.id p	FHIR primitive of System.String p	a FHIR.id is of System.Any
+D79	System.Boolean false	System.Boolean true	a FHIR.date is of FHIR.Element
+D793	System.Boolean false	System.Boolean true	a FHIR.Quantity is not of System.Quantity
+D794	FHIR.string abc	FHIR primitive of System.String abc	a FHIR.string is of FHIR.string
+D795	translation error	run-time error	no signature of Abs takes a FHIR.Patient
+D798	FHIR.code x	null	a FHIR.code is of FHIR.Element
+D801	run-time error	System.String 7	a FHIR.integer is not of System.String
+D807	System.Boolean false	System.Boolean true	a FHIR.date is not of System.Date
+D808	System.Boolean true	System.Boolean false	a FHIR.dateTime is of FHIR.Element
+D812	translation error	System.String {"resourceType": "Patient", "id": "p", "gender": "male", "birthDate": "1980-01-01", "deceasedDateTime": "2020-02-02"}	no signature of ToString takes a FHIR.Patient
+D819	FHIR.id p	run-time error	a FHIR.id is of FHIR.Element
+D820	run-time error	null	a FHIR.AdministrativeGender is not of System.DateTime
+D825	run-time error	null	a FHIR.id is not of FHIR.integer
+D839	FHIR.Coding {"code":"x"}	System.Coding {code: other Code Code '' from }	a FHIR.Coding is of FHIR.Element
+D844	System.Boolean false	System.Boolean true	a System.Quantity is not of FHIR.Quantity
+D851	run-time error	System.Quantity 5 'mg'	a System.Quantity is not of List<System.Any>
+D87	run-time error	FHIR primitive of System.String abc	a FHIR.string is not of System.String
+D870	run-time error	System.Coding {code: other Code Code '' from }	a FHIR.Coding is not of Interval<System.DateTime>
+D878	run-time error	System.String Tuple{code: Code '' from }	a FHIR.Coding is not of System.String
+D879	run-time error	System.ValueSet {id: System.String x}	a System.ValueSet is not of Interval<System.DateTime>
+D88	FHIR.AdministrativeGender male	run-time error	a FHIR.AdministrativeGender is of FHIR.Element
+D882	run-time error	System.String 2020-01-01	a FHIR.dateTime is not of System.String
+D895	run-time error	System.String 2020-01-01	a FHIR.dateTime is not of FHIR.string
+D9	translation error	run-time error	no signature of Abs takes a FHIR.Period

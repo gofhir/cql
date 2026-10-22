@@ -85,6 +85,41 @@ func TestAnswersMatchTheReferences(t *testing.T) {
 // of no type.
 func referenceDivergences(t *testing.T, area string, exact bool) (divergences map[string]answerPair, untyped map[string]answers.Answer) {
 	t.Helper()
+	engineAnswers := snapshotEngineAnswers(t, area)
+	refs := map[string]map[string]json.RawMessage{
+		"java": readReferenceResults(t, area, "java"),
+		"js":   readReferenceResults(t, area, "js"),
+	}
+	same := answers.Same
+	if exact {
+		same = answers.SameExactly
+	}
+	divergences, untyped = map[string]answerPair{}, map[string]answers.Answer{}
+	for _, name := range slices.Sorted(maps.Keys(engineAnswers)) {
+		answer := engineAnswers[name]
+		for _, engineName := range []string{"java", "js"} {
+			raw, answered := refs[engineName][name]
+			if !answered {
+				continue // cql-execution runs only what the translator accepted
+			}
+			reference := answers.Reference(raw)
+			if same(reference, answer) && !answer.Panicked {
+				if answers.HoldsUntyped(reference) {
+					untyped[name+"\t"+engineName] = answer
+				}
+				continue
+			}
+			divergences[name+"\t"+engineName] = answerPair{Reference: pinned(reference.Text), Engine: pinned(answer.Text)}
+		}
+	}
+	return divergences, untyped
+}
+
+// snapshotEngineAnswers is this engine's answer to every definition of an
+// area's corpus, read as the references' are, each evaluated in a library of
+// its own with the area's header.
+func snapshotEngineAnswers(t *testing.T, area string) map[string]answers.Answer {
+	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", area+".cql"))
 	if err != nil {
 		t.Fatal(err)
@@ -103,34 +138,11 @@ func referenceDivergences(t *testing.T, area string, exact bool) (divergences ma
 		patient = subject
 	}
 	engine := NewEngine(opts...)
-	refs := map[string]map[string]json.RawMessage{
-		"java": readReferenceResults(t, area, "java"),
-		"js":   readReferenceResults(t, area, "js"),
-	}
-	same := answers.Same
-	if exact {
-		same = answers.SameExactly
-	}
-	divergences, untyped = map[string]answerPair{}, map[string]answers.Answer{}
+	out := map[string]answers.Answer{}
 	for _, m := range snapshotDefine.FindAllStringSubmatch(src, -1) {
-		name := m[1]
-		answer := snapshotEngineAnswer(engine, header+m[0]+"\n", name, patient)
-		for _, engineName := range []string{"java", "js"} {
-			raw, answered := refs[engineName][name]
-			if !answered {
-				continue // cql-execution runs only what the translator accepted
-			}
-			reference := answers.Reference(raw)
-			if same(reference, answer) && !answer.Panicked {
-				if answers.HoldsUntyped(reference) {
-					untyped[name+"\t"+engineName] = answer
-				}
-				continue
-			}
-			divergences[name+"\t"+engineName] = answerPair{Reference: pinned(reference.Text), Engine: pinned(answer.Text)}
-		}
+		out[m[1]] = snapshotEngineAnswer(engine, header+m[0]+"\n", m[1], patient)
 	}
-	return divergences, untyped
+	return out
 }
 
 // snapshotEngineAnswer is this engine's answer to a definition, read as the
