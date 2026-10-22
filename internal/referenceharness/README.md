@@ -26,12 +26,12 @@ needs the toolchain.
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
   mvn -q -B dependency:copy-dependencies -DoutputDirectory=/w/lib
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
   sh -c 'javac -cp "lib/*" -d out src/Translate.java'
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  maven:3-eclipse-temurin-21 java -cp "out:lib/*" Translate /cql/probe.cql /cql \
+  maven:3.10.0-eclipse-temurin-25 java -cp "out:lib/*" Translate /cql/probe.cql /cql \
   > elm.json
 ```
 
@@ -65,10 +65,10 @@ and does not stop the rest.
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
   sh -c 'javac -cp "lib/*" -d out src/Translate.java src/Evaluate.java'
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  maven:3-eclipse-temurin-21 java -cp "out:lib/*" Evaluate /cql/runtime.cql /cql \
+  maven:3.10.0-eclipse-temurin-25 java -cp "out:lib/*" Evaluate /cql/runtime.cql /cql \
   > runtime.json && mv runtime.json ../../testdata/reference/runtime.expected.json
 ```
 
@@ -123,12 +123,12 @@ the encoding accounts for each:
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD/js":/w -w /w node:20 npm ci
+docker run --rm -v "$PWD/js":/w -w /w node:24.22.1 npm ci
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  maven:3-eclipse-temurin-21 java -cp "out:lib/*" Translate /cql/runtime.cql /cql \
+  maven:3.10.0-eclipse-temurin-25 java -cp "out:lib/*" Translate /cql/runtime.cql /cql \
   > elm.json
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  node:20 node js/evaluate.js elm.json /cql/runtime.cql \
+  node:24.22.1 node js/evaluate.js elm.json /cql/runtime.cql \
   > runtime-js.json && mv runtime-js.json ../../testdata/reference/runtime.expected.js.json
 ```
 
@@ -198,7 +198,7 @@ each fix that nothing else had moved.
 ```sh
 go run ./internal/referenceharness/differential/gen -area arithmetic -seed 7 -n 600 > /tmp/diff/fuzz.cql
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -v /tmp/diff:/cql -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -v /tmp/diff:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
   java -cp "out:lib/*" Evaluate /cql/fuzz.cql /cql > /tmp/diff/java.json
 cd ../..
 go run ./internal/referenceharness/differential/compare \
@@ -266,18 +266,18 @@ for one invalid expression and this corpus holds them on purpose:
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
   mvn -q -B dependency:copy-dependencies -DoutputDirectory=/w/lib
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
   sh -c 'javac -cp "lib/*" -d out src/Translate.java src/Evaluate.java'
 mkdir -p /tmp/fhir && cp ../../testdata/snapshots/fhir.cql ../../testdata/snapshots/fhir-data.json \
   ../../fhirhelpers/FHIRHelpers-4.0.1.cql /tmp/fhir/
-docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
   java -cp "out:lib/*" Evaluate -each /cql/fhir.cql /cql /cql/fhir-data.json /cql/fhir.elm.json \
   > /tmp/fhir/java.json && mv /tmp/fhir/java.json ../../testdata/snapshots/fhir.java.json
-docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
   java -cp "out:lib/*" Translate /cql/FHIRHelpers-4.0.1.cql /cql > /tmp/fhir/FHIRHelpers.elm.json
-docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w node:20 node js/evaluate.js --each \
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w node:24.22.1 node js/evaluate.js --each \
   /cql/fhir.elm.json /cql/fhir.cql /cql/FHIRHelpers.elm.json /cql/fhir-data.json \
   > /tmp/fhir/js.json && mv /tmp/fhir/js.json ../../testdata/snapshots/fhir.js.json
 cd ../..

@@ -151,7 +151,7 @@ var membershipModelDefine = regexp.MustCompile(`(?m)^define (D\d+): (.*)$`)
 // Regenerate the reference files, from internal/referenceharness, with
 // FHIRHelpers-4.0.1.cql copied beside the cases:
 //
-//	docker run --rm -v "$PWD":/w -v <dir>:/cql -w /w maven:3-eclipse-temurin-21 \
+//	docker run --rm -v "$PWD":/w -v <dir>:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
 //	  java -cp "out:lib/*" Evaluate -each /cql/cases.cql /cql /cql/absent.json /cql/cases.elm.json > absent.java.json
 //
 // and the same with present.json.

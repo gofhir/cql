@@ -19,12 +19,18 @@ harness=$repo/internal/referenceharness
 work=$(mktemp -d "${TMPDIR:-/tmp}/references.XXXXXX")
 trap 'rm -rf "$work"' EXIT
 
+# The images the harness runs in, each at an exact version: a tag that moves
+# would change the references under both runs alike, where their comparison
+# cannot see it. The latest LTS of each (plan 007).
+java_image=maven:3.10.0-eclipse-temurin-25
+node_image=node:24.22.1
+
 areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division"
 
 # The harness, built from what it pins.
-docker run --rm -v "$harness":/w -w /w maven:3-eclipse-temurin-21 sh -c \
+docker run --rm -v "$harness":/w -w /w "$java_image" sh -c \
 	'mvn -q -B dependency:copy-dependencies -DoutputDirectory=/w/lib && rm -rf out && mkdir out && javac -cp "lib/*" -d out src/Translate.java src/Evaluate.java'
-docker run --rm -v "$harness/js":/w -w /w node:20 npm ci --silent
+docker run --rm -v "$harness/js":/w -w /w "$node_image" npm ci --silent
 
 # generate writes every reference into $1/testdata, at the path the tests read
 # it from, and the ELM it needs on the way into $1/elm.
@@ -36,7 +42,7 @@ generate() {
 	cp -R "$repo/testdata/snapshots" "$repo/testdata/reference" "$repo/testdata/membership" \
 		"$repo/testdata/membershipmodel" "$out/in/"
 	cp "$repo/fhirhelpers/FHIRHelpers-4.0.1.cql" "$out/in/reference/"
-	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" maven:3-eclipse-temurin-21 sh -ec '
+	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" "$java_image" sh -ec '
 		java -cp "out:lib/*" Translate /o/in/lib/FHIRHelpers-4.0.1.cql /o/in/lib > /o/elm/FHIRHelpers.elm.json
 		for a in $AREAS; do
 			data=-
@@ -54,7 +60,7 @@ generate() {
 			java -cp "out:lib/*" Evaluate -each /o/in/membershipmodel/cases.cql /o/in/lib /o/in/membershipmodel/$d.json \
 				/o/testdata/membershipmodel/cases.elm.json > /o/testdata/membershipmodel/$d.java.json
 		done'
-	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" node:20 sh -ec '
+	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" "$node_image" sh -ec '
 		for a in $AREAS; do
 			data=
 			case $a in fhir | fhirmembership) data=/o/in/snapshots/fhir-data.json ;; esac

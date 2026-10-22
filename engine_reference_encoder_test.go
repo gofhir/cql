@@ -58,7 +58,7 @@ var referenceEncoderCases = map[string]string{
 // Regenerate it, from internal/referenceharness, with encoder.cql,
 // fhir-data.json and FHIRHelpers-4.0.1.cql copied to <dir>:
 //
-//	docker run --rm -v "$PWD":/w -v <dir>:/cql -w /w maven:3-eclipse-temurin-21 \
+//	docker run --rm -v "$PWD":/w -v <dir>:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
 //	  java -cp "out:lib/*" Evaluate -each /cql/encoder.cql /cql /cql/fhir-data.json > encoder.java.json
 func TestTheReferenceEncoderWritesEachValueAsItIs(t *testing.T) {
 	dir := filepath.Join("testdata", "reference")

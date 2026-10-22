@@ -145,7 +145,7 @@
     },
     "D43" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D43: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D43: Infinite or NaN"
     },
     "D44" : null,
     "D45" : {
@@ -190,7 +190,7 @@
     "D57" : null,
     "D58" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D58: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D58: Infinite or NaN"
     },
     "D59" : null,
     "D60" : null,
@@ -587,7 +587,7 @@
     "D187" : null,
     "D188" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D188: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D188: Infinite or NaN"
     },
     "D189" : {
       "type" : "Decimal",
@@ -739,7 +739,7 @@
     },
     "D235" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D235: Character I is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D235: Infinite or NaN"
     },
     "D236" : null,
     "D237" : {
@@ -1012,7 +1012,7 @@
     },
     "D328" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D328: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D328: Infinite or NaN"
     },
     "D329" : null,
     "D330" : {
@@ -1209,7 +1209,7 @@
     },
     "D390" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D390: Character I is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D390: Infinite or NaN"
     },
     "D391" : null,
     "D392" : {
@@ -1284,7 +1284,7 @@
     "D413" : null,
     "D414" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D414: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D414: Infinite or NaN"
     },
     "D415" : {
       "type" : "Decimal",
@@ -1447,7 +1447,7 @@
     },
     "D466" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D466: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D466: Infinite or NaN"
     },
     "D467" : null,
     "D468" : {
@@ -1472,7 +1472,7 @@
     },
     "D473" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D473: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D473: Infinite or NaN"
     },
     "D474" : {
       "type" : "Integer",
@@ -1546,7 +1546,7 @@
     },
     "D502" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D502: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D502: Infinite or NaN"
     },
     "D503" : {
       "type" : "Decimal",
@@ -1579,7 +1579,7 @@
     },
     "D511" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D511: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D511: Infinite or NaN"
     },
     "D512" : {
       "type" : "Decimal",
@@ -1756,7 +1756,7 @@
     },
     "D565" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D565: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D565: Infinite or NaN"
     },
     "D566" : {
       "error" : "CqlException",
@@ -1948,7 +1948,7 @@
     "D630" : null,
     "D631" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D631: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D631: Infinite or NaN"
     },
     "D632" : {
       "error" : "CqlException",
@@ -2120,7 +2120,7 @@
     },
     "D683" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D683: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D683: Infinite or NaN"
     },
     "D684" : {
       "type" : "Decimal",
@@ -2179,7 +2179,7 @@
     },
     "D700" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D700: Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D700: Infinite or NaN"
     },
     "D701" : {
       "type" : "Decimal",
@@ -2397,7 +2397,7 @@
     },
     "D768" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D768: Character I is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+      "message" : "Error evaluating expression D768: Infinite or NaN"
     },
     "D769" : {
       "type" : "Decimal",

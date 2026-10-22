@@ -8,7 +8,7 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 **Estado al 22-10-2026:** el 006 está cerrado: #161 (32f8aef, `fix:` para v1.24.3). El usuario fijó la regla el 22-10-2026: siempre la última versión, sobre todo en las comparaciones. La motivó el 1c13, un defecto de la 3.26.0 que la 5.4.0 ya corrige.
 
-**Paso:** 8 cerrado: el review del PR 1 convergió en la ronda 2 (plan, secciones «Review del PR 1»). Las 19 mutaciones de 007 y las 257 de 001 a 006 se detectan todas, y `make check` pasa (22-10-2026). Próximo paso: commit (`test:`) y PR 1, con el visto bueno del usuario. Después, el PR 2: la 5.4.0 y el entorno al día (node 24.22.1, temurin 25, slf4j 2.0.20; ver el plan).
+**Paso:** PR 1 MERGEADO #162 (1347eb4). PR 2 en curso, en la rama `chore/references-5.4`: A) el entorno sobre la 3.26.0 (node 24.22.1, temurin 25, slf4j 2.0.20), cuya deriva medida son 16 mensajes de aritmética y ningún veredicto; B) el salto a la 5.4.0 (plan, alcance 1-12, y «Agregado al PR 2»).
 
 **Próximo paso concreto:** el PR 1 está implementado y sin commit; ver «Implementación del PR 1» del plan 007. `make check` en verde el 22-10-2026, y las 11 mutaciones del 007 detectadas, más la de Docker. Falta el review del PR 1 con Codex y Fable; después, `make evidence`, el commit (`test:`) y el PR, con el visto bueno del usuario.
 

@@ -171,7 +171,7 @@ func TestMembershipWithNullFollowsTheSpecification(t *testing.T) {
 //
 // Regenerate the ELM, from internal/referenceharness:
 //
-//	docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/membership":/cql -w /w maven:3-eclipse-temurin-21 \
+//	docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/membership":/cql -w /w maven:3.10.0-eclipse-temurin-25 \
 //	  sh -c 'java -cp "out:lib/*" Translate /cql/cases.cql /cql > /cql/cases.elm.json'
 func TestMembershipWithNullFromTheReferenceELM(t *testing.T) {
 	src, err := os.ReadFile("testdata/membership/cases.cql")
