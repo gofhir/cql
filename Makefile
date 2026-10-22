@@ -6,7 +6,7 @@
 GOLANGCI_LINT := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 ZONES := UTC America/Santiago Asia/Kathmandu Pacific/Kiritimati Pacific/Midway Australia/Lord_Howe
 
-.PHONY: check fmt lint test zones mutations references conformance-provenance evidence
+.PHONY: check fmt lint test zones mutations references references-write conformance-provenance evidence
 
 check: fmt lint test zones mutations
 
@@ -36,6 +36,12 @@ conformance-provenance:
 evidence:
 	sh scripts/evidence.sh
 
+# references regenerates every reference file twice with Docker and checks the
+# two runs are identical; references-write also copies them to testdata. The
+# mutation that needs it runs here, not in make mutations.
 references:
-	@echo "see internal/referenceharness/README.md: the commands depend on the area"
-	@exit 1
+	sh scripts/references.sh check
+	CQL_MUTATIONS_DOCKER=1 sh scripts/mutations/007-references.sh
+
+references-write:
+	sh scripts/references.sh write

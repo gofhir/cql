@@ -1,0 +1,80 @@
+# name	expected	engine answer	reason — see TestTheEngineFollowsTheOracles
+D109	error	"{}"	a List<Integer> is not of String
+D110	error	Interval[1, null]	a Interval<Integer> is not of List<Integer>
+D112	Long 5	Integer 5	a Long is of Any
+D125	error	Integer 5	a Integer is not of List<Integer>
+D13	error	Interval[1, null]	a Interval<Integer> is not of List<String>
+D132	true	false	a List<Integer> is not of List<String>
+D136	error	true	a Boolean is not of List<Any>
+D147	error	Code{code: "x", display: null, system: null, version: null}	a Code is not of Interval<String>
+D156	error	Decimal 2.5	a Decimal is not of List<Any>
+D160	true	false	a Long is not of Integer
+D183	error	Code{code: "x", display: null, system: null, version: null}	a Code is not of List<Integer>
+D191	error	Concept{codes: {Code{code: "x", display: null, system: null, version: null}}, display: null}	a Concept is not of List<Integer>
+D193	error	DateTime 2020-01-01T10:00:00.000Z	a DateTime is not of Interval<Any>
+D200	Long 5	Integer 5	a Long is of Any
+D214	error	Concept{codes: {Code{code: "x", display: null, system: null, version: null}}, display: null}	a Concept is not of Interval<Integer>
+D222	null	Interval[1, null]	a Interval<Integer> is not of Interval<String>
+D229	error	Concept{codes: {Code{code: "x", display: null, system: null, version: null}}, display: null}	a Concept is not of List<Any>
+D243	null	Interval["a", "b"]	a Interval<String> is not of Interval<Integer>
+D244	true	false	a Interval<Integer> is not of Interval<String>
+D259	error	Decimal 2.5	a Decimal is not of Interval<String>
+D267	false	true	a Long is of Long
+D29	error	Decimal 2.5	a Decimal is not of Interval<Any>
+D296	error	"a"	a String is not of List<Any>
+D30	true	false	a Interval<Integer> is not of Interval<String>
+D307	error	"2020-01-01T10:00:00.000Z"	a DateTime is not of String
+D31	error	Integer 5	a Long is not of Integer
+D321	error	Tuple{a: 1}	a Tuple is not of List<Integer>
+D326	error	Interval[1, null]	a Interval<Integer> is not of List<Any>
+D344	error	Tuple{a: 1}	a Tuple is not of Interval<Any>
+D363	error	"Concept{Code 'x' from }"	a Concept is not of String
+D37	error	Integer 1	a Boolean is not of Integer
+D374	error	"Tuple{a: 1}"	a Tuple is not of String
+D381	error	Code{code: "x", display: null, system: null, version: null}	a Code is not of List<String>
+D401	error	Interval[1, 2]	a Interval<Integer> is not of Interval<String>
+D402	error	DateTime 2020-01-01T10:00:00.000Z	a DateTime is not of Interval<Integer>
+D43	error	{1, "a"}	a List<Choice<Integer, String>> is not of List<Integer>
+D441	error	Decimal 5	a Integer is not of Decimal
+D448	Long 5	Integer 5	a Long is of Any
+D449	error	null	a String is not of DateTime
+D455	error	{1, 2}	a List<Integer> is not of List<String>
+D456	true	false	a List<Choice<Integer, String>> is not of List<String>
+D463	error	{1, "a"}	a List<Choice<Integer, String>> is not of Interval<Any>
+D470	error	Integer 5	a Integer is not of List<String>
+D51	error	Code{code: "x", display: null, system: null, version: null}	a Code is not of List<Any>
+D510	error	{"a"}	a List<String> is not of Interval<Any>
+D516	error	Interval[1, null]	a Interval<Integer> is not of Interval<String>
+D531	error	Time 10:00:00	a Time is not of List<Any>
+D546	error	{"a"}	a List<String> is not of List<Integer>
+D549	error	DateTime 2020-01-01T10:00:00.000Z	a DateTime is not of List<String>
+D591	error	Interval["a", "b"]	a Interval<String> is not of List<Integer>
+D598	error	5 'mg'	a Quantity is not of List<Integer>
+D621	error	DateTime 2020-01-01T10:00:00.000Z	a DateTime is not of List<Integer>
+D627	error	"{a}"	a List<String> is not of String
+D650	error	5 'mg'	a Quantity is not of Interval<Any>
+D655	error	true	a Integer is not of Boolean
+D657	null	{"a"}	a List<String> is not of List<Integer>
+D675	error	Concept{codes: {Code{code: "x", display: null, system: null, version: null}}, display: null}	a Concept is not of Interval<Any>
+D681	error	Time 10:00:00	a Time is not of Interval<String>
+D683	error	Date 2020-01-01	a Date is not of Interval<Integer>
+D695	error	Interval[1, 2]	a Interval<Integer> is not of List<String>
+D718	error	"{1, a}"	a List<Choice<Integer, String>> is not of String
+D723	error	Integer 5	a Long is not of Integer
+D727	error	Decimal 2.5	a Decimal is not of List<String>
+D733	error	Time 10:00:00	a Time is not of Interval<Integer>
+D739	error	true	a Long is not of Boolean
+D755	error	Integer 5	a Integer is not of Interval<String>
+D763	true	false	a List<Choice<Integer, String>> is not of List<Integer>
+D786	error	true	a Boolean is not of List<String>
+D789	error	{}	a List<Integer> is not of Interval<Integer>
+D793	error	Tuple{a: 1}	a Tuple is not of List<Any>
+D801	error	Tuple{a: 1}	a Tuple is not of List<String>
+D802	error	5 'mg'	a Quantity is not of List<Any>
+D811	true	false	a Long is of Long
+D816	null	{1, "a"}	a List<Choice<Integer, String>> is not of List<String>
+D829	error	Interval[1, 2]	a Interval<Integer> is not of List<Integer>
+D855	null	Interval[1, 2]	a Interval<Integer> is not of Interval<String>
+D887	Long 5	error: CQL evaluation error: 2:15: cast failed: cannot convert Integer to Long	a Long is of Long
+D890	error	{1, "a"}	a List<Choice<Integer, String>> is not of Interval<String>
+D891	error	"5 'mg'"	a Quantity is not of String

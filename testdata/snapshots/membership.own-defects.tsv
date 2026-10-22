@@ -1,0 +1,3 @@
+# name	expected	engine answer	reason — see TestTheEngineFollowsTheOracles
+D241	true	false	a value is in a list if an element equals it, and values written in one spelling are equal when they are written alike: List In, List Contains
+D253	true	false	a value is in a list if an element equals it, and values written in one spelling are equal when they are written alike: List In, List Contains

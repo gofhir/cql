@@ -1,0 +1,102 @@
+#!/bin/sh
+# Regenerates every reference file the tests compare against, with the
+# versions the harness pins (internal/referenceharness/pom.xml and
+# js/package-lock.json), twice and in two directories: the two runs have to be
+# identical byte for byte, or a reference holds something of the run and not
+# of the answer (plan 007). Needs Docker.
+#
+#   sh scripts/references.sh check   regenerates, and fails listing the files that differ from testdata
+#   sh scripts/references.sh write   regenerates, and copies them to testdata
+set -eu
+mode=${1:-check}
+case $mode in check | write) ;; *)
+	echo "usage: sh scripts/references.sh check|write" >&2
+	exit 2
+	;;
+esac
+repo=$(cd "$(dirname "$0")/.." && pwd)
+harness=$repo/internal/referenceharness
+work=$(mktemp -d "${TMPDIR:-/tmp}/references.XXXXXX")
+trap 'rm -rf "$work"' EXIT
+
+areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division"
+
+# The harness, built from what it pins.
+docker run --rm -v "$harness":/w -w /w maven:3-eclipse-temurin-21 sh -c \
+	'mvn -q -B dependency:copy-dependencies -DoutputDirectory=/w/lib && rm -rf out && mkdir out && javac -cp "lib/*" -d out src/Translate.java src/Evaluate.java'
+docker run --rm -v "$harness/js":/w -w /w node:20 npm ci --silent
+
+# generate writes every reference into $1/testdata, at the path the tests read
+# it from, and the ELM it needs on the way into $1/elm.
+generate() {
+	out=$1
+	mkdir -p "$out/in/lib" "$out/elm" "$out/testdata/snapshots" "$out/testdata/reference" \
+		"$out/testdata/membership" "$out/testdata/membershipmodel"
+	cp "$repo/fhirhelpers/FHIRHelpers-4.0.1.cql" "$out/in/lib/"
+	cp -R "$repo/testdata/snapshots" "$repo/testdata/reference" "$repo/testdata/membership" \
+		"$repo/testdata/membershipmodel" "$out/in/"
+	cp "$repo/fhirhelpers/FHIRHelpers-4.0.1.cql" "$out/in/reference/"
+	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" maven:3-eclipse-temurin-21 sh -ec '
+		java -cp "out:lib/*" Translate /o/in/lib/FHIRHelpers-4.0.1.cql /o/in/lib > /o/elm/FHIRHelpers.elm.json
+		for a in $AREAS; do
+			data=-
+			case $a in fhir | fhirmembership) data=/o/in/snapshots/fhir-data.json ;; esac
+			java -cp "out:lib/*" Evaluate -each /o/in/snapshots/$a.cql /o/in/lib $data /o/elm/$a.elm.json \
+				> /o/testdata/snapshots/$a.java.json
+		done
+		java -cp "out:lib/*" Evaluate -each /o/in/reference/encoder.cql /o/in/lib /o/in/snapshots/fhir-data.json \
+			> /o/testdata/reference/encoder.java.json
+		java -cp "out:lib/*" Translate /o/in/reference/probe.cql /o/in/reference > /o/elm/probe.elm.json
+		java -cp "out:lib/*" Evaluate /o/in/reference/runtime.cql /o/in/reference > /o/testdata/reference/runtime.expected.json
+		java -cp "out:lib/*" Translate /o/in/reference/runtime.cql /o/in/reference > /o/elm/runtime.elm.json
+		java -cp "out:lib/*" Translate /o/in/membership/cases.cql /o/in/membership > /o/testdata/membership/cases.elm.json
+		for d in absent present; do
+			java -cp "out:lib/*" Evaluate -each /o/in/membershipmodel/cases.cql /o/in/lib /o/in/membershipmodel/$d.json \
+				/o/testdata/membershipmodel/cases.elm.json > /o/testdata/membershipmodel/$d.java.json
+		done'
+	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" node:20 sh -ec '
+		for a in $AREAS; do
+			data=
+			case $a in fhir | fhirmembership) data=/o/in/snapshots/fhir-data.json ;; esac
+			node js/evaluate.js --each /o/elm/$a.elm.json /o/in/snapshots/$a.cql /o/elm/FHIRHelpers.elm.json $data \
+				> /o/testdata/snapshots/$a.js.json
+		done
+		node js/evaluate.js /o/elm/runtime.elm.json /o/in/reference/runtime.cql > /o/testdata/reference/runtime.expected.js.json'
+	(cd "$repo" && go run ./internal/referenceharness/differential/nodes -cql testdata/snapshots/fhirmembership.cql \
+		-elm "$out/elm/fhirmembership.elm.json" > "$out/testdata/snapshots/fhirmembership.nodes.tsv")
+	(cd "$repo" && go run ./internal/referenceharness/fold -in "$out/elm/probe.elm.json" -source probe.cql \
+		-out "$out/testdata/reference/probe.expected.json")
+}
+
+generate "$work/a"
+generate "$work/b"
+if ! diff -r "$work/a/testdata" "$work/b/testdata" > "$work/runs.diff"; then
+	echo "two runs of the harness differ:" >&2
+	head -40 "$work/runs.diff" >&2
+	exit 1
+fi
+echo "two runs identical: $(cd "$work/a" && find testdata -type f | wc -l | tr -d ' ') files"
+
+changed=0
+for f in $(cd "$work/a" && find testdata -type f | sort); do
+	if ! cmp -s "$work/a/$f" "$repo/$f"; then
+		echo "differs: $f"
+		changed=$((changed + 1))
+	fi
+done
+# A reference in the repository the harness no longer writes is stale too.
+for f in $(cd "$repo" && ls testdata/snapshots/*.java.json testdata/snapshots/*.js.json testdata/snapshots/*.nodes.tsv \
+	testdata/reference/*.java.json testdata/reference/*.expected*.json testdata/membership/*.elm.json \
+	testdata/membershipmodel/*.elm.json testdata/membershipmodel/*.java.json); do
+	if [ ! -f "$work/a/$f" ]; then
+		echo "not written by the harness: $f"
+		changed=$((changed + 1))
+	fi
+done
+echo "$changed files differ from the repository"
+if [ "$mode" = write ]; then
+	(cd "$work/a" && find testdata -type f) | while read -r f; do cp "$work/a/$f" "$repo/$f"; done
+	echo "written"
+elif [ "$changed" -gt 0 ]; then
+	exit 1
+fi
