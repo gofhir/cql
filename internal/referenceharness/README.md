@@ -321,6 +321,23 @@ engine answers the list-list overload with a null as the membership one (false,
 or true over a list that holds a null), where the specification and
 the conformance suite (`IncludesNullRight`) say null.
 
+`fhirmembership` is the same operators with FHIR operands over
+`testdata/snapshots/fhir-data.json`, and a null on one side at least (plan
+006): where the overload hangs on the model's conversions. Both references
+run it as `fhir`, each definition alone. Its oracle,
+`engine_fhirmembership_oracle_test.go`, does not read the overload from the
+text: it takes the node the translator wrote for each definition, which
+`differential/nodes` extracts from the ELM `Evaluate -each` writes, and keeps
+in `fhirmembership.nodes.tsv` (the ELM is megabytes):
+
+```sh
+go run ./internal/referenceharness/differential/nodes -cql testdata/snapshots/fhirmembership.cql \
+  -elm /tmp/fhir/fhirmembership.elm.json > testdata/snapshots/fhirmembership.nodes.tsv
+```
+
+The translator refuses an expression that chains a model conversion with a
+System one, which this engine accepts (backlog 1c15).
+
 ## Answer snapshots
 
 The differential says which answers are right; it needs a reference that can

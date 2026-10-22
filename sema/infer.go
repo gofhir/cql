@@ -701,6 +701,7 @@ func (c *checker) inferTiming(e *ast.TimingExpression) Type {
 	if iv, ok := left.(*Interval); ok {
 		c.narrowChoiceOperand(e.Right, right, iv.Point)
 	}
+	c.recordOverload(e, left, right)
 	return Boolean
 }
 

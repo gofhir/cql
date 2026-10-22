@@ -40,15 +40,18 @@ var areas = map[string]area{
 	"codes":      codes,
 	"codesets":   codeSets,
 	"membership": membership,
+	// fhirmembership is membership with FHIR operands (plan 006).
+	"fhirmembership": fhirMembership,
 }
 
 // preambles are the definitions an area's expressions refer to, written once
 // ahead of them.
 var preambles = map[string]string{
-	"scope":    scopePreamble,
-	"fhir":     fhirPreamble,
-	"codes":    codesPreamble,
-	"codesets": codesPreamble,
+	"scope":          scopePreamble,
+	"fhir":           fhirPreamble,
+	"fhirmembership": fhirPreamble,
+	"codes":          codesPreamble,
+	"codesets":       codesPreamble,
 }
 
 type generator struct {
@@ -698,6 +701,105 @@ func (g *generator) memberContainer(t memberType, null bool) string {
 		}
 	}
 	return "List<" + t.name + ">{ " + strings.Join(items, ", ") + " }"
+}
+
+// fhirOperand is one side of a membership over testdata/snapshots/fhir-data.json:
+// its text and whether its value there is null. A FHIR list with no element in
+// the data is empty, not null.
+type fhirOperand struct {
+	text string
+	null bool
+}
+
+// fhirFamily is the operands of one kind of value: what is looked for, the
+// lists it is looked for in, and, for a point kind, the intervals.
+type fhirFamily struct {
+	elements, lists, intervals []fhirOperand
+}
+
+var fhirFamilies = []fhirFamily{
+	{ // strings: FHIR.code, FHIR.string and a String branch of a choice
+		elements: []fhirOperand{{"Patient.gender", false}, {"Patient.language", true},
+			{"(First([Observation] O where O.id = 's')).value", false}, {"(null as String)", true}},
+		lists: []fhirOperand{{"{ 'male', 'female' }", false}, {"{ 'female', null }", false}, {"List<String>{}", false},
+			{"(null as List<String>)", true}, {"Patient.name.given", false}},
+	},
+	{ // booleans
+		elements: []fhirOperand{{"Patient.active", true}, {"(null as Boolean)", true}},
+		lists:    []fhirOperand{{"{ true, false }", false}, {"{ true, null }", false}, {"(null as List<Boolean>)", true}},
+	},
+	{ // dates
+		elements: []fhirOperand{{"Patient.birthDate", false}, {"(null as Date)", true}},
+		lists:    []fhirOperand{{"{ @1980-01-01 }", false}, {"{ @1980-01-02, null }", false}, {"(null as List<Date>)", true}},
+	},
+	{ // date-times, as points and in Periods
+		elements: []fhirOperand{{"First([Encounter]).period.start", false},
+			{"(First([Observation] O where O.id = 'q')).effective", false},
+			{"(First([Observation] O where O.id = 'x')).effective", true}, {"(null as DateTime)", true},
+			{"Patient.birthDate", false}},
+		lists: []fhirOperand{{"{ @2020-01-01T00:00:00Z }", false}, {"{ null, @2020-01-01T00:00:00Z }", false},
+			{"(null as List<DateTime>)", true}},
+		intervals: []fhirOperand{{"First([Encounter]).period", false}, {"(First([Encounter] E where E.id = 'x')).period", true},
+			{"(null as FHIR.Period)", true}, {"(null as Interval<DateTime>)", true},
+			{"Interval[@2020-01-01T00:00:00Z, @2020-12-31T00:00:00Z]", false},
+			{"(First([Observation] O where O.id = 'i')).effective", false},
+			{"(First([Observation] O where O.id = 'x')).effective", true}},
+	},
+	{ // quantities
+		elements: []fhirOperand{{"(First([Observation] O where O.id = 'q')).value", false},
+			{"(First([Observation] O where O.id = 'x')).value", true}, {"(null as Quantity)", true}},
+		lists: []fhirOperand{{"{ -5 'mg' }", false}, {"{ 1 'mg', null }", false}, {"(null as List<Quantity>)", true}},
+	},
+	{ // a FHIR.integer against Decimals, which takes two conversions
+		elements: []fhirOperand{{"(First([Observation] O where O.id = 'i')).value", false},
+			{"(First([Observation] O where O.id = 'x')).value", true}},
+		lists: []fhirOperand{{"{ 7.0 }", false}, {"(null as List<Decimal>)", true}},
+	},
+}
+
+// fhirMembership writes in, contains, includes, included in and during with a
+// FHIR operand on one side or both, and a null on one side at least, where
+// the overload hangs on the model's conversions (plan 006). A point and an
+// interval both given are a comparison, not this area. A list-list question
+// takes a typed null list as the element.
+func fhirMembership(g *generator, _ int) string {
+	for {
+		f := fhirFamilies[g.rnd.Intn(len(fhirFamilies))]
+		op := g.pick("in", "contains", "includes", "included in", "during")
+		element := f.elements[g.rnd.Intn(len(f.elements))]
+		containers := f.lists
+		if len(f.intervals) > 0 && g.chance(0.5) {
+			containers = f.intervals
+		}
+		container := containers[g.rnd.Intn(len(containers))]
+		if op != "in" && op != "contains" && len(containers) == len(f.lists) && g.chance(0.15) {
+			element = fhirOperand{"(null as List<" + listElementType(container.text) + ">)", true}
+			if strings.HasSuffix(element.text, "<>)") {
+				continue
+			}
+		}
+		if !element.null && !container.null {
+			continue
+		}
+		switch op {
+		case "contains", "includes":
+			return "(" + container.text + " " + op + " " + element.text + ")"
+		}
+		return "(" + element.text + " " + op + " " + container.text + ")"
+	}
+}
+
+// listElementType is the element type a list operand is written with, for the
+// typed null list of the list-list overload, or "" where its text does not say.
+func listElementType(list string) string {
+	if t, ok := strings.CutPrefix(list, "(null as List<"); ok {
+		return strings.TrimSuffix(t, ">)")
+	}
+	if t, ok := strings.CutPrefix(list, "List<"); ok {
+		element, _, _ := strings.Cut(t, ">")
+		return element
+	}
+	return ""
 }
 
 func main() {

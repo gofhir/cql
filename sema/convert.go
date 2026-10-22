@@ -83,20 +83,10 @@ var implicitConversions = map[string][]*Named{
 
 // ImplicitlyConverts reports whether from is to, or reaches it by one of the
 // implicit conversions the specification declares between System types
-// (Integer to Decimal, Date to DateTime...), with no function of a model. A
-// list or an interval converts element by element, as the specification's
-// List and Interval conversions do.
+// (Integer to Decimal, Date to DateTime...), with no function of a model.
 func ImplicitlyConverts(from, to Type) bool {
 	if Equal(from, to) {
 		return true
-	}
-	switch f := from.(type) {
-	case *List:
-		t, ok := to.(*List)
-		return ok && ImplicitlyConverts(f.Element, t.Element)
-	case *Interval:
-		t, ok := to.(*Interval)
-		return ok && ImplicitlyConverts(f.Point, t.Point)
 	}
 	named, ok := from.(*Named)
 	if !ok {

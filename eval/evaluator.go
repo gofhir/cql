@@ -2651,76 +2651,30 @@ func childValueKey(v fptypes.Value, depth int) string {
 // they are synonyms of contains and in; over two lists, a null is null. A value
 // does not tell the two apart — `{ 's' } includes (null as String)` is false and
 // `{ 's' } includes (null as List<String>)` is null — so the static types
-// decide, as the translator decides them. Without a plan or a type it reports
-// false, and the operator goes on as before.
+// decide, as the translator decides them, and the semantic phase records which
+// (sema.Overload). Where it decided none it reports false, and the operator
+// goes on as before.
 func (e *Evaluator) nullMembership(n *ast.TimingExpression, left, right fptypes.Value) (fptypes.Value, bool, error) {
-	op := n.Operator
-	if (left != nil && right != nil) || op.Offset != "" || op.Properly || e.ctx.Plan == nil {
+	if (left != nil && right != nil) || e.ctx.Plan == nil {
 		return nil, false, nil
 	}
-	container, element, in := n.Left, n.Right, ast.OpContains
-	switch op.Kind {
+	in := ast.OpContains
+	switch n.Operator.Kind {
 	case ast.TimingIncludes:
 	case ast.TimingIncludedIn, ast.TimingDuring:
-		container, element, in = n.Right, n.Left, ast.OpIn
+		in = ast.OpIn
 	default:
 		return nil, false, nil
 	}
-	switch e.membershipOverload(container, element) {
-	case elementOverload:
-		v, err := e.evalInContains(in, left, right)
-		return v, true, err
-	case listOverload:
+	o, ok := e.ctx.Plan.OverloadOf(n)
+	if !ok {
+		return nil, false, nil
+	}
+	if o == sema.ListOverload {
 		return nil, true, nil
 	}
-	return nil, false, nil
-}
-
-// overload is which signature of includes or included in the static types of
-// its operands select.
-type overload int
-
-const (
-	untypedOverload overload = iota
-	elementOverload          // a list and one of its elements, or an interval and a point
-	listOverload             // two lists of one element type
-)
-
-// membershipOverload is the overload the static types select: the element one
-// for a List<T> and a T, even when T is a list, or an Interval<P> and a P; the
-// list one for two List<T>. An element of a type that implicitly converts to T
-// or P is one too (`(null as Integer) included in List<Decimal>{ 1.0 }`), and a
-// container the model converts to an interval, as a FHIR.Period, is that
-// interval: both are how the translator resolves them.
-func (e *Evaluator) membershipOverload(container, element ast.Expression) overload {
-	elem := e.ctx.Plan.TypeOf(element)
-	if sema.Equal(elem, sema.Unknown) || sema.Equal(elem, sema.Any) {
-		return untypedOverload
-	}
-	ct := e.ctx.Plan.TypeOf(container)
-	if conv, ok := e.ctx.Plan.Conversions[container]; ok && conv.Target != nil {
-		ct = conv.Target
-	}
-	switch t := ct.(type) {
-	case *sema.List:
-		if commonType(elem, t.Element) {
-			return elementOverload
-		}
-		if commonType(elem, t) {
-			return listOverload
-		}
-	case *sema.Interval:
-		if commonType(elem, t.Point) {
-			return elementOverload
-		}
-	}
-	return untypedOverload
-}
-
-// commonType reports whether one of a and b converts implicitly to the other:
-// overload resolution may widen either operand, the element or the container.
-func commonType(a, b sema.Type) bool {
-	return sema.ImplicitlyConverts(a, b) || sema.ImplicitlyConverts(b, a)
+	v, err := e.evalInContains(in, left, right)
+	return v, true, err
 }
 
 func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
