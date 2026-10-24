@@ -1,4 +1,5 @@
 # name	expected	engine answer	reason — see TestTheEngineFollowsTheOracles
+D104	error	{}	an empty List<Integer> is not of List<String>: its specifier is its run-time type (docs/adr/003-lo-que-la-especificacion-no-decide.md, decision 8)
 D109	error	"{}"	a List<Integer> is not of String
 D110	error	Interval[1, null]	a Interval<Integer> is not of List<Integer>
 D112	Long 5	Integer 5	a Long is of Any
@@ -73,6 +74,7 @@ D801	error	Tuple{a: 1}	a Tuple is not of List<String>
 D802	error	5 'mg'	a Quantity is not of List<Any>
 D811	true	false	a Long is of Long
 D816	null	{1, "a"}	a List<Choice<Integer, String>> is not of List<String>
+D823	null	{}	an empty List<Integer> is not of List<String>: its specifier is its run-time type (docs/adr/003-lo-que-la-especificacion-no-decide.md, decision 8)
 D829	error	Interval[1, 2]	a Interval<Integer> is not of List<Integer>
 D855	null	Interval[1, 2]	a Interval<Integer> is not of Interval<String>
 D887	Long 5	error: CQL evaluation error: 2:15: cast failed: cannot convert Integer to Long	a Long is of Long

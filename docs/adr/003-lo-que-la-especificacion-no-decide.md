@@ -21,16 +21,17 @@ El ADR 001 pide que cada divergencia con las referencias tenga un veredicto. Los
    Java falla en Mode de Codes («Code is not comparable»), y eso es `reference defect`. La lectura que se deja de lado es la equivalencia: el oráculo la calcula, y una referencia que responde por ella lee de otro modo lo que la especificación deja abierto.
 6. **Con los dos argumentos null, en la pertenencia a un intervalo, decide el contenedor.** Interval Operators, Contains, dice «If the first argument is null, the result is false. If the second argument is null, the result is null», e In dice lo inverso. Con los dos null, las dos frases chocan. `(null as Interval<Integer>) contains (null as Integer)` y `(null as Integer) in (null as Interval<Integer>)` dan false, como en List In y List Contains, donde las dos frases coinciden. Java 3.26.0 y cql-execution 3.3.2 dan false. La lectura que se deja de lado es la del punto null, que da null en los dos: Interval In dice null para un punto null como primer argumento, y Contains, como segundo. Lo decidió el usuario el 21-10-2026 (plan 005).
 7. **Si las ramas de una choice eligen sobrecargas distintas, gana la del elemento.** Function Resolution no dice qué sobrecarga toma un operando choice cuando una rama alcanza el elemento o el punto del contenedor y otra alcanza el contenedor entero. `Observation.value` tiene una rama Quantity y una Range. Contra un `FHIR.Range`, que el ModelInfo convierte a `Interval<Quantity>`, la rama Quantity es un punto (Interval In) y la Range, un intervalo (Interval Included In). Se toma la del elemento, en `in`, `contains`, `included in`, `includes` y `during`: `First([Observation]).value during (null as FHIR.Range)` da false, porque un intervalo null no contiene ningún punto. Java 3.26.0 no sigue una regla que salga del modelo, aunque las dos conversiones del ModelInfo son simétricas. Con un `FHIR.Period` elige el punto, y `O.effective during E.period` da false. Con un `FHIR.Range` elige el intervalo, y da null. Este motor coincide con Java en la frase de las medidas, la del Period. La lectura que se deja de lado es dejar sin decidir la sobrecarga cuando las ramas chocan, y entonces `effective during period` daría null. Lo decidió el usuario el 22-10-2026 (plan 006).
+8. **Una lista vacía tiene en ejecución el tipo de su selector.** Appendix B, Is, As y Cast, se refieren al «run-time type of the argument», y la especificación no dice cuál es ese tipo para una lista sin elementos. Se toma el que declara su selector: `List<Integer>{}` es una `List<Integer>`, así que `(List<Any>{ List<Integer>{} })[0] as List<String>` da null, y el `cast`, un error. Es lo que responde Java 5.4.0. La lectura que se deja de lado es que una lista vacía sea de cualquier tipo de lista, porque no tiene ningún elemento que falle. Esa es la de Java 3.26.0, la de cql-execution 3.3.2 y la de este motor, que todavía no sigue la decisión: D104 y D823 de `types` son `own defect`. Lo decidió el usuario el 22-10-2026 (plan 007).
 
 Una referencia que responde otra cosa en estos casos lee de otro modo lo que la especificación deja abierto: la diferencia es `deliberate`. Estas son las filas `deliberate` que citan este ADR como su decisión, en cada área. Los 14 casts de null de `fhir` de la decisión 2 citan primero la decisión 1 del PR 3, y los nombra el plan 003:
 
 - `types`:
 <!-- ADR 003, types, written by -classify-types: begin -->
-D129 D172 D265 D317 D435 D857 D881 D92 D99
+D483
 <!-- ADR 003, types: end -->
 - `fhir`:
 <!-- ADR 003, fhir, written by -classify-fhir: begin -->
-D117 D134 D194 D239 D244 D326 D577 D739 D84
+D194 D239 D688
 <!-- ADR 003, fhir: end -->
 - `arithmetic`:
 <!-- ADR 003, arithmetic, written by -classify-arithmetic: begin -->
@@ -48,5 +49,6 @@ D380 D450
 - `TestTheExactReadingHoldsItsControls`: la lectura exacta decide un cociente solo cuando todo su intervalo da un valor; `(1.0 / 3.0) * 3.0` y `Ln(Exp(2.0))` quedan sin decidir.
 - `TestMembershipWithNullFollowsTheSpecification` (decisión 6): los dos casos de la decisión, escritos a mano, dan false.
 - `TestMembershipThroughTheModelFollowsTheSpecification` (decisión 7): los tres casos con un `FHIR.Range` dan false, y la tabla nombra la respuesta de Java como diferencia.
+- `TestTheTypesVerdictsFollowTheOracle` y `TestTheEngineFollowsTheOracles` (decisión 8): D104 y D823 tienen el veredicto del oráculo, y el defecto propio queda en `types.own-defects.tsv`.
 - `TestTheUndecidedADRNamesItsRows`: este ADR nombra cada fila `deliberate` que lo cita, y ninguna otra.
 - `TestTheDivergencesAreConsistent`: una fila `deliberate` cita el documento que la decidió, y ese documento la nombra.

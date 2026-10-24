@@ -2,38 +2,31 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>local</groupId><artifactId>xlat</artifactId><version>1</version>
   <dependencies>
+    <!-- org.cqframework 5.x: Kotlin Multiplatform libraries, each with its
+         JVM artifact. The ELM's JSON and the model's come with cql-to-elm-jvm,
+         with no elm-jackson or model-jackson. -->
     <dependency>
-      <groupId>info.cqframework</groupId>
-      <artifactId>cql-to-elm</artifactId>
-      <version>3.26.0</version>
+      <groupId>org.cqframework</groupId>
+      <artifactId>cql-to-elm-jvm</artifactId>
+      <version>5.4.0</version>
     </dependency>
     <dependency>
-      <groupId>info.cqframework</groupId>
-      <artifactId>elm-jackson</artifactId>
-      <version>3.26.0</version>
-    </dependency>
-    <dependency>
-      <groupId>info.cqframework</groupId>
+      <groupId>org.cqframework</groupId>
       <artifactId>quick</artifactId>
-      <version>3.26.0</version>
+      <version>5.4.0</version>
     </dependency>
     <dependency>
-      <groupId>info.cqframework</groupId>
-      <artifactId>model-jackson</artifactId>
-      <version>3.26.0</version>
-    </dependency>
-    <dependency>
-      <groupId>info.cqframework</groupId>
-      <artifactId>engine</artifactId>
-      <version>3.26.0</version>
+      <groupId>org.cqframework</groupId>
+      <artifactId>engine-jvm</artifactId>
+      <version>5.4.0</version>
     </dependency>
     <dependency>
       <!-- The FHIR data provider and the R4 model resolver of the same engine,
            so that the reference evaluates over FHIR resources and not only
            over expressions without data. -->
-      <groupId>info.cqframework</groupId>
-      <artifactId>engine-fhir</artifactId>
-      <version>3.26.0</version>
+      <groupId>org.cqframework</groupId>
+      <artifactId>engine-fhir-jvm</artifactId>
+      <version>5.4.0</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

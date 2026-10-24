@@ -24,8 +24,9 @@ const (
 
 // membershipModelCase is a membership whose operands meet only through the FHIR
 // model's conversions (backlog 1c11, plan 006). node is the overload the Java
-// translator 3.26.0 writes for the expression alone in its library, since its
-// choice depends on the definitions before it (backlog 1c13). absent and present
+// translator 5.4.0 writes for the expression alone in its library, as the
+// harness translates each (3.26.0's choice depended on the definitions before
+// it, backlog 1c13). absent and present
 // are the answers over testdata/membershipmodel/absent.json and present.json:
 // the specification's rule for that overload where a side is null, the
 // reference's answer where none is.
@@ -119,9 +120,6 @@ var membershipModelCases = []membershipModelCase{
 
 // membershipModelDiffers names where an answer above is not Java's, and why.
 var membershipModelDiffers = map[string]string{
-	"D7/present":  "List Includes with a null is null; Java answers false",
-	"D8/present":  "List Includes with a null is null; Java answers false",
-	"D9/present":  "List Included In with a null is null; Java answers false",
 	"D24/absent":  "the translator refuses it; this engine decides no overload (backlog 1c15)",
 	"D25/absent":  "the translator refuses it; this engine decides no overload (backlog 1c15)",
 	"D25/present": "the translator refuses it; this engine decides no overload (backlog 1c15)",
@@ -129,10 +127,6 @@ var membershipModelDiffers = map[string]string{
 	"D26/present": "the list's element is not converted (backlog 1c14)",
 	"D27/absent":  "the list's element is not converted (backlog 1c14)",
 	"D27/present": "the list's element is not converted (backlog 1c14)",
-	"D28/absent":  "List Contains of a null in a list that holds one is true; Java answers null",
-	"D28/present": "List Contains of a null in a list that holds one is true; Java answers null",
-	"D29/absent":  "List Includes with a null is null; Java answers false",
-	"D29/present": "List Includes with a null is null; Java answers false",
 	"D35/absent":  "the element overload wins over the interval one (ADR 003, decision 7); Java answers null",
 	"D35/present": "the element overload wins over the interval one (ADR 003, decision 7); Java answers null",
 	"D36/absent":  "the element overload wins over the interval one (ADR 003, decision 7); Java answers null",
@@ -331,7 +325,7 @@ func TestMembershipWithAnAnyOperandStaysUndecided(t *testing.T) {
 // whose body is typed speculatively at each call site (review round 2 of plan
 // 006, Codex). The overload is the definition's own, wherever it is declared:
 // List Contains of a null in a list that holds none is false. Java 3.26.0
-// answers false in both orders.
+// and 5.4.0 answer false in both orders.
 func TestMembershipInADefinitionReachedFirstFromACallIsDecided(t *testing.T) {
 	const later = "define Later: { 'a' } includes (null as String)\n"
 	const call = "define function F(): Later\ndefine Entry: F()\n"

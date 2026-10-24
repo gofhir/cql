@@ -27,3 +27,5 @@ define D21: Patient.birthDate
 define D22: FHIR.Coding { system: FHIR.uri { value: 's' }, code: FHIR.code { value: 'c' }, extension: { FHIR.Extension { url: FHIR.uri { value: 'http://example.org/e' }, value: FHIR.string { value: 'x' } } } }
 define D23: Patient
 define D24: { Patient.birthDate }
+define D25: FHIR.string { value: 'a', extension: { FHIR.Extension { url: FHIR.uri { value: 'http://example.org/p' }, value: FHIR.string { value: 'y' } } } }
+define D26: (FHIR.string { value: 'a', extension: { FHIR.Extension { url: FHIR.uri { value: 'http://example.org/p' }, value: FHIR.string { value: 'y' } } } }).extension

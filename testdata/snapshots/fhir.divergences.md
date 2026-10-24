@@ -76,3 +76,10 @@ Product. An operand typed as no number at all still fails. D10, D374, D792.
 See "The fhir area" in `internal/referenceharness/README.md`. Both files carry
 the SHA-256 of `fhir.cql`, and `TestTheFHIRReferencesAreOfThisCorpus` fails when
 the corpus moved without them.
+
+## Since plan 007
+
+The references are `org.cqframework:engine-jvm 5.4.0` and cql-exec-fhir
+2.2.0. The inventory above is as it was measured on 18 October 2026, with
+3.26.0 and 2.1.6; the verdicts in `fhir.divergences.tsv` are the newer
+references'. What moved is in `docs/evidence/`, in the drift report of 5.4.0.

@@ -1,11 +1,11 @@
 {
-  "translator": "info.cqframework:cql-to-elm 3.26.0",
+  "translator": "cql-to-elm 5.4.0",
   "source": "probe.cql",
   "definitions": [
     {
       "name": "Patient",
-      "kind": "expression",
-      "resultType": "",
+      "kind": "context",
+      "resultType": "Patient",
       "locator": "",
       "conversions": []
     },
@@ -86,7 +86,7 @@
     {
       "name": "ChoiceElement",
       "kind": "expression",
-      "resultType": "Choice\u003cQuantity, CodeableConcept, string, boolean, integer, Range, Ratio, SampledData, time, dateTime, Period\u003e",
+      "resultType": "Choice\u003cCodeableConcept, Period, Quantity, Range, Ratio, SampledData, boolean, dateTime, integer, string, time\u003e",
       "locator": "33:23",
       "conversions": []
     },
@@ -246,7 +246,7 @@
     {
       "name": "OnsetChoice",
       "kind": "expression",
-      "resultType": "Choice\u003cdateTime, Age, Period, Range, string\u003e",
+      "resultType": "Choice\u003cAge, Period, Range, dateTime, string\u003e",
       "locator": "77:21",
       "conversions": []
     }

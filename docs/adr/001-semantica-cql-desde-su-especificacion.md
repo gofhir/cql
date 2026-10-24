@@ -13,7 +13,7 @@ La semántica de CQL no está en ningún package. La define la prosa de su espec
 
 **La semántica de CQL se programa desde la especificación de CQL 1.5.3,** la edición normativa publicada en `https://cql.hl7.org/N1A` el 7 de marzo de 2025, según `https://cql.hl7.org/package-list.json`.
 - **La única excepción de versión** es el grupo `Slice` de `CqlListOperatorsTest`, con sus 10 casos, todos marcados `version="2.0"`, que el motor también resuelve.
-- **El traductor de referencia** es el motor Java 3.26.0, con las opciones que fija `internal/referenceharness/src/Evaluate.java`, `EnableResultTypes` y `EnableLocators`, y sin `compatibilityLevel`. Esas opciones deciden qué CQL acepta, y las respuestas de referencia se produjeron con ellas.
+- **El traductor de referencia** es el de Java, `org.cqframework:cql-to-elm-jvm` en la versión que fija `internal/referenceharness/pom.xml` (5.4.0 desde el plan 007; antes, `info.cqframework` 3.26.0), con las opciones que fija `internal/referenceharness/src/Evaluate.java`, `EnableResultTypes` y `EnableLocators`, y sin `compatibilityLevel`. Esas opciones deciden qué CQL acepta, y las respuestas de referencia se produjeron con ellas.
 
 **Cada operador se escribe desde su sección,** que se cita en el comentario o en el test que lo prueba.
 

@@ -53,9 +53,12 @@ type membershipCase struct {
 }
 
 // membershipCases are the probes of plan 005 (21-10-2026). Each answer is the
-// specification's, and both the Java engine 3.26.0 and cql-execution 3.3.2 give
-// it, but for the two list-list cases, where Java answers false: there
-// cql-execution and the conformance suite (IncludesNullRight) give null.
+// specification's, and both the Java engine 5.4.0 and cql-execution 3.3.2 give
+// it, each case in a library of its own (re-measured 22-10-2026, plan 007): in
+// one library, the translator writes In(Any, List<Any>) for some, and Java
+// answers true where the table has null. Java 3.26.0 answered the list-list
+// cases with a null otherwise, false or true, where cql-execution and the
+// conformance suite (IncludesNullRight) give null.
 var membershipCases = []membershipCase{
 	{"(null as Integer) in { 1, 2 }", "false", listIn},
 	{"{ 1, 2 } contains (null as Integer)", "false", listContains},
@@ -164,7 +167,7 @@ func TestMembershipWithNullFollowsTheSpecification(t *testing.T) {
 }
 
 // TestMembershipWithNullFromTheReferenceELM evaluates the cases from the ELM
-// the Java translator 3.26.0 writes for testdata/membership/cases.cql, which
+// the Java translator 5.4.0 writes for testdata/membership/cases.cql, which
 // resolves each overload itself: In and Contains for the membership one,
 // Includes and IncludedIn for the list-list one. It is the path of an imported
 // library, which has no static types.

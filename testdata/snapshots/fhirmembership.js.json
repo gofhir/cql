@@ -1,7 +1,7 @@
 {
   "library": "corpus fhirmembership.cql",
   "sourceSha256": "be5d25002535123cf6532310ca7dc72ffce0af3ce126549dbcd57af8f93da8c5",
-  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.1.6",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
     "D0": {

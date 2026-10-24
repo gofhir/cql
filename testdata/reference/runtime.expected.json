@@ -1,7 +1,7 @@
 {
   "library" : "RuntimeProbe",
-  "sourceSha256" : "14b8939ede9eef95dbb7bae14e05ceb3e7788b4921f29cd85f0c6c990c2113fe",
-  "engine" : "3.26.0",
+  "sourceSha256" : "31b33ed43f76083d3159cdf61ff5029f986b556a70382170a26c9f79c67ff85f",
+  "engine" : "5.4.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
     "WithAggregate" : {
@@ -93,7 +93,7 @@
     },
     "AggDistinctQuantity" : {
       "type" : "Integer",
-      "value" : "2"
+      "value" : "1"
     },
     "AggDistinctOffsets" : {
       "type" : "Integer",
@@ -216,10 +216,6 @@
         "type" : "Quantity",
         "value" : "1",
         "unit" : "m"
-      }, {
-        "type" : "Quantity",
-        "value" : "100",
-        "unit" : "cm"
       } ]
     },
     "DistinctOffsets" : {
@@ -232,10 +228,13 @@
         "instant" : "2020-01-01T10:00:00Z"
       } ]
     },
-    "QuantityEqual" : null,
+    "QuantityEqual" : {
+      "type" : "Boolean",
+      "value" : true
+    },
     "QuantityEquivalent" : {
       "type" : "Boolean",
-      "value" : false
+      "value" : true
     },
     "ExpandWeekPerMinute" : {
       "type" : "Integer",
@@ -616,7 +615,7 @@
     },
     "LogOfAScaledString" : {
       "type" : "Decimal",
-      "value" : "-230258506.99111846"
+      "value" : "-230258506.99111847"
     },
     "ToDecimalScaleKept" : {
       "type" : "String",
@@ -800,11 +799,11 @@
     },
     "AggregateLetWithout" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression AggregateLetWithout: Cannot invoke \"org.opencds.cqf.cql.engine.execution.Variable.getValue()\" because the return value of \"org.opencds.cqf.cql.engine.execution.State.resolveVariable(String)\" is null"
+      "message" : "null"
     },
     "AggregateDistinctLetWith" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression AggregateDistinctLetWith: Cannot invoke \"org.opencds.cqf.cql.engine.execution.Variable.getValue()\" because the return value of \"org.opencds.cqf.cql.engine.execution.State.resolveVariable(String)\" is null"
+      "message" : "null"
     },
     "AggregateDistinctSources" : {
       "type" : "Integer",
@@ -1061,20 +1060,20 @@
       } ]
     },
     "AsAny" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression AsAny: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+      "type" : "String",
+      "value" : "a"
     },
     "IsAny" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression IsAny: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+      "type" : "Boolean",
+      "value" : true
     },
     "CastAsAny" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression CastAsAny: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+      "type" : "String",
+      "value" : "a"
     },
     "AsAnyInArithmetic" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression AsAnyInArithmetic: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
+      "type" : "Integer",
+      "value" : "6"
     },
     "ListIsListOfAny" : {
       "type" : "Boolean",
@@ -1086,11 +1085,11 @@
     },
     "ListOfIntegersIsNotListOfString" : {
       "type" : "Boolean",
-      "value" : true
+      "value" : false
     },
     "IntervalOfIntegersIsNotIntervalOfString" : {
       "type" : "Boolean",
-      "value" : true
+      "value" : false
     }
   }
 }

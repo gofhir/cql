@@ -2,7 +2,9 @@
 
 What the probe cannot express, and what it decided. Everything here was found by
 translating `probe.cql` with `info.cqframework:cql-to-elm 3.26.0` and comparing,
-not by reading the specification and reasoning about it.
+not by reading the specification and reasoning about it, and measured again
+with `org.cqframework:cql-to-elm-jvm 5.4.0` (plan 007): both refuse
+`Obs.valueQuantity` with the same message.
 
 ## The engine accepts a choice element by its concrete name; the translator does not
 

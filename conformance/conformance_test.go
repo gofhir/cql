@@ -166,12 +166,12 @@ var upstreamContradictions = map[string]string{
 }
 
 // untypedOutputs are the cases whose expected output is written without the
-// type of its numbers. The Java engine 3.26.0 answers each of them with Decimal
-// points, as this engine does, and as the specification has it: the points of
-// a Decimal interval are Decimals. The output text writes them as whole
-// numbers, which reads as Integers, so their numbers are read as the Decimals
-// Java answers, and compared with their type all the same: compared by value
-// alone, { 10.0, 11, 12 } would pass.
+// type of its numbers. The Java engine, 3.26.0 and 5.4.0, answers each of them
+// with Decimal points, as this engine does, and as the specification has it:
+// the points of a Decimal interval are Decimals. The output text writes them
+// as whole numbers, which reads as Integers, so their numbers are read as the
+// Decimals Java answers, and compared with their type all the same: compared
+// by value alone, { 10.0, 11, 12 } would pass.
 var untypedOutputs = map[string]string{
 	"ExpandPer1":                     "expand { Interval[10.0, 12.5] } per 1: Java answers Interval[10.0, 10.0] and on, Decimal points",
 	"ExpandPer1Open":                 "expand { Interval[10.0, 12.5) } per 1: Java answers Decimal points",

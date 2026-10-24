@@ -1,12 +1,12 @@
 {
   "library" : "corpus arithmetic.cql",
   "sourceSha256" : "39051ea41fc207380fb7282eb5a9fe01b3bdf71c4b10616f83f7c82be90030df",
-  "engine" : "3.26.0",
+  "engine" : "5.4.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
     "D0" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D0: Non-terminating decimal expansion; no exact representable decimal result."
+      "message" : "Non-terminating decimal expansion; no exact representable decimal result."
     },
     "D1" : {
       "type" : "Integer",
@@ -19,20 +19,14 @@
     "D3" : null,
     "D4" : {
       "type" : "Decimal",
-      "value" : "0.00000000"
+      "value" : "1.00000000"
     },
-    "D5" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D5: Division by zero"
-    },
+    "D5" : null,
     "D6" : {
       "type" : "Decimal",
       "value" : "0"
     },
-    "D7" : {
-      "error" : "UndefinedResult",
-      "message" : "Results in positive infinity"
-    },
+    "D7" : null,
     "D8" : {
       "type" : "Decimal",
       "value" : "1.50000000"
@@ -46,10 +40,7 @@
       "type" : "Decimal",
       "value" : "10000000"
     },
-    "D12" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D12: Division by zero"
-    },
+    "D12" : null,
     "D13" : null,
     "D14" : {
       "type" : "Decimal",
@@ -60,15 +51,12 @@
       "value" : "2.0"
     },
     "D16" : null,
-    "D17" : {
-      "error" : "UndefinedResult",
-      "message" : "Results in negative infinity"
-    },
+    "D17" : null,
     "D18" : null,
     "D19" : null,
     "D20" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D20: Division by zero"
+      "message" : "Division by zero"
     },
     "D21" : null,
     "D22" : {
@@ -86,11 +74,11 @@
     },
     "D26" : {
       "type" : "Decimal",
-      "value" : "183.09405819371818"
+      "value" : "183.094058193718183247256092727184295654296875"
     },
     "D27" : {
       "type" : "Decimal",
-      "value" : "1.0"
+      "value" : "1"
     },
     "D28" : null,
     "D29" : {
@@ -103,7 +91,7 @@
     },
     "D31" : {
       "type" : "Decimal",
-      "value" : "4.4816890703380645"
+      "value" : "4.48168907033806451778445989475585520267486572265625"
     },
     "D32" : {
       "type" : "Integer",
@@ -135,18 +123,12 @@
       "type" : "Integer",
       "value" : "0"
     },
-    "D41" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D41: Division by zero"
-    },
+    "D41" : null,
     "D42" : {
       "type" : "Decimal",
       "value" : "2.50000000"
     },
-    "D43" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D43: Infinite or NaN"
-    },
+    "D43" : null,
     "D44" : null,
     "D45" : {
       "type" : "Decimal",
@@ -169,7 +151,7 @@
     },
     "D52" : {
       "type" : "Decimal",
-      "value" : "0.0"
+      "value" : "0"
     },
     "D53" : {
       "type" : "Decimal",
@@ -188,10 +170,7 @@
       "value" : "-0.74098339"
     },
     "D57" : null,
-    "D58" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D58: Infinite or NaN"
-    },
+    "D58" : null,
     "D59" : null,
     "D60" : null,
     "D61" : null,
@@ -218,10 +197,7 @@
       "type" : "Decimal",
       "value" : "0.74202154"
     },
-    "D70" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D70: Division by zero"
-    },
+    "D70" : null,
     "D71" : {
       "type" : "Integer",
       "value" : "11"
@@ -231,23 +207,14 @@
       "type" : "Decimal",
       "value" : "16.00"
     },
-    "D74" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D74: Division by zero"
-    },
+    "D74" : null,
     "D75" : null,
     "D76" : null,
     "D77" : null,
     "D78" : null,
     "D79" : null,
-    "D80" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D80: Division by zero"
-    },
-    "D81" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D81: Division by zero"
-    },
+    "D80" : null,
+    "D81" : null,
     "D82" : {
       "type" : "Decimal",
       "value" : "0.00"
@@ -263,8 +230,8 @@
     "D85" : null,
     "D86" : null,
     "D87" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D87: Division by zero"
+      "type" : "Decimal",
+      "value" : "0.33333333"
     },
     "D88" : null,
     "D89" : {
@@ -284,17 +251,14 @@
       "value" : "97"
     },
     "D93" : null,
-    "D94" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D94: Division by zero"
-    },
+    "D94" : null,
     "D95" : {
       "type" : "Integer",
       "value" : "1"
     },
     "D96" : {
       "type" : "Decimal",
-      "value" : "7.38905609893065"
+      "value" : "7.3890560989306504069418224389664828777313232421875"
     },
     "D97" : {
       "type" : "Integer",
@@ -346,14 +310,8 @@
     "D111" : null,
     "D112" : null,
     "D113" : null,
-    "D114" : {
-      "error" : "UndefinedResult",
-      "message" : "Results in negative infinity"
-    },
-    "D115" : {
-      "error" : "UndefinedResult",
-      "message" : "Results in positive infinity"
-    },
+    "D114" : null,
+    "D115" : null,
     "D116" : {
       "type" : "Decimal",
       "value" : "0.00000000"
@@ -394,8 +352,8 @@
       "value" : "7.000000001"
     },
     "D128" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D128: Division by zero"
+      "type" : "Decimal",
+      "value" : "-2.0"
     },
     "D129" : {
       "type" : "Decimal",
@@ -437,24 +395,21 @@
     },
     "D140" : {
       "type" : "Decimal",
-      "value" : "0.0"
+      "value" : "0"
     },
     "D141" : null,
     "D142" : {
       "type" : "Decimal",
       "value" : "-0.26751593"
     },
-    "D143" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D143: Division by zero"
-    },
+    "D143" : null,
     "D144" : {
       "type" : "Decimal",
       "value" : "0.06517330"
     },
     "D145" : {
       "type" : "Decimal",
-      "value" : "1.0"
+      "value" : "1"
     },
     "D146" : {
       "type" : "Decimal",
@@ -488,15 +443,9 @@
       "type" : "Decimal",
       "value" : "10.0"
     },
-    "D157" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D157: Division by zero"
-    },
+    "D157" : null,
     "D158" : null,
-    "D159" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D159: Division by zero"
-    },
+    "D159" : null,
     "D160" : {
       "type" : "Decimal",
       "value" : "3.5"
@@ -547,7 +496,7 @@
     },
     "D175" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D175: Division by zero"
+      "message" : "Division by zero"
     },
     "D176" : {
       "type" : "Integer",
@@ -568,7 +517,7 @@
     "D180" : null,
     "D181" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D181: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D182" : null,
     "D183" : {
@@ -585,10 +534,7 @@
       "value" : "0.8"
     },
     "D187" : null,
-    "D188" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D188: Infinite or NaN"
-    },
+    "D188" : null,
     "D189" : {
       "type" : "Decimal",
       "value" : "22.18795000"
@@ -601,10 +547,7 @@
       "type" : "Decimal",
       "value" : "0.5"
     },
-    "D192" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D192: Division by zero"
-    },
+    "D192" : null,
     "D193" : {
       "type" : "Decimal",
       "value" : "-3"
@@ -619,7 +562,7 @@
     },
     "D196" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D196: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D197" : null,
     "D198" : {
@@ -648,7 +591,7 @@
     "D206" : null,
     "D207" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D207: Non-terminating decimal expansion; no exact representable decimal result."
+      "message" : "Non-terminating decimal expansion; no exact representable decimal result."
     },
     "D208" : {
       "type" : "Decimal",
@@ -663,10 +606,7 @@
       "value" : "0"
     },
     "D211" : null,
-    "D212" : {
-      "error" : "UndefinedResult",
-      "message" : "Results in positive infinity"
-    },
+    "D212" : null,
     "D213" : null,
     "D214" : {
       "type" : "Decimal",
@@ -696,10 +636,7 @@
       "value" : "-2"
     },
     "D223" : null,
-    "D224" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D224: Division by zero"
-    },
+    "D224" : null,
     "D225" : {
       "type" : "Integer",
       "value" : "0"
@@ -735,16 +672,13 @@
     },
     "D234" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D234: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
-    "D235" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D235: Infinite or NaN"
-    },
+    "D235" : null,
     "D236" : null,
     "D237" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D237: Division by zero"
+      "message" : "Division by zero"
     },
     "D238" : {
       "type" : "Integer",
@@ -796,13 +730,10 @@
       "value" : "0.65788145"
     },
     "D257" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D257: Division by zero"
+      "type" : "Decimal",
+      "value" : "249955.002025"
     },
-    "D258" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D258: Division by zero"
-    },
+    "D258" : null,
     "D259" : null,
     "D260" : {
       "type" : "Decimal",
@@ -880,10 +811,7 @@
       "type" : "Decimal",
       "value" : "-0.1"
     },
-    "D291" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D291: Division by zero"
-    },
+    "D291" : null,
     "D292" : {
       "type" : "Decimal",
       "value" : "1020.5"
@@ -897,10 +825,7 @@
       "value" : "0.00"
     },
     "D295" : null,
-    "D296" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D296: Division by zero"
-    },
+    "D296" : null,
     "D297" : null,
     "D298" : {
       "type" : "Decimal",
@@ -951,15 +876,12 @@
     },
     "D312" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D312: Division undefined"
+      "message" : "Division undefined"
     },
-    "D313" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D313: Division by zero"
-    },
+    "D313" : null,
     "D314" : {
       "type" : "Decimal",
-      "value" : "20.085536923187668"
+      "value" : "20.08553692318766792368478490971028804779052734375"
     },
     "D315" : {
       "type" : "Integer",
@@ -994,10 +916,7 @@
       "type" : "Decimal",
       "value" : "2.0"
     },
-    "D324" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D324: Division by zero"
-    },
+    "D324" : null,
     "D325" : {
       "type" : "Decimal",
       "value" : "1"
@@ -1011,8 +930,8 @@
       "value" : "-0.09"
     },
     "D328" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D328: Infinite or NaN"
+      "type" : "Decimal",
+      "value" : "-0.93827161"
     },
     "D329" : null,
     "D330" : {
@@ -1033,15 +952,15 @@
     },
     "D334" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D334: Non-terminating decimal expansion; no exact representable decimal result."
+      "message" : "Non-terminating decimal expansion; no exact representable decimal result."
     },
     "D335" : {
       "type" : "Integer",
       "value" : "2"
     },
     "D336" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D336: Division by zero"
+      "type" : "Decimal",
+      "value" : "1096.63315842"
     },
     "D337" : null,
     "D338" : null,
@@ -1086,7 +1005,7 @@
     },
     "D351" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D351: Division by zero"
+      "message" : "Division by zero"
     },
     "D352" : {
       "type" : "Decimal",
@@ -1094,7 +1013,7 @@
     },
     "D353" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D353: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D354" : {
       "type" : "Decimal",
@@ -1113,10 +1032,7 @@
       "type" : "Decimal",
       "value" : "0"
     },
-    "D359" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D359: Division by zero"
-    },
+    "D359" : null,
     "D360" : null,
     "D361" : {
       "type" : "Decimal",
@@ -1156,7 +1072,7 @@
     "D372" : null,
     "D373" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D373: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D374" : {
       "type" : "Decimal",
@@ -1165,7 +1081,7 @@
     "D375" : null,
     "D376" : {
       "type" : "Decimal",
-      "value" : "1.0"
+      "value" : "1"
     },
     "D377" : {
       "type" : "Decimal",
@@ -1174,7 +1090,7 @@
     "D378" : null,
     "D379" : {
       "type" : "Decimal",
-      "value" : "1907346572495099500000"
+      "value" : "1907346572495099527168"
     },
     "D380" : {
       "type" : "Decimal",
@@ -1197,20 +1113,11 @@
       "type" : "Decimal",
       "value" : "6.68650052"
     },
-    "D386" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D386: Division by zero"
-    },
+    "D386" : null,
     "D387" : null,
     "D388" : null,
-    "D389" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D389: Division by zero"
-    },
-    "D390" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D390: Infinite or NaN"
-    },
+    "D389" : null,
+    "D390" : null,
     "D391" : null,
     "D392" : {
       "type" : "Decimal",
@@ -1221,10 +1128,7 @@
       "type" : "Decimal",
       "value" : "100"
     },
-    "D395" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D395: Division by zero"
-    },
+    "D395" : null,
     "D396" : null,
     "D397" : {
       "type" : "Decimal",
@@ -1236,7 +1140,7 @@
     },
     "D399" : {
       "type" : "Decimal",
-      "value" : "1.0"
+      "value" : "1"
     },
     "D400" : {
       "type" : "Integer",
@@ -1248,7 +1152,7 @@
     },
     "D402" : {
       "type" : "Decimal",
-      "value" : "2.7182818284590455"
+      "value" : "2.71828182845904553488480814849026501178741455078125"
     },
     "D403" : {
       "type" : "Integer",
@@ -1256,7 +1160,7 @@
     },
     "D404" : {
       "type" : "Decimal",
-      "value" : "0.153118488908666"
+      "value" : "0.1531184889086660005919071636526496149599552154541015625"
     },
     "D405" : {
       "type" : "Decimal",
@@ -1276,16 +1180,10 @@
       "value" : "1.00"
     },
     "D410" : null,
-    "D411" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D411: Division by zero"
-    },
+    "D411" : null,
     "D412" : null,
     "D413" : null,
-    "D414" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D414: Infinite or NaN"
-    },
+    "D414" : null,
     "D415" : {
       "type" : "Decimal",
       "value" : "0"
@@ -1321,7 +1219,7 @@
     "D426" : null,
     "D427" : {
       "type" : "Decimal",
-      "value" : "26881171418161356000000000000000000000000000"
+      "value" : "26881171418161356094253400435962903554686976"
     },
     "D428" : null,
     "D429" : null,
@@ -1346,13 +1244,10 @@
       "type" : "Decimal",
       "value" : "0.00000000"
     },
-    "D436" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D436: Division by zero"
-    },
+    "D436" : null,
     "D437" : {
       "type" : "Decimal",
-      "value" : "0.00048734258608908046"
+      "value" : "0.0004873425860890804629799166747261551790870726108551025390625"
     },
     "D438" : null,
     "D439" : null,
@@ -1437,27 +1332,18 @@
       "type" : "Decimal",
       "value" : "498.11684957"
     },
-    "D464" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D464: Division by zero"
-    },
+    "D464" : null,
     "D465" : {
       "type" : "Decimal",
       "value" : "14.69693845"
     },
-    "D466" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D466: Infinite or NaN"
-    },
+    "D466" : null,
     "D467" : null,
     "D468" : {
       "type" : "Decimal",
       "value" : "-2.41666667"
     },
-    "D469" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D469: Division by zero"
-    },
+    "D469" : null,
     "D470" : {
       "type" : "Decimal",
       "value" : "0"
@@ -1470,26 +1356,17 @@
       "type" : "Decimal",
       "value" : "0.69314718"
     },
-    "D473" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D473: Infinite or NaN"
-    },
+    "D473" : null,
     "D474" : {
       "type" : "Integer",
       "value" : "12"
     },
     "D475" : null,
-    "D476" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D476: Division by zero"
-    },
-    "D477" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D477: Division by zero"
-    },
+    "D476" : null,
+    "D477" : null,
     "D478" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D478: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D479" : null,
     "D480" : {
@@ -1519,11 +1396,11 @@
     "D489" : null,
     "D490" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D490: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D491" : {
       "type" : "Decimal",
-      "value" : "3.776476039046951"
+      "value" : "3.776476039046951171940236235968768596649169921875"
     },
     "D492" : null,
     "D493" : null,
@@ -1544,10 +1421,7 @@
       "type" : "Decimal",
       "value" : "-3"
     },
-    "D502" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D502: Infinite or NaN"
-    },
+    "D502" : null,
     "D503" : {
       "type" : "Decimal",
       "value" : "1008.0"
@@ -1561,13 +1435,10 @@
       "type" : "Integer",
       "value" : "14"
     },
-    "D507" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D507: Division by zero"
-    },
+    "D507" : null,
     "D508" : {
       "type" : "Decimal",
-      "value" : "162754.79141900392"
+      "value" : "162754.7914190039155073463916778564453125"
     },
     "D509" : {
       "type" : "Decimal",
@@ -1577,10 +1448,7 @@
       "type" : "Decimal",
       "value" : "2"
     },
-    "D511" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D511: Infinite or NaN"
-    },
+    "D511" : null,
     "D512" : {
       "type" : "Decimal",
       "value" : "1"
@@ -1609,7 +1477,7 @@
     },
     "D520" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D520: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D521" : {
       "type" : "Decimal",
@@ -1651,7 +1519,7 @@
     },
     "D535" : {
       "type" : "Integer",
-      "value" : "-1979711488"
+      "value" : "0"
     },
     "D536" : {
       "type" : "Integer",
@@ -1709,10 +1577,7 @@
       "value" : "0"
     },
     "D552" : null,
-    "D553" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D553: Division by zero"
-    },
+    "D553" : null,
     "D554" : {
       "type" : "Integer",
       "value" : "10"
@@ -1755,13 +1620,10 @@
       "value" : "1"
     },
     "D565" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D565: Infinite or NaN"
+      "type" : "Decimal",
+      "value" : "1096.63315842845850056619383394718170166015625"
     },
-    "D566" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D566: Division by zero"
-    },
+    "D566" : null,
     "D567" : {
       "type" : "Integer",
       "value" : "-997"
@@ -1772,18 +1634,12 @@
       "type" : "Decimal",
       "value" : "0.45825756"
     },
-    "D571" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D571: Division by zero"
-    },
+    "D571" : null,
     "D572" : {
       "type" : "Decimal",
       "value" : "0"
     },
-    "D573" : {
-      "error" : "UndefinedResult",
-      "message" : "Results in positive infinity"
-    },
+    "D573" : null,
     "D574" : {
       "type" : "Integer",
       "value" : "-7"
@@ -1812,7 +1668,7 @@
     },
     "D582" : {
       "type" : "Decimal",
-      "value" : "0.00000000000000000"
+      "value" : "0.000000000000000000000000000000000000000000000000000000000000000000000000000"
     },
     "D583" : null,
     "D584" : {
@@ -1832,7 +1688,7 @@
     "D589" : null,
     "D590" : {
       "type" : "Decimal",
-      "value" : "1.9999999988801094"
+      "value" : "1.9999999988801093753210125214536674320697784423828125"
     },
     "D591" : null,
     "D592" : null,
@@ -1874,10 +1730,7 @@
       "type" : "Decimal",
       "value" : "8.33333333"
     },
-    "D604" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D604: Division by zero"
-    },
+    "D604" : null,
     "D605" : null,
     "D606" : {
       "type" : "Decimal",
@@ -1898,14 +1751,11 @@
       "value" : "5432.50843411"
     },
     "D612" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D612: Division by zero"
+      "type" : "Decimal",
+      "value" : "4.5"
     },
     "D613" : null,
-    "D614" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D614: Division by zero"
-    },
+    "D614" : null,
     "D615" : {
       "type" : "Decimal",
       "value" : "80.13035643"
@@ -1941,18 +1791,12 @@
       "value" : "1.75"
     },
     "D628" : null,
-    "D629" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D629: Division by zero"
-    },
+    "D629" : null,
     "D630" : null,
-    "D631" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D631: Infinite or NaN"
-    },
+    "D631" : null,
     "D632" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D632: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D633" : {
       "type" : "Decimal",
@@ -2012,8 +1856,8 @@
       "value" : "64"
     },
     "D651" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D651: Division by zero"
+      "type" : "Decimal",
+      "value" : "2.12132034"
     },
     "D652" : {
       "type" : "Decimal",
@@ -2021,7 +1865,7 @@
     },
     "D653" : {
       "type" : "Decimal",
-      "value" : "99.99999940119086"
+      "value" : "99.9999994011908626134754740633070468902587890625"
     },
     "D654" : {
       "type" : "Integer",
@@ -2048,7 +1892,7 @@
     },
     "D662" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D662: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D663" : null,
     "D664" : {
@@ -2082,7 +1926,7 @@
     },
     "D672" : {
       "type" : "Decimal",
-      "value" : "-1.0"
+      "value" : "-1"
     },
     "D673" : null,
     "D674" : {
@@ -2107,21 +1951,15 @@
       "value" : "5"
     },
     "D680" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D680: Division by zero"
+      "type" : "Decimal",
+      "value" : "8.12784588"
     },
-    "D681" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D681: Division by zero"
-    },
+    "D681" : null,
     "D682" : {
       "type" : "Decimal",
       "value" : "1.00000000"
     },
-    "D683" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D683: Infinite or NaN"
-    },
+    "D683" : null,
     "D684" : {
       "type" : "Decimal",
       "value" : "0"
@@ -2133,7 +1971,7 @@
     "D686" : null,
     "D687" : {
       "type" : "Decimal",
-      "value" : "0.000000000000000"
+      "value" : "0.000000000000000000000000000000000000000000000000000"
     },
     "D688" : {
       "type" : "Integer",
@@ -2169,18 +2007,12 @@
       "type" : "Decimal",
       "value" : "999.68191918"
     },
-    "D698" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D698: Division by zero"
-    },
+    "D698" : null,
     "D699" : {
       "type" : "Decimal",
-      "value" : "26881171149349810000000000000000000000000000"
+      "value" : "26881171149349812049819514673522596865114112"
     },
-    "D700" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D700: Infinite or NaN"
-    },
+    "D700" : null,
     "D701" : {
       "type" : "Decimal",
       "value" : "0.03345678"
@@ -2191,7 +2023,7 @@
     },
     "D703" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D703: Non-terminating decimal expansion; no exact representable decimal result."
+      "message" : "Non-terminating decimal expansion; no exact representable decimal result."
     },
     "D704" : {
       "type" : "Decimal",
@@ -2300,10 +2132,7 @@
       "type" : "Integer",
       "value" : "-1"
     },
-    "D739" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D739: Division by zero"
-    },
+    "D739" : null,
     "D740" : {
       "type" : "Decimal",
       "value" : "0.000"
@@ -2354,12 +2183,9 @@
     },
     "D755" : {
       "type" : "Integer",
-      "value" : "-402653184"
+      "value" : "0"
     },
-    "D756" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D756: Division by zero"
-    },
+    "D756" : null,
     "D757" : null,
     "D758" : {
       "type" : "Decimal",
@@ -2367,7 +2193,7 @@
     },
     "D759" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D759: Infinite or NaN"
+      "message" : "Infinite or NaN"
     },
     "D760" : {
       "type" : "Decimal",
@@ -2388,17 +2214,14 @@
     },
     "D765" : {
       "type" : "Decimal",
-      "value" : "-1.00000001"
+      "value" : "-1.00000000999999993922529029077850282192230224609375"
     },
     "D766" : null,
     "D767" : {
       "type" : "Decimal",
       "value" : "-0.125"
     },
-    "D768" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D768: Infinite or NaN"
-    },
+    "D768" : null,
     "D769" : {
       "type" : "Decimal",
       "value" : "100"
@@ -2433,7 +2256,7 @@
     "D779" : null,
     "D780" : {
       "type" : "Decimal",
-      "value" : "26881171418161356000000000000000000000000000"
+      "value" : "26881171418161356094253400435962903554686976"
     },
     "D781" : null,
     "D782" : {
@@ -2464,7 +2287,7 @@
     },
     "D790" : {
       "error" : "CqlException",
-      "message" : "Error evaluating expression D790: Non-terminating decimal expansion; no exact representable decimal result."
+      "message" : "Non-terminating decimal expansion; no exact representable decimal result."
     },
     "D791" : {
       "type" : "Decimal",

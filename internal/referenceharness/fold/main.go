@@ -36,10 +36,12 @@ type includeDef struct {
 
 type definition struct {
 	Name string `json:"name"`
-	// Kind is "expression" or "function". The translator reports both as
-	// definitions and types both; this engine's sema.Result carries only the
-	// expressions, so the comparison has to be able to tell them apart rather
-	// than read a function as a definition we failed to type.
+	// Kind is "expression", "function" or "context". The translator reports
+	// both as definitions and types both; this engine's sema.Result carries
+	// only the expressions, so the comparison has to be able to tell them apart
+	// rather than read a function as a definition we failed to type. "context"
+	// is the implicit definition the translator adds for the context, named
+	// after it, which has no source and, from 5.x, a type.
 	Kind        string   `json:"kind"`
 	ResultType  string   `json:"resultType"`
 	Locator     string   `json:"locator"`
@@ -50,8 +52,6 @@ func main() {
 	in := flag.String("in", "", "path to the translator's ELM JSON")
 	source := flag.String("source", "", "name of the CQL file it came from")
 	out := flag.String("out", "", "path to write the folded reference to")
-	translator := flag.String("translator", "info.cqframework:cql-to-elm 3.26.0",
-		"translator coordinates, recorded so a diff can say which version decided")
 	flag.Parse()
 	if *in == "" || *source == "" || *out == "" {
 		fmt.Fprintln(os.Stderr, "-in, -source and -out are required")
@@ -65,6 +65,12 @@ func main() {
 	}
 	var doc struct {
 		Library struct {
+			// The translator writes its version in a CqlToElmInfo annotation:
+			// recorded, so a diff can say which version decided.
+			Annotation []struct {
+				Type              string `json:"type"`
+				TranslatorVersion string `json:"translatorVersion"`
+			} `json:"annotation"`
 			Includes struct {
 				Def []includeDef `json:"def"`
 			} `json:"includes"`
@@ -86,8 +92,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	version := ""
+	for _, a := range doc.Library.Annotation {
+		if a.Type == "CqlToElmInfo" {
+			version = a.TranslatorVersion
+		}
+	}
+	if version == "" {
+		fmt.Fprintln(os.Stderr, "the ELM document names no translator version (CqlToElmInfo)")
+		os.Exit(1)
+	}
 	result := expected{
-		Translator:  *translator,
+		Translator:  "cql-to-elm " + version,
 		Source:      *source,
 		Definitions: definitionsOf(defs, helperAliasesOf(doc.Library.Includes.Def)),
 	}
@@ -142,8 +158,11 @@ func definitionsOf(defs []map[string]any, helperAliases map[string]bool) []defin
 		name, _ := def["name"].(string)
 		expr, _ := def["expression"].(map[string]any)
 		kind := "expression"
-		if def["type"] == "FunctionDef" {
+		switch {
+		case def["type"] == "FunctionDef":
 			kind = "function"
+		case name == contextOf(def):
+			kind = "context"
 		}
 		out = append(out, definition{
 			Name:        name,
@@ -156,6 +175,12 @@ func definitionsOf(defs []map[string]any, helperAliases map[string]bool) []defin
 	return out
 }
 
+// contextOf is the context a definition is declared in, if the ELM says.
+func contextOf(def map[string]any) string {
+	c, _ := def["context"].(string)
+	return c
+}
+
 // unannotated names the definitions the translator recorded nothing about.
 //
 // A reference with nothing in it passes every comparison, which is worse than
@@ -166,8 +191,10 @@ func definitionsOf(defs []map[string]any, helperAliases map[string]bool) []defin
 func unannotated(defs []definition) []string {
 	var blank []string
 	for _, def := range defs {
-		if def.Name == "Patient" && def.ResultType == "" {
-			continue // the implicit context definition, which has no expression
+		if def.Kind == "context" {
+			// The implicit context definition: the translator gives its
+			// expression no locator, and up to 3.26.0 no type either.
+			continue
 		}
 		if def.ResultType == "" || def.Locator == "" {
 			blank = append(blank, def.Name)

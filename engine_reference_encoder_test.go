@@ -50,6 +50,12 @@ var referenceEncoderCases = map[string]string{
 	// The resource is the one fhir-data.json serves, as the test reads it.
 	"D23": "Patient",
 	"D24": `{"type": "List", "elements": [{"type": "FHIR.date", "value": "1980-01-01"}]}`,
+	// A primitive with an extension: the encoder writes the primitive's value,
+	// and the extension through the element that holds it (FHIR R4, Datatypes,
+	// Primitive Types: a primitive has an id and extensions). Java 3.26.0 does
+	// not evaluate it (plan 007).
+	"D25": `{"type": "FHIR.string", "value": "a"}`,
+	"D26": `{"type": "List", "elements": [{"type": "FHIR.Extension", "value": {"url": "http://example.org/p", "valueString": "y"}}]}`,
 }
 
 // TestTheReferenceEncoderWritesEachValueAsItIs holds what the Java harness
@@ -135,13 +141,28 @@ func encodedValue(t *testing.T, raw json.RawMessage) any {
 	if err := json.Unmarshal(raw, &v); err != nil {
 		t.Fatalf("%s: %v", raw, err)
 	}
-	if m, ok := v.(map[string]any); ok {
-		if text, isText := m["value"].(string); isText && text != "" && text[0] == '{' {
-			var inner any
-			if err := json.Unmarshal([]byte(text), &inner); err != nil {
-				t.Fatalf("%s: %v", text, err)
+	return parsedFHIRValues(t, v)
+}
+
+// parsedFHIRValues parses, at every depth, the JSON text a FHIR value holds.
+func parsedFHIRValues(t *testing.T, v any) any {
+	t.Helper()
+	switch v := v.(type) {
+	case map[string]any:
+		for k, x := range v {
+			if text, isText := x.(string); isText && k == "value" && text != "" && text[0] == '{' {
+				var inner any
+				if err := json.Unmarshal([]byte(text), &inner); err != nil {
+					t.Fatalf("%s: %v", text, err)
+				}
+				v[k] = inner
+				continue
 			}
-			m["value"] = inner
+			v[k] = parsedFHIRValues(t, x)
+		}
+	case []any:
+		for i, x := range v {
+			v[i] = parsedFHIRValues(t, x)
 		}
 	}
 	return v

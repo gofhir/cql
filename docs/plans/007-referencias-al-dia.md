@@ -247,3 +247,89 @@ Lo pidió el usuario: siempre las últimas versiones. Se midió el 22-10-2026 co
 - Las 257 mutaciones de 001 a 006 se detectan todas.
 - `make check` pasa: 1027 s y 1,26 GB de RSS.
 
+
+## Defecto de otra librería: XHTML que no vuelve igual (22-10-2026)
+
+Lo encontró la ida y vuelta de `toHapi` (`RoundTrip.java`) en `PlanDefinition-KDN5.json` de `hl7.fhir.r4.examples` 4.0.1. Es la única diferencia en 5314 recursos.
+- **Impacto en las referencias, cero:** `fhir-data.json` vuelve idéntico, y no tiene narrativas con comentarios.
+- **Qué hace el código:** no lo rodea. `RoundTrip.KNOWN` lo registra, y la ida y vuelta falla si deja de ocurrir.
+- **Estado:** publicado el 22-10-2026 con el visto bueno del usuario, como [hapifhir/org.hl7.fhir.core#2785](https://github.com/hapifhir/org.hl7.fhir.core/issues/2785). Antes se buscaron duplicados (`xhtml`, `XhtmlComposer comment` y otras cuatro búsquedas, sin coincidencias) y se reprodujo de nuevo en la 7.0.3, la última: 18, 20 y 22 espacios.
+
+**Issue redactado** (para `hapifhir/org.hl7.fhir.core`):
+
+> **XhtmlParser + XhtmlComposer are not idempotent: each round trip adds two spaces before a comment**
+>
+> `org.hl7.fhir.utilities` 7.0.3 (latest), also 6.9.4.1. Parsing a narrative and composing it again adds two spaces of indentation before every XML comment, each time:
+>
+> ```java
+> String s = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table><tr>\n          <td>\n                <!-- c -->\n            <div>x</div>\n          </td></tr></table></div>";
+> for (int i = 0; i < 3; i++) {
+>     s = new XhtmlComposer(XhtmlComposer.XML, false).compose(new XhtmlParser().parse(s, "div"));
+>     System.out.println(s);  // 18, 20, 22 spaces before <!-- c -->
+> }
+> ```
+>
+> Expected: `compose(parse(s))` equals `s` for a well-formed narrative, or at least the second round trip is the identity. FHIR R4, Narrative (hl7.org/fhir/R4/narrative.html), makes `div` XHTML content. A comment is allowed there, and its surrounding whitespace is part of the content. Any tool that reads and writes a resource (an `XhtmlType.setValueAsString` after a `getValueAsString`) changes the narrative each time.
+>
+> Probable cause: the parser keeps the whitespace text node before the comment, and the composer indents the comment on top of it in non-pretty mode.
+
+## Implementación del PR 2: lo que la 5.4.0 movió en los tests (22-10-2026)
+
+Con testdata regenerado y reclasificado, fallaban siete cosas en el paquete raíz. Cada una se midió antes de tocarla:
+
+- **La definición `Patient` implícita viene tipada desde la 5.x.** `fold` la marca con kind `context` (la reconoce por su nombre, igual al del contexto), y `TestStaticTypesMatchTheReference` la salta por ese kind. `probe.expected.json` cambia solo en eso, con fold sobre una traducción nueva del probe.
+- **La 5.4.0 ordena por nombre las ramas de un `Choice`.** La 3.26.0 y `sema` siguen el orden del ModelInfo. Una choice es el conjunto de sus tipos, así que el test compara las ramas ordenadas (`choiceSorted`).
+- **D4 de `arithmetic`:** Java 5.4.0 responde `1.00000000`, como el motor, y calcula con `Exp(100)`, que está fuera del rango Decimal. Entra en `arithmeticAgreedOutsideTheSpecification` como `pastTheRange`, igual que D379. El defecto propio queda en la fila de js.
+- **D345 y D788 de `fhir`:** Java 5.4.0 le da `codesystems: List{}` a un ValueSet construido sin ellos, y el oráculo espera null. Es `reference defect` en el manifiesto. `fhirReferenceDefectValues` lo nombra y falla si el valor llega a coincidir.
+- **D104 y D823 de `types`:** la especificación no dice si una lista vacía tiene en ejecución el tipo de su selector. El usuario decidió el 22-10-2026 tomar el tipo declarado, como Java 5.4.0: es la decisión 8 del ADR 003. El motor no la sigue todavía: son `own defect`, en `types.own-defects.tsv`, y quedan como pendiente propio.
+- **`LogOfAScaledString`:** el motor da `…99111846`: divide los dos `ln` en float64. Java 5.4.0 los divide como BigDecimal y da `…99111847`. El valor exacto es -230258508.14811202, así que ninguno acierta. El usuario decidió el 22-10-2026 registrarlo como divergencia conocida (`knownRuntimeDivergences` y `runtime.divergences.md`). Deja de ser `// control` en `runtime.cql`. Un Log exacto en el motor queda como pendiente.
+- **Las exclusiones de Java por unidades ya no aplican:** la 5.4.0 convierte unidades, y QuantityEqual, QuantityEquivalent, DistinctQuantity y AggDistinctQuantity coinciden con el motor. Salen de `notOracle`. Nada lo detectaba: una exclusión que pasa a coincidir no falla. Probé una guarda general y no sirve, porque las exclusiones de cql-execution dicen «no es oráculo para esta clase de fila», y coincidir por casualidad no las invalida (falló en 6 filas de Decimal y en ListIntDec). Queda como hallazgo, sin guarda.
+- **`runtime.divergences.md`:** la 5.4.0 como referencia, Any y el tipo de elemento resueltos, las unidades resueltas y la sección del logaritmo. El `let` dentro de `aggregate` sigue fallando en la 5.4.0, con el mensaje `null`.
+- **`conformance_test.go`, `untypedOutputs`:** se volvió a medir con la 5.4.0 sobre las cuatro expresiones, y responde con puntos Decimal, igual que la 3.26.0.
+- **Un comentario de `runtime.cql` cambia su SHA-256:** quitarle `// control` a `LogOfAScaledString` invalidó `runtime.expected*.json`, y la base de las mutaciones de 001 y 002 falló por eso (`TestRuntimeMatchesTheReference`: «runtime.cql changed since…»). Se regeneró con `sh scripts/references.sh write`, y las mutaciones se corrieron de nuevo, completas.
+- **Controles que la 5.4.0 dejó sin uso, y que nada vigilaba:** la corrida completa de mutaciones los encontró en 003 (cuatro sobrevivientes y una mutación que no se aplicaba).
+  - De las once excepciones de `arithmeticAgreedOutsideTheSpecification`, diez ya no se usaban: Java 5.4.0 responde ahora distinto que el motor en esas filas, que están en el manifiesto. Quedó D4, y el test falla si una excepción no se aplica a ninguna fila.
+  - `fhirReferenceRenderings` (`Patient/p`) quedó sin uso, porque la 5.4.0 escribe el id como `p`. Se borró con su mutación.
+  - En `types`, ningún `cast` de null tiene ya a los tres de acuerdo, porque Java 5.4.0 falla en los seis. La decisión 2 la sostiene `TestTheTypesVerdictsFollowTheOracle`, y las dos mutaciones apuntan ahí. La del ADR apunta a D483.
+- **Mutaciones, 22-10-2026:** 001 (16), 002 (30), 003 (116), 004 (53), 005 (22), 006 (20) y 007 (25 sin Docker y 34 con Docker) se detectan todas, y no sobrevive ninguna. Las de Docker del 007 corrieron antes de estos ajustes de 003, que no tocan lo que ejercitan.
+- **Deriva de la 5.4.0:** [007-drift-5.4.md](../evidence/007-drift-5.4.md).
+
+## Review del PR 2, ronda 1 (Codex y Fable, 22 y 23-10-2026)
+
+Cada uno trabajó en su propia copia. Se verificó cada hallazgo:
+
+| # | Quién | Severidad | Hallazgo | Resolución |
+|---|---|---|---|---|
+| R1-1 | Fable | media | `make check` fallaba en el lint: `referenceStructure` subió a gocyclo 16 con el caso de ValueSet | **Aceptado.** Pasa a `referenceVocabulary`; el lint da 0 issues. |
+| R1-2 | Codex | media | El lector de ValueSet y CodeSystem descarta los null de Java, pero no los de este motor: `System.CodeSystem { id: 's', version: null }` difería de la misma respuesta de Java | **Aceptado.** Confirmado con un caso de `answers_test.go` que fallaba. `Value` descarta también los null de un ValueSet o un CodeSystem. Mutación en el 007. |
+| R1-3 | Codex | media | `RoundTrip.KNOWN` dejaba pasar cualquier diferencia de KDN5, incluso un `EncodingError` | **Aceptado.** La pérdida conocida tiene que quedar en la narrativa: sin `text`, el valor tiene que volver igual. Con `toHapi` fallando en todo PlanDefinition, KDN5 da «more than the known loss differs», con 18 diferencias y exit 1. Antes, KDN5 pasaba como pérdida conocida. Sin mutación en el script, porque `references.sh check` no la distinguiría de las otras 17. |
+| R1-4 | Codex | baja | D797 en `fhirBothReferencesWrong` está muerta: Java 5.4.0 responde `{1, 2}`, y las referencias ya no coinciden | **Aceptado.** Se sacó, y el test falla si una excepción no se ejercita. Mutación en el 007. |
+| R1-5 | Fable | baja | El comentario de `membershipCases` no dice que cada caso se mide en una librería propia; en una sola, Java da true en D74 y D75 | **Aceptado.** Comentario corregido. |
+| R1-6 | Fable | baja | El punto de reanudación estaba atrasado | **Aceptado.** Ya se había actualizado después de hacer las copias. |
+| R1-7 | Fable | baja | `RoundTrip` imprime cuántos recursos vuelven como el mismo JSON (4931 de 5314), y no queda registrado qué difiere en los 383 restantes | **Registrado, sin medir más.** La propiedad que se exige es el valor del motor, no el texto (ver el comentario de `RoundTrip.java`). Las causas de los 383 no se clasificaron. |
+| R1-8 | Fable | baja | Un primitivo con extensión se escribe solo por su valor (D25) | **Rechazado para este PR.** Ya era así en la 3.26.0, y lo documenta el comentario de D25. |
+| R1-9 | Fable | baja | La entrada js de `runtimeReferences` fija su versión a mano, y la de Java la lee del pin | **Rechazado.** `pinnedReferenceEngine("js")` agrega cql-exec-fhir, que no es el engine que registra `runtime.expected.js.json`. Cambiarlo es otro formato. |
+
+Fable confirmó con comandos varios puntos más: `knownRuntimeDivergences` y `fhirReferenceDefectValues` fallan si su fila cambia; el `codeSystems = mutableListOf()` de la 5.4.0 es del engine; los 5314 recursos; y las afirmaciones remedidas.
+
+## Review del PR 2, ronda 2 (Codex y Fable, 23-10-2026)
+
+Revisaron solo las correcciones de la ronda 1, cada uno en una copia nueva:
+
+| # | Quién | Severidad | Hallazgo | Resolución |
+|---|---|---|---|---|
+| R2-1 | Codex | media | La corrección R1-2 rompió la comparación con cql-execution. Este escribe el ValueSet como `Object` sin tipo y conserva un null explícito, y `Value` ahora lo descarta: `System.CodeSystem { id: 's', version: null }` difería | **Aceptado.** Confirmado con un caso que fallaba. Contra un ValueSet o un CodeSystem, los null de un `Object` se leen como no dados (`withoutNullParts`). Una tupla común sigue distinguiendo un campo de más. Mutación en el 007. |
+| R2-2 | Fable | baja | `KNOWN` dejaba pasar cualquier cambio en la narrativa de KDN5: con «NCCN image» → «NCCN picture», 0 diferencias | **Aceptado.** La narrativa, con los espacios colapsados, tiene que volver igual: #2785 cambia solo espacios. Con esa mutación, «more than the known loss differs», exit 1. |
+| R2-3 | Fable | baja | `withoutNarrative` daba la misma constante para cualquier recurso que no fuera DomainResource, y una excepción para uno así pasaría siempre | **Aceptado.** Ahora da null, y ese recurso no puede ser una pérdida conocida. |
+
+Fable confirmó con comandos las correcciones R1-1 a R1-5: el lint en 0, las mutaciones del 007 detectadas y `RoundTrip` con 5314 recursos y KDN5 como pérdida conocida. Con «KDN5» → «KDN5x» fuera de la narrativa, 5 diferencias y exit 1. La ronda no converge (R2-1 es media): va una tercera, la última del tope.
+
+## Review del PR 2, ronda 3 (Codex y Fable, 23-10-2026): converge
+
+Ninguno de los dos deja hallazgos de severidad media o mayor. Los dos encontraron el mismo hallazgo bajo:
+
+| # | Quién | Severidad | Hallazgo | Resolución |
+|---|---|---|---|---|
+| R3-1 | Codex y Fable | baja | `withoutNarrative` sacaba todo el `text`, y `narrativeText` compara solo el `div`. Un cambio del `status` de la narrativa de KDN5 pasaba como la pérdida conocida | **Aceptado.** Se saca solo el `div`. Con el `status` cambiado en `toHapi`, KDN5 da «more than the known loss differs», exit 1. Sin la mutación, sigue la pérdida conocida y 0 diferencias. |
+
+Fable verificó R2-1 con diez casos más, en los dos órdenes: un null contra un valor dado, un `Object` de solo null, `codesystems` anidado, una tupla con su null y un Code. Verificó R2-2 con cambios de texto y de espacios en la narrativa, y R2-3 con un Bundle en `KNOWN`.

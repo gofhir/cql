@@ -67,19 +67,17 @@ var runtimeReferences = []struct {
 	notOracle map[string]string
 }{
 	{
-		name:   "the Java engine",
-		file:   "testdata/reference/runtime.expected.json",
-		engine: "3.26.0",
+		name: "the Java engine",
+		file: "testdata/reference/runtime.expected.json",
+		// The version pom.xml pins, read there (pinnedReferenceEngine).
+		engine: "",
 		notOracle: map[string]string{
-			"QuantityEqual":       "it does not convert units: 1 'm' = 100 'cm' is null there",
-			"QuantityEquivalent":  "it does not convert units: it answers false",
-			"DistinctQuantity":    "it does not convert units, and keeps both",
-			"AggDistinctQuantity": "it does not convert units, and answers 2",
 			// The engine fails reading a let from the aggregate expression:
-			// State.resolveVariable returns null for it. cql-execution and
-			// this engine both bind it.
-			"AggregateLetWithout":      "it fails resolving a let inside aggregate: a NullPointerException in State.resolveVariable",
-			"AggregateDistinctLetWith": "it fails resolving a let inside aggregate distinct, after a with: the same NullPointerException",
+			// in 3.26.0, State.resolveVariable returned null for it, and
+			// 5.4.0 fails with the message "null". cql-execution and this
+			// engine both bind it.
+			"AggregateLetWithout":      "it fails resolving a let inside aggregate",
+			"AggregateDistinctLetWith": "it fails resolving a let inside aggregate distinct, after a with",
 		},
 	},
 	{
@@ -154,8 +152,12 @@ var knownRuntimeDivergences = map[string]struct {
 	got string
 	why string
 }{
-	// None at present: every definition the references and the specification
-	// agree on, this engine answers as they do.
+	// Both compute it in binary floating point, and neither gives the exact
+	// -230258508.14811202: ln 0.99999999 as a float loses the digits that
+	// decide the quotient. The Java engine 5.4.0 divides the two floats in
+	// BigDecimal, and its last digit is another (runtime.divergences.md).
+	"LogOfAScaledString": {"Decimal(-230258506.99111846)", "this engine divides the two logarithms as floats, " +
+		"and the Java engine 5.4.0 as decimals; neither is the exact value"},
 }
 
 // decidedRuntimeAnswers are the definitions where this engine answers
@@ -218,13 +220,6 @@ var disputedRuntimeAnswers = map[string]struct {
 	agree []string
 	why   string
 }{
-	"AsAny":                           {`String("a")`, []string{"cql-execution"}, anySettled},
-	"IsAny":                           {"Boolean(true)", []string{"cql-execution"}, anySettled},
-	"CastAsAny":                       {`String("a")`, []string{"cql-execution"}, anySettled},
-	"AsAnyInArithmetic":               {"Integer(6)", []string{"cql-execution"}, anySettled},
-	"ListOfIntegersIsNotListOfString": {"Boolean(false)", []string{"cql-execution"}, elementTypeSettled},
-	"IntervalOfIntegersIsNotIntervalOfString": {"Boolean(false)", []string{"cql-execution"},
-		elementTypeSettled},
 	"DefinitionUnderAnAlias":   {"List[Integer(2)]", []string{"the Java engine"}, scopeSettled},
 	"DefinitionUnderALet":      {"List[Integer(2)]", []string{"the Java engine"}, scopeSettled},
 	"DefinitionUnderAWhere":    {"List[Integer(10), Integer(20)]", []string{"the Java engine"}, scopeSettled},
@@ -253,18 +248,6 @@ const setOpNullSettled = "a null operand of union, or the second of except, is a
 	"and returns \"all unique elements\"; Except \"the operation is performed as though the second argument " +
 	"was an empty list\" and \"each element will appear in the result at most once\" (CQL 1.5, list " +
 	"operators). The Java engine answers so; cql-execution returns the other operand with its duplicates"
-
-// anySettled is how the rows on Any were settled.
-const anySettled = "every value is of type Any, the type every other one descends from (CQL 1.5, types: \"System.Any " +
-	"is the base type of all types\"), so x as Any and cast x as Any are x and x is Any is true. cql-execution " +
-	"answers so for these rows, a scalar each, and null for a list or an interval as Any; the Java engine fails " +
-	"at run time resolving the type, org.opencds.cqf.cql.engine.runtime.Any"
-
-// elementTypeSettled is how the rows on the element type of a list or an
-// interval were settled.
-const elementTypeSettled = "a list is a List<T>, and an interval an Interval<T>, when what it holds is of T: a " +
-	"List<Integer> is not a List<String>. cql-execution answers so; the Java engine answers true for any list " +
-	"or interval, whatever its elements"
 
 // scopeSettled is how the rows on the scope of a definition were settled.
 const scopeSettled = "a definition evaluates in the scope of its library, not in the query or the function it " +
@@ -340,7 +323,11 @@ func TestRuntimeMatchesTheReference(t *testing.T) {
 
 	refs := make([]runtimeReference, len(runtimeReferences))
 	for i, r := range runtimeReferences {
-		refs[i] = loadRuntimeReference(t, r.file, r.engine, src)
+		engine := r.engine
+		if engine == "" {
+			engine = pinnedReferenceEngine(t, "java")
+		}
+		refs[i] = loadRuntimeReference(t, r.file, engine, src)
 		runtimeCoverage(t, r.name, names, refs[i])
 		for name := range r.notOracle {
 			if !inProbe[name] {

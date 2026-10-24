@@ -188,8 +188,10 @@ func TestStaticTypesMatchTheReference(t *testing.T) {
 
 	compared := 0
 	for _, want := range ref.Definitions {
-		if want.ResultType == "" {
-			continue // the implicit context definition
+		if want.Kind == "context" || want.ResultType == "" {
+			// The implicit context definition, which 5.x types, and up to
+			// 3.26.0 did not; see comparedEnough for a type that is empty.
+			continue
 		}
 		got, ok := result.Defines[want.Name]
 		if !ok {
@@ -200,7 +202,7 @@ func TestStaticTypesMatchTheReference(t *testing.T) {
 				want.Name, want.ResultType)
 			continue
 		}
-		if sema.Unqualified(got) != want.ResultType {
+		if choiceSorted(sema.Unqualified(got)) != choiceSorted(want.ResultType) {
 			t.Errorf("%s is %s, the reference says %s", want.Name, got, want.ResultType)
 		}
 		compared++
@@ -213,6 +215,36 @@ func TestStaticTypesMatchTheReference(t *testing.T) {
 		t.Errorf("the reference translated the probe cleanly; we reported:\n%s",
 			result.Diagnostics.Errors().Error())
 	}
+}
+
+// choiceSorted is a type's name with the branches of a choice in order. A
+// choice is the set of its types (CQL, Choice Types), and the order is the
+// writer's: 3.26.0 wrote the model info's, as sema does, and 5.4.0 sorts them
+// by name.
+func choiceSorted(name string) string {
+	inner, ok := strings.CutPrefix(name, "Choice<")
+	if !ok || !strings.HasSuffix(inner, ">") {
+		return name
+	}
+	var branches []string
+	depth, start := 0, 0
+	inner = strings.TrimSuffix(inner, ">")
+	for i, r := range inner {
+		switch r {
+		case '<':
+			depth++
+		case '>':
+			depth--
+		case ',':
+			if depth == 0 {
+				branches = append(branches, choiceSorted(strings.TrimSpace(inner[start:i])))
+				start = i + 1
+			}
+		}
+	}
+	branches = append(branches, choiceSorted(strings.TrimSpace(inner[start:])))
+	sort.Strings(branches)
+	return "Choice<" + strings.Join(branches, ", ") + ">"
 }
 
 // TestStaticConversionsMatchTheReference covers where the semantic phase says a
@@ -322,6 +354,11 @@ func loadReference(t *testing.T) referenceELM {
 	var ref referenceELM
 	if err := json.Unmarshal(raw, &ref); err != nil {
 		t.Fatalf("reading the reference: %v", err)
+	}
+	// The translator that decided is the one the harness pins: a fold of
+	// another version's ELM is not the reference.
+	if want := "cql-to-elm " + pinnedJavaArtifact(t, "cql-to-elm-jvm"); ref.Translator != want {
+		t.Fatalf("probe.expected.json was folded from %q; the harness pins %q", ref.Translator, want)
 	}
 	return ref
 }

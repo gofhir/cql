@@ -378,7 +378,7 @@ func NewContext(goCtx context.Context, lib *ast.Library) *Context {
 }
 
 // codeSystemOf is the URL and the version of a declared code system, which a
-// code declared from it carries, as the Java engine 3.26.0 answers it (plan
+// code declared from it carries, as the Java engine 3.26.0 and 5.4.0 answer it (plan
 // 004: `"A".version` is the code system's); nil for a name no code system
 // declares.
 func (c *Context) codeSystemOf(name string) (system, version *string) {

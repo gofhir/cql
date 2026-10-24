@@ -1,7 +1,7 @@
 {
   "library" : "corpus fhirmembership.cql",
   "sourceSha256" : "be5d25002535123cf6532310ca7dc72ffce0af3ce126549dbcd57af8f93da8c5",
-  "engine" : "3.26.0",
+  "engine" : "5.4.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
     "D0" : {
@@ -14,7 +14,7 @@
     },
     "D2" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>, choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>)."
     },
     "D3" : {
       "type" : "Boolean",
@@ -47,7 +47,7 @@
     },
     "D11" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator In with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator In with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D12" : {
       "type" : "Boolean",
@@ -55,7 +55,7 @@
     },
     "D13" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>, choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>)."
     },
     "D14" : {
       "type" : "Boolean",
@@ -156,7 +156,7 @@
     },
     "D39" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator In with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator In with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D40" : null,
     "D41" : {
@@ -197,11 +197,11 @@
     },
     "D50" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>, choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>)."
     },
     "D51" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D52" : {
       "type" : "Boolean",
@@ -225,7 +225,7 @@
     },
     "D57" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Includes with signature (FHIR.Period,FHIR.date)."
+      "message" : "Could not resolve call to operator Includes with signature (FHIR.Period, FHIR.date)."
     },
     "D58" : {
       "type" : "Boolean",
@@ -281,7 +281,7 @@
     },
     "D71" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+      "message" : "Could not resolve call to operator Contains with signature (list<System.Decimal>, choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>)."
     },
     "D72" : {
       "type" : "Boolean",
@@ -317,7 +317,7 @@
     },
     "D80" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D81" : {
       "type" : "Boolean",
@@ -354,7 +354,7 @@
     },
     "D90" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator In with signature (FHIR.date,list<System.DateTime>)."
+      "message" : "Could not resolve call to operator In with signature (FHIR.date, list<System.DateTime>)."
     },
     "D91" : {
       "type" : "Boolean",
@@ -362,7 +362,7 @@
     },
     "D92" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator In with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator In with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D93" : {
       "type" : "Boolean",
@@ -370,7 +370,7 @@
     },
     "D94" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D95" : {
       "type" : "Boolean",
@@ -398,7 +398,7 @@
     },
     "D101" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Includes with signature (choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>,FHIR.date)."
+      "message" : "Could not resolve call to operator Includes with signature (choice<FHIR.Period,FHIR.Timing,FHIR.dateTime,FHIR.instant>, FHIR.date)."
     },
     "D102" : {
       "type" : "Boolean",
@@ -493,7 +493,7 @@
     },
     "D127" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Includes with signature (FHIR.Period,FHIR.date)."
+      "message" : "Could not resolve call to operator Includes with signature (FHIR.Period, FHIR.date)."
     },
     "D128" : null,
     "D129" : {
@@ -524,7 +524,7 @@
     },
     "D137" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>, choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>)."
     },
     "D138" : {
       "type" : "Boolean",
@@ -568,12 +568,12 @@
     },
     "D148" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D149" : null,
     "D150" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>,list<System.Decimal>)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>, list<System.Decimal>)."
     },
     "D151" : {
       "type" : "Boolean",
@@ -601,11 +601,11 @@
     },
     "D157" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,list<System.DateTime>)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date, list<System.DateTime>)."
     },
     "D158" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.Quantity,FHIR.CodeableConcept,FHIR.string,FHIR.boolean,FHIR.integer,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.time,FHIR.dateTime,FHIR.Period>)."
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>, choice<FHIR.CodeableConcept,FHIR.Period,FHIR.Quantity,FHIR.Range,FHIR.Ratio,FHIR.SampledData,FHIR.boolean,FHIR.dateTime,FHIR.integer,FHIR.string,FHIR.time>)."
     },
     "D159" : {
       "type" : "Boolean",
@@ -618,12 +618,9 @@
     },
     "D162" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,FHIR.Period)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date, FHIR.Period)."
     },
-    "D163" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D163" : null,
     "D164" : {
       "type" : "Boolean",
       "value" : false
@@ -676,7 +673,7 @@
     },
     "D178" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,choice<FHIR.dateTime,FHIR.Period,FHIR.Timing,FHIR.instant>)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date, choice<FHIR.Period,FHIR.Timing,FHIR.dateTime,FHIR.instant>)."
     },
     "D179" : {
       "type" : "Boolean",

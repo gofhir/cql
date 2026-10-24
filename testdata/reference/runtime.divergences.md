@@ -3,7 +3,7 @@
 `runtime.cql` was run by two reference runtimes at the same fixed evaluation
 time:
 
-- `info.cqframework:engine 3.26.0`, through `Evaluate.java`, into
+- `org.cqframework:engine-jvm 5.4.0`, through `Evaluate.java`, into
   `runtime.expected.json`.
 - `cql-execution 3.3.2`, through `js/evaluate.js`, into
   `runtime.expected.js.json`.
@@ -28,24 +28,27 @@ type, toward negative infinity, as the Java engine does (`funcs.ScaleDecimal`).
 cql-execution computes Decimal in binary floating point and is not an oracle for
 those rows.
 
-## Where the Java engine is not an oracle: quantities with different units
+## Neither gives the exact value: a logarithm in floating point
 
 ```cql
-define QuantityEqual: 1 'm' = 100 'cm'        // Java: null   cql-execution: true   this engine: true
-define QuantityEquivalent: 1 'm' ~ 100 'cm'   // Java: false  cql-execution: true   this engine: true
-define DistinctQuantity: distinct {1 'm', 100 'cm'}
-                       // Java: both          cql-execution: {1 'm'}            this engine: {1 'm'}
-define AggDistinctQuantity: ({1 'm', 100 'cm'}) X aggregate distinct A starting 0: A + 1
-                       // Java: 2             cql-execution: 1                  this engine: 1
+define LogOfAScaledString: Log(10, ToDecimal('0.999999999999999999999'))
+// Java: -230258506.99111847   cql-execution: null   this engine: -230258506.99111846
 ```
 
-The specification compares quantities with comparable units after converting
-them. Configured as `Evaluate.java` configures it, the Java engine does not
-convert. `cql-execution` converts through `ucum-lhc`, and it settles these
-rows: this engine was right on the first three, and was wrong on the fourth
-until aggregate distinct compared rows by equality instead of by their text.
+The exact value is -230258508.14811202. ToDecimal brings the string to the
+scale of 8, 0.99999999, and both engines take the logarithm of each argument
+as a float, where ln 0.99999999 has already lost the digits that decide the
+quotient. This engine divides the two floats as floats; the Java engine 5.4.0
+divides them as decimals, and 3.26.0 answered as this engine does. It is in
+`knownRuntimeDivergences`, and an exact Log is this engine's to do.
 
-`AggDistinctQuantity` is why one reference was not enough. With Java alone,
+## Settled: quantities with different units
+
+`QuantityEqual` (`1 'm' = 100 'cm'`), `QuantityEquivalent`, `DistinctQuantity`
+and `AggDistinctQuantity` compare quantities with comparable units, which the
+specification converts. The Java engine 3.26.0 did not convert, and was not an
+oracle for them; 5.4.0 converts, and the three runtimes agree.
+`AggDistinctQuantity` is why one reference was not enough: with 3.26.0 alone,
 both engines answered 2 and the row looked settled, though both were wrong,
 for different reasons. Agreement between two engines does not make the answer
 right.
@@ -58,9 +61,10 @@ define AggregateLetWithout: ({1, 2, 3}) X let L: X * 10
 // Java: CqlException   cql-execution: 40   this engine: 40
 ```
 
-The Java engine fails whenever the aggregate expression reads a let:
-`State.resolveVariable` returns null for it, and the evaluation ends in a
-NullPointerException. Two rows show it, and it is excluded from both, which
+The Java engine fails whenever the aggregate expression reads a let. In
+3.26.0, `State.resolveVariable` returned null for it, and the evaluation
+ended in a NullPointerException; 5.4.0 fails too, with a CqlException whose
+message is `null`. Two rows show it, and it is excluded from both, which
 cql-execution settles:
 
 - `AggregateLetWithout`, a plain aggregate after a without (40).
@@ -246,22 +250,13 @@ The rows — `DefinitionUnderAnAlias`, `DefinitionUnderALet`,
 The test fails the day cql-execution agrees too, and the rows then leave the
 list.
 
-## Disputed: Any
+## Settled: Any, and the element type of a list or an interval
 
-Every value is of type Any, the type every other one descends from, so
-`x as Any` and `cast x as Any` are `x`, and `x is Any` is true. cql-execution
-answers so for a scalar, and null for a list or an interval as Any; this
-engine answers the list or the interval. The Java engine fails at run time on
-each, resolving the type (`Could not resolve type
-org.opencds.cqf.cql.engine.runtime.Any`). The rows — `AsAny`, `IsAny`,
-`CastAsAny` and `AsAnyInArithmetic`, a scalar each — stay in
-`disputedRuntimeAnswers`, with cql-execution as the reference that agrees.
-
-## Disputed: the element type of a list or an interval
-
-A list is a `List<T>`, and an interval an `Interval<T>`, when what it holds is
-of `T`: `{ 1, 2 } is List<String>` is false. cql-execution answers so. The
-Java engine answers true for any list or interval, whatever its elements. The
-rows `ListOfIntegersIsNotListOfString` and
-`IntervalOfIntegersIsNotIntervalOfString` stay in `disputedRuntimeAnswers`,
-with cql-execution agreeing.
+Every value is of type Any, so `x as Any` and `cast x as Any` are `x`, and
+`x is Any` is true; a list is a `List<T>`, and an interval an `Interval<T>`,
+when what it holds is of `T`, so `{ 1, 2 } is List<String>` is false. The
+Java engine 3.26.0 failed on Any (`Could not resolve type
+org.opencds.cqf.cql.engine.runtime.Any`) and answered true for any list or
+interval; 5.4.0 answers as this engine and cql-execution do. `AsAny`, `IsAny`,
+`CastAsAny`, `AsAnyInArithmetic`, `ListOfIntegersIsNotListOfString` and
+`IntervalOfIntegersIsNotIntervalOfString` left `disputedRuntimeAnswers`.
