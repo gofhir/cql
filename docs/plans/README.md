@@ -19,7 +19,7 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 - todas las mutaciones de 001 a 007 se detectan;
 - la deriva está en [007-drift-5.4.md](../evidence/007-drift-5.4.md).
 
-Falta el visto bueno del usuario para el commit y el PR. Después vienen los bumps de Go, cada uno como incremento propio: fhirpath v1.16.6 y decimal v1.6.0.
+Abierto como #163 el 24-10-2026, con el visto bueno del usuario. Falta el CI y el merge. Después vienen los bumps de Go, cada uno como incremento propio: fhirpath v1.16.6 y decimal v1.6.0.
 
 ## Pendientes, en orden
 
