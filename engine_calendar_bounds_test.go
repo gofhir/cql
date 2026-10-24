@@ -4,7 +4,8 @@ import "testing"
 
 // TestCalendarAndRangeAgreeWithTheReference pins what fhirpath v1.14 changed in
 // how a DateTime is built and moved, each against what the reference engine
-// (info.cqframework:engine 3.26.0) answers for the same expression evaluated at
+// (info.cqframework:engine 3.26.0, and org.cqframework:engine-jvm 5.4.0
+// re-measured 22-10-2026, plan 007) answers for the same expression evaluated at
 // UTC-3. Before v1.14 every one of these answered differently here: a date off
 // the calendar was accepted, a large clock amount wrapped around, and a value
 // at the end of the range could not be compared with the maximum at all.

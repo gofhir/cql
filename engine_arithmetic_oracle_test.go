@@ -1496,6 +1496,7 @@ func TestTheArithmeticOracleAllowsWhatAllAgreeOn(t *testing.T) {
 		"js":   readReferenceResults(t, "arithmetic", "js"),
 	}
 	checked := 0
+	excepted := map[string]bool{}
 	for _, name := range slices.Sorted(maps.Keys(defs)) {
 		v, err := arithmeticOracle(defs[name])
 		if err != nil {
@@ -1515,6 +1516,7 @@ func TestTheArithmeticOracleAllowsWhatAllAgreeOn(t *testing.T) {
 			}
 			checked++
 			if why := arithmeticAgreedOutsideTheSpecification[name+" "+ref]; why != "" {
+				excepted[name+" "+ref] = true
 				if _, told := recorded[name+"\tjs"]; !told || isConformant(a, v.conform) {
 					t.Errorf("%s: %s is no exception any longer (%s)", name, ref, why)
 				}
@@ -1526,6 +1528,13 @@ func TestTheArithmeticOracleAllowsWhatAllAgreeOn(t *testing.T) {
 			}
 		}
 	}
+	// An exception for a row where the answers no longer agree is checked
+	// nowhere, and would hide the row's answer the day they agree again.
+	for _, key := range slices.Sorted(maps.Keys(arithmeticAgreedOutsideTheSpecification)) {
+		if !excepted[key] {
+			t.Errorf("%s: the exception applies to no definition where all agree any longer; remove it", key)
+		}
+	}
 	if checked == 0 {
 		t.Fatal("no definition where all agree: the oracle is checked on nothing")
 	}
@@ -1535,22 +1544,13 @@ func TestTheArithmeticOracleAllowsWhatAllAgreeOn(t *testing.T) {
 // as this engine does that the specification does not allow, with why. Each
 // holds only while the other reference tells this engine apart.
 var arithmeticAgreedOutsideTheSpecification = map[string]string{
-	"D114 java": failsOnInfinity,
-	"D115 java": failsOnInfinity,
-	"D17 java":  failsOnInfinity,
-	"D212 java": failsOnInfinity,
-	"D7 java":   failsOnInfinity,
-	"D379 java": pastTheRange,
-	"D427 java": pastTheRange,
-	"D780 java": pastTheRange,
-	"D573 java": failsOnInfinity,
-	"D699 java": pastTheRange,
+	"D4 java": pastTheRange,
 }
 
-const (
-	failsOnInfinity = "the Java engine fails on an infinity, as this engine does; the specification makes it null, and this engine's own defect is the verdict of the js row"
-	pastTheRange    = "the Java engine answers past the Decimal range, as this engine does; the specification makes it null (PR 4, decision 2), and this engine's own defect is the verdict of the js row"
-)
+// pastTheRange is why the Java engine answers D4 as this engine does: it computes
+// with Exp(100), past the Decimal range, which the specification makes null
+// (PR 4, decision 2). This engine's own defect is the verdict of the js row.
+const pastTheRange = "the Java engine answers past the Decimal range, as this engine does; the specification makes it null (PR 4, decision 2), and this engine's own defect is the verdict of the js row"
 
 // TestTheArithmeticDecisionNamesItsRows holds the plan to the rows decision 1
 // covers: it names each of them. -classify-arithmetic writes the list.

@@ -987,6 +987,25 @@ func fhirReferenceText(raw json.RawMessage) string {
 			items[i] = fhirReferenceText(e)
 		}
 		return "List{" + strings.Join(items, ", ") + "}"
+	case v.Type == "ValueSet" || v.Type == "CodeSystem":
+		// Java writes every element, null the ones a selector did not give;
+		// this engine keeps the given ones, as answers.Reference reads them.
+		// Its texts are written plain, as a Code's; its code systems as a list.
+		fields := make([]string, 0, len(v.Fields))
+		for _, k := range slices.Sorted(maps.Keys(v.Fields)) {
+			f := fhirReferenceText(v.Fields[k])
+			var text *string
+			if k != "codesystems" && json.Unmarshal(v.Fields[k], &text) == nil {
+				f = "null"
+				if text != nil {
+					f = "System.String " + *text
+				}
+			}
+			if f != "null" {
+				fields = append(fields, k+": "+f)
+			}
+		}
+		return "System." + v.Type + " {" + strings.Join(fields, ", ") + "}"
 	}
 	var s string
 	switch v.Type {
@@ -1017,6 +1036,8 @@ type referenceTyped struct {
 	Unit     string            `json:"unit"`
 	Elements []json.RawMessage `json:"elements"`
 	Error    string            `json:"error"`
+	// A ValueSet's and a CodeSystem's elements, as the harness writes them.
+	Fields map[string]json.RawMessage `json:"fields"`
 }
 
 // fhirEngineText is this engine's answer to a definition as typed text, the
@@ -1175,9 +1196,15 @@ func TestTheFHIRVerdictsFollowTheOracle(t *testing.T) {
 // the references only because the comparison reads a FHIR primitive by its
 // value: this engine's typed answer, a FHIR primitive with no FHIR type
 // (Option A, an own defect the user decided, PR 3, decision 2).
+// D28, D70 and D787 joined them with Java 5.4.0, which answers their cast or `as` to Any
+// with the FHIR value, where 3.26.0 failed resolving Any; fhir.own-defects.tsv
+// keeps each defect (plan 007).
 var fhirHiddenByTheComparison = map[string]string{
 	"D19":  "FHIR primitive of System.Date 1980-01-01",
+	"D28":  "FHIR primitive of System.String male",
 	"D54":  "FHIR primitive of System.Date 1980-01-01",
+	"D70":  "FHIR primitive of System.Integer 7",
+	"D787": "FHIR primitive of System.String p",
 	"D794": "FHIR primitive of System.String abc",
 }
 
@@ -1287,7 +1314,6 @@ func TestTheFHIRDecisionNamesItsCasts(t *testing.T) {
 // fhirBothReferencesWrong is the definitions where both references give one
 // answer and it is not the specification's, with why.
 var fhirBothReferencesWrong = map[string]string{
-	"D797": "both fail on a cast to Any: the Java engine's failure is in testdata/reference/runtime.divergences.md, and cql-execution fails the same cast",
 	"D194": "both take the Integer signature of Sum by the choice's static type, and the Quantity is null by then; ADR 003 (decision 4) takes the signature of the element's run-time type",
 }
 
@@ -1301,6 +1327,7 @@ func TestTheFHIROracleAgreesWhereTheReferencesAgree(t *testing.T) {
 	c := readFHIRCorpus(t)
 	java, js := readReferenceResults(t, "fhir", "java"), readReferenceResults(t, "fhir", "js")
 	checked := 0
+	used := map[string]bool{}
 	for _, name := range slices.Sorted(maps.Keys(defs)) {
 		a, okJava := java[name]
 		b, okJS := js[name]
@@ -1317,6 +1344,7 @@ func TestTheFHIROracleAgreesWhereTheReferencesAgree(t *testing.T) {
 		}
 		checked++
 		why, excepted := fhirBothReferencesWrong[name]
+		used[name] = excepted
 		switch {
 		case excepted && v.expected == answer:
 			t.Errorf("%s: both references answer %s, as the oracle expects; it is no exception (%s)", name, answer, why)
@@ -1324,16 +1352,32 @@ func TestTheFHIROracleAgreesWhereTheReferencesAgree(t *testing.T) {
 			t.Errorf("%s: both references answer %s; the oracle expects %s (%s)", name, answer, v.expected, v.reason)
 		}
 	}
+	// An exception where the references no longer agree is checked nowhere
+	// (D797, when the Java engine 5.4.0 stopped failing on Any).
+	for _, name := range slices.Sorted(maps.Keys(fhirBothReferencesWrong)) {
+		if !used[name] {
+			t.Errorf("%s: the references no longer agree on it; remove it from fhirBothReferencesWrong", name)
+		}
+	}
 	if checked == 0 {
 		t.Fatal("no definition where both references agree: the oracle is checked on nothing")
 	}
 }
 
-// fhirReferenceRenderings is the values a reference writes otherwise than
-// its data holds them, and why: the value is the same, its text is not.
-var fhirReferenceRenderings = map[string]string{
-	"java FHIR.id Patient/p": "the Java engine writes a resource's id with its type, as HAPI's IdType does; the data's id is p",
+// fhirReferenceDefectValues are the values a reference answers wrong, by
+// definition and reference, with why: the value differs from the oracle's, and
+// the divergence manifest records it as the reference's defect. Each has to
+// differ still.
+var fhirReferenceDefectValues = map[string]string{
+	"D345 java": valueSetCodesystems,
+	"D788 java": valueSetCodesystems,
 }
+
+// valueSetCodesystems is why the Java engine 5.4.0 answers a ValueSet built
+// with no codesystems otherwise than the oracle: it gives the element an empty
+// list, and an element an instance selector does not name is null (CQL,
+// Structured Values).
+const valueSetCodesystems = "the Java engine 5.4.0 gives a ValueSet built without codesystems an empty list of them"
 
 // TestTheFHIROracleValuesAreTheReferences holds the values the oracle expects
 // to the references: wherever a reference answers a value of the type the
@@ -1364,7 +1408,13 @@ func TestTheFHIROracleValuesAreTheReferences(t *testing.T) {
 				continue
 			}
 			checked++
-			if got != v.expected && fhirReferenceRenderings[ref+" "+got] == "" {
+			if why := fhirReferenceDefectValues[name+" "+ref]; why != "" {
+				if got == v.expected {
+					t.Errorf("%s: %s answers the oracle's value now; it is no reference defect any longer (%s)", name, ref, why)
+				}
+				continue
+			}
+			if got != v.expected {
 				t.Errorf("%s: %s answers %s; the oracle expects %s (%s)", name, ref, got, v.expected, v.reason)
 			}
 		}

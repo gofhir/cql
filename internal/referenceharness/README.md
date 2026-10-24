@@ -26,12 +26,12 @@ needs the toolchain.
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
   mvn -q -B dependency:copy-dependencies -DoutputDirectory=/w/lib
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
-  sh -c 'javac -cp "lib/*" -d out src/Translate.java'
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
+  sh -c 'javac -cp "lib/*" -d out src/*.java'
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  maven:3-eclipse-temurin-21 java -cp "out:lib/*" Translate /cql/probe.cql /cql \
+  maven:3.10.0-eclipse-temurin-25 java -cp "out:lib/*" Translate /cql/probe.cql /cql \
   > elm.json
 ```
 
@@ -47,8 +47,10 @@ go run ./internal/referenceharness/fold \
 ```
 
 The fold keeps the type, the locator and the FHIRHelpers calls, and marks whether
-each definition is an expression or a function — the translator types both, and
-`sema.Result` carries only the expressions.
+each definition is an expression, a function or the implicit definition of the
+context — the translator types all three, and `sema.Result` carries only the
+expressions. The translator's version comes from the ELM itself
+(`CqlToElmInfo.translatorVersion`); a document without it is refused.
 
 A translation that fails prints nothing and exits non-zero, so a reference cannot
 be derived from a failed run. That has already been useful: the translator
@@ -59,16 +61,16 @@ is what `testdata/reference/probe.divergences.md` records.
 
 Translation says what the reference decides about types; it says nothing about
 values. `Evaluate.java` runs each expression definition with
-`info.cqframework:engine`, at the same version as the translator, and records
+`org.cqframework:engine-jvm`, at the same version as the translator, and records
 the value with its CQL type. A definition that throws is recorded as an error
 and does not stop the rest.
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
-  sh -c 'javac -cp "lib/*" -d out src/Translate.java src/Evaluate.java'
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
+  sh -c 'javac -cp "lib/*" -d out src/*.java'
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  maven:3-eclipse-temurin-21 java -cp "out:lib/*" Evaluate /cql/runtime.cql /cql \
+  maven:3.10.0-eclipse-temurin-25 java -cp "out:lib/*" Evaluate /cql/runtime.cql /cql \
   > runtime.json && mv runtime.json ../../testdata/reference/runtime.expected.json
 ```
 
@@ -123,12 +125,12 @@ the encoding accounts for each:
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD/js":/w -w /w node:20 npm ci
+docker run --rm -v "$PWD/js":/w -w /w node:24.22.1 npm ci
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  maven:3-eclipse-temurin-21 java -cp "out:lib/*" Translate /cql/runtime.cql /cql \
+  maven:3.10.0-eclipse-temurin-25 java -cp "out:lib/*" Translate /cql/runtime.cql /cql \
   > elm.json
 docker run --rm -v "$PWD":/w -v "$PWD/../../testdata/reference":/cql -w /w \
-  node:20 node js/evaluate.js elm.json /cql/runtime.cql \
+  node:24.22.1 node js/evaluate.js elm.json /cql/runtime.cql \
   > runtime-js.json && mv runtime-js.json ../../testdata/reference/runtime.expected.js.json
 ```
 
@@ -198,7 +200,7 @@ each fix that nothing else had moved.
 ```sh
 go run ./internal/referenceharness/differential/gen -area arithmetic -seed 7 -n 600 > /tmp/diff/fuzz.cql
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -v /tmp/diff:/cql -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -v /tmp/diff:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
   java -cp "out:lib/*" Evaluate /cql/fuzz.cql /cql > /tmp/diff/java.json
 cd ../..
 go run ./internal/referenceharness/differential/compare \
@@ -266,18 +268,18 @@ for one invalid expression and this corpus holds them on purpose:
 
 ```sh
 cd internal/referenceharness
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
   mvn -q -B dependency:copy-dependencies -DoutputDirectory=/w/lib
-docker run --rm -v "$PWD":/w -w /w maven:3-eclipse-temurin-21 \
-  sh -c 'javac -cp "lib/*" -d out src/Translate.java src/Evaluate.java'
+docker run --rm -v "$PWD":/w -w /w maven:3.10.0-eclipse-temurin-25 \
+  sh -c 'javac -cp "lib/*" -d out src/*.java'
 mkdir -p /tmp/fhir && cp ../../testdata/snapshots/fhir.cql ../../testdata/snapshots/fhir-data.json \
   ../../fhirhelpers/FHIRHelpers-4.0.1.cql /tmp/fhir/
-docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
   java -cp "out:lib/*" Evaluate -each /cql/fhir.cql /cql /cql/fhir-data.json /cql/fhir.elm.json \
   > /tmp/fhir/java.json && mv /tmp/fhir/java.json ../../testdata/snapshots/fhir.java.json
-docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3-eclipse-temurin-21 \
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w maven:3.10.0-eclipse-temurin-25 \
   java -cp "out:lib/*" Translate /cql/FHIRHelpers-4.0.1.cql /cql > /tmp/fhir/FHIRHelpers.elm.json
-docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w node:20 node js/evaluate.js --each \
+docker run --rm -v "$PWD":/w -v /tmp/fhir:/cql -w /w node:24.22.1 node js/evaluate.js --each \
   /cql/fhir.elm.json /cql/fhir.cql /cql/FHIRHelpers.elm.json /cql/fhir-data.json \
   > /tmp/fhir/js.json && mv /tmp/fhir/js.json ../../testdata/snapshots/fhir.js.json
 cd ../..
@@ -286,7 +288,14 @@ go run ./internal/referenceharness/differential/compare -each -data testdata/sna
 ```
 
 The Java engine reads the resources through engine-fhir's R4 model resolver,
-cql-execution through cql-exec-fhir 2.1.6, both pinned. A translation error is
+cql-execution through cql-exec-fhir 2.2.0, both pinned. From 5.x the Java
+engine hands a FHIR value as the engine's own value, not as the HAPI object;
+`Evaluate.toHapi` rebuilds the HAPI object to write it, and fails rather than
+write something else. `RoundTrip.java` holds it to every resource of
+`fhir-data.json` and of `hl7.fhir.r4.examples` 4.0.1 (its SHA-256 pinned in
+`scripts/references.sh`, which runs it before generating): the engine's value
+of the rebuilt object has to be the one it started from, and the one known
+loss, a narrative's comment, is hapifhir/org.hl7.fhir.core#2785. A translation error is
 the Java engine's answer for its definition, and cql-execution runs only the
 ELM the translator wrote. What the three engines answer is inventoried in
 `testdata/snapshots/fhir.divergences.md`; the references are held to the
@@ -442,10 +451,11 @@ go run ./internal/referenceharness/differential/drift -old <dir> -new testdata/s
 
 ## Two things worth knowing
 
-`cql-to-elm-cli`'s published POM is invalid — it declares
-`hapi-fhir-structures-r5` with no version — so Maven drops its transitive
-dependencies and the CLI cannot be resolved. This depends on the `cql-to-elm`
-library directly and drives it from `Translate.java` instead.
+Up to 3.26.0, `cql-to-elm-cli`'s published POM was invalid — it declared
+`hapi-fhir-structures-r5` with no version — so Maven dropped its transitive
+dependencies and the CLI could not be resolved. 5.4.0's resolves, and the
+harness still depends on the `cql-to-elm-jvm` library directly and drives it
+from `Translate.java`, with the options it fixes there.
 
 Result types are not emitted by default. `EnableResultTypes` is what makes the
 translator annotate them, and without it every `resultType` comes back empty.

@@ -1,7 +1,7 @@
 {
   "library" : "corpus membership.cql",
   "sourceSha256" : "19f69a8e0ae0c90d4f2938baf54973e4abc6de28fa6d68133ad0fe3c793beec6",
-  "engine" : "3.26.0",
+  "engine" : "5.4.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
     "D0" : {
@@ -48,10 +48,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D11" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D11" : null,
     "D12" : {
       "type" : "Boolean",
       "value" : false
@@ -60,10 +57,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D14" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D14" : null,
     "D15" : {
       "type" : "Boolean",
       "value" : false
@@ -96,10 +90,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D23" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D23" : null,
     "D24" : {
       "type" : "Boolean",
       "value" : false
@@ -140,10 +131,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D34" : {
-      "type" : "Boolean",
-      "value" : true
-    },
+    "D34" : null,
     "D35" : {
       "type" : "Boolean",
       "value" : false
@@ -288,14 +276,8 @@
       "type" : "Boolean",
       "value" : true
     },
-    "D71" : {
-      "type" : "Boolean",
-      "value" : false
-    },
-    "D72" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D71" : null,
+    "D72" : null,
     "D73" : {
       "type" : "Boolean",
       "value" : false
@@ -353,10 +335,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D88" : {
-      "type" : "Boolean",
-      "value" : true
-    },
+    "D88" : null,
     "D89" : {
       "type" : "Boolean",
       "value" : false
@@ -389,10 +368,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D97" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D97" : null,
     "D98" : {
       "type" : "Boolean",
       "value" : false
@@ -505,18 +481,12 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D129" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D129" : null,
     "D130" : {
       "type" : "Boolean",
       "value" : false
     },
-    "D131" : {
-      "type" : "Boolean",
-      "value" : true
-    },
+    "D131" : null,
     "D132" : null,
     "D133" : {
       "type" : "Boolean",
@@ -579,10 +549,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D149" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D149" : null,
     "D150" : {
       "type" : "Boolean",
       "value" : false
@@ -639,10 +606,7 @@
       "type" : "Boolean",
       "value" : true
     },
-    "D164" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D164" : null,
     "D165" : {
       "type" : "Boolean",
       "value" : true
@@ -663,10 +627,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D170" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D170" : null,
     "D171" : {
       "type" : "Boolean",
       "value" : false
@@ -700,10 +661,7 @@
       "type" : "Boolean",
       "value" : true
     },
-    "D180" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D180" : null,
     "D181" : {
       "type" : "Boolean",
       "value" : true
@@ -836,10 +794,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D214" : {
-      "type" : "Boolean",
-      "value" : true
-    },
+    "D214" : null,
     "D215" : {
       "type" : "Boolean",
       "value" : false
@@ -1040,10 +995,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D265" : {
-      "type" : "Boolean",
-      "value" : true
-    },
+    "D265" : null,
     "D266" : {
       "type" : "Boolean",
       "value" : false
@@ -1096,10 +1048,7 @@
       "type" : "Boolean",
       "value" : true
     },
-    "D279" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D279" : null,
     "D280" : {
       "type" : "Boolean",
       "value" : false
@@ -1265,10 +1214,7 @@
       "type" : "Boolean",
       "value" : true
     },
-    "D322" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D322" : null,
     "D323" : {
       "type" : "Boolean",
       "value" : false
@@ -1301,10 +1247,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D331" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D331" : null,
     "D332" : {
       "type" : "Boolean",
       "value" : true
@@ -1373,10 +1316,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D349" : {
-      "type" : "Boolean",
-      "value" : true
-    },
+    "D349" : null,
     "D350" : {
       "type" : "Boolean",
       "value" : true
@@ -1494,10 +1434,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D380" : {
-      "type" : "Boolean",
-      "value" : false
-    },
+    "D380" : null,
     "D381" : {
       "type" : "Boolean",
       "value" : true
@@ -1551,10 +1488,7 @@
       "type" : "Boolean",
       "value" : false
     },
-    "D395" : {
-      "type" : "Boolean",
-      "value" : true
-    },
+    "D395" : null,
     "D396" : {
       "type" : "Boolean",
       "value" : false

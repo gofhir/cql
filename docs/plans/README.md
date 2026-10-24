@@ -4,13 +4,22 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**007: las referencias de comparación a su última versión.** El traductor y el engine de Java pasan de 3.26.0 a 5.4.0 (group `org.cqframework` desde la 4.x), y `cql-exec-fhir` de 2.1.6 a 2.2.0. `cql-execution` 3.3.2 ya es la última. Rama `chore/references-latest`. Plan: [007-referencias-al-dia.md](007-referencias-al-dia.md).
+**007: las referencias de comparación a su última versión.** El traductor y el engine de Java pasan de 3.26.0 a 5.4.0 (group `org.cqframework` desde la 4.x), y `cql-exec-fhir` de 2.1.6 a 2.2.0. `cql-execution` 3.3.2 ya es la última. Ramas `chore/references-latest` (PR 1) y `chore/references-5.4` (PR 2). Plan: [007-referencias-al-dia.md](007-referencias-al-dia.md).
 
 **Estado al 22-10-2026:** el 006 está cerrado: #161 (32f8aef, `fix:` para v1.24.3). El usuario fijó la regla el 22-10-2026: siempre la última versión, sobre todo en las comparaciones. La motivó el 1c13, un defecto de la 3.26.0 que la 5.4.0 ya corrige.
 
-**Paso:** 8 cerrado: el review del PR 1 convergió en la ronda 2 (plan, secciones «Review del PR 1»). Las 19 mutaciones de 007 y las 257 de 001 a 006 se detectan todas, y `make check` pasa (22-10-2026). Próximo paso: commit (`test:`) y PR 1, con el visto bueno del usuario. Después, el PR 2: la 5.4.0 y el entorno al día (node 24.22.1, temurin 25, slf4j 2.0.20; ver el plan).
+**Paso:** PR 1 MERGEADO #162 (1347eb4). PR 2 en curso, en la rama `chore/references-5.4`:
+- A) el entorno, commit 7419c47, local (`docs/evidence/007-drift-environment.md`: 16 mensajes y ningún veredicto);
+- B) la 5.4.0, sin commit, con el review convergido. Hecho: el port (pom, Translate, Evaluate), la normalización de identidades, `toHapi` estricto (`EncodingError`; *backbone elements* desde la definición del hijo; extensiones de un primitivo; el tipo de la 5.4.0), ValueSet y CodeSystem, `RoundTrip.java` (5314 recursos; una pérdida conocida de org.hl7.fhir.utilities, por reportar), D25 y D26 en `encoder.cql`, el pin de engine-jvm, `fold` con `translatorVersion` y cql-exec-fhir 2.2.0. Próximo paso: `make references-write`, reclasificar, `drift` e inventario.
 
-**Próximo paso concreto:** el PR 1 está implementado y sin commit; ver «Implementación del PR 1» del plan 007. `make check` en verde el 22-10-2026, y las 11 mutaciones del 007 detectadas, más la de Docker. Falta el review del PR 1 con Codex y Fable; después, `make evidence`, el commit (`test:`) y el PR, con el visto bueno del usuario.
+**Próximo paso concreto:** el PR 2 está listo y sin commit: el review convergió en la ronda 3 (ver el plan 007). Al 23-10-2026:
+- `sh scripts/references.sh check` pasa: dos corridas idénticas y 0 archivos que difieran del repositorio;
+- `make check` pasa, con 0 issues de lint;
+- `make evidence` pasa, en [2026-10-23.md](../evidence/2026-10-23.md);
+- todas las mutaciones de 001 a 007 se detectan;
+- la deriva está en [007-drift-5.4.md](../evidence/007-drift-5.4.md).
+
+Abierto como #163 el 24-10-2026, con el visto bueno del usuario. Falta el CI y el merge. Después vienen los bumps de Go, cada uno como incremento propio: fhirpath v1.16.6 y decimal v1.6.0.
 
 ## Pendientes, en orden
 
@@ -39,9 +48,12 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 1c15. **`sema` acepta lo que el traductor rechaza por encadenar conversiones:** `Patient.birthDate during (null as FHIR.Period)` y `{ 1.0, 2.0 } includes Patient.multipleBirth` necesitan una conversión del modelo y otra del sistema. Java dice «Could not resolve call to operator». También `(null as FHIR.Period) included in (null as List<Interval<Date>>)`, que este motor decide como `In`: `inferTimingOperand` convierte el Period antes de decidir la sobrecarga, y la conversión del sistema se agrega después. Lo encontró Fable en la ronda adversarial y en la ronda 1 del review del 006.
 1c16. **Una instancia `FHIR.dateTime { … }` no se convierte en un operador de tiempo:** `FHIR.dateTime { value: @2020-01-02T00:00:00Z } during First([Encounter]).period`, con un period, da el error «cannot compare dateTime»; Java da true. Pasa también en main. Lo encontró el 006 (`TestMembershipThroughTheModelFollowsTheSpecification`, D12 y D13).
 1c17. **El ciclo que se cierra dentro de un pase especulativo no se reporta:** `define function F(): A` con `define A: F()`, y `define A: ({1, 2}) X aggregate R: R + A`, no dan ningún diagnóstico. `typeOfDefine` reporta el ciclo antes de salir del modo especulativo, y `reportf` lo calla. En ejecución, el motor da «maximum expression depth exceeded». Pasa también en main. Lo encontró Fable en la ronda 3 del review del 006.
+1c19. **Del 007 (decisiones del usuario del 22-10-2026):**
+  - una lista vacía no conserva su tipo en ejecución: `(List<Any>{ List<Integer>{} })[0] as List<String>` da `{}`, y el ADR 003 (decisión 8) dice null. Son D104 y D823 de `types`, `own defect`;
+  - `Log` en coma flotante: `LogOfAScaledString` está a 1,16 del valor exacto, y Java también lo calcula mal.
 1c18. **El comparador de respuestas no ve el tipo FHIR ni distingue Integer de Long:** `answers.Reference` iguala `FHIR.string "a"` con `FHIR.code "a"`, e `Integer 1` con `Long 1`. Lo encontró Codex en la ronda adversarial del 007 (sonda `compare_probe.go`).
 1c12. **Un intervalo en un intervalo null:** `Interval[1, 2] in (null as Interval<Integer>)` da false, y la especificación (Interval Operators, Included In) dice null cuando un argumento es null. Es anterior al 005: la sobrecarga intervalo-intervalo de `in` llega a la rama de List Contains (`evalInContains`). Lo encontró Fable en la ronda 1 del review del 005.
-1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s.** El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.
+1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s** (el 23-10-2026, con la 5.4.0: 1,36 GB y 834 s). El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.
 2. **`distinct` y operaciones de conjuntos sobre intervalos** son O(n²). Con un plazo ya no corren de más, desde #144, pero siguen siendo lentas: hace falta un índice por cubetas para intervalos.
 3. **D4a, identidad de tipo:** un descriptor `{modelo, nombre}` en vez del texto de `Type()`. Ver [arquitectura-verificacion-2026-10-18.md](../arquitectura-verificacion-2026-10-18.md) §4.
 4. **ELM oficial:** el documento completo del traductor y los 54 de 115 tipos de nodo que faltan. Ya hay un arreglo listo para entrar cuando sea: `Abs` se importa como `OpPositive`.

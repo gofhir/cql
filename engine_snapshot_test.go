@@ -422,28 +422,7 @@ func pinnedReferenceEngine(t *testing.T, engine string) string {
 	dir := filepath.Join("internal", "referenceharness")
 	switch engine {
 	case "java":
-		raw, err := os.ReadFile(filepath.Join(dir, "pom.xml"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		// Read as XML: a version in a comment is not the dependency's.
-		var pom struct {
-			Dependencies []struct {
-				GroupID    string `xml:"groupId"`
-				ArtifactID string `xml:"artifactId"`
-				Version    string `xml:"version"`
-			} `xml:"dependencies>dependency"`
-		}
-		if err := xml.Unmarshal(raw, &pom); err != nil {
-			t.Fatal(err)
-		}
-		for _, d := range pom.Dependencies {
-			if d.GroupID == "info.cqframework" && d.ArtifactID == "engine" {
-				return d.Version
-			}
-		}
-		t.Fatal("pom.xml pins no info.cqframework:engine")
-		return ""
+		return pinnedJavaArtifact(t, "engine-jvm")
 	case "js":
 		raw, err := os.ReadFile(filepath.Join(dir, "js", "package-lock.json"))
 		if err != nil {
@@ -479,4 +458,31 @@ func snapshotElement(s *string) string {
 		return "null"
 	}
 	return fmt.Sprintf("%q", *s)
+}
+
+// pinnedJavaArtifact is the version of an org.cqframework artifact the harness
+// pins in pom.xml, read as XML: a version in a comment is not the dependency's.
+func pinnedJavaArtifact(t *testing.T, artifact string) string {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("internal", "referenceharness", "pom.xml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var pom struct {
+		Dependencies []struct {
+			GroupID    string `xml:"groupId"`
+			ArtifactID string `xml:"artifactId"`
+			Version    string `xml:"version"`
+		} `xml:"dependencies>dependency"`
+	}
+	if err := xml.Unmarshal(raw, &pom); err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range pom.Dependencies {
+		if d.GroupID == "org.cqframework" && d.ArtifactID == artifact {
+			return d.Version
+		}
+	}
+	t.Fatalf("pom.xml pins no org.cqframework:%s", artifact)
+	return ""
 }

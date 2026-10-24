@@ -162,7 +162,7 @@ define DecimalLogNearOne: Log(10, 1.00001) // control
 // A string read as a Decimal is brought to the scale, toward negative infinity.
 define ToDecimalScaled: ToDecimal('1.000000005') // control
 define ToDecimalNegativeScaled: ToDecimal('-1.000000005') // control
-define LogOfAScaledString: Log(10, ToDecimal('0.999999999999999999999')) // control
+define LogOfAScaledString: Log(10, ToDecimal('0.999999999999999999999')) // both in floating point: runtime.divergences.md
 define ToDecimalScaleKept: ToString(ToDecimal('1.000000005')) // control
 define ToDecimalPrecision: Precision(ToDecimal('1.000000005')) // control
 define ToDecimalTrailingZeros: ToString(ToDecimal('2.50000000000')) // control

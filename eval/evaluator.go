@@ -210,7 +210,7 @@ func containerVerdict(left, right fptypes.Value) (elementVerdict, bool) {
 // conjunction of equality comparisons" of its elements, so, unlike the walk of
 // a list, order does not decide: an element that differs makes it false
 // wherever it is, and only then an element null on one side makes it null.
-// The Java engine 3.26.0 answers null whenever an element is null on one side;
+// The Java engine (3.26.0 and 5.4.0) answers null whenever an element is null on one side;
 // plan 004 follows the specification.
 func codeVerdict(a, b cqltypes.Code) elementVerdict {
 	return conjunction(

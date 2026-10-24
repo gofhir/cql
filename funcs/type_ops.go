@@ -230,7 +230,7 @@ func ToConcept(v fptypes.Value) (fptypes.Value, error) {
 	}
 	if c, ok := v.(cqltypes.Code); ok {
 		// The Concept has a display of its own, which a conversion leaves
-		// null (the Java engine 3.26.0 agrees).
+		// null (the Java engine 3.26.0 and 5.4.0 agree).
 		return cqltypes.NewConcept([]cqltypes.Code{c}, nil), nil
 	}
 	// Handle Tuple with TypeOverride="Code" (from instance expressions like Code { code: '...' })

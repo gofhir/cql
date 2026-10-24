@@ -1,7 +1,7 @@
 {
   "library" : "corpus cases.cql",
   "sourceSha256" : "c26c8a662273615bcd9adad3b0ddde5f67c9bdcf034b0ea848d0487a78a6f8ec",
-  "engine" : "3.26.0",
+  "engine" : "5.4.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
     "D0" : {
@@ -93,11 +93,11 @@
     },
     "D24" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date,FHIR.Period)."
+      "message" : "Could not resolve call to operator IncludedIn with signature (FHIR.date, FHIR.Period)."
     },
     "D25" : {
       "error" : "Translation",
-      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>,choice<FHIR.boolean,FHIR.integer>)."
+      "message" : "Could not resolve call to operator Includes with signature (list<System.Decimal>, choice<FHIR.boolean,FHIR.integer>)."
     },
     "D26" : {
       "type" : "Boolean",
@@ -108,13 +108,10 @@
       "value" : true
     },
     "D28" : {
-      "error" : "CqlException",
-      "message" : "Error evaluating expression D28: Could not resolve type org.opencds.cqf.cql.engine.runtime.Any."
-    },
-    "D29" : {
       "type" : "Boolean",
-      "value" : false
+      "value" : true
     },
+    "D29" : null,
     "D30" : {
       "type" : "Boolean",
       "value" : true

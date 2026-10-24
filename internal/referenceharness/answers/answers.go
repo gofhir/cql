@@ -126,6 +126,8 @@ func referenceStructure(v referenceValue) (Answer, bool) {
 			codes[i] = Reference(c)
 		}
 		return concept(list(codes), plainString(v.Display)), true
+	case "ValueSet", "CodeSystem":
+		return referenceVocabulary(v), true
 	case "Tuple", "Object":
 		names := slices.Sorted(maps.Keys(v.Fields))
 		fields := make([]Answer, len(names))
@@ -268,10 +270,15 @@ func partsValue(v fptypes.Value) (Answer, bool) {
 		}
 		return concept(list(codes), stringField(n.Display)), true
 	case cqltypes.Tuple:
-		names := slices.Sorted(maps.Keys(n.Elements))
-		fields := make([]Answer, len(names))
-		for i, name := range names {
-			fields[i] = Value(n.Elements[name])
+		// A ValueSet's or a CodeSystem's null element is read as not given,
+		// as on the reference's side (referenceVocabulary).
+		vocabulary := n.Type() == "ValueSet" || n.Type() == "CodeSystem"
+		var names []string
+		var fields []Answer
+		for _, name := range slices.Sorted(maps.Keys(n.Elements)) {
+			if a := Value(n.Elements[name]); !vocabulary || a.Kind != "null" {
+				names, fields = append(names, name), append(fields, a)
+			}
 		}
 		return structure(n.Type(), names, fields), true
 	}
@@ -440,8 +447,25 @@ func compareUntyped(a, b Answer, leaf func(a, b Answer) bool) bool {
 		return b.Kind == "string" && b.Text == strings.TrimPrefix(a.Text, "Text ")
 	}
 	// An object of no type is the same as a structure of any type with the
-	// same fields.
+	// same fields. Against a ValueSet or a CodeSystem, whose null elements are
+	// read as not given (referenceVocabulary, Value), so are the object's.
+	if t := structureType(b); t == "ValueSet" || t == "CodeSystem" {
+		a = withoutNullParts(a)
+	}
 	return b.Kind == "structure" && sameParts(a, b, leaf)
+}
+
+// withoutNullParts is a structure with its null fields taken off.
+func withoutNullParts(a Answer) Answer {
+	var names []string
+	var parts []Answer
+	for i, p := range a.Parts {
+		if p.Kind != "null" {
+			names, parts = append(names, a.Names[i]), append(parts, p)
+		}
+	}
+	a.Names, a.Parts = names, parts
+	return a
 }
 
 // structured reports whether an answer holds a structure or a value of no
@@ -564,4 +588,25 @@ func numberText(a Answer) string {
 		return "Decimal " + a.Num.String()
 	}
 	return a.Num.String()
+}
+
+// referenceVocabulary reads a System ValueSet or CodeSystem. Java writes every
+// element of each (CQL 1.5.3, Clinical Values), null the ones a selector did
+// not give; this engine and cql-execution keep only the given ones. A null one
+// is read as not given, on both sides (Value); an empty list of code systems
+// is not null, and stays.
+func referenceVocabulary(v referenceValue) Answer {
+	var names []string
+	var fields []Answer
+	for _, n := range slices.Sorted(maps.Keys(v.Fields)) {
+		// Its texts are written plain, as a Code's; its code systems as a list.
+		a := plainString(v.Fields[n])
+		if n == "codesystems" {
+			a = Reference(v.Fields[n])
+		}
+		if a.Kind != "null" {
+			names, fields = append(names, n), append(fields, a)
+		}
+	}
+	return structure(v.Type, names, fields)
 }

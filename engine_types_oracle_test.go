@@ -142,10 +142,6 @@ var (
 	typesCast   = regexp.MustCompile(`^\(cast \(List<Any>\{ (.*) \}\)\[0\] as (\S+)\)$`)
 )
 
-// emptyListUndecided is the one question of the area the oracle leaves
-// open.
-const emptyListUndecided = "the specification does not say whether an empty list's specifier is its run-time type"
-
 // typesVerdict is the oracle's answer to a definition: the answer the
 // specification expects, how it was reached, or why it cannot say.
 type typesVerdict struct {
@@ -187,32 +183,32 @@ func typesExpected(expr string) (typesVerdict, error) {
 		}
 		return typesVerdict{expected: "null", decided: true, reason: "null is of no type, so cast null as " + t.String() + " is null (" + undecidedADR + ", decision 2)"}, nil
 	}
-	// An empty list has no element to give it a type at run time. Its
-	// specifier gives it List<Integer> statically, and the specification does
-	// not say whether that is its run-time type: all three engines take an
-	// empty list for a list of any element (D104, D823 agree on it).
-	if lit == "List<Integer>{}" && t.name == "List" && !derivesFrom(named("Integer"), t.element[0]) {
-		return typesVerdict{undecided: true, reason: emptyListUndecided}, nil
-	}
 	of := derivesFrom(*value.runtime, t)
+	// An empty list has no element to give it a type at run time, and the
+	// specification does not say whether its specifier is that type: ADR 003
+	// takes the specifier's (decision 8), as the Java engine 5.4.0 does.
+	emptyList := lit == "List<Integer>{}" && t.name == "List" && !of
 	relation := " is not of "
 	if of {
 		relation = " is of "
 	}
 	reason := "a " + value.runtime.String() + relation + t.String()
+	if emptyList {
+		reason = "an empty " + value.runtime.String() + relation + t.String() + ": its specifier is its run-time type (" + undecidedADR + ", decision 8)"
+	}
 	switch op {
 	case "is":
-		return typesVerdict{expected: fmt.Sprint(of), reason: reason}, nil
+		return typesVerdict{expected: fmt.Sprint(of), reason: reason, decided: emptyList}, nil
 	case "as-null":
-		return typesVerdict{expected: fmt.Sprint(!of), reason: reason}, nil
+		return typesVerdict{expected: fmt.Sprint(!of), reason: reason, decided: emptyList}, nil
 	case "as":
 		if !of {
-			return typesVerdict{expected: "null", reason: reason}, nil
+			return typesVerdict{expected: "null", reason: reason, decided: emptyList}, nil
 		}
 		return typesVerdict{expected: value.answer, reason: reason}, nil
 	}
 	if !of {
-		return typesVerdict{expected: "error", reason: reason}, nil
+		return typesVerdict{expected: "error", reason: reason, decided: emptyList}, nil
 	}
 	return typesVerdict{expected: value.answer, reason: reason}, nil
 }
@@ -278,7 +274,7 @@ func TestTheTypesOracleAgreesWhereAllAgree(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}
-		if v.undecided && v.reason != emptyListUndecided {
+		if v.undecided {
 			// ADR 003 decides the rest: an undecided verdict would drop it from this test.
 			t.Errorf("%s: the oracle leaves undecided what it should decide (%s)", name, v.reason)
 		}

@@ -28,6 +28,7 @@ concept "K": { "A" } display 'kay'
 // intersection of the codes".
 //
 // Each answer is the Java engine's 3.26.0 (probes of 21-10-2026, plan 004),
+// and 5.4.0's (re-measured 22-10-2026, plan 007),
 // but for the two marked: there Java answers null where the conjunction gives
 // false, and the specification decides (the user's decision, plan 004).
 func TestCodeFieldsKeepNullApartFromEmpty(t *testing.T) {
@@ -118,7 +119,8 @@ func TestCodeFieldsKeepNullApartFromEmpty(t *testing.T) {
 // unknown counts as not equal, as both reference engines answer.
 //
 // Each answer is the Java engine's 3.26.0 and cql-execution's 3.3.2 (probes of
-// 21-10-2026, plan 004 PR 2), but for the ones marked: there Java compares by
+// 21-10-2026, plan 004 PR 2), and Java 5.4.0's, re-measured 22-10-2026 (plan
+// 007), but for the ones marked: there Java compares by
 // equivalence (IndexOf) or fails (Mode, "Code is not comparable"), and the
 // answer is cql-execution's, which is the specification's. Mode's section says
 // nothing of how it compares elements: it counts by equality, as distinct does,
