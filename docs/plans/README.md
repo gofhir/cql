@@ -8,9 +8,9 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 **007 cerrado:** #162 (1347eb4) y #163 (9806a90, mergeado el 24-10-2026 con el CI en verde). Plan: [007-referencias-al-dia.md](007-referencias-al-dia.md).
 
-**Paso (25-10-2026):** cierre. El review convergió en la ronda 2 (Codex y Opus); `make check` está en verde, y el reporte es [docs/evidence/2026-10-25.md](../evidence/2026-10-25.md). Sin commit.
+**Paso (25-10-2026):** cierre. El review convergió en la ronda 2 (Codex y Opus); `make check` está en verde, y el reporte es [docs/evidence/2026-10-25.md](../evidence/2026-10-25.md). PR abierto: #164 (28d2c5b), sin merge.
 
-**Próximo paso concreto:** que el usuario apruebe el commit y el PR del 008 (rama `chore/fhirpath-1.16`). Después viene `shopspring/decimal` v1.6.0, como incremento propio.
+**Próximo paso concreto:** que el CI de #164 pase y el usuario lo mergee. Después viene `shopspring/decimal` v1.6.0, como incremento propio.
 
 ## Pendientes, en orden
 
