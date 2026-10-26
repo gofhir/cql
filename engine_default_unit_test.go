@@ -420,8 +420,13 @@ func TestWidthIsTheSubtractionItIsDefinedAs(t *testing.T) {
 // is width plus the point size and only the width half was rewritten.
 func TestSizeFollowsWidth(t *testing.T) {
 	for _, tt := range []struct{ interval, width, size string }{
-		// Continuous: a size is the width, there being no points to count.
-		{"Interval[100 'cm', 2 'm']", "1 'm'", "1 'm'"},
+		// Continuous: this engine answers the width. A width is a subtraction,
+		// and "the unit of the result will be the most granular unit of either
+		// input" (CQL Reference, Subtract). The specification adds a point to a
+		// size, "(end of argument – start of argument) + point-size" (CQL
+		// Reference, Size), and the Java engine does: 100.00000001 'cm' here. A
+		// known defect, older than plan 008: units.divergences.tsv, D25.
+		{"Interval[100 'cm', 2 'm']", "100 'cm'", "100 'cm'"},
 		{"Interval[1.0, 2.0]", "1", "1"},
 		{"Interval[1 'cm', 1 's']", "null", "null"},
 		// Discrete: a size counts the points, so it is the width plus one.
@@ -643,29 +648,29 @@ func TestQuantityExpansionBehavesLikeTheDecimalOneItIsBuiltOn(t *testing.T) {
 	}
 }
 
-// TestWidthAndExpandReportDifferentUnitsOnPurpose records an asymmetry that is
-// measured rather than accidental, so that changing it is a decision.
+// TestWidthAndExpandAnswerInTheMostGranularUnit checks that the two answer in
+// the same unit over an interval whose bounds are in two.
 //
-// Over the same interval the two answer in different units:
-//
-//	width of Interval[100 'cm', 2 'm']             1 'm'
-//	expand Interval[100 'cm', 2 'm'] per 50 'cm'   {100 'cm', 150 'cm', 200 'cm'}
-//
-// Each inherits the unit from the operation it is defined as. A width is
-// `high - low`, and a subtraction answers in the unit of what it subtracts from.
-// An expansion walks from the low bound, so it answers in that bound's unit.
-// Neither is wrong about the quantity — 1 'm' is 100 'cm' — and forcing them to
-// agree would mean overriding one of the two definitions.
-func TestWidthAndExpandReportDifferentUnitsOnPurpose(t *testing.T) {
-	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm']"); got != "1 'm'" {
-		t.Errorf("width = %s, want 1 'm' — the unit of the subtraction's left side", got)
+// A width is `high - low`, and "the unit of the result will be the most
+// granular unit of either input" (CQL Reference, Subtract): centimeters, not
+// the meters of the side subtracted from. An expansion walks from the low
+// bound, in centimeters here. Until fhirpath v1.16.6 a subtraction answered in
+// the unit of its left side, and the two disagreed: width 1 'm', expand in
+// centimeters (docs/plans/008-fhirpath-1-16.md). The Java engine answers the
+// width in the least granular unit, 1.0 'm'; that is recorded in
+// testdata/snapshots/units.divergences.tsv.
+func TestWidthAndExpandAnswerInTheMostGranularUnit(t *testing.T) {
+	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm']"); got != "100 'cm'" {
+		t.Errorf("width = %s, want 100 'cm' — the more granular of the two units", got)
+	}
+	if got := evalDefaultUnit(t, "width of Interval[1 'm', 200 'cm']"); got != "100 'cm'" {
+		t.Errorf("width = %s, want 100 'cm' whichever bound holds the finer unit", got)
 	}
 	if got := evalDefaultUnit(t, "expand Interval[100 'cm', 2 'm'] per 50 'cm'"); got != "{100 'cm', 150 'cm', 200 'cm'}" {
 		t.Errorf("expand = %s, want centimeters — the unit it starts walking from", got)
 	}
-	// And they agree about the quantity, which is the part that matters.
-	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm'] = 100 'cm'"); got != "true" {
-		t.Errorf("the two units disagree about the value: %s", got)
+	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm'] = 1 'm'"); got != "true" {
+		t.Errorf("the width is not the quantity it should be: %s", got)
 	}
 }
 

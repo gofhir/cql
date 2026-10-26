@@ -1,0 +1,73 @@
+D0	Quantity 100 'cm'
+D1	Quantity -100 'cm'
+D10	Quantity 1001 'mm'
+D11	Quantity 3.54 'cm'
+D12	Quantity 0 'g'
+D13	Quantity 1556.555555 'mg'
+D14	Quantity 2 'mg'
+D15	null
+D16	Quantity 101 '%'
+D17	null
+D18	null
+D19	Quantity 1500 'mg'
+D2	Quantity 300 'cm'
+D20	Quantity 1500 'mg'
+D21	Quantity 750 'mg'
+D22	Quantity 1 'g'
+D23	Quantity 500 'mg'
+D24	Quantity 100 'cm'
+D25	Quantity 100 'cm'
+D26	List[Quantity 100 'cm', Quantity 150 'cm', Quantity 200 'cm']
+D27	List[Interval[Quantity 1 'g', Quantity 3000 'mg']]
+D28	Quantity 100.00000001 'cm'
+D29	Quantity 1000.99999999 'mg'
+D3	Quantity 300 'cm'
+D30	Quantity 499.99999999 'mg'
+D31	Decimal 1001
+D32	Boolean false
+D33	Boolean true
+D34	Quantity 25 hour
+D35	Quantity 25 'h'
+D36	Quantity 25 hours
+D37	Quantity 90 minutes
+D38	Quantity 8 day
+D39	Quantity 2 month
+D4	Quantity 1500 'mg'
+D40	Quantity 3 year
+D41	null
+D42	Quantity 13 month
+D43	null
+D44	null
+D45	null
+D46	null
+D47	Quantity 31.4375 'd'
+D48	null
+D49	Date 2020-03-01
+D5	Quantity 1500 'mg'
+D50	Boolean true
+D51	null
+D52	null
+D53	null
+D54	null
+D55	null
+D56	null
+D57	Quantity 13 month
+D58	null
+D59	null
+D6	Quantity -997 'm'
+D60	null
+D61	null
+D62	null
+D63	null
+D64	null
+D65	null
+D66	null
+D67	null
+D68	null
+D69	Quantity 250 'mg'
+D7	Quantity 997 'm'
+D70	Quantity 250 'mg'
+D71	Quantity 353.55339059 'mg'
+D72	Quantity 125000 'mg2'
+D8	Quantity 750 'mL'
+D9	Quantity 90 'min'

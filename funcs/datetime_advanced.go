@@ -210,7 +210,7 @@ func DateTimeConstructor(year, month, day, hour, minute, second, millisecond, tz
 			s += fmt.Sprintf("%+03d:00", hours)
 		}
 	}
-	return fptypes.NewDateTime(s)
+	return cqltypes.NewDateTime(s)
 }
 
 // TimeConstructor creates a Time from hour, minute, second, millisecond.
@@ -228,7 +228,7 @@ func TimeConstructor(hour, minute, second, millisecond fptypes.Value) (fptypes.V
 			}
 		}
 	}
-	return fptypes.NewTime(s)
+	return cqltypes.NewTime(s)
 }
 
 // DurationBetween calculates the duration between two date/time values at a given precision.

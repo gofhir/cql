@@ -1,0 +1,399 @@
+{
+  "library": "corpus units.cql",
+  "sourceSha256": "075b405725433c5a298a8e3d4cb31d628efc94869d28b2c923a1bcf4b4d99a8d",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": {
+      "type": "Quantity",
+      "value": "1",
+      "unit": "m"
+    },
+    "D1": {
+      "type": "Quantity",
+      "value": "-1",
+      "unit": "m"
+    },
+    "D2": {
+      "type": "Quantity",
+      "value": "300",
+      "unit": "cm"
+    },
+    "D3": {
+      "type": "Quantity",
+      "value": "300",
+      "unit": "cm"
+    },
+    "D4": {
+      "type": "Quantity",
+      "value": "1500",
+      "unit": "mg"
+    },
+    "D5": {
+      "type": "Quantity",
+      "value": "1500",
+      "unit": "mg"
+    },
+    "D6": {
+      "type": "Quantity",
+      "value": "-0.997",
+      "unit": "km"
+    },
+    "D7": {
+      "type": "Quantity",
+      "value": "0.997",
+      "unit": "km"
+    },
+    "D8": {
+      "type": "Quantity",
+      "value": "0.75",
+      "unit": "L"
+    },
+    "D9": {
+      "type": "Quantity",
+      "value": "90",
+      "unit": "min"
+    },
+    "D10": {
+      "type": "Quantity",
+      "value": "1001",
+      "unit": "mm"
+    },
+    "D11": {
+      "type": "Quantity",
+      "value": "3.54",
+      "unit": "cm"
+    },
+    "D12": {
+      "type": "Quantity",
+      "value": "0",
+      "unit": "kg"
+    },
+    "D13": {
+      "type": "Quantity",
+      "value": "1556.555555",
+      "unit": "mg"
+    },
+    "D14": {
+      "type": "Quantity",
+      "value": "2",
+      "unit": "mg"
+    },
+    "D15": null,
+    "D16": {
+      "type": "Quantity",
+      "value": "101",
+      "unit": "%"
+    },
+    "D17": {
+      "type": "Quantity",
+      "value": "275.15",
+      "unit": "K"
+    },
+    "D18": {
+      "type": "Quantity",
+      "value": "311.15",
+      "unit": "K"
+    },
+    "D19": {
+      "type": "Quantity",
+      "value": "1.5",
+      "unit": "g"
+    },
+    "D20": {
+      "type": "Quantity",
+      "value": "1500",
+      "unit": "mg"
+    },
+    "D21": {
+      "type": "Quantity",
+      "value": "0.75",
+      "unit": "g"
+    },
+    "D22": {
+      "type": "Quantity",
+      "value": "1",
+      "unit": "g"
+    },
+    "D23": {
+      "type": "Quantity",
+      "value": "0.5",
+      "unit": "g"
+    },
+    "D24": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot calculate width of Quantity Interval with different units\n\tCQL Library:\tD24|1.0\n\tExpression:\tWidth\n\tELM Local ID:\t209\n\tCQL Locator:\t5:13-5:46\n"
+    },
+    "D25": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot calculate size of Quantity Interval with different units\n\tCQL Library:\tD25|1.0\n\tExpression:\tSize\n\tELM Local ID:\t216\n\tCQL Locator:\t5:13-5:43\n"
+    },
+    "D26": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Interval",
+          "low": {
+            "type": "Quantity",
+            "value": "100",
+            "unit": "cm"
+          },
+          "lowClosed": true,
+          "high": {
+            "type": "Quantity",
+            "value": "149",
+            "unit": "cm"
+          },
+          "highClosed": true
+        },
+        {
+          "type": "Interval",
+          "low": {
+            "type": "Quantity",
+            "value": "150",
+            "unit": "cm"
+          },
+          "lowClosed": true,
+          "high": {
+            "type": "Quantity",
+            "value": "199",
+            "unit": "cm"
+          },
+          "highClosed": true
+        }
+      ]
+    },
+    "D27": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Interval",
+          "low": {
+            "type": "Quantity",
+            "value": "1",
+            "unit": "g"
+          },
+          "lowClosed": true,
+          "high": {
+            "type": "Quantity",
+            "value": "3000",
+            "unit": "mg"
+          },
+          "highClosed": true
+        }
+      ]
+    },
+    "D28": {
+      "type": "Quantity",
+      "value": "2",
+      "unit": "m"
+    },
+    "D29": {
+      "type": "Quantity",
+      "value": "1000",
+      "unit": "mg"
+    },
+    "D30": {
+      "type": "Quantity",
+      "value": "0.49999999",
+      "unit": "g"
+    },
+    "D31": {
+      "type": "Decimal",
+      "value": "1001"
+    },
+    "D32": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D33": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D34": {
+      "type": "Quantity",
+      "value": "25",
+      "unit": "hour"
+    },
+    "D35": {
+      "type": "Quantity",
+      "value": "25",
+      "unit": "h"
+    },
+    "D36": {
+      "type": "Quantity",
+      "value": "25",
+      "unit": "h"
+    },
+    "D37": {
+      "type": "Quantity",
+      "value": "90",
+      "unit": "minute"
+    },
+    "D38": {
+      "type": "Quantity",
+      "value": "8",
+      "unit": "day"
+    },
+    "D39": {
+      "type": "Quantity",
+      "value": "2",
+      "unit": "mo_g"
+    },
+    "D40": {
+      "type": "Quantity",
+      "value": "3",
+      "unit": "a_g"
+    },
+    "D41": {
+      "type": "Quantity",
+      "value": "31.436875",
+      "unit": "day"
+    },
+    "D42": {
+      "type": "Quantity",
+      "value": "13",
+      "unit": "month"
+    },
+    "D43": {
+      "type": "Quantity",
+      "value": "366.2425",
+      "unit": "day"
+    },
+    "D44": {
+      "type": "Quantity",
+      "value": "0.96714512",
+      "unit": "month"
+    },
+    "D45": {
+      "type": "Quantity",
+      "value": "731.485",
+      "unit": "hour"
+    },
+    "D46": {
+      "type": "Quantity",
+      "value": "31.436875",
+      "unit": "d"
+    },
+    "D47": {
+      "type": "Quantity",
+      "value": "31.4375",
+      "unit": "d"
+    },
+    "D48": {
+      "type": "Date",
+      "value": "2020-03-02",
+      "precision": "day"
+    },
+    "D49": {
+      "type": "Date",
+      "value": "2020-03-01",
+      "precision": "day"
+    },
+    "D50": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D51": {
+      "type": "Date",
+      "value": "2019-12-30",
+      "precision": "day"
+    },
+    "D52": {
+      "type": "Quantity",
+      "value": "5.348125",
+      "unit": "week"
+    },
+    "D53": {
+      "type": "Quantity",
+      "value": "1.98083465",
+      "unit": "year"
+    },
+    "D54": {
+      "type": "Quantity",
+      "value": "1.03285488",
+      "unit": "month"
+    },
+    "D55": {
+      "type": "Quantity",
+      "value": "31.436875",
+      "unit": "day"
+    },
+    "D56": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot calculate width of Quantity Interval with different units\n\tCQL Library:\tD56|1.0\n\tExpression:\tWidth\n\tELM Local ID:\t209\n\tCQL Locator:\t5:13-5:45\n"
+    },
+    "D57": {
+      "type": "Quantity",
+      "value": "1.08333333",
+      "unit": "year"
+    },
+    "D58": {
+      "type": "Quantity",
+      "value": "61.87375",
+      "unit": "day"
+    },
+    "D59": {
+      "type": "Quantity",
+      "value": "43859.1",
+      "unit": "minute"
+    },
+    "D60": {
+      "type": "Quantity",
+      "value": "525950.2",
+      "unit": "minute"
+    },
+    "D61": {
+      "type": "Quantity",
+      "value": "2629747",
+      "unit": "second"
+    },
+    "D62": {
+      "type": "Quantity",
+      "value": "-0.99999994",
+      "unit": "year"
+    },
+    "D63": null,
+    "D64": null,
+    "D65": {
+      "type": "Quantity",
+      "value": "1.99988592",
+      "unit": "year"
+    },
+    "D66": {
+      "type": "Quantity",
+      "value": "732.485",
+      "unit": "hour"
+    },
+    "D67": {
+      "type": "Quantity",
+      "value": "367.2425",
+      "unit": "day"
+    },
+    "D68": {
+      "type": "Quantity",
+      "value": "6.348125",
+      "unit": "week"
+    },
+    "D69": {
+      "type": "Quantity",
+      "value": "0.25",
+      "unit": "g"
+    },
+    "D70": {
+      "type": "Quantity",
+      "value": "250",
+      "unit": "mg"
+    },
+    "D71": {
+      "type": "Quantity",
+      "value": "0.3535533905932738",
+      "unit": "g"
+    },
+    "D72": {
+      "type": "Quantity",
+      "value": "0.125",
+      "unit": "g"
+    }
+  }
+}

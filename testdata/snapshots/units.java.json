@@ -1,0 +1,265 @@
+{
+  "library" : "corpus units.cql",
+  "sourceSha256" : "075b405725433c5a298a8e3d4cb31d628efc94869d28b2c923a1bcf4b4d99a8d",
+  "engine" : "5.4.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Quantity",
+      "value" : "1.0",
+      "unit" : "m"
+    },
+    "D1" : {
+      "type" : "Quantity",
+      "value" : "-1.0",
+      "unit" : "m"
+    },
+    "D2" : {
+      "type" : "Quantity",
+      "value" : "3.0",
+      "unit" : "m"
+    },
+    "D3" : {
+      "type" : "Quantity",
+      "value" : "3.0",
+      "unit" : "m"
+    },
+    "D4" : {
+      "type" : "Quantity",
+      "value" : "1.50",
+      "unit" : "g"
+    },
+    "D5" : {
+      "type" : "Quantity",
+      "value" : "1.50",
+      "unit" : "g"
+    },
+    "D6" : {
+      "type" : "Quantity",
+      "value" : "-0.9970",
+      "unit" : "km"
+    },
+    "D7" : {
+      "type" : "Quantity",
+      "value" : "0.9970",
+      "unit" : "km"
+    },
+    "D8" : {
+      "type" : "Quantity",
+      "value" : "0.75",
+      "unit" : "L"
+    },
+    "D9" : {
+      "type" : "Quantity",
+      "value" : "1.50",
+      "unit" : "h"
+    },
+    "D10" : {
+      "type" : "Quantity",
+      "value" : "1.0010",
+      "unit" : "m"
+    },
+    "D11" : {
+      "type" : "Quantity",
+      "value" : "1.394",
+      "unit" : "[in_i]"
+    },
+    "D12" : {
+      "type" : "Quantity",
+      "value" : "0.0",
+      "unit" : "kg"
+    },
+    "D13" : {
+      "type" : "Quantity",
+      "value" : "1.55655555",
+      "unit" : "g"
+    },
+    "D14" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "mg"
+    },
+    "D15" : null,
+    "D16" : {
+      "type" : "Quantity",
+      "value" : "1.010",
+      "unit" : "1"
+    },
+    "D17" : null,
+    "D18" : null,
+    "D19" : {
+      "type" : "Quantity",
+      "value" : "1.50",
+      "unit" : "g"
+    },
+    "D20" : {
+      "type" : "Quantity",
+      "value" : "1.50",
+      "unit" : "g"
+    },
+    "D21" : {
+      "type" : "Quantity",
+      "value" : "0.75",
+      "unit" : "g"
+    },
+    "D22" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "g"
+    },
+    "D23" : {
+      "type" : "Quantity",
+      "value" : "0.50",
+      "unit" : "g"
+    },
+    "D24" : {
+      "type" : "Quantity",
+      "value" : "1.0",
+      "unit" : "m"
+    },
+    "D25" : {
+      "type" : "Quantity",
+      "value" : "1.00000001",
+      "unit" : "m"
+    },
+    "D26" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Quantity",
+        "value" : "100",
+        "unit" : "cm"
+      }, {
+        "type" : "Quantity",
+        "value" : "150",
+        "unit" : "cm"
+      }, {
+        "type" : "Quantity",
+        "value" : "200",
+        "unit" : "cm"
+      }, {
+        "type" : "Quantity",
+        "value" : "250",
+        "unit" : "cm"
+      } ]
+    },
+    "D27" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Interval",
+        "low" : {
+          "type" : "Quantity",
+          "value" : "1",
+          "unit" : "g"
+        },
+        "lowClosed" : true,
+        "high" : {
+          "type" : "Quantity",
+          "value" : "3000",
+          "unit" : "mg"
+        },
+        "highClosed" : true
+      } ]
+    },
+    "D28" : {
+      "type" : "Quantity",
+      "value" : "1.00000001",
+      "unit" : "m"
+    },
+    "D29" : {
+      "type" : "Quantity",
+      "value" : "1.00099999",
+      "unit" : "g"
+    },
+    "D30" : {
+      "type" : "Quantity",
+      "value" : "0.49999999",
+      "unit" : "g"
+    },
+    "D31" : {
+      "type" : "Decimal",
+      "value" : "1.0010"
+    },
+    "D32" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D33" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D34" : null,
+    "D35" : {
+      "type" : "Quantity",
+      "value" : "1.04166666666666666666666666666667",
+      "unit" : "d"
+    },
+    "D36" : null,
+    "D37" : null,
+    "D38" : null,
+    "D39" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "month"
+    },
+    "D40" : null,
+    "D41" : null,
+    "D42" : null,
+    "D43" : null,
+    "D44" : null,
+    "D45" : null,
+    "D46" : null,
+    "D47" : {
+      "type" : "Quantity",
+      "value" : "1.0328542094455852156057495",
+      "unit" : "mo"
+    },
+    "D48" : null,
+    "D49" : {
+      "type" : "Date",
+      "value" : "2020-03-01",
+      "precision" : "day"
+    },
+    "D50" : null,
+    "D51" : null,
+    "D52" : null,
+    "D53" : null,
+    "D54" : null,
+    "D55" : null,
+    "D56" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (1 'month') must be greater than or equal to the starting boundary (1 'day')."
+    },
+    "D57" : null,
+    "D58" : null,
+    "D59" : null,
+    "D60" : null,
+    "D61" : null,
+    "D62" : null,
+    "D63" : null,
+    "D64" : null,
+    "D65" : null,
+    "D66" : null,
+    "D67" : null,
+    "D68" : null,
+    "D69" : {
+      "type" : "Quantity",
+      "value" : "0.25",
+      "unit" : "g"
+    },
+    "D70" : {
+      "type" : "Quantity",
+      "value" : "0.25",
+      "unit" : "g"
+    },
+    "D71" : {
+      "type" : "Quantity",
+      "value" : "0.35355339",
+      "unit" : "g"
+    },
+    "D72" : {
+      "type" : "Quantity",
+      "value" : "0.1250",
+      "unit" : "g2"
+    }
+  }
+}

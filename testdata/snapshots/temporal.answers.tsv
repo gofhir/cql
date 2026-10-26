@@ -1,0 +1,49 @@
+D0	error: CQL evaluation error: 2016-12-31T23:59:60Z: a second of 60 is no CQL value: seconds run from 00 to 59
+D1	error: CQL evaluation error: 2016-12-31T23:59:60.5Z: a second of 60 is no CQL value: seconds run from 00 to 59
+D10	null
+D11	error: CQL evaluation error: not a date or time on the calendar and the clock: 23:60:00
+D12	null
+D13	null
+D14	null
+D15	null
+D16	null
+D17	Boolean true
+D18	Boolean true
+D19	Boolean true
+D2	null
+D20	null
+D21	Boolean true
+D22	Boolean true
+D23	error: CQL syntax error: CQL syntax error: line 6:53 mismatched input 'of' expecting 'from'
+D24	null
+D25	null
+D26	null
+D27	null
+D28	Integer 90
+D29	Integer 10
+D3	null
+D30	null
+D31	DateTime 2020-01-01T10+05:30
+D32	Boolean false
+D33	Boolean true
+D34	null
+D35	null
+D36	null
+D37	null
+D38	null
+D39	Boolean true
+D4	error: CQL evaluation error: 23:a second of 60 is no CQL value: seconds run from 00 to 59
+D40	Boolean true
+D41	Boolean true
+D42	null
+D43	Boolean false
+D44	null
+D45	error: CQL evaluation error: 23:a second of 60 is no CQL value: seconds run from 00 to 59
+D46	Boolean false
+D47	Boolean true
+D48	Boolean true
+D5	error: CQL evaluation error: 2016-12-31T23:59:60.000+a second of 60 is no CQL value: seconds run from 00 to 59
+D6	error: CQL evaluation error: 23:a second of 60 is no CQL value: seconds run from 00 to 59
+D7	null
+D8	Boolean true
+D9	Time 23:59:59.999

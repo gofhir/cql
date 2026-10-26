@@ -1,0 +1,40 @@
+D0	Boolean true
+D1	Boolean true
+D10	Integer 2
+D11	List[Quantity -0.005 'g']
+D12	List[Quantity -5 'mg']
+D13	Boolean true
+D14	Boolean false
+D15	Boolean true
+D16	Boolean false
+D17	Boolean false
+D18	Boolean false
+D19	Boolean false
+D2	Boolean true
+D20	Boolean true
+D21	Integer -1
+D22	Integer -1
+D23	Boolean false
+D24	Boolean false
+D25	Boolean false
+D26	Boolean false
+D27	Boolean false
+D28	List[]
+D29	List[Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}]
+D3	Boolean true
+D30	Boolean false
+D31	Boolean false
+D32	List[Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}]
+D33	List[Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}, Quantity -5 'mg']
+D34	Boolean true
+D35	List[]
+D36	List[]
+D37	List[]
+D38	List[]
+D39	List[String "male"]
+D4	List[Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}]
+D5	List[Quantity -0.005 'g']
+D6	List[]
+D7	List[]
+D8	List[Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}, Quantity -0.005 'g']
+D9	List[Quantity -0.005 'g', Quantity {"value": -5, "unit": "mg", "system": "http://unitsofmeasure.org", "code": "mg"}]

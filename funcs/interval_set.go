@@ -74,7 +74,7 @@ func IntervalWidth(interval cqltypes.Interval) (fptypes.Value, error) {
 	low, high = cqltypes.PairWithQuantity(low, high)
 	if lq, ok := low.(fptypes.Quantity); ok {
 		if hq, ok := high.(fptypes.Quantity); ok {
-			diff, err := hq.Subtract(lq)
+			diff, err := cqltypes.AddQuantities(hq, lq, true)
 			if err != nil {
 				// No unit both can be stated in is a width that does not exist,
 				// which CQL answers with null rather than a failure — the same

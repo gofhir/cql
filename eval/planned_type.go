@@ -22,8 +22,16 @@ import (
 // So every door a DateTime comes through calls this. A stated offset is left
 // alone, and nothing is written into the value: the default is remembered
 // alongside, which is what keeps a literal printing as it was written.
+//
+// A DateTime with a second of 60 stays the text it was read as. FHIR allows the
+// leap second and fhirpath reads it from v1.16.6, but CQL has no such value
+// (cqltypes.ErrLeapSecond), and this engine answered the text before
+// (docs/plans/008-fhirpath-1-16.md, alcance 4).
 func (e *Evaluator) situate(v fptypes.Value) fptypes.Value {
 	dt, isDateTime := v.(fptypes.DateTime)
+	if isDateTime && dt.Second() > 59 {
+		return fptypes.NewString(dt.String())
+	}
 	if !isDateTime || dt.HasTZ() {
 		return v
 	}

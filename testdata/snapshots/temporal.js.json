@@ -1,0 +1,156 @@
+{
+  "library": "corpus temporal.cql",
+  "sourceSha256": "e0b47b745c3ff0a2647584f67fb1e278532f636a4a7972b1c39580f81befd8f0",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": {
+      "type": "DateTime",
+      "value": "2016-12-31T23:59:60+00:00",
+      "precision": "second",
+      "instant": "2016-12-31T23:59:60Z"
+    },
+    "D1": {
+      "type": "DateTime",
+      "value": "2016-12-31T23:59:60.005+00:00",
+      "precision": "millisecond",
+      "instant": "2016-12-31T23:59:60.005Z"
+    },
+    "D2": null,
+    "D3": null,
+    "D5": {
+      "type": "DateTime",
+      "value": "2016-12-31T23:59:60.000+00:00",
+      "precision": "millisecond",
+      "instant": "2016-12-31T23:59:60Z"
+    },
+    "D6": {
+      "type": "Time",
+      "value": "23:59:60",
+      "precision": "second"
+    },
+    "D7": null,
+    "D8": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D9": {
+      "type": "Time",
+      "value": "23:59:59.999",
+      "precision": "millisecond"
+    },
+    "D10": null,
+    "D11": {
+      "type": "Time",
+      "value": "23:60:00",
+      "precision": "second"
+    },
+    "D12": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D13": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D14": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D15": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D16": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D17": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D18": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D19": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D20": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D21": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D22": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D24": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D25": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D26": null,
+    "D27": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D28": {
+      "type": "Integer",
+      "value": "90"
+    },
+    "D29": {
+      "type": "Integer",
+      "value": "10"
+    },
+    "D30": null,
+    "D31": {
+      "type": "DateTime",
+      "value": "2020-01-01T10+05:30",
+      "precision": "hour",
+      "instant": "2020-01-01T10:00:00+05:30"
+    },
+    "D32": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D33": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D34": null,
+    "D35": null,
+    "D36": null,
+    "D37": null,
+    "D38": null,
+    "D39": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D40": null,
+    "D41": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D42": null,
+    "D47": null,
+    "D48": null,
+    "D43": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D44": null,
+    "D45": null,
+    "D46": {
+      "type": "Boolean",
+      "value": false
+    }
+  }
+}

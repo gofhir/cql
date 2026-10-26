@@ -354,7 +354,7 @@ func valuesEqual(a, b fptypes.Value) bool {
 	if a == nil && b == nil {
 		return true
 	}
-	if a == nil || b == nil {
+	if a == nil || b == nil || ModelAgainstSystem(a, b) {
 		return false
 	}
 	a, b = PairWithQuantity(a, b)

@@ -125,6 +125,9 @@ func CompareTemporal(a, b fptypes.Value) (int, error) {
 	// operators, the timing phrases in funcs, and the comparison operators
 	// themselves — so the rule is applied here rather than at each of them.
 	a, b = PairWithQuantity(a, b)
+	if cmp, applies, err := compareAcrossPartialOffsets(a, b); applies {
+		return cmp, err
+	}
 	ordered, ok := a.(fptypes.Comparable)
 	if !ok {
 		return 0, fmt.Errorf("cannot compare %s", a.Type())
@@ -161,6 +164,67 @@ func CompareTemporal(a, b fptypes.Value) (int, error) {
 		}
 	}
 	return 0, fptypes.ErrPrecisionMismatch
+}
+
+// compareAcrossPartialOffsets orders two DateTimes, one of them specified to
+// the hour and the other to the hour or finer, whose offsets differ by
+// something other than whole hours, as @2020-01-01T10+05:30 against
+// @2020-01-01T05Z or @2020-01-01T05:00Z, and reports whether the pair is one.
+//
+// The specification compares precision by precision and says nothing of how
+// to normalize such a pair, and each engine reads it its own way: the Java
+// engine brings the second value to the first one's offset, cql-execution
+// another rule, fhirpath v1.16.6 the instant 04:30Z. Each value is a span of
+// its own clock, as long as its precision: at UTC the hour of 10+05:30 runs
+// from 04:30 to 05:30, across two hours of the other's, and the minute 05:00Z
+// lies inside it. So the two are ordered when their spans do not overlap, and
+// where they do the order is unknown: the precision rule's null, one value
+// holding a minute the other does not. This engine answered so before
+// v1.16.6, and the user decided it stays (docs/plans/008-fhirpath-1-16.md,
+// «Decisión del usuario: offsets parciales»).
+func compareAcrossPartialOffsets(a, b fptypes.Value) (cmp int, applies bool, err error) {
+	left, leftOK := a.(fptypes.DateTime)
+	right, rightOK := b.(fptypes.DateTime)
+	if !leftOK || !rightOK || left.Precision() < fptypes.DTHourPrecision || right.Precision() < fptypes.DTHourPrecision ||
+		left.Precision() != fptypes.DTHourPrecision && right.Precision() != fptypes.DTHourPrecision {
+		return 0, false, nil
+	}
+	leftOffset, leftHas := left.EffectiveOffset()
+	rightOffset, rightHas := right.EffectiveOffset()
+	if !leftHas || !rightHas || (leftOffset-rightOffset)%60 == 0 {
+		return 0, false, nil
+	}
+	leftStart, leftEnd := clockSpan(left, leftOffset)
+	rightStart, rightEnd := clockSpan(right, rightOffset)
+	switch {
+	case !leftEnd.After(rightStart):
+		return -1, true, nil
+	case !rightEnd.After(leftStart):
+		return 1, true, nil
+	}
+	return 0, true, fptypes.ErrPrecisionMismatch
+}
+
+// clockSpan is the stretch of time a DateTime specified to the hour or finer
+// names, at its offset: an hour, a minute, a second or a millisecond.
+func clockSpan(dt fptypes.DateTime, offset int) (start, end time.Time) {
+	zone := time.FixedZone("", offset*60)
+	day := func(h, m, s, ms int) time.Time {
+		return time.Date(dt.Year(), time.Month(dt.Month()), dt.Day(), h, m, s, ms*int(time.Millisecond), zone)
+	}
+	switch dt.Precision() {
+	case fptypes.DTHourPrecision:
+		start = day(dt.Hour(), 0, 0, 0)
+		return start, start.Add(time.Hour)
+	case fptypes.DTMinutePrecision:
+		start = day(dt.Hour(), dt.Minute(), 0, 0)
+		return start, start.Add(time.Minute)
+	case fptypes.DTSecondPrecision:
+		start = day(dt.Hour(), dt.Minute(), dt.Second(), 0)
+		return start, start.Add(time.Second)
+	}
+	start = day(dt.Hour(), dt.Minute(), dt.Second(), dt.Millisecond())
+	return start, start.Add(time.Millisecond)
 }
 
 // Legal timezone offsets run from -12:00 to +14:00, so a value that does not

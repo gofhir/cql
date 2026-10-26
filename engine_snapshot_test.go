@@ -51,6 +51,11 @@ var snapshotAreas = []struct {
 	{"fhirmembership", 200, true}, // gen -area fhirmembership -seed 1 -n 200, on testdata/snapshots/fhir-data.json
 	// Written by hand, not generated: the cases of docs/plans/001-decimal-division.md.
 	{"division", 29, true},
+	// Written by hand: the cases of docs/plans/008-fhirpath-1-16.md, where
+	// fhirpath v1.16.6 moved an answer and no generator reaches it.
+	{"units", 73, true},
+	{"temporal", 49, true},
+	{"crossmodel", 40, true}, // on testdata/snapshots/fhir-data.json
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over
@@ -122,7 +127,7 @@ func snapshotAnswers(t *testing.T, area string) map[string]string {
 	header := src[:first[0]]
 	opts := []Option{WithEvaluationTimestamp(time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", -3*3600)))}
 	var patient json.RawMessage
-	if area == "fhir" || area == "fhirmembership" {
+	if readsFHIRData(area) {
 		provider, subject := snapshotProvider(t)
 		opts = append(opts, WithDataProvider(provider))
 		patient = subject
@@ -248,6 +253,13 @@ func snapshotDecimalOf(answer string) (d decimal.Decimal, float, ok bool) {
 }
 
 // snapshotProvider serves the fhir area's resources, and its patient.
+// readsFHIRData reports whether an area's definitions read the resources of
+// testdata/snapshots/fhir-data.json, as scripts/references.sh serves them to
+// both reference engines.
+func readsFHIRData(area string) bool {
+	return area == "fhir" || area == "fhirmembership" || area == "crossmodel"
+}
+
 func snapshotProvider(t *testing.T) (provider eval.DataProvider, patient json.RawMessage) {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "snapshots", "fhir-data.json"))
@@ -342,6 +354,26 @@ func TestASnapshotComparesPastFloatNoiseOnly(t *testing.T) {
 	} {
 		if got := snapshotSame(tt.want, tt.got); got != tt.same {
 			t.Errorf("snapshotSame(%q, %q) = %t; want %t", tt.want, tt.got, got, tt.same)
+		}
+	}
+}
+
+// TestEveryCorpusIsInTheManifest holds snapshotAreas to the corpora of
+// testdata/snapshots: an area left out of it is no longer evaluated nor
+// compared, and every test that reads the manifest would pass without it
+// (docs/plans/008-fhirpath-1-16.md, criterio de salida).
+func TestEveryCorpusIsInTheManifest(t *testing.T) {
+	listed := map[string]bool{}
+	for _, a := range snapshotAreas {
+		listed[a.area] = true
+	}
+	corpora, err := filepath.Glob(filepath.Join("testdata", "snapshots", "*.cql"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range corpora {
+		if area := strings.TrimSuffix(filepath.Base(path), ".cql"); !listed[area] {
+			t.Errorf("%s is not in snapshotAreas", path)
 		}
 	}
 }

@@ -132,7 +132,7 @@ func snapshotEngineAnswers(t *testing.T, area string) map[string]answers.Answer 
 	header := src[:first[0]]
 	opts := []Option{WithEvaluationTimestamp(time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", -3*3600)))}
 	var patient json.RawMessage
-	if area == "fhir" || area == "fhirmembership" {
+	if readsFHIRData(area) {
 		provider, subject := snapshotProvider(t)
 		opts = append(opts, WithDataProvider(provider))
 		patient = subject

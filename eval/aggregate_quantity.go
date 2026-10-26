@@ -9,6 +9,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/funcs"
+	cqltypes "github.com/gofhir/cql/types"
 )
 
 // The aggregates did not understand Quantity, and the way they did not was the
@@ -75,7 +76,7 @@ func quantityOperands(c fptypes.Collection) (quantities []fptypes.Quantity, foun
 func sumQuantities(quantities []fptypes.Quantity) (fptypes.Quantity, error) {
 	total := quantities[0]
 	for _, q := range quantities[1:] {
-		sum, err := total.Add(q)
+		sum, err := cqltypes.AddQuantities(total, q, false)
 		if err != nil {
 			return fptypes.Quantity{}, err
 		}
@@ -113,6 +114,20 @@ func productOfQuantities(quantities []fptypes.Quantity) fptypes.Value {
 // unit — the variance of milligrams is in mg2, and its square root is back in
 // mg. Sample variance divides by n-1, population variance by n.
 func varianceOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Value, error) {
+	variance, unit, ok, err := spreadOfQuantities(quantities, sample)
+	if err != nil || !ok {
+		return nil, err
+	}
+	return fptypes.NewQuantityFromDecimal(variance, multiplyUnits(unit, unit)), nil
+}
+
+// spreadOfQuantities is the variance's figure and the unit its deviations were
+// taken in, whose square the variance is in; ok is false for a sample of one.
+//
+// The unit is the deviations' own, not the first value's: a difference is in
+// "the most granular unit of either input" (CQL Reference, Add and Subtract),
+// so the deviations of 1 'g' and 500 'mg' are in mg whichever comes first.
+func spreadOfQuantities(quantities []fptypes.Quantity, sample bool) (variance decimal.Decimal, unit string, ok bool, err error) {
 	divisor := len(quantities)
 	if sample {
 		divisor--
@@ -120,24 +135,26 @@ func varianceOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.V
 	if divisor <= 0 {
 		// One sample says nothing about spread, which is why CQL's sample
 		// variance of a single value is null rather than zero.
-		return nil, nil
+		return decimal.Zero, "", false, nil
 	}
 	mean, err := meanQuantity(quantities)
 	if err != nil {
-		return nil, err
+		return decimal.Zero, "", false, err
 	}
+	// The mean is in the most granular unit of the list, the unit of its sum,
+	// so every deviation from it comes back in that unit.
+	unit = mean.Unit()
 	total := decimal.Zero
 	for _, q := range quantities {
 		// Subtract through Quantity so that a list mixing mg and g is brought
 		// to one unit before the deviation is squared.
 		deviation, err := q.Subtract(mean)
 		if err != nil {
-			return nil, err
+			return decimal.Zero, "", false, err
 		}
 		total = total.Add(deviation.Value().Mul(deviation.Value()))
 	}
-	variance := trimTrailingZeros(total.Div(decimal.NewFromInt(int64(divisor))))
-	return fptypes.NewQuantityFromDecimal(variance, multiplyUnits(mean.Unit(), mean.Unit())), nil
+	return trimTrailingZeros(total.Div(decimal.NewFromInt(int64(divisor)))), unit, true, nil
 }
 
 // trimTrailingZeros drops the zeros a division leaves behind, so that a
@@ -155,22 +172,18 @@ func trimTrailingZeros(d decimal.Decimal) decimal.Decimal {
 	return d
 }
 
-// stdDevOfQuantities is the square root of the variance, which returns the
-// original unit.
+// stdDevOfQuantities is the square root of the variance, in the unit of the
+// deviations it was taken from.
 func stdDevOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Value, error) {
-	variance, err := varianceOfQuantities(quantities, sample)
-	if err != nil || variance == nil {
+	variance, unit, ok, err := spreadOfQuantities(quantities, sample)
+	if err != nil || !ok {
 		return nil, err
-	}
-	v, ok := variance.(fptypes.Quantity)
-	if !ok {
-		return nil, nil
 	}
 	// Through float64 and rounded to 8 places. A plain number's StdDev is
 	// floored at the Decimal scale at every step, as the reference engine takes
 	// it, and a Quantity keeps its digits (see funcs.ScaleDecimal), so the two
 	// can differ in the eighth digit over the same figures.
-	f, _ := v.Value().Float64()
+	f, _ := variance.Float64()
 	sqrt := math.Sqrt(f)
 	// A variance past a float64 has no root to give, and building a Decimal from
 	// the infinity it becomes panics.
@@ -178,7 +191,7 @@ func stdDevOfQuantities(quantities []fptypes.Quantity, sample bool) (fptypes.Val
 		return nil, nil
 	}
 	root := trimTrailingZeros(decimal.NewFromFloat(sqrt).Round(8))
-	return fptypes.NewQuantityFromDecimal(root, quantities[0].Unit()), nil
+	return fptypes.NewQuantityFromDecimal(root, unit), nil
 }
 
 // geometricMeanOfQuantities is the nth root of the product, which comes back in
