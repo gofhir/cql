@@ -97,6 +97,9 @@ func elementEquality(a, b fptypes.Value) elementVerdict {
 	if a == nil || b == nil {
 		return elementsUnknown
 	}
+	if cqltypes.ModelAgainstSystem(a, b) {
+		return elementsUnequal
+	}
 	// A bare number held next to a quantity is a quantity of the default unit,
 	// the same as anywhere else. Without this a container was less sure than the
 	// values it holds rather than more: `150 in {150 '1'}` was true while
@@ -793,7 +796,7 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 	case ast.LiteralDateTime:
 		// Strip trailing 'T' when no time component follows (e.g., "2015-02-10T" -> "2015-02-10")
 		dtVal := strings.TrimSuffix(n.Value, "T")
-		dt, err := fptypes.NewDateTime(dtVal)
+		dt, err := cqltypes.NewDateTime(dtVal)
 		if err != nil {
 			return nil, err
 		}
@@ -817,7 +820,7 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 				timeVal = timeVal[:dotIdx+1] + frac[:3]
 			}
 		}
-		t, err := fptypes.NewTime(timeVal)
+		t, err := cqltypes.NewTime(timeVal)
 		if err != nil {
 			return nil, err
 		}
@@ -1674,9 +1677,9 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 	if lqOk && rqOk {
 		switch op {
 		case ast.OpAdd:
-			return quantitySum(lq.Add(rq))
+			return quantitySum(cqltypes.AddQuantities(lq, rq, false))
 		case ast.OpSubtract:
-			return quantitySum(lq.Subtract(rq))
+			return quantitySum(cqltypes.AddQuantities(lq, rq, true))
 		case ast.OpMultiply:
 			resultVal := lq.Value().Mul(rq.Value())
 			resultUnit := multiplyUnits(lq.Unit(), rq.Unit())
@@ -1985,6 +1988,9 @@ func indexedKeepFirst(lc, rc fptypes.Collection, inRC bool, stop *canceler) fpty
 // decision comes from cqltypes so that lists inside types and lists here cannot
 // answer differently.
 func sameValue(a, b fptypes.Value) bool {
+	if cqltypes.ModelAgainstSystem(a, b) {
+		return false
+	}
 	a, b = cqltypes.PairWithQuantity(a, b)
 	if equal, decided := cqltypes.TemporalValuesEqual(a, b); decided {
 		return equal
@@ -4989,7 +4995,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		case fptypes.Date:
 			return fptypes.NewBoolean(true), nil
 		case fptypes.String:
-			_, parseErr := fptypes.NewDateTime(v.Value())
+			_, parseErr := cqltypes.NewDateTime(v.Value())
 			return fptypes.NewBoolean(parseErr == nil), nil
 		default:
 			return fptypes.NewBoolean(false), nil
@@ -8718,7 +8724,7 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 			return dt, nil
 		}
 		if s, ok := v.(fptypes.String); ok {
-			dt, err := fptypes.NewDateTime(s.Value())
+			dt, err := cqltypes.NewDateTime(s.Value())
 			if err != nil {
 				return nil, nil // CQL: failed string-to-datetime conversion returns null
 			}
@@ -8741,7 +8747,7 @@ func convertToType(v fptypes.Value, typeName string) (fptypes.Value, error) {
 			if idx := strings.LastIndexAny(str, "+-"); idx > 0 && strings.Contains(str[idx:], ":") {
 				str = str[:idx]
 			}
-			return fptypes.NewTime(str)
+			return cqltypes.NewTime(str)
 		}
 	}
 	return nil, fmt.Errorf("cannot convert %s to %s", v.Type(), typeName)

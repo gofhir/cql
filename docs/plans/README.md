@@ -4,22 +4,13 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**007: las referencias de comparación a su última versión.** El traductor y el engine de Java pasan de 3.26.0 a 5.4.0 (group `org.cqframework` desde la 4.x), y `cql-exec-fhir` de 2.1.6 a 2.2.0. `cql-execution` 3.3.2 ya es la última. Ramas `chore/references-latest` (PR 1) y `chore/references-5.4` (PR 2). Plan: [007-referencias-al-dia.md](007-referencias-al-dia.md).
+**008: fhirpath v1.14.1 → v1.16.6** (y ucum v4.2.0 → v4.3.0, indirecta). Rama `chore/fhirpath-1.16`. Plan: [008-fhirpath-1-16.md](008-fhirpath-1-16.md).
 
-**Estado al 22-10-2026:** el 006 está cerrado: #161 (32f8aef, `fix:` para v1.24.3). El usuario fijó la regla el 22-10-2026: siempre la última versión, sobre todo en las comparaciones. La motivó el 1c13, un defecto de la 3.26.0 que la 5.4.0 ya corrige.
+**007 cerrado:** #162 (1347eb4) y #163 (9806a90, mergeado el 24-10-2026 con el CI en verde). Plan: [007-referencias-al-dia.md](007-referencias-al-dia.md).
 
-**Paso:** PR 1 MERGEADO #162 (1347eb4). PR 2 en curso, en la rama `chore/references-5.4`:
-- A) el entorno, commit 7419c47, local (`docs/evidence/007-drift-environment.md`: 16 mensajes y ningún veredicto);
-- B) la 5.4.0, sin commit, con el review convergido. Hecho: el port (pom, Translate, Evaluate), la normalización de identidades, `toHapi` estricto (`EncodingError`; *backbone elements* desde la definición del hijo; extensiones de un primitivo; el tipo de la 5.4.0), ValueSet y CodeSystem, `RoundTrip.java` (5314 recursos; una pérdida conocida de org.hl7.fhir.utilities, por reportar), D25 y D26 en `encoder.cql`, el pin de engine-jvm, `fold` con `translatorVersion` y cql-exec-fhir 2.2.0. Próximo paso: `make references-write`, reclasificar, `drift` e inventario.
+**Paso (25-10-2026):** cierre. El review convergió en la ronda 2 (Codex y Opus); `make check` está en verde, y el reporte es [docs/evidence/2026-10-25.md](../evidence/2026-10-25.md). Sin commit.
 
-**Próximo paso concreto:** el PR 2 está listo y sin commit: el review convergió en la ronda 3 (ver el plan 007). Al 23-10-2026:
-- `sh scripts/references.sh check` pasa: dos corridas idénticas y 0 archivos que difieran del repositorio;
-- `make check` pasa, con 0 issues de lint;
-- `make evidence` pasa, en [2026-10-23.md](../evidence/2026-10-23.md);
-- todas las mutaciones de 001 a 007 se detectan;
-- la deriva está en [007-drift-5.4.md](../evidence/007-drift-5.4.md).
-
-Abierto como #163 el 24-10-2026, con el visto bueno del usuario. Falta el CI y el merge. Después vienen los bumps de Go, cada uno como incremento propio: fhirpath v1.16.6 y decimal v1.6.0.
+**Próximo paso concreto:** que el usuario apruebe el commit y el PR del 008 (rama `chore/fhirpath-1.16`). Después viene `shopspring/decimal` v1.6.0, como incremento propio.
 
 ## Pendientes, en orden
 
@@ -44,13 +35,29 @@ Abierto como #163 el 24-10-2026, con el visto bueno del usuario. Falta el CI y e
 1c10. **`includes` e `included in` sobre una lista de listas sin null:** `{ 3 } included in List<List<Integer>>{ { 3 } }` es la sobrecarga singleton (el elemento es `List<Integer>`), y las dos referencias dan true. Este motor lo lee como lista-lista, por el valor, y da false. Son D241 y D253 del corpus `membership` (005), `own defect` con las dos referencias. La sobrecarga sale del tipo estático solo cuando hay un null (`nullMembership`).
 1c11. **Un elemento que necesita la conversión del modelo:** `Patient.gender included in { 'male', 'female' }`, sin gender, da null, y `Patient.gender in { 'male', 'female' }` da false. El elemento es `FHIR.AdministrativeGender` y la lista es de String: la conversión la registra `sema` para `in` (`inferMembership`, `expectTyped`), pero no para `includes`, `included in` ni `during`, y el evaluador no tiene el modelo para deducirla. Pasa también con el contenedor: `Patient.name.given includes (null as String)` da null, y `O.effective during E.period`, sin period, también da null; Java da false en los dos (ronda 2, Fable). Es la frase que escriben las medidas. Arreglarlo es registrar esa conversión en `inferTiming`, que también cambiaría el valor que recibe el operador cuando no hay null: va en su propio incremento. Lo encontró Fable en las rondas 1 y 2 del review del 005; lo documenta `TestMembershipWithAModelConvertedElementStaysUndecided`.
 1c13. **Cerrado sin reportar: el traductor de Java 3.26.0 elige la sobrecarga según las definiciones anteriores, y la 5.4.0 ya no.** Sola, `(null as List<Decimal>) included in List<Integer>{ 1, null }` se traduce como `IncludedIn`. Si antes está `define X: null in { 1, 2 }`, la 3.26.0 la traduce como `In`. Lo encontraron Codex y Fable en la ronda 3 del review del 005. El 22-10-2026 se midió con las opciones por defecto en las dos versiones, en el scratchpad y sin tocar el arnés: la 3.26.0 escribe `In` y `org.cqframework:cql-to-elm-cli` 5.4.0, `IncludedIn` en las dos librerías. No se comenta #435. El engine 3.26.0 responde true en las dos, así que el cambio está en el ELM, no en el resultado de Java. Los tests siguen traduciendo cada expresión sola, porque el arnés está fijado en 3.26.0. Queda abierto actualizar el arnés: desde la 4.x, el group es `org.cqframework`.
-1c14. **`in` y `contains` sobre una lista FHIR no convierten sus elementos:** `List<FHIR.string>{ FHIR.string { value: null as String } } contains (null as String)` da false, y Java da true: convierte cada elemento a String, y el que no tiene value es null. La lista conserva el objeto. Lo encontró Codex en la ronda adversarial del 006.
+1c14. **`in` y `contains` sobre una lista FHIR no convierten sus elementos:** `List<FHIR.string>{ FHIR.string { value: null as String } } contains (null as String)` da false, y Java da true: convierte cada elemento a String, y el que no tiene value es null. La lista conserva el objeto. Lo encontró Codex en la ronda adversarial del 006. Lo amplió el 008 (`testdata/snapshots/crossmodel.cql`): falta la conversión del modelo que inserta el traductor en `=` y `~` de listas, `IndexOf`, `in` y `contains` (anidados y sobre un retrieve), `includes`, `included in` e intervalos de Quantity FHIR (D14 a D31). Un primitivo FHIR, además, es igual a un valor de System en `except` y `union` (D35 a D39). fhirpath v1.16.6 acertaba algunos de estos casos por accidente, con la igualdad de FHIRPath; la regla del 008 (`types.ModelAgainstSystem`) los deja como en main. El arreglo es convertir en `sema`, donde convierte el traductor.
 1c15. **`sema` acepta lo que el traductor rechaza por encadenar conversiones:** `Patient.birthDate during (null as FHIR.Period)` y `{ 1.0, 2.0 } includes Patient.multipleBirth` necesitan una conversión del modelo y otra del sistema. Java dice «Could not resolve call to operator». También `(null as FHIR.Period) included in (null as List<Interval<Date>>)`, que este motor decide como `In`: `inferTimingOperand` convierte el Period antes de decidir la sobrecarga, y la conversión del sistema se agrega después. Lo encontró Fable en la ronda adversarial y en la ronda 1 del review del 006.
 1c16. **Una instancia `FHIR.dateTime { … }` no se convierte en un operador de tiempo:** `FHIR.dateTime { value: @2020-01-02T00:00:00Z } during First([Encounter]).period`, con un period, da el error «cannot compare dateTime»; Java da true. Pasa también en main. Lo encontró el 006 (`TestMembershipThroughTheModelFollowsTheSpecification`, D12 y D13).
 1c17. **El ciclo que se cierra dentro de un pase especulativo no se reporta:** `define function F(): A` con `define A: F()`, y `define A: ({1, 2}) X aggregate R: R + A`, no dan ningún diagnóstico. `typeOfDefine` reporta el ciclo antes de salir del modo especulativo, y `reportf` lo calla. En ejecución, el motor da «maximum expression depth exceeded». Pasa también en main. Lo encontró Fable en la ronda 3 del review del 006.
 1c19. **Del 007 (decisiones del usuario del 22-10-2026):**
   - una lista vacía no conserva su tipo en ejecución: `(List<Any>{ List<Integer>{} })[0] as List<String>` da `{}`, y el ADR 003 (decisión 8) dice null. Son D104 y D823 de `types`, `own defect`;
   - `Log` en coma flotante: `LogOfAScaledString` está a 1,16 del valor exacto, y Java también lo calcula mal.
+1c21. **`gen` no termina con `-area fhirmembership -n 1500`:** llega a la línea 360 y sigue con la CPU ocupada sin escribir más, probablemente buscando expresiones distintas que ya no existen. Debería fallar con un mensaje. Lo encontró la diferencial del 008.
+1c22. **Defectos anteriores que encontró la ronda adversarial del 008:**
+  - `Size` de un intervalo continuo no suma el tamaño del punto (`units` D25; CQL Reference, Size);
+  - `same hour as` con un offset parcial no sigue la decisión del 008 (`temporal` D22), ni `same or before`: `@2020-01-01T10+05:30 same or before @2020-01-01T05Z` da true, mientras que `<` y `=` dan null;
+  - `ToDateTime` acepta una hora con offset (`'2020-01-01T10+05:30'`), y Java da null (`temporal` D31);
+  - `12 'mg' / 0` da error y Java null;
+  - `convert '25:00' to Time` y `convert '23:59:60' to Time` dan error, y Java null (`temporal` D45);
+  - `ToQuantity(5)` da `5 ''` y debería dar `5 '1'`;
+  - una Quantity FHIR sin value se lee como null;
+  - `Interval[Q, Q] contains -5 'mg'` da error;
+  - `2 'cm' * 2 'm'` da `4 'cm.m'` y Java `0.04 'm2'`;
+  - `expand { Interval[100 'cm', 2 'm'] } per 50 'cm'` no coincide con ninguna referencia;
+  - las duraciones de calendario se comparan a través del mes: `1 day < 1 month` y `1 month = 30 days` dan true, y por la guía de autores (Quantities) no son comparables; por eso `Interval[1 day, 1 month]` es válido, y en Java da error (`units` D56); también `1 month > 29 days` y `1 month ~ 30 days` dan true, y `GeometricMean({1 month, 30 days})` da `1 month` (review del 008);
+  - un `time` FHIR no se lee como Time, con 60 o sin él: `First([Observation]).value as FHIR.time` da null con `valueTime` 23:59:58 (medido en main y en la rama);
+  - `TestTheDivergencesAreConsistent` acepta que el plan nombre la definición en cualquier parte, aunque sea la homónima de otra área: D47 deliberada de `units` pasa porque el plan nombra D47 de `temporal` (la mutación del 008 tuvo que apuntar a D70, que se nombra una sola vez);
+  - el comparador de respuestas compara los DateTime como texto, y `Z` no es `+00:00` (el 008 escribió D8 de `temporal` y D50 de `units` como Boolean por eso).
 1c18. **El comparador de respuestas no ve el tipo FHIR ni distingue Integer de Long:** `answers.Reference` iguala `FHIR.string "a"` con `FHIR.code "a"`, e `Integer 1` con `Long 1`. Lo encontró Codex en la ronda adversarial del 007 (sonda `compare_probe.go`).
 1c12. **Un intervalo en un intervalo null:** `Interval[1, 2] in (null as Interval<Integer>)` da false, y la especificación (Interval Operators, Included In) dice null cuando un argumento es null. Es anterior al 005: la sobrecarga intervalo-intervalo de `in` llega a la rama de List Contains (`evalInContains`). Lo encontró Fable en la ronda 1 del review del 005.
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s** (el 23-10-2026, con la 5.4.0: 1,36 GB y 834 s). El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.

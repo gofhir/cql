@@ -1,0 +1,166 @@
+{
+  "library" : "corpus temporal.cql",
+  "sourceSha256" : "e0b47b745c3ff0a2647584f67fb1e278532f636a4a7972b1c39580f81befd8f0",
+  "engine" : "5.4.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "error" : "InvalidDateTime",
+      "message" : "Invalid date time components Text '2016-12-31T23:59:60.000Z' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60"
+    },
+    "D1" : {
+      "error" : "InvalidDateTime",
+      "message" : "Invalid date time components Text '2016-12-31T23:59:60.005Z' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60"
+    },
+    "D2" : null,
+    "D3" : null,
+    "D4" : {
+      "error" : "Translation",
+      "message" : "Invalid time input (T23:59:60). Use ISO 8601 time representation (hh:mm:ss.fff)."
+    },
+    "D5" : {
+      "error" : "InvalidDateTime",
+      "message" : "Invalid date time components Text '2016-12-31T23:59:60.000Z' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60"
+    },
+    "D6" : {
+      "error" : "CqlException",
+      "message" : "Text '23:59:60.000' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60"
+    },
+    "D7" : null,
+    "D8" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D9" : {
+      "type" : "Time",
+      "value" : "23:59:59.999",
+      "precision" : "millisecond"
+    },
+    "D10" : null,
+    "D11" : {
+      "error" : "CqlException",
+      "message" : "Text '23:60:00.000' could not be parsed: Invalid value for MinuteOfHour (valid values 0 - 59): 60"
+    },
+    "D12" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D13" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D14" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D15" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D16" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D17" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D18" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D19" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D20" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D21" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D22" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D23" : {
+      "error" : "Translation",
+      "message" : "Syntax error at of"
+    },
+    "D24" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D25" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D26" : null,
+    "D27" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D28" : {
+      "type" : "Integer",
+      "value" : "90"
+    },
+    "D29" : {
+      "type" : "Integer",
+      "value" : "10"
+    },
+    "D30" : null,
+    "D31" : null,
+    "D32" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D33" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D34" : null,
+    "D35" : null,
+    "D36" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D37" : null,
+    "D38" : null,
+    "D39" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D40" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D41" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D42" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D47" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D48" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D43" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D44" : null,
+    "D45" : null,
+    "D46" : {
+      "type" : "Boolean",
+      "value" : false
+    }
+  }
+}

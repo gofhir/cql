@@ -126,11 +126,19 @@ func TestSpreadAggregatesUnderstandQuantities(t *testing.T) {
 
 		// The root of PopulationVariance's 1 'mg2', in the original unit.
 		{`PopulationStdDev({ 1 'mg', 3 'mg' })`, "1 'mg'"},
-		{`PopulationStdDev({ 1 'g', 1000 'mg' })`, "0 'g'"},
+		// In the unit of the deviations, "the most granular unit of either
+		// input" (CQL Reference, Subtract), whichever comes first; the Java
+		// engine answers 0.25 'g' and 0.35355339 'g', the same amounts
+		// (docs/plans/008-fhirpath-1-16.md).
+		{`PopulationStdDev({ 1 'g', 1000 'mg' })`, "0 'mg'"},
+		{`PopulationStdDev({ 1 'g', 500 'mg' })`, "250 'mg'"},
+		{`PopulationStdDev({ 500 'mg', 1 'g' })`, "250 'mg'"},
+		{`StdDev({ 1 'g', 500 'mg' })`, "353.55339059 'mg'"},
+		{`StdDev({ 500 'mg', 1 'g' })`, "353.55339059 'mg'"},
 
 		// Converted first, so two ways of writing the same amount have no
 		// spread between them.
-		{`StdDev({ 1 'g', 1000 'mg' })`, "0 'g'"},
+		{`StdDev({ 1 'g', 1000 'mg' })`, "0 'mg'"},
 
 		// One value says nothing about spread, which is why the sample variance
 		// of a single quantity is null — the same answer the numeric one gives.

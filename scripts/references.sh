@@ -25,7 +25,7 @@ trap 'rm -rf "$work"' EXIT
 java_image=maven:3.10.0-eclipse-temurin-25
 node_image=node:24.22.1
 
-areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division"
+areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel"
 
 # The harness, built from what it pins.
 docker run --rm -v "$harness":/w -w /w "$java_image" sh -c \
@@ -61,7 +61,7 @@ generate() {
 		java -cp "out:lib/*" Translate /o/in/lib/FHIRHelpers-4.0.1.cql /o/in/lib > /o/elm/FHIRHelpers.elm.json
 		for a in $AREAS; do
 			data=-
-			case $a in fhir | fhirmembership) data=/o/in/snapshots/fhir-data.json ;; esac
+			case $a in fhir | fhirmembership | crossmodel) data=/o/in/snapshots/fhir-data.json ;; esac
 			java -cp "out:lib/*" Evaluate -each /o/in/snapshots/$a.cql /o/in/lib $data /o/elm/$a.elm.json \
 				> /o/testdata/snapshots/$a.java.json
 		done
@@ -78,7 +78,7 @@ generate() {
 	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" "$node_image" sh -ec '
 		for a in $AREAS; do
 			data=
-			case $a in fhir | fhirmembership) data=/o/in/snapshots/fhir-data.json ;; esac
+			case $a in fhir | fhirmembership | crossmodel) data=/o/in/snapshots/fhir-data.json ;; esac
 			node js/evaluate.js --each /o/elm/$a.elm.json /o/in/snapshots/$a.cql /o/elm/FHIRHelpers.elm.json $data \
 				> /o/testdata/snapshots/$a.js.json
 		done

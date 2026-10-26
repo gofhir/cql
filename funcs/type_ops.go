@@ -107,7 +107,7 @@ func ToDateTime(v fptypes.Value) (fptypes.Value, error) {
 		// CQL: converting Date to DateTime preserves date precision (no time component)
 		return fptypes.NewDateTime(val.String())
 	case fptypes.String:
-		dt, err := fptypes.NewDateTime(val.Value())
+		dt, err := cqltypes.NewDateTime(val.Value())
 		if err != nil {
 			return nil, nil // CQL: failed conversions return null
 		}
@@ -200,7 +200,7 @@ func ToTime(v fptypes.Value) (fptypes.Value, error) {
 	sv := s.Value()
 	// Strip timezone suffix (Z, +HH:MM, -HH:MM) from time strings
 	sv = stripTimeZone(sv)
-	t, err := fptypes.NewTime(sv)
+	t, err := cqltypes.NewTime(sv)
 	if err != nil {
 		return nil, nil // CQL: failed conversions return null
 	}

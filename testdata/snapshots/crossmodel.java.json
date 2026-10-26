@@ -1,0 +1,228 @@
+{
+  "library" : "corpus crossmodel.cql",
+  "sourceSha256" : "041ff84dfb26c457fd9ec65a99f76ded01fec93dd95f29650b9b0fcbc5033943",
+  "engine" : "5.4.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D1" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D2" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D3" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D4" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.Quantity",
+        "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+      } ]
+    },
+    "D5" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Quantity",
+        "value" : "-0.005",
+        "unit" : "g"
+      } ]
+    },
+    "D6" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D7" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D8" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.Quantity",
+        "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+      }, {
+        "type" : "Quantity",
+        "value" : "-0.005",
+        "unit" : "g"
+      } ]
+    },
+    "D9" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Quantity",
+        "value" : "-0.005",
+        "unit" : "g"
+      }, {
+        "type" : "FHIR.Quantity",
+        "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+      } ]
+    },
+    "D10" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D11" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Quantity",
+        "value" : "-0.005",
+        "unit" : "g"
+      } ]
+    },
+    "D12" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "Quantity",
+        "value" : "-5",
+        "unit" : "mg"
+      } ]
+    },
+    "D13" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D14" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D15" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D16" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D17" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D18" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D19" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D20" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D21" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D22" : {
+      "type" : "Integer",
+      "value" : "0"
+    },
+    "D23" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D24" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D25" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D26" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D27" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D28" : {
+      "type" : "List",
+      "elements" : [ ]
+    },
+    "D29" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.Quantity",
+        "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+      } ]
+    },
+    "D30" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D31" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D32" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.Quantity",
+        "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+      } ]
+    },
+    "D33" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.Quantity",
+        "value" : "{\"value\":-5,\"unit\":\"mg\",\"system\":\"http://unitsofmeasure.org\",\"code\":\"mg\"}"
+      }, {
+        "type" : "Quantity",
+        "value" : "-5",
+        "unit" : "mg"
+      } ]
+    },
+    "D34" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D35" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.AdministrativeGender",
+        "value" : "male"
+      } ]
+    },
+    "D36" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.integer",
+        "value" : "7"
+      } ]
+    },
+    "D37" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.decimal",
+        "value" : "-5"
+      } ]
+    },
+    "D38" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.date",
+        "value" : "1980-01-01"
+      } ]
+    },
+    "D39" : {
+      "type" : "List",
+      "elements" : [ {
+        "type" : "FHIR.AdministrativeGender",
+        "value" : "male"
+      }, {
+        "type" : "String",
+        "value" : "male"
+      } ]
+    }
+  }
+}
