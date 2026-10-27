@@ -20,7 +20,9 @@ Ronda 1 del review: 10 hallazgos, todos confirmados y corregidos (tabla en el pl
 
 El review convergió en la ronda 2. Pasan `make check` (359 mutaciones), `references.sh check` y la diferencial, que es idéntica a main. Evidencia: [docs/evidence/2026-10-26.md](../evidence/2026-10-26.md). Sin commit.
 
-**Próximo paso concreto:** que el usuario apruebe el commit y el PR del 009 (rama `chore/decimal-1.6`) (el issue para fhirpath ya está publicado: gofhir/fhirpath#235).
+PR abierto: #165 (b8a2bb7), sin merge. El issue para fhirpath es gofhir/fhirpath#235.
+
+**Próximo paso concreto:** que el CI de #165 pase y el usuario lo mergee.
 
 ## Pendientes, en orden
 
