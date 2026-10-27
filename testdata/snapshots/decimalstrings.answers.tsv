@@ -1,0 +1,216 @@
+D0	Decimal 1
+D1	Boolean true
+D10	Boolean true
+D100	Boolean false
+D101	null
+D102	null
+D103	Boolean false
+D104	null
+D105	null
+D106	Boolean false
+D107	null
+D108	null
+D109	Boolean false
+D11	Decimal 1
+D110	null
+D111	null
+D112	Boolean false
+D113	null
+D114	null
+D115	Boolean false
+D116	null
+D117	null
+D118	Boolean false
+D119	null
+D12	Decimal 0.5
+D120	null
+D121	Boolean false
+D122	null
+D123	null
+D124	Boolean false
+D125	null
+D126	Decimal 0.00000000
+D127	Boolean true
+D128	Decimal 0.00000000
+D129	Decimal 0.00000000
+D13	Boolean true
+D130	Boolean true
+D131	Decimal 0.00000000
+D132	Decimal -0.00000001
+D133	Boolean true
+D134	Decimal -0.00000001
+D135	Decimal 0
+D136	Boolean true
+D137	Decimal 0
+D138	Decimal 0
+D139	Boolean true
+D14	Decimal 0.5
+D140	Decimal 0
+D141	null
+D142	Boolean false
+D143	null
+D144	null
+D145	Boolean false
+D146	null
+D147	Decimal 0.00000000
+D148	Boolean true
+D149	Decimal 0.00000000
+D15	Decimal 0.5
+D150	Decimal 0.00000000
+D151	Boolean true
+D152	Decimal 0.00000000
+D153	Decimal -0.00000001
+D154	Boolean true
+D155	Decimal -0.00000001
+D156	null
+D157	Boolean false
+D158	null
+D159	null
+D16	Boolean true
+D160	Boolean false
+D161	null
+D162	null
+D163	Boolean false
+D164	null
+D165	Decimal 12345678901234567890
+D166	Boolean true
+D167	Decimal 12345678901234567890
+D168	null
+D169	Boolean false
+D17	Decimal 0.5
+D170	null
+D171	Decimal 99999999999999999999.99999999
+D172	Boolean true
+D173	Decimal 99999999999999999999.99999999
+D174	null
+D175	Boolean false
+D176	null
+D177	null
+D178	Boolean false
+D179	null
+D18	Decimal -0.5
+D180	Decimal 0.00000000
+D181	Boolean true
+D182	Decimal 0.00000000
+D183	Decimal -0.00000001
+D184	Boolean true
+D185	Decimal -0.00000001
+D186	Decimal 1.00000000
+D187	Boolean true
+D188	Decimal 1.00000000
+D189	Decimal -1.00000001
+D19	Boolean true
+D190	Boolean true
+D191	Decimal -1.00000001
+D192	Decimal 0
+D193	Boolean true
+D194	Decimal 0
+D195	Decimal 0
+D196	Boolean true
+D197	Decimal 0
+D198	Decimal 1.00000000
+D199	Boolean true
+D2	Decimal 1
+D20	Decimal -0.5
+D200	Decimal 1.00000000
+D201	Decimal -0.00000002
+D202	Boolean true
+D203	Decimal -0.00000002
+D204	Decimal 0.00000000
+D205	Boolean true
+D206	Decimal 0.00000000
+D207	Decimal -1.00000001
+D208	Boolean true
+D209	Decimal -1.00000001
+D21	Decimal 0.10
+D210	null
+D211	Boolean false
+D212	null
+D213	Decimal 100000
+D214	Boolean true
+D215	Decimal 100000
+D22	Boolean true
+D23	Decimal 0.10
+D24	Decimal 150
+D25	Boolean true
+D26	Decimal 150
+D27	Decimal 1000
+D28	Boolean true
+D29	Decimal 1000
+D3	Decimal 5
+D30	Decimal 0.01
+D31	Boolean true
+D32	Decimal 0.01
+D33	Decimal 100000
+D34	Boolean true
+D35	Decimal 100000
+D36	Decimal 0
+D37	Boolean true
+D38	Decimal 0
+D39	Decimal 1
+D4	Boolean true
+D40	Boolean true
+D41	Decimal 1
+D42	null
+D43	Boolean false
+D44	null
+D45	null
+D46	Boolean false
+D47	null
+D48	null
+D49	Boolean false
+D5	Decimal 5
+D50	null
+D51	null
+D52	Boolean false
+D53	null
+D54	null
+D55	Boolean false
+D56	null
+D57	null
+D58	Boolean false
+D59	null
+D6	Decimal -5
+D60	null
+D61	Boolean false
+D62	null
+D63	null
+D64	Boolean false
+D65	null
+D66	null
+D67	Boolean false
+D68	null
+D69	null
+D7	Boolean true
+D70	Boolean false
+D71	null
+D72	null
+D73	Boolean false
+D74	null
+D75	null
+D76	Boolean false
+D77	null
+D78	null
+D79	Boolean false
+D8	Decimal -5
+D80	null
+D81	null
+D82	Boolean false
+D83	null
+D84	null
+D85	Boolean false
+D86	null
+D87	null
+D88	Boolean false
+D89	null
+D9	Decimal 1
+D90	null
+D91	Boolean false
+D92	null
+D93	null
+D94	Boolean false
+D95	null
+D96	null
+D97	Boolean false
+D98	null
+D99	null

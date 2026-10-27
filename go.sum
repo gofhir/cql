@@ -6,7 +6,7 @@ github.com/gofhir/fhirpath v1.16.6 h1:5v4IY9C59YdoPbUPs8Qkwy8n/Vm7T5k/mWt5nks6Xy
 github.com/gofhir/fhirpath v1.16.6/go.mod h1:/FYB1TLZqcCRM45GReduy+sywrT7fZ+joe922nNfRPc=
 github.com/gofhir/ucum/v4 v4.3.0 h1:bxr1FAe+vX+ITFr7/yvyj4uttnhsmYL8HnYJgdXJ8hE=
 github.com/gofhir/ucum/v4 v4.3.0/go.mod h1:hk/uAUDzD7UFymbMrIglysUzUtfSeqLN5prsmf9yIbM=
-github.com/shopspring/decimal v1.4.0 h1:bxl37RwXBklmTi0C79JfXCEBD1cqqHt0bbgBAGFp81k=
-github.com/shopspring/decimal v1.4.0/go.mod h1:gawqmDU56v4yIKSwfBSFip1HdCCXN8/+DMd9qYNcwME=
+github.com/shopspring/decimal v1.6.0 h1:DcTwjCj4tJPLuGZYsR9W0hyX9pQwMIkdo26Ig1T9xX4=
+github.com/shopspring/decimal v1.6.0/go.mod h1:gawqmDU56v4yIKSwfBSFip1HdCCXN8/+DMd9qYNcwME=
 golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 h1:vr/HnozRka3pE4EsMEg1lgkXJkTFJCVUX+S/ZT6wYzM=
 golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842/go.mod h1:XtvwrStGgqGPLc4cjQfWqZHG1YFdYs6swckp8vpsjnc=

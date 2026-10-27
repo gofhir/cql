@@ -56,6 +56,9 @@ var snapshotAreas = []struct {
 	{"units", 73, true},
 	{"temporal", 49, true},
 	{"crossmodel", 40, true}, // on testdata/snapshots/fhir-data.json
+	// Written by hand: the strings of docs/plans/009-decimal-1-6.md, where
+	// shopspring/decimal v1.6.0 moved what reads as a Decimal.
+	{"decimalstrings", 216, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over

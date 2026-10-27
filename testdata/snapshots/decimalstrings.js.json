@@ -1,0 +1,740 @@
+{
+  "library": "corpus decimalstrings.cql",
+  "sourceSha256": "e21086c65f72d29d650a52225bcf421184b74eff8758c5939298fe223157df5b",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D1": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D2": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D3": {
+      "type": "Decimal",
+      "value": "5"
+    },
+    "D4": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D5": {
+      "type": "Decimal",
+      "value": "5"
+    },
+    "D6": {
+      "type": "Decimal",
+      "value": "-5"
+    },
+    "D7": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D8": {
+      "type": "Decimal",
+      "value": "-5"
+    },
+    "D9": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D10": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D11": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D12": {
+      "type": "Decimal",
+      "value": "0.5"
+    },
+    "D13": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D14": {
+      "type": "Decimal",
+      "value": "0.5"
+    },
+    "D15": {
+      "type": "Decimal",
+      "value": "0.5"
+    },
+    "D16": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D17": {
+      "type": "Decimal",
+      "value": "0.5"
+    },
+    "D18": {
+      "type": "Decimal",
+      "value": "-0.5"
+    },
+    "D19": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D20": {
+      "type": "Decimal",
+      "value": "-0.5"
+    },
+    "D21": {
+      "type": "Decimal",
+      "value": "0.1"
+    },
+    "D22": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D23": {
+      "type": "Decimal",
+      "value": "0.1"
+    },
+    "D24": {
+      "type": "Decimal",
+      "value": "150"
+    },
+    "D25": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D26": {
+      "type": "Decimal",
+      "value": "150"
+    },
+    "D27": {
+      "type": "Decimal",
+      "value": "1000"
+    },
+    "D28": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D29": {
+      "type": "Decimal",
+      "value": "1000"
+    },
+    "D30": {
+      "type": "Decimal",
+      "value": "0.01"
+    },
+    "D31": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D32": {
+      "type": "Decimal",
+      "value": "0.01"
+    },
+    "D33": {
+      "type": "Decimal",
+      "value": "100000"
+    },
+    "D34": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D35": {
+      "type": "Decimal",
+      "value": "100000"
+    },
+    "D36": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D37": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D38": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D39": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D40": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D41": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D42": null,
+    "D43": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D44": null,
+    "D45": null,
+    "D46": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D47": null,
+    "D48": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D49": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D50": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D51": null,
+    "D52": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D53": null,
+    "D54": null,
+    "D55": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D56": null,
+    "D57": null,
+    "D58": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D59": null,
+    "D60": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D61": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D62": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D63": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D64": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D65": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D66": null,
+    "D67": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D68": null,
+    "D69": null,
+    "D70": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D71": null,
+    "D72": null,
+    "D73": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D74": null,
+    "D75": null,
+    "D76": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D77": null,
+    "D78": null,
+    "D79": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D80": null,
+    "D81": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D82": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D83": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D84": {
+      "type": "Decimal",
+      "value": "100000"
+    },
+    "D85": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D86": {
+      "type": "Decimal",
+      "value": "100000"
+    },
+    "D87": null,
+    "D88": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D89": null,
+    "D90": null,
+    "D91": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D92": null,
+    "D93": null,
+    "D94": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D95": null,
+    "D96": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D97": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D98": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D99": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D100": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D101": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D102": null,
+    "D103": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D104": null,
+    "D105": {
+      "type": "Decimal",
+      "value": "1.5"
+    },
+    "D106": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D107": {
+      "type": "Decimal",
+      "value": "1.5"
+    },
+    "D108": null,
+    "D109": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D110": null,
+    "D111": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D112": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D113": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D114": null,
+    "D115": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D116": null,
+    "D117": null,
+    "D118": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D119": null,
+    "D120": null,
+    "D121": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D122": null,
+    "D123": null,
+    "D124": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D125": null,
+    "D126": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D127": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D128": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D129": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D130": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D131": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D132": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D133": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D134": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D135": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D136": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D137": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D138": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D139": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D140": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D141": null,
+    "D142": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D143": null,
+    "D144": null,
+    "D145": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D146": null,
+    "D147": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D148": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D149": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D150": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D151": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D152": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D153": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D154": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D155": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D156": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D157": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D158": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D159": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D160": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D161": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D162": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D163": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D164": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D165": {
+      "type": "Decimal",
+      "value": "12345678901234567000"
+    },
+    "D166": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D167": {
+      "type": "Decimal",
+      "value": "12345678901234567000"
+    },
+    "D168": null,
+    "D169": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D170": null,
+    "D171": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D172": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D173": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D174": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D175": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D176": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D177": {
+      "type": "Decimal",
+      "value": "-100000000000000000000"
+    },
+    "D178": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D179": {
+      "type": "Decimal",
+      "value": "-100000000000000000000"
+    },
+    "D180": {
+      "type": "Decimal",
+      "value": "5e-9"
+    },
+    "D181": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D182": {
+      "type": "Decimal",
+      "value": "5e-9"
+    },
+    "D183": {
+      "type": "Decimal",
+      "value": "-5e-9"
+    },
+    "D184": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D185": {
+      "type": "Decimal",
+      "value": "-5e-9"
+    },
+    "D186": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D187": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D188": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D189": {
+      "type": "Decimal",
+      "value": "-1"
+    },
+    "D190": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D191": {
+      "type": "Decimal",
+      "value": "-1"
+    },
+    "D192": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D193": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D194": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D195": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D196": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D197": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D198": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D199": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D200": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D201": {
+      "type": "Decimal",
+      "value": "-1.00000000001e-8"
+    },
+    "D202": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D203": {
+      "type": "Decimal",
+      "value": "-1.00000000001e-8"
+    },
+    "D204": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D205": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D206": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D207": {
+      "type": "Decimal",
+      "value": "-1"
+    },
+    "D208": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D209": {
+      "type": "Decimal",
+      "value": "-1"
+    },
+    "D210": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D211": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D212": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D213": {
+      "type": "Decimal",
+      "value": "100000"
+    },
+    "D214": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D215": {
+      "type": "Decimal",
+      "value": "100000"
+    }
+  }
+}

@@ -3313,6 +3313,9 @@ func (e *Evaluator) evalConvert(n *ast.ConvertExpression) (fptypes.Value, error)
 	if n.ToType != nil {
 		if nt, ok := n.ToType.(*ast.NamedType); ok {
 			converted, err := convertToType(operand, nt.Name)
+			if errors.Is(err, funcs.ErrNotADecimal) {
+				return nil, nil // as ToDecimal (see funcs.DecimalFromString)
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -3783,7 +3786,11 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		if src != nil {
-			return convertToType(src, "Decimal")
+			v, err := convertToType(src, "Decimal")
+			if errors.Is(err, funcs.ErrNotADecimal) {
+				return nil, nil // see funcs.DecimalFromString
+			}
+			return v, err
 		}
 		return nil, nil
 	case "not":

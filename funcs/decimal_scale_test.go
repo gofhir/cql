@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -109,5 +110,65 @@ func TestLogOfTwoValuesAFloatCallsOneIsNull(t *testing.T) {
 	got, err := Log(decimalValue(near), decimalValue(near))
 	if err != nil || got != nil {
 		t.Errorf("Log of two values a float rounds to 1 = %v, %v; want null", got, err)
+	}
+}
+
+// TestAStringOfMillionsOfDigitsIsReadInBoundedResources covers mantissas no
+// Decimal needs whole: the value floors to eight places within twenty digits,
+// so the digits past them only tell whether something is left. Reading the
+// whole mantissa as a number took a minute for ten million digits, and a
+// string worth 1, written with as many zeros as its exponent takes away,
+// passed any check of its magnitude (docs/plans/009-decimal-1-6.md, round 1).
+func TestAStringOfMillionsOfDigitsIsReadInBoundedResources(t *testing.T) {
+	const n = 10_000_000
+	zeros := strings.Repeat("0", n)
+	for _, tt := range []struct{ name, s, want string }{
+		// 1.00000000, as the reference engine answers the same written with
+		// thirty zeros (D198 of testdata/snapshots/decimalstrings.cql).
+		{"one written with ten million zeros", "1" + zeros + "e-10000000", "1.00000000"},
+		{"below the scale", "0." + zeros + "1", "0.00000000"},
+		{"below the scale and negative, floored", "-0." + zeros + "1", "-0.00000001"},
+		{"past the range", "1" + zeros, "null"},
+		// Floored to eight places, as ToDecimal('1.000000005') is 1.00000000 in
+		// the reference engine (TestAStringIsReadAsADecimalAtTheScale).
+		{"within the range, with a remainder past the scale", "1." + zeros + "1", "1.00000000"},
+		// An exponent of ten million digits: past an int32, and no Decimal.
+		{"an exponent of ten million digits", "1e" + strings.Repeat("9", n), "error: invalid decimal"},
+		{"an exponent of ten million leading zeros", "1e-" + zeros + "5", "0.00001"},
+	} {
+		var before, after runtime.MemStats
+		runtime.GC()
+		runtime.ReadMemStats(&before)
+		start := time.Now()
+		done := make(chan string, 1)
+		go func() {
+			v, err := DecimalFromString(tt.s)
+			switch {
+			case err != nil:
+				done <- "error: " + err.Error()[:min(len(err.Error()), len("invalid decimal"))]
+			case v == nil:
+				done <- "null"
+			default:
+				done <- v.String()
+			}
+		}()
+		select {
+		case got := <-done:
+			runtime.ReadMemStats(&after)
+			if got != tt.want {
+				t.Errorf("%s = %s; want %s", tt.name, got, tt.want)
+			}
+			if elapsed := time.Since(start); elapsed > time.Second {
+				t.Errorf("%s took %s", tt.name, elapsed)
+			}
+			// What is kept is at most twenty-eight digits: 208 bytes in at most
+			// ten allocations were measured, and a copy of any part of the
+			// mantissa or of the exponent is past this bound.
+			if allocated := after.TotalAlloc - before.TotalAlloc; allocated > 4096 {
+				t.Errorf("%s allocated %d bytes, more than 4096", tt.name, allocated)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("%s did not return in 5s", tt.name)
+		}
 	}
 }
