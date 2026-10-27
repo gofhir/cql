@@ -146,11 +146,22 @@ func exponentOf(text string) (int64, bool) {
 }
 
 // digitsFrom is the index past the ASCII digits of s from i on.
+//
+// The scans of a mantissa here go through strings.TrimLeft with an ASCII set,
+// not a loop of this package: under the coverage CI runs with
+// (-covermode=atomic), each pass of such a loop is an atomic counter, and ten
+// million digits took over a second.
 func digitsFrom(s string, i int) int {
-	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
-		i++
+	return len(s) - len(strings.TrimLeft(s[i:], "0123456789"))
+}
+
+// firstNonZero is the index of the first digit of digits that is not zero, or
+// -1.
+func firstNonZero(digits string) int {
+	if rest := strings.TrimLeft(digits, "0"); rest != "" {
+		return len(digits) - len(rest)
 	}
-	return i
+	return -1
 }
 
 // ErrNotADecimal reports a string that does not read as a Decimal. ToDecimal and
@@ -202,9 +213,9 @@ func DecimalFromString(s string) (fptypes.Value, error) {
 		}
 		return fraction[i-len(whole)]
 	}
-	first := strings.IndexFunc(whole, isNonZeroDigit)
+	first := firstNonZero(whole)
 	if first < 0 {
-		if f := strings.IndexFunc(fraction, isNonZeroDigit); f >= 0 {
+		if f := firstNonZero(fraction); f >= 0 {
 			first = len(whole) + f
 		}
 	}
@@ -251,10 +262,8 @@ func DecimalFromString(s string) (fptypes.Value, error) {
 // nonZeroFrom reports whether a digit from the i-th on of the mantissa, the
 // point taken away, is not zero.
 func nonZeroFrom(whole, fraction string, i int) bool {
-	if i < len(whole) && strings.ContainsFunc(whole[i:], isNonZeroDigit) {
+	if i < len(whole) && firstNonZero(whole[i:]) >= 0 {
 		return true
 	}
-	return strings.ContainsFunc(fraction[max(0, i-len(whole)):], isNonZeroDigit)
+	return firstNonZero(fraction[max(0, i-len(whole)):]) >= 0
 }
-
-func isNonZeroDigit(r rune) bool { return r >= '1' && r <= '9' }

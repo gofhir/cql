@@ -162,10 +162,11 @@ func TestAStringOfMillionsOfDigitsIsReadInBoundedResources(t *testing.T) {
 				t.Errorf("%s took %s", tt.name, elapsed)
 			}
 			// What is kept is at most twenty-eight digits: 208 bytes in at most
-			// ten allocations were measured, and a copy of any part of the
-			// mantissa or of the exponent is past this bound.
-			if allocated := after.TotalAlloc - before.TotalAlloc; allocated > 4096 {
-				t.Errorf("%s allocated %d bytes, more than 4096", tt.name, allocated)
+			// ten allocations were measured. TotalAlloc counts the whole
+			// process, and CI measured 6688 bytes with the runtime's own; a
+			// copy of the mantissa or of the exponent is megabytes.
+			if allocated := after.TotalAlloc - before.TotalAlloc; allocated > 64<<10 {
+				t.Errorf("%s allocated %d bytes, more than 64 KiB", tt.name, allocated)
 			}
 		case <-time.After(5 * time.Second):
 			t.Fatalf("%s did not return in 5s", tt.name)

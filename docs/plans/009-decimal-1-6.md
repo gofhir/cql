@@ -234,6 +234,16 @@ Codex no encontró discrepancias en 300.000 casos contra un oráculo independien
   - el issue para fhirpath (decisión D), publicado como [gofhir/fhirpath#235](https://github.com/gofhir/fhirpath/issues/235), relacionado con #232;
   - el commit y el PR, que esperan la aprobación del usuario.
 
+## CI de #165 (27-10-2026)
+
+El primer CI falló en el test de presupuesto, en dos jobs:
+- **Test** corre con `-race -covermode=atomic`. Con esa cobertura, cada vuelta de un bucle byte a byte del paquete es un contador atómico, y diez millones de dígitos tardaron más de 5 s; en local, sin cobertura, eran 0,06 s.
+  - Los recorridos pasaron a `strings.TrimLeft` con conjuntos ASCII, que la cobertura no instrumenta.
+  - Con las mismas opciones que el CI, ahora tarda 0,21 s.
+- **Zones** midió 6688 bytes contra la cota de 4 KB. `TotalAlloc` cuenta todo el proceso, así que la cota pasó a 64 KiB, todavía muy por debajo de una copia de la mantisa (10 MB).
+
+Las mutaciones (23) se siguen cazando todas, y la diferencial sigue idéntica a main.
+
 ## Dependencias
 
 Ninguna nueva. `math/big` y `strconv` son de la biblioteca estándar.
