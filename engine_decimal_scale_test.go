@@ -260,7 +260,8 @@ func TestAStringIsReadAsADecimalAtTheScale(t *testing.T) {
 // TestAStringWithAHugeExponentIsAnsweredAtOnce covers exponents no Decimal
 // reaches. Comparing or flooring one rescaled it to a number of a billion
 // digits, and the evaluation never returned; the reference engine answers each
-// at once.
+// at once. The floor below the scale is its answer to '-1e-10001',
+// -0.00000001 (D132 of testdata/snapshots/decimalstrings.cql).
 func TestAStringWithAHugeExponentIsAnsweredAtOnce(t *testing.T) {
 	for expr, want := range map[string]string{
 		"ToDecimal('1e999999999')":         "null",

@@ -4,13 +4,25 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**008: fhirpath v1.14.1 → v1.16.6** (y ucum v4.2.0 → v4.3.0, indirecta). Rama `chore/fhirpath-1.16`. Plan: [008-fhirpath-1-16.md](008-fhirpath-1-16.md).
+**009: shopspring/decimal v1.4.0 → v1.6.0.** Rama `chore/decimal-1.6`. Plan: [009-decimal-1-6.md](009-decimal-1-6.md).
 
-**007 cerrado:** #162 (1347eb4) y #163 (9806a90, mergeado el 24-10-2026 con el CI en verde). Plan: [007-referencias-al-dia.md](007-referencias-al-dia.md).
+**008 cerrado:** #164 (1b45c9f, mergeado el 26-10-2026 con el CI en verde). Plan: [008-fhirpath-1-16.md](008-fhirpath-1-16.md).
 
-**Paso (25-10-2026):** cierre. El review convergió en la ronda 2 (Codex y Opus); `make check` está en verde, y el reporte es [docs/evidence/2026-10-25.md](../evidence/2026-10-25.md). PR abierto: #164 (28d2c5b), sin merge.
+**Paso (26-10-2026):** cierre. Antes: ronda adversarial cerrada (Fable y Codex, 11 hallazgos registrados en el plan). La diferencial seed 8008 es idéntica a main; fhirpath con v1.6.0 falla `TestDecimalRange`, sin cambiar respuestas del motor.
 
-**Próximo paso concreto:** que el CI de #164 pase y el usuario lo mergee. Después viene `shopspring/decimal` v1.6.0, como incremento propio.
+El usuario aprobó el plan con las decisiones A, B, C y D recomendadas.
+
+**Implementación hecha (26-10-2026).** El corpus `decimalstrings` tiene 216 definiciones y 100 divergencias clasificadas; las mutaciones del 009 se cazan (23 después de la ronda 1), y la diferencial seed 8008 es idéntica a main.
+
+`make check` en verde el 26-10-2026, con 357 mutaciones cazadas (21 del 009).
+
+Ronda 1 del review: 10 hallazgos, todos confirmados y corregidos (tabla en el plan).
+
+El review convergió en la ronda 2. Pasan `make check` (359 mutaciones), `references.sh check` y la diferencial, que es idéntica a main. Evidencia: [docs/evidence/2026-10-26.md](../evidence/2026-10-26.md). Sin commit.
+
+PR abierto: #165 (b8a2bb7), sin merge. El issue para fhirpath es gofhir/fhirpath#235.
+
+**Próximo paso concreto:** que el CI de #165 pase y el usuario lo mergee.
 
 ## Pendientes, en orden
 
@@ -58,6 +70,13 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
   - un `time` FHIR no se lee como Time, con 60 o sin él: `First([Observation]).value as FHIR.time` da null con `valueTime` 23:59:58 (medido en main y en la rama);
   - `TestTheDivergencesAreConsistent` acepta que el plan nombre la definición en cualquier parte, aunque sea la homónima de otra área: D47 deliberada de `units` pasa porque el plan nombra D47 de `temporal` (la mutación del 008 tuvo que apuntar a D70, que se nombra una sola vez);
   - el comparador de respuestas compara los DateTime como texto, y `Z` no es `+00:00` (el 008 escribió D8 de `temporal` y D50 de `units` como Boolean por eso).
+1c23. **Defectos anteriores que encontró el 009** (son iguales en main y en la rama; ver [009-decimal-1-6.md](009-decimal-1-6.md)):
+  - **`ToDecimal('.5')`, `'+.5'` y `'-.5'`** dan 0.5, aunque no siguen el formato `(+|-)?#0(.0#)?`. Java da null. Son D12 a D20 de `decimalstrings`, clasificados como defecto propio.
+  - **Ceros con escala.** `ToDecimal('0.000000000')` da `0`, y Java da `0.00000000`; el comparador de respuestas no lo ve (como en 1c18, tampoco ve la escala de un Decimal). Lo mismo pasa con `'0e-10001'` y `'0.00000000e5'`.
+  - **`ToQuantity` de un string mal formado** da error, no null (`'−5 \'mg\''`, `'.-5 \'mg\''`).
+  - **Quantity FHIR que desborda** (`valueQuantity.value` de 1E20000). `.value` da null, `>` da error, y `1E100` se acepta fuera de rango.
+  - **`cast` convierte** (backlog de #139). `cast` de un String a DateTime, a Integer o a un tipo FHIR da null cuando la conversión no tiene valor, y Java da error. Son D449 de `types` y D16, D52, D540, D627, D742, D744, D820 y D825 de `fhir`.
+  - **Issue para fhirpath: [gofhir/fhirpath#235](https://github.com/gofhir/fhirpath/issues/235)** (decisión D del 009; relacionado con #232). Con decimal v1.6.0, `TestDecimalRange` falla porque `types.ParseDecimal` recibe de `NewFromString` un error genérico en vez de `ErrDecimalRange`, y además `NewDecimal("1e−2")` da 0.01. Hay que reportarlo antes de que fhirpath suba decimal.
 1c18. **El comparador de respuestas no ve el tipo FHIR ni distingue Integer de Long:** `answers.Reference` iguala `FHIR.string "a"` con `FHIR.code "a"`, e `Integer 1` con `Long 1`. Lo encontró Codex en la ronda adversarial del 007 (sonda `compare_probe.go`).
 1c12. **Un intervalo en un intervalo null:** `Interval[1, 2] in (null as Interval<Integer>)` da false, y la especificación (Interval Operators, Included In) dice null cuando un argumento es null. Es anterior al 005: la sobrecarga intervalo-intervalo de `in` llega a la rama de List Contains (`evalInContains`). Lo encontró Fable en la ronda 1 del review del 005.
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s** (el 23-10-2026, con la 5.4.0: 1,36 GB y 834 s). El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.

@@ -5,7 +5,7 @@ go 1.27
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/gofhir/fhirpath v1.16.6
-	github.com/shopspring/decimal v1.4.0
+	github.com/shopspring/decimal v1.6.0
 )
 
 require (
