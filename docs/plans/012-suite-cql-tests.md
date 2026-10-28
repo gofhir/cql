@@ -104,7 +104,7 @@ Fable y Codex, en paralelo, cada uno sobre su copia. Cada hallazgo se verificó 
 
 | # | Hallazgo | Severidad | Resolución |
 |---|---|---|---|
-| Codex 1, Fable 1 | NotEquivalentNullNull no es un defecto propio: la 1.5.3 da `null !~ null` como false | alta | Aceptado: G5, la suite contra la especificación. Issue redactado para cql-tests |
+| Codex 1, Fable 1 | NotEquivalentNullNull no es un defecto propio: la 1.5.3 da `null !~ null` como false | alta | Aceptado: G5, la suite contra la especificación. Reportado: cqframework/cql-tests#172 |
 | Codex 2, Fable 7 | G4b y G4c se pueden decidir ya | alta | Aceptado: la especificación decide; pasan a G3g y G3h, defectos propios y de Java |
 | Codex 3, Fable 6 | G4a mezcla límites cerrados y abiertos; PointFrom mal descrito; la cuenta no daba | media | Aceptado: G3i (cerrados, 8) y G3j (abiertos, 2). El motor da null en PointFrom, como Java |
 | Codex 4 | En ToDateIgnoresTime las dos referencias dan null, y la especificación dice ignorar la hora | alta | Aceptado: se registra en G3f como defecto de las dos referencias |
