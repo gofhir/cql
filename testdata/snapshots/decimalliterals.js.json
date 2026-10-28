@@ -1,0 +1,264 @@
+{
+  "library": "corpus decimalliterals.cql",
+  "sourceSha256": "c031657e326c6fd625361f5566d8b15794166bbe8acb3fe2a7a0f81f0e312cdc",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D1": {
+      "type": "Decimal",
+      "value": "1.000000005"
+    },
+    "D2": {
+      "type": "Decimal",
+      "value": "1e-9"
+    },
+    "D3": {
+      "type": "Decimal",
+      "value": "1e-9"
+    },
+    "D4": {
+      "type": "Decimal",
+      "value": "-1e-9"
+    },
+    "D5": {
+      "type": "Decimal",
+      "value": "0.100000001"
+    },
+    "D6": {
+      "type": "Decimal",
+      "value": "1e-9"
+    },
+    "D7": {
+      "type": "Decimal",
+      "value": "12345678901234567000"
+    },
+    "D8": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D9": {
+      "type": "Decimal",
+      "value": "1.000000005"
+    },
+    "D10": {
+      "type": "Decimal",
+      "value": "0.1"
+    },
+    "D11": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D12": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D13": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D14": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D15": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D16": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D17": {
+      "type": "Decimal",
+      "value": "0.5"
+    },
+    "D18": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D19": {
+      "type": "Decimal",
+      "value": "123456789012345680000"
+    },
+    "D20": {
+      "type": "Decimal",
+      "value": "1.2345678901234569e+27"
+    },
+    "D21": {
+      "type": "Decimal",
+      "value": "1e+28"
+    },
+    "D22": {
+      "type": "Decimal",
+      "value": "1e+28"
+    },
+    "D23": {
+      "type": "Decimal",
+      "value": "-1e+28"
+    },
+    "D24": {
+      "type": "Decimal",
+      "value": "1e+29"
+    },
+    "D25": {
+      "type": "Decimal",
+      "value": "1.000000005"
+    },
+    "D26": {
+      "type": "Decimal",
+      "value": "1.000000005"
+    },
+    "D27": {
+      "type": "Decimal",
+      "value": "1.000000005"
+    },
+    "D28": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D29": {
+      "type": "Decimal",
+      "value": "1.000000005"
+    },
+    "D30": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D31": {
+      "type": "Decimal",
+      "value": "1e-9"
+    },
+    "D32": {
+      "type": "Decimal",
+      "value": "-1.000000005"
+    },
+    "D33": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D34": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D35": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D36": {
+      "type": "Number",
+      "value": "1.000000005"
+    },
+    "D37": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D38": {
+      "type": "String",
+      "value": "1"
+    },
+    "D39": {
+      "type": "String",
+      "value": "1"
+    },
+    "D40": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Decimal",
+          "value": "1"
+        },
+        {
+          "type": "Decimal",
+          "value": "1.000000005"
+        }
+      ]
+    },
+    "D41": {
+      "type": "Interval",
+      "low": {
+        "type": "Decimal",
+        "value": "1"
+      },
+      "lowClosed": true,
+      "high": {
+        "type": "Decimal",
+        "value": "1.000000005"
+      },
+      "highClosed": true
+    },
+    "D42": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "D43": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D44": {
+      "type": "Decimal",
+      "value": "1e-9"
+    },
+    "D45": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D46": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D47": {
+      "type": "Decimal",
+      "value": "2"
+    },
+    "D48": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D49": {
+      "type": "Decimal",
+      "value": "1"
+    },
+    "D50": null,
+    "D51": null,
+    "D52": {
+      "type": "Decimal",
+      "value": "100000000000000000000"
+    },
+    "D53": {
+      "type": "Decimal",
+      "value": "-100000000000000000000"
+    },
+    "D54": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D55": {
+      "type": "Quantity",
+      "value": "5.999999999",
+      "unit": "g"
+    },
+    "D56": {
+      "type": "Quantity",
+      "value": "1.000000005",
+      "unit": "mg"
+    },
+    "D57": {
+      "type": "Quantity",
+      "value": "1",
+      "unit": "mg"
+    },
+    "D58": {
+      "type": "Quantity",
+      "value": "1e-9",
+      "unit": "mg"
+    },
+    "D59": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tCannot create a quantity with an invalid decimal value\n\tCQL Library:\tD59|1.0\n\tExpression:\tQuantity\n\tELM Local ID:\t209\n\tCQL Locator:\t10:13-10:48\n"
+    }
+  }
+}

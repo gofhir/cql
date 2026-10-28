@@ -1,0 +1,60 @@
+D0	Decimal 1.00000000
+D1	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D10	Decimal 0.100000000
+D11	Decimal 1.00000000000000000000000000000
+D12	Decimal 0.000000000
+D13	Decimal 0
+D14	Decimal 0
+D15	Decimal 0
+D16	Decimal 000000000000000000000000000001.0
+D17	Decimal 0000000000000000000000000000000000.5
+D18	Decimal 99999999999999999999.99999999
+D19	Decimal 123456789012345678901.0
+D2	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.000000001
+D20	Decimal 1234567890123456789012345678.0
+D21	Decimal 9999999999999999999999999999.99999999
+D22	error: CQL evaluation error: decimal overflow: too many integer digits in 10000000000000000000000000000.0
+D23	error: CQL evaluation error: decimal overflow: too many integer digits in 10000000000000000000000000000.0
+D24	error: CQL evaluation error: decimal overflow: too many integer digits in 100000000000000000000000000000.0000
+D25	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D26	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D27	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D28	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D29	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D3	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.000000001
+D30	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D31	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.000000001
+D32	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D33	Decimal 1
+D34	Boolean true
+D35	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D36	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D37	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D38	String "1.000000000"
+D39	String "000000000000000000000000000001.0"
+D4	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.000000001
+D40	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D41	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D42	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.000000001
+D43	Decimal 1.0
+D44	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.000000001
+D45	Boolean false
+D46	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.000000001
+D47	Decimal 2.0
+D48	Decimal 1.00000000
+D49	Decimal 1.00000000
+D5	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.100000001
+D50	null
+D51	null
+D52	Decimal 99999999999999999999.99999999
+D53	Decimal -99999999999999999999.99999999
+D54	Boolean true
+D55	Quantity 5.999999999 'g'
+D56	Quantity 1.000000005 'mg'
+D57	Quantity 1.000000000 'mg'
+D58	Quantity 0.000000001 'mg'
+D59	Quantity 10000000000000000000000000000.0 'mg'
+D6	error: CQL evaluation error: decimal overflow: too many fractional digits in 0.0000000010
+D7	error: CQL evaluation error: decimal overflow: too many fractional digits in 12345678901234567890.123456789
+D8	Decimal 1.000000000
+D9	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.0000000050
