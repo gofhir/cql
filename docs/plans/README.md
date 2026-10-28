@@ -4,7 +4,7 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**010: ToQuantity y la lectura de números en un string** (backlog 1c23, primer frente). Plan: [010-to-quantity.md](010-to-quantity.md). Paso: 8 terminado, el review converge en la ronda 3 (ninguno de los dos revisores deja hallazgos medios o mayores). `make check` en verde con 390 mutaciones atrapadas; diferencial 8008 idéntica a main en las 9 áreas después del review; `references.sh check` en verde. Pendiente: commit y PR cuando el usuario lo pida, y la decisión de publicar el issue de gofhir/ucum (la caché retiene el string de quien llama; redactado, sin publicar). Rama `fix/string-readers-1c23`, sin commit.
+**010: ToQuantity y la lectura de números en un string** (backlog 1c23, primer frente). Plan: [010-to-quantity.md](010-to-quantity.md). Paso: 8 terminado, el review converge en la ronda 3 (ninguno de los dos revisores deja hallazgos medios o mayores). `make check` en verde con 390 mutaciones atrapadas; diferencial 8008 idéntica a main en las 9 áreas después del review; `references.sh check` en verde. PR [#166](https://github.com/gofhir/cql/pull/166), sin merge. Issue [gofhir/ucum#61](https://github.com/gofhir/ucum/issues/61): la caché retiene el string de quien llama.
 
 **009 cerrado:** #165 (dd35249), mergeado el 27-10-2026 con el CI en verde. Plan: [009-decimal-1-6.md](009-decimal-1-6.md). Issue para fhirpath: gofhir/fhirpath#235.
 
