@@ -62,6 +62,9 @@ var snapshotAreas = []struct {
 	// Written by hand: the strings of docs/plans/010-to-quantity.md, each read
 	// as ToQuantity, ConvertsToQuantity and convert to Quantity.
 	{"quantitystrings", 894, true},
+	// Written by hand: the Decimal literals of docs/plans/011-literal-decimal.md,
+	// at the borders of the suite's precision and magnitude.
+	{"decimalliterals", 60, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over

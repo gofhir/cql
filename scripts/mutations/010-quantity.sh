@@ -132,9 +132,10 @@ mutations = [
      (QS, "\nD6\tjava\tdeliberate\t", "\nD6-gone\tjava\tdeliberate\t"), REFERENCES, "are not the ones recorded"),
     ("a deliberate divergence the plan does not name",
      (PLAN, "D336, D337, D338", "D336, D338"), CONSISTENT, "does not name D337"),
+    # D851 became deliberate in plan 011; the oracle is held on D39 of decimalliterals.
     ("an own defect expected as this engine answers",
-     (QS, "\nD851\tjava\town defect\t1.000000005 '1'\t",
-      "\nD851\tjava\town defect\terror: CQL evaluation error: 11:25: decimal overflow: too many fractional digits in 1.000000005\t"),
+     ("testdata/snapshots/decimalliterals.divergences.tsv", '\nD39\tjava\town defect\t"1.0"\t',
+      '\nD39\tjava\town defect\t"000000000000000000000000000001.0"\t'),
      CONSISTENT, "an own defect expects an answer other than this engine's"),
     ("the area left out of the manifest",
      ("engine_snapshot_test.go", '\t{"quantitystrings", 894, true},\n', ""), run("TestEveryCorpusIsInTheManifest"),

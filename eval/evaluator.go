@@ -786,7 +786,7 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 		}
 		return fptypes.NewInteger(v), nil
 	case ast.LiteralDecimal:
-		// CQL decimal validation: max 28 digits before decimal, max 8 digits after
+		// At most 28 integer digits and 8 places of value (plan 011).
 		if err := validateCQLDecimal(n.Value); err != nil {
 			return nil, err
 		}
@@ -8444,16 +8444,19 @@ func (e *Evaluator) getPatientBirthDate() fptypes.Value {
 // Helpers
 // ---------------------------------------------------------------------------
 
-// validateCQLDecimal checks that a decimal literal is within CQL limits:
-// max 28 integer digits and max 8 fractional digits.
+// validateCQLDecimal checks that a decimal literal is within what cql-tests
+// reads: at most 28 integer digits and 8 places of value. DecimalTenthStep
+// (0.000000001) is invalid for "more precision than the Decimal step size",
+// and Decimal10Pow28 for "a greater magnitude than a Decimal supports"; CQL
+// itself "may support more precise values", and both references read them
+// (plan 011). A zero to the left of the integer or to the right of the places
+// adds neither, and does not count (plan 011, decision D).
 func validateCQLDecimal(s string) error {
-	clean := strings.TrimLeft(s, "+-")
-	parts := strings.Split(clean, ".")
-	intPart := parts[0]
-	if len(intPart) > 28 {
+	whole, places, _ := strings.Cut(strings.TrimLeft(s, "+-"), ".")
+	if len(strings.TrimLeft(whole, "0")) > 28 {
 		return fmt.Errorf("decimal overflow: too many integer digits in %s", s)
 	}
-	if len(parts) == 2 && len(parts[1]) > 8 {
+	if len(strings.TrimRight(places, "0")) > 8 {
 		return fmt.Errorf("decimal overflow: too many fractional digits in %s", s)
 	}
 	return nil

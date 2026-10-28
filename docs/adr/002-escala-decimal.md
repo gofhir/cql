@@ -33,6 +33,8 @@ El motor eligió en el #134, y sus excepciones quedaron en `decidedRuntimeAnswer
 | `GeometricMean` | no se recorta | la raíz exacta (`DecimalGeometricMeanUnscaled`); no está en el corpus `arithmetic` |
 | Quantity | no se recorta | la escala es la del tipo Decimal; una dosis en una unidad chica conserva sus cifras (`QuantityDivisionUnscaled`) |
 
+**El literal Decimal** se lee como está escrito, y es un error si tiene más de 8 decimales con valor o más de 28 cifras enteras con valor: los ceros a la izquierda del entero y a la derecha de los decimales no cuentan (plan 011, decisiones del usuario del 27-10-2026). Es lo que pide cql-tests (`ValueLiteralsAndSelectors.xml`: `DecimalTenthStep` y `Decimal10Pow28` son inválidos, y `Decimal10Pow28ToZeroOneStepDecimalMaxValue` lee un literal de 28 cifras enteras). El límite de 28 es el de la suite y no el del tipo, que llega a 20 (`maximum Decimal`); la contradicción está en [cqframework/cql-tests#145](https://github.com/cqframework/cql-tests/issues/145). La suite está en discusión ([#153](https://github.com/cqframework/cql-tests/issues/153)): si deja de pedir el error, la regla se revisa al actualizarla (1c24). Java y cql-execution leen esos literales sin error. El literal Quantity no pasa por este control y conserva sus cifras (`QuantityFractionalTooBig`). Lo verifican `TestADecimalLiteralIsBoundedByItsDigitsOfValue`, `TestConformance` y el área `decimalliterals`.
+
 Una referencia que da una respuesta conforme con otra escala no está equivocada. La diferencia es `deliberate`, y la nombra el plan 003 (PR 4, decisión 1).
 
 ## Verificación
