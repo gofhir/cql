@@ -23,6 +23,7 @@ type TestGroup struct {
 type TestCase struct {
 	Name         string       `xml:"name,attr"`
 	Version      string       `xml:"version,attr"`
+	VersionTo    string       `xml:"versionTo,attr"` // the last CQL the test applies to
 	Ordered      string       `xml:"ordered,attr"`
 	Expression   Expression   `xml:"expression"`
 	Outputs      []Output     `xml:"output"`

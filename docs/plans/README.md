@@ -4,7 +4,9 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**011: el literal Decimal de más de ocho decimales** (backlog 1c23, segundo frente). Plan: [011-literal-decimal.md](011-literal-decimal.md). Paso: 8 terminado, el review converge en la ronda 2. Decisiones del usuario del 27-10: se mantiene el error que pide la suite; D, se cuentan las cifras con valor; E, el alcance del error se documenta y va al backlog. `validateCQLDecimal` cuenta las cifras con valor; área `decimalliterals` (60) clasificada; D851 deliberada; 13 mutaciones del 011 atrapadas; `make check` en verde (403); diferencial 8008 idéntica a main después del review. Riesgo: [cql-tests#153](https://github.com/cqframework/cql-tests/issues/153) discute los tests en que se apoya la decisión (revisar en 1c24); evidencia agregada a [#145](https://github.com/cqframework/cql-tests/issues/145). Pendiente: commit y PR cuando el usuario lo pida. Rama `test/decimal-literal-1c23`, sin commit.
+**012: la suite de conformance al día** (backlog 1c24). Plan: [012-suite-cql-tests.md](012-suite-cql-tests.md). Paso: 8 terminado, el review converge en la ronda 3. Decisiones del 28-10: traer y clasificar; los tests 2.0 en la lista por nombre. cql-tests f724ee4 en el repo (`make conformance-provenance` en verde); 57 fallas en `knownFailures` y en el área `suitegaps`, con un ítem del backlog por grupo (1c25); 19 mutaciones del 012 atrapadas; `make check` en verde (422); diferencial 8008 idéntica. Issue de G5 para cql-tests redactado en el scratchpad (`q012/cql-tests-issue-g5.md`), sin publicar. Pendiente: commit y PR cuando el usuario lo pida. Rama `test/conformance-suite-1c24`, sin commit.
+
+**011 cerrado:** #167 (2dc918f), mergeado el 28-10-2026. Plan: [011-literal-decimal.md](011-literal-decimal.md).
 
 **009 cerrado:** #165 (dd35249), mergeado el 27-10-2026 con el CI en verde. Plan: [009-decimal-1-6.md](009-decimal-1-6.md). Issue para fhirpath: gofhir/fhirpath#235.
 
@@ -76,7 +78,22 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
     - **`(maximum Decimal) + 1.0`** da `100000000000000000000.99999999`, y el ADR 002 dice que lo que pasa del rango es null (Java da lo mismo);
     - **ToString de un literal con ceros a la izquierda** los conserva: `ToString(0001.0)` da `"0001.0"`, también en main, y Java da `"1.0"` (D39 de `decimalliterals`). El Decimal de fhirpath imprime el texto del que se leyó, y fhirpath v1.16.6 da lo mismo sola (`0001.0.toString()`). Hay que decidir de quién es antes de reportarlo;
     - **la suite pide 28 cifras enteras y la especificación da 20:** ya estaba en [cqframework/cql-tests#145](https://github.com/cqframework/cql-tests/issues/145), donde se agregó la evidencia. [#153](https://github.com/cqframework/cql-tests/issues/153) discute los tests en que se apoya la decisión del 011: revisarla en 1c24.
-1c24. **La suite de conformance está atrasada:** `conformance/testdata/SOURCE.tsv` fija cqframework/cql-tests en 727219f, 56 commits detrás de main (f724ee4, 20-10-2026), con unas 1 200 líneas de tests nuevas en los 15 archivos. Lo encontró la revisión previa del 011.
+1c24. **(Lo toma el 012.) La suite de conformance está atrasada:** `conformance/testdata/SOURCE.tsv` fija cqframework/cql-tests en 727219f, 56 commits detrás de main (f724ee4, 19-10-2026 en −0600), con unas 1 200 líneas de tests nuevas en los 15 archivos. Lo encontró la revisión previa del 011.
+1c25. **Las fallas de la suite al día** (cql-tests f724ee4; ver [012-suite-cql-tests.md](012-suite-cql-tests.md)). Cada test está en `knownFailures` (`conformance/known_failures_test.go`) con su grupo, y en `testdata/snapshots/suitegaps.cql` con las respuestas de Java y cql-execution. Un frente por incremento:
+  - **G2. Error donde va null** (9): división de Quantity por cero, Exp, Ln, Predecessor y Successor fuera de rango. Ocho de estos tests pasaron de inválidos a null, y DivideQuantityByZero es nuevo; Exp y Ln ya estaban en `arithmetic.own-defects.tsv`.
+  - **G3a.** `month from DateTime(2012)` da 0 y no null («is not specified to the level of precision being extracted, the result is null»).
+  - **G3b.** `years between @2012-02-29 and @2014-02-28` da 1, y Java y cql-execution dan 2, como la especificación: un año sumado a un 29 de febrero cae en el último día de febrero (Author's Guide, Date and Time Arithmetic).
+  - **G3c.** `Distinct` y `Flatten` de una lista null dan `{}` y no null.
+  - **G3d.** `Skip` con un número negativo da la lista entera, y la especificación dice vacía (Java da error).
+  - **G3e.** `Coalesce` de seis argumentos se evalúa; sus firmas son de 2 a 5.
+  - **G3f.** Faltan `ToDate` y `ToRatio`. En `ToDate('2014-01-01T12:05:05.955')` las dos referencias dan null, y la especificación dice ignorar la hora.
+  - **G3g.** `div` de dos Quantity de la misma unidad conserva la unidad, y debe ser `'1'` (Java también la conserva).
+  - **G3h.** La igualdad de tuplas con un elemento null da null, y es una conjunción (Java también da null).
+  - **G3i.** Un límite cerrado en null no se lee como el mínimo o el máximo del tipo (8 tests; Java responde igual que el motor).
+  - **G3j.** Un límite abierto en null da false y no null (2 tests; Java también).
+  - **G1. CQL 2.0** (17): `MatchesFull`, `~in`, `~contains`, y Predecessor y Successor con la precisión del literal. Fuera del objetivo (ADR 001); se mueven si el objetivo pasa a 2.0.
+  - **G5. La suite contra la especificación:** NotEquivalentNullNull marca inválido `null !~ null`, que la especificación da como false. Issue redactado para cql-tests, sin publicar.
+  - **Lo que la ronda adversarial del 012 dejó para después:** en las salidas esperadas, un Long se lee como Integer, así que los tests de Long pasan solo por el valor (como 1c18); `valuesEqual` iguala `1 'm'` con `100 'cm'` e ignora si un límite null es abierto o cerrado; los tests `semantic` se aceptan con un error de evaluación; y DateTimeComponentFromTimezoneOffset (`versionTo="1.3"`) pasa porque el motor guarda `timezone from`, anterior a la 1.4: hay que decidir si se queda y anotarlo en el ADR 001.
 1c18. **El comparador de respuestas no ve el tipo FHIR ni distingue Integer de Long:** `answers.Reference` iguala `FHIR.string "a"` con `FHIR.code "a"`, e `Integer 1` con `Long 1`. Lo encontró Codex en la ronda adversarial del 007 (sonda `compare_probe.go`).
 1c12. **Un intervalo en un intervalo null:** `Interval[1, 2] in (null as Interval<Integer>)` da false, y la especificación (Interval Operators, Included In) dice null cuando un argumento es null. Es anterior al 005: la sobrecarga intervalo-intervalo de `in` llega a la rama de List Contains (`evalInContains`). Lo encontró Fable en la ronda 1 del review del 005.
 1c. **`make evidence` llega a 1,08 GB de RSS y tarda 515 s** (el 23-10-2026, con la 5.4.0: 1,36 GB y 834 s). El oráculo de `types` no lo explica (0,5 s, 11 MB): hay que medir dónde está el costo y corregirlo.

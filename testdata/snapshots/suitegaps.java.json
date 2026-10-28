@@ -1,0 +1,172 @@
+{
+  "library" : "corpus suitegaps.cql",
+  "sourceSha256" : "2d6ae103e03bbe089520ca4e09b209102e5cffe3b06efd9f506d753f65980d40",
+  "engine" : "5.4.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : null,
+    "D1" : null,
+    "D2" : null,
+    "D3" : null,
+    "D4" : null,
+    "D5" : {
+      "type" : "Decimal",
+      "value" : "0.99999999"
+    },
+    "D6" : {
+      "type" : "Decimal",
+      "value" : "1.00999999"
+    },
+    "D7" : {
+      "type" : "Quantity",
+      "value" : "0.99999999",
+      "unit" : "cm"
+    },
+    "D8" : null,
+    "D9" : null,
+    "D10" : {
+      "type" : "Decimal",
+      "value" : "1.00000001"
+    },
+    "D11" : {
+      "type" : "Decimal",
+      "value" : "1.01000001"
+    },
+    "D12" : null,
+    "D13" : null,
+    "D14" : {
+      "type" : "Quantity",
+      "value" : "-3",
+      "unit" : "cm"
+    },
+    "D15" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "g"
+    },
+    "D16" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "m"
+    },
+    "D17" : null,
+    "D18" : null,
+    "D19" : {
+      "error" : "Translation",
+      "message" : "Call to operator Equivalent(System.Any, System.Any) is ambiguous with: \n  - Equivalent(System.Time, System.Time)\n  - Equivalent(System.Decimal, System.Decimal)\n  - Equivalent(System.Long, System.Long)\n  - Equivalent(System.String, System.String)\n  - Equivalent(System.Boolean, System.Boolean)\n  - Equivalent(System.Integer, System.Integer)\n  - Equivalent(System.Date, System.Date)\n  - Equivalent(System.DateTime, System.DateTime)"
+    },
+    "D20" : null,
+    "D21" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D22" : {
+      "type" : "Integer",
+      "value" : "2"
+    },
+    "D23" : null,
+    "D24" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D25" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D26" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D27" : null,
+    "D28" : null,
+    "D29" : null,
+    "D30" : null,
+    "D31" : null,
+    "D32" : null,
+    "D33" : {
+      "error" : "Translation",
+      "message" : "Syntax error at 'a'"
+    },
+    "D34" : {
+      "error" : "Translation",
+      "message" : "Syntax error at 'a'"
+    },
+    "D35" : {
+      "error" : "Translation",
+      "message" : "Syntax error at 'a'"
+    },
+    "D36" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to system operator Contains.  Expected 2 arguments."
+    },
+    "D37" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to system operator Contains.  Expected 2 arguments."
+    },
+    "D38" : null,
+    "D39" : null,
+    "D40" : {
+      "error" : "Translation",
+      "message" : "Syntax error at in"
+    },
+    "D41" : {
+      "error" : "Translation",
+      "message" : "Syntax error at in"
+    },
+    "D42" : {
+      "error" : "Translation",
+      "message" : "Syntax error at in"
+    },
+    "D43" : {
+      "error" : "Translation",
+      "message" : "Syntax error at in"
+    },
+    "D44" : {
+      "error" : "CqlException",
+      "message" : "Collection doesn't contain element at index -1."
+    },
+    "D45" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator Coalesce with signature (System.Any, System.Integer, System.Any, System.Any, System.Any, System.Any)."
+    },
+    "D46" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator MatchesFull with signature (System.String, System.String)."
+    },
+    "D47" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator MatchesFull with signature (System.String, System.String)."
+    },
+    "D48" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator MatchesFull with signature (System.String, System.Any)."
+    },
+    "D49" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D50" : {
+      "type" : "Date",
+      "value" : "2014-01",
+      "precision" : "month"
+    },
+    "D51" : {
+      "type" : "Date",
+      "value" : "2014",
+      "precision" : "year"
+    },
+    "D52" : null,
+    "D53" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D54" : null,
+    "D55" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D56" : null
+  }
+}
