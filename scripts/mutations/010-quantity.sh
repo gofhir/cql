@@ -65,7 +65,7 @@ mutations = [
      GIVEN, "want null"),
     # The whitespace.
     ("a line break not trimmed",
-     (READ, "return r <= ' ' })", "return r == ' ' || r == '\\t' })"), SNAPSHOTS, MOVED),
+     (READ, "\\x08\\t\\n\\x0b\\x0c\\r", "\\x08\\t\\x0b\\x0c"), SNAPSHOTS, MOVED),
     ("a line break between the number and the unit",
      (READ, 'unitSeparator = " \\t"', 'unitSeparator = " \\t\\n"'), SNAPSHOTS, MOVED),
     ("a space required before the unit",

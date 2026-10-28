@@ -22,10 +22,16 @@ const unitSeparator = " \t"
 
 // trimmed is s without what the Java engine trims from around it, as
 // String.trim does: every character up to U+0020, the line breaks among them
-// (plan 010, decision B).
+// (plan 010, decision B). A cutset of ASCII, so the standard library trims
+// it without a call of this package per character, which coverage counts:
+// ten million spaces took 3.4 s under -race -covermode=atomic in CI.
 func trimmed(s string) string {
-	return strings.TrimFunc(s, func(r rune) bool { return r <= ' ' })
+	return strings.Trim(s, javaTrimmed)
 }
+
+// javaTrimmed is every character up to U+0020.
+const javaTrimmed = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f" +
+	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f "
 
 // ucumService validates a unit against UCUM. The definitions load once, on the first
 // string ToQuantity reads with a unit (2.5 ms and 214 KiB, plan 010); the
