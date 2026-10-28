@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/shopspring/decimal"
+
 	cqltypes "github.com/gofhir/cql/types"
 	fptypes "github.com/gofhir/fhirpath/types"
 )
@@ -139,15 +141,25 @@ func ToDate(v fptypes.Value) (fptypes.Value, error) {
 	}
 }
 
-// ToQuantity converts a value to a Quantity.
+// ToQuantity converts a value to a Quantity: a string as QuantityFromString
+// reads it, and an Integer or a Decimal with "the value of the argument and a
+// unit of '1' (the default unit)" (CQL Reference, ToQuantity). Null is null.
+// Any other type has no overload, which the reference translator refuses and
+// its engine fails on, and it fails here as well.
 func ToQuantity(v fptypes.Value) (fptypes.Value, error) {
-	if v == nil {
+	switch val := v.(type) {
+	case nil:
 		return nil, nil
+	case fptypes.Quantity:
+		return val, nil
+	case fptypes.String:
+		return QuantityFromString(val.Value())
+	case fptypes.Integer:
+		return fptypes.NewQuantityFromDecimal(decimal.NewFromInt(val.Value()), "1"), nil
+	case fptypes.Decimal:
+		return fptypes.NewQuantityFromDecimal(val.Value(), "1"), nil
 	}
-	if _, ok := v.(fptypes.Quantity); ok {
-		return v, nil
-	}
-	return fptypes.NewQuantity(v.String())
+	return nil, fmt.Errorf("cannot convert %s to Quantity", v.Type())
 }
 
 // IsType checks if a value matches the given type name.

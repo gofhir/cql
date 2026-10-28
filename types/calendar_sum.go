@@ -41,6 +41,13 @@ var (
 	}
 )
 
+// IsCalendarKeyword reports whether unit is one of CQL's calendar duration
+// keywords, singular or plural: the rules dateTimePrecision and
+// pluralDateTimePrecision of the grammar (TestTheCalendarKeywordsAreTheGrammars).
+func IsCalendarKeyword(unit string) bool {
+	return yearsAndMonths[unit] || belowTheMonth[unit]
+}
+
 func acrossTheMonth(a, b string) bool {
 	return yearsAndMonths[a] && belowTheMonth[b] || yearsAndMonths[b] && belowTheMonth[a]
 }

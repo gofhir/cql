@@ -59,6 +59,9 @@ var snapshotAreas = []struct {
 	// Written by hand: the strings of docs/plans/009-decimal-1-6.md, where
 	// shopspring/decimal v1.6.0 moved what reads as a Decimal.
 	{"decimalstrings", 216, true},
+	// Written by hand: the strings of docs/plans/010-to-quantity.md, each read
+	// as ToQuantity, ConvertsToQuantity and convert to Quantity.
+	{"quantitystrings", 894, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over

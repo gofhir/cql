@@ -1,0 +1,894 @@
+D0	Quantity 5 'mg'
+D1	Boolean true
+D10	Boolean true
+D100	Boolean true
+D101	Quantity 5 'mg'
+D102	Quantity 5 '1'
+D103	Boolean true
+D104	Quantity 5 '1'
+D105	Quantity 5 'mg'
+D106	Boolean true
+D107	Quantity 5 'mg'
+D108	Quantity -5 'mg'
+D109	Boolean true
+D11	Quantity -5 'mg'
+D110	Quantity -5 'mg'
+D111	Quantity -5 '1'
+D112	Boolean true
+D113	Quantity -5 '1'
+D114	Quantity -5 'mg'
+D115	Boolean true
+D116	Quantity -5 'mg'
+D117	Quantity 1000 'mg'
+D118	Boolean true
+D119	Quantity 1000 'mg'
+D12	Quantity -5 '1'
+D120	Quantity 1000 '1'
+D121	Boolean true
+D122	Quantity 1000 '1'
+D123	Quantity 1000 'mg'
+D124	Boolean true
+D125	Quantity 1000 'mg'
+D126	Quantity 1000 'mg'
+D127	Boolean true
+D128	Quantity 1000 'mg'
+D129	Quantity 1000 '1'
+D13	Boolean true
+D130	Boolean true
+D131	Quantity 1000 '1'
+D132	Quantity 1000 'mg'
+D133	Boolean true
+D134	Quantity 1000 'mg'
+D135	Quantity 0.001 'mg'
+D136	Boolean true
+D137	Quantity 0.001 'mg'
+D138	Quantity 0.001 '1'
+D139	Boolean true
+D14	Quantity -5 '1'
+D140	Quantity 0.001 '1'
+D141	Quantity 0.001 'mg'
+D142	Boolean true
+D143	Quantity 0.001 'mg'
+D144	Quantity 1000 'mg'
+D145	Boolean true
+D146	Quantity 1000 'mg'
+D147	Quantity 1000 '1'
+D148	Boolean true
+D149	Quantity 1000 '1'
+D15	Quantity -5 'mg'
+D150	Quantity 1000 'mg'
+D151	Boolean true
+D152	Quantity 1000 'mg'
+D153	Quantity -1000 'mg'
+D154	Boolean true
+D155	Quantity -1000 'mg'
+D156	Quantity -1000 '1'
+D157	Boolean true
+D158	Quantity -1000 '1'
+D159	Quantity -1000 'mg'
+D16	Boolean true
+D160	Boolean true
+D161	Quantity -1000 'mg'
+D162	Quantity 150 'mg'
+D163	Boolean true
+D164	Quantity 150 'mg'
+D165	Quantity 150 '1'
+D166	Boolean true
+D167	Quantity 150 '1'
+D168	Quantity 150 'mg'
+D169	Boolean true
+D17	Quantity -5 'mg'
+D170	Quantity 150 'mg'
+D171	Quantity 0 'mg'
+D172	Boolean true
+D173	Quantity 0 'mg'
+D174	Quantity 0 '1'
+D175	Boolean true
+D176	Quantity 0 '1'
+D177	Quantity 0 'mg'
+D178	Boolean true
+D179	Quantity 0 'mg'
+D18	Quantity 5 'mg'
+D180	Quantity 0.0000000001 'mg'
+D181	Boolean true
+D182	Quantity 0.0000000001 'mg'
+D183	Quantity 0.0000000001 '1'
+D184	Boolean true
+D185	Quantity 0.0000000001 '1'
+D186	Quantity 0.0000000001 'mg'
+D187	Boolean true
+D188	Quantity 0.0000000001 'mg'
+D189	Quantity 1.000000005 'mg'
+D19	Boolean true
+D190	Boolean true
+D191	Quantity 1.000000005 'mg'
+D192	Quantity 1.000000005 '1'
+D193	Boolean true
+D194	Quantity 1.000000005 '1'
+D195	Quantity 1.000000005 'mg'
+D196	Boolean true
+D197	Quantity 1.000000005 'mg'
+D198	Quantity 0.000000001 'mg'
+D199	Boolean true
+D2	Quantity 5 'mg'
+D20	Quantity 5 'mg'
+D200	Quantity 0.000000001 'mg'
+D201	Quantity 0.000000001 '1'
+D202	Boolean true
+D203	Quantity 0.000000001 '1'
+D204	Quantity 0.000000001 'mg'
+D205	Boolean true
+D206	Quantity 0.000000001 'mg'
+D207	Quantity -0.000000001 'mg'
+D208	Boolean true
+D209	Quantity -0.000000001 'mg'
+D21	Quantity 5 '1'
+D210	Quantity -0.000000001 '1'
+D211	Boolean true
+D212	Quantity -0.000000001 '1'
+D213	Quantity -0.000000001 'mg'
+D214	Boolean true
+D215	Quantity -0.000000001 'mg'
+D216	Quantity -1.00000001 'mg'
+D217	Boolean true
+D218	Quantity -1.00000001 'mg'
+D219	Quantity -1.00000001 '1'
+D22	Boolean true
+D220	Boolean true
+D221	Quantity -1.00000001 '1'
+D222	Quantity -1.00000001 'mg'
+D223	Boolean true
+D224	Quantity -1.00000001 'mg'
+D225	Quantity 1.123456789 'mg'
+D226	Boolean true
+D227	Quantity 1.123456789 'mg'
+D228	Quantity 1.123456789 '1'
+D229	Boolean true
+D23	Quantity 5 '1'
+D230	Quantity 1.123456789 '1'
+D231	Quantity 1.123456789 'mg'
+D232	Boolean true
+D233	Quantity 1.123456789 'mg'
+D234	Quantity 0.000000000 'mg'
+D235	Boolean true
+D236	Quantity 0.000000000 'mg'
+D237	Quantity 0.000000000 '1'
+D238	Boolean true
+D239	Quantity 0.000000000 '1'
+D24	Quantity 5 'mg'
+D240	Quantity 0.000000000 'mg'
+D241	Boolean true
+D242	Quantity 0.000000000 'mg'
+D243	Quantity 12345678901234567890.12345678 'mg'
+D244	Boolean true
+D245	Quantity 12345678901234567890.12345678 'mg'
+D246	Quantity 12345678901234567890.12345678 '1'
+D247	Boolean true
+D248	Quantity 12345678901234567890.12345678 '1'
+D249	Quantity 12345678901234567890.12345678 'mg'
+D25	Boolean true
+D250	Boolean true
+D251	Quantity 12345678901234567890.12345678 'mg'
+D252	Quantity 99999999999999999999 'mg'
+D253	Boolean true
+D254	Quantity 99999999999999999999 'mg'
+D255	Quantity 99999999999999999999 '1'
+D256	Boolean true
+D257	Quantity 99999999999999999999 '1'
+D258	Quantity 99999999999999999999 'mg'
+D259	Boolean true
+D26	Quantity 5 'mg'
+D260	Quantity 99999999999999999999 'mg'
+D261	null
+D262	Boolean false
+D263	null
+D264	null
+D265	Boolean false
+D266	null
+D267	null
+D268	Boolean false
+D269	null
+D27	Quantity 0 'mg'
+D270	Quantity -99999999999999999999.99999999 'mg'
+D271	Boolean true
+D272	Quantity -99999999999999999999.99999999 'mg'
+D273	Quantity -99999999999999999999.99999999 '1'
+D274	Boolean true
+D275	Quantity -99999999999999999999.99999999 '1'
+D276	Quantity -99999999999999999999.99999999 'mg'
+D277	Boolean true
+D278	Quantity -99999999999999999999.99999999 'mg'
+D279	null
+D28	Boolean true
+D280	Boolean false
+D281	null
+D282	null
+D283	Boolean false
+D284	null
+D285	null
+D286	Boolean false
+D287	null
+D288	null
+D289	Boolean false
+D29	Quantity 0 'mg'
+D290	null
+D291	null
+D292	Boolean false
+D293	null
+D294	null
+D295	Boolean false
+D296	null
+D297	null
+D298	Boolean false
+D299	null
+D3	Quantity 5 '1'
+D30	Quantity 0 '1'
+D300	null
+D301	Boolean false
+D302	null
+D303	null
+D304	Boolean false
+D305	null
+D306	null
+D307	Boolean false
+D308	null
+D309	null
+D31	Boolean true
+D310	Boolean false
+D311	null
+D312	null
+D313	Boolean false
+D314	null
+D315	Quantity 10000000000000000000 'mg'
+D316	Boolean true
+D317	Quantity 10000000000000000000 'mg'
+D318	Quantity 10000000000000000000 '1'
+D319	Boolean true
+D32	Quantity 0 '1'
+D320	Quantity 10000000000000000000 '1'
+D321	Quantity 10000000000000000000 'mg'
+D322	Boolean true
+D323	Quantity 10000000000000000000 'mg'
+D324	null
+D325	Boolean false
+D326	null
+D327	null
+D328	Boolean false
+D329	null
+D33	Quantity 0 'mg'
+D330	null
+D331	Boolean false
+D332	null
+D333	null
+D334	Boolean false
+D335	null
+D336	null
+D337	Boolean false
+D338	null
+D339	null
+D34	Boolean true
+D340	Boolean false
+D341	null
+D342	null
+D343	Boolean false
+D344	null
+D345	null
+D346	Boolean false
+D347	null
+D348	null
+D349	Boolean false
+D35	Quantity 0 'mg'
+D350	null
+D351	null
+D352	Boolean false
+D353	null
+D354	null
+D355	Boolean false
+D356	null
+D357	null
+D358	Boolean false
+D359	null
+D36	Quantity 0 'mg'
+D360	null
+D361	Boolean false
+D362	null
+D363	null
+D364	Boolean false
+D365	null
+D366	null
+D367	Boolean false
+D368	null
+D369	null
+D37	Boolean true
+D370	Boolean false
+D371	null
+D372	null
+D373	Boolean false
+D374	null
+D375	null
+D376	Boolean false
+D377	null
+D378	null
+D379	Boolean false
+D38	Quantity 0 'mg'
+D380	null
+D381	null
+D382	Boolean false
+D383	null
+D384	null
+D385	Boolean false
+D386	null
+D387	null
+D388	Boolean false
+D389	null
+D39	Quantity 0 '1'
+D390	null
+D391	Boolean false
+D392	null
+D393	null
+D394	Boolean false
+D395	null
+D396	null
+D397	Boolean false
+D398	null
+D399	null
+D4	Boolean true
+D40	Boolean true
+D400	Boolean false
+D401	null
+D402	null
+D403	Boolean false
+D404	null
+D405	null
+D406	Boolean false
+D407	null
+D408	null
+D409	Boolean false
+D41	Quantity 0 '1'
+D410	null
+D411	null
+D412	Boolean false
+D413	null
+D414	null
+D415	Boolean false
+D416	null
+D417	null
+D418	Boolean false
+D419	null
+D42	Quantity 0 'mg'
+D420	null
+D421	Boolean false
+D422	null
+D423	null
+D424	Boolean false
+D425	null
+D426	null
+D427	Boolean false
+D428	null
+D429	null
+D43	Boolean true
+D430	Boolean false
+D431	null
+D432	null
+D433	Boolean false
+D434	null
+D435	null
+D436	Boolean false
+D437	null
+D438	null
+D439	Boolean false
+D44	Quantity 0 'mg'
+D440	null
+D441	null
+D442	Boolean false
+D443	null
+D444	null
+D445	Boolean false
+D446	null
+D447	null
+D448	Boolean false
+D449	null
+D45	Quantity 0 'mg'
+D450	null
+D451	Boolean false
+D452	null
+D453	null
+D454	Boolean false
+D455	null
+D456	null
+D457	Boolean false
+D458	null
+D459	null
+D46	Boolean true
+D460	Boolean false
+D461	null
+D462	null
+D463	Boolean false
+D464	null
+D465	null
+D466	Boolean false
+D467	null
+D468	null
+D469	Boolean false
+D47	Quantity 0 'mg'
+D470	null
+D471	null
+D472	Boolean false
+D473	null
+D474	null
+D475	Boolean false
+D476	null
+D477	null
+D478	Boolean false
+D479	null
+D48	Quantity 0 '1'
+D480	null
+D481	Boolean false
+D482	null
+D483	null
+D484	Boolean false
+D485	null
+D486	null
+D487	Boolean false
+D488	null
+D489	null
+D49	Boolean true
+D490	Boolean false
+D491	null
+D492	null
+D493	Boolean false
+D494	null
+D495	null
+D496	Boolean false
+D497	null
+D498	null
+D499	Boolean false
+D5	Quantity 5 '1'
+D50	Quantity 0 '1'
+D500	null
+D501	null
+D502	Boolean false
+D503	null
+D504	null
+D505	Boolean false
+D506	null
+D507	null
+D508	Boolean false
+D509	null
+D51	Quantity 0 'mg'
+D510	null
+D511	Boolean false
+D512	null
+D513	null
+D514	Boolean false
+D515	null
+D516	Quantity 5 'MG'
+D517	Boolean true
+D518	Quantity 5 'MG'
+D519	Quantity 5 'Mg'
+D52	Boolean true
+D520	Boolean true
+D521	Quantity 5 'Mg'
+D522	null
+D523	Boolean false
+D524	null
+D525	Quantity 5 '{tablet}'
+D526	Boolean true
+D527	Quantity 5 '{tablet}'
+D528	Quantity 5 'mg/dL'
+D529	Boolean true
+D53	Quantity 0 'mg'
+D530	Quantity 5 'mg/dL'
+D531	Quantity 5 '[lb_av]'
+D532	Boolean true
+D533	Quantity 5 '[lb_av]'
+D534	Quantity 5 '1'
+D535	Boolean true
+D536	Quantity 5 '1'
+D537	Quantity 5 'd'
+D538	Boolean true
+D539	Quantity 5 'd'
+D54	Quantity 5.5 'mg'
+D540	Quantity 5 'mo'
+D541	Boolean true
+D542	Quantity 5 'mo'
+D543	Quantity 5 'wk'
+D544	Boolean true
+D545	Quantity 5 'wk'
+D546	Quantity 5 'a'
+D547	Boolean true
+D548	Quantity 5 'a'
+D549	Quantity 5 '%'
+D55	Boolean true
+D550	Boolean true
+D551	Quantity 5 '%'
+D552	Quantity 5 '10*3/uL'
+D553	Boolean true
+D554	Quantity 5 '10*3/uL'
+D555	null
+D556	Boolean false
+D557	null
+D558	Quantity 5 'kg.m/s2'
+D559	Boolean true
+D56	Quantity 5.5 'mg'
+D560	Quantity 5 'kg.m/s2'
+D561	Quantity 5 'cm[H2O]'
+D562	Boolean true
+D563	Quantity 5 'cm[H2O]'
+D564	Quantity 5 'Cel'
+D565	Boolean true
+D566	Quantity 5 'Cel'
+D567	Quantity 5 '[degF]'
+D568	Boolean true
+D569	Quantity 5 '[degF]'
+D57	Quantity 5.5 '1'
+D570	Quantity 5 'ug/(kg.h)'
+D571	Boolean true
+D572	Quantity 5 'ug/(kg.h)'
+D573	Quantity 5 'mmol/L'
+D574	Boolean true
+D575	Quantity 5 'mmol/L'
+D576	Quantity 5 '/min'
+D577	Boolean true
+D578	Quantity 5 '/min'
+D579	null
+D58	Boolean true
+D580	Boolean false
+D581	null
+D582	null
+D583	Boolean false
+D584	null
+D585	null
+D586	Boolean false
+D587	null
+D588	null
+D589	Boolean false
+D59	Quantity 5.5 '1'
+D590	null
+D591	null
+D592	Boolean false
+D593	null
+D594	null
+D595	Boolean false
+D596	null
+D597	null
+D598	Boolean false
+D599	null
+D6	Quantity 5 'mg'
+D60	Quantity 5.5 'mg'
+D600	Quantity 5 year
+D601	Boolean true
+D602	Quantity 5 year
+D603	Quantity 5 years
+D604	Boolean true
+D605	Quantity 5 years
+D606	Quantity 5 month
+D607	Boolean true
+D608	Quantity 5 month
+D609	Quantity 5 months
+D61	Boolean true
+D610	Boolean true
+D611	Quantity 5 months
+D612	Quantity 5 week
+D613	Boolean true
+D614	Quantity 5 week
+D615	Quantity 5 weeks
+D616	Boolean true
+D617	Quantity 5 weeks
+D618	Quantity 5 day
+D619	Boolean true
+D62	Quantity 5.5 'mg'
+D620	Quantity 5 day
+D621	Quantity 5 days
+D622	Boolean true
+D623	Quantity 5 days
+D624	Quantity 5 hour
+D625	Boolean true
+D626	Quantity 5 hour
+D627	Quantity 5 hours
+D628	Boolean true
+D629	Quantity 5 hours
+D63	Quantity 5.50 'mg'
+D630	Quantity 5 minute
+D631	Boolean true
+D632	Quantity 5 minute
+D633	Quantity 5 minutes
+D634	Boolean true
+D635	Quantity 5 minutes
+D636	Quantity 5 second
+D637	Boolean true
+D638	Quantity 5 second
+D639	Quantity 5 seconds
+D64	Boolean true
+D640	Boolean true
+D641	Quantity 5 seconds
+D642	Quantity 5 millisecond
+D643	Boolean true
+D644	Quantity 5 millisecond
+D645	Quantity 5 milliseconds
+D646	Boolean true
+D647	Quantity 5 milliseconds
+D648	null
+D649	Boolean false
+D65	Quantity 5.50 'mg'
+D650	null
+D651	null
+D652	Boolean false
+D653	null
+D654	null
+D655	Boolean false
+D656	null
+D657	null
+D658	Boolean false
+D659	null
+D66	Quantity 5.50 '1'
+D660	null
+D661	Boolean false
+D662	null
+D663	null
+D664	Boolean false
+D665	null
+D666	null
+D667	Boolean false
+D668	null
+D669	null
+D67	Boolean true
+D670	Boolean false
+D671	null
+D672	null
+D673	Boolean false
+D674	null
+D675	null
+D676	Boolean false
+D677	null
+D678	null
+D679	Boolean false
+D68	Quantity 5.50 '1'
+D680	null
+D681	null
+D682	Boolean false
+D683	null
+D684	null
+D685	Boolean false
+D686	null
+D687	null
+D688	Boolean false
+D689	null
+D69	Quantity 5.50 'mg'
+D690	null
+D691	Boolean false
+D692	null
+D693	null
+D694	Boolean false
+D695	null
+D696	null
+D697	Boolean false
+D698	null
+D699	null
+D7	Boolean true
+D70	Boolean true
+D700	Boolean false
+D701	null
+D702	null
+D703	Boolean false
+D704	null
+D705	null
+D706	Boolean false
+D707	null
+D708	null
+D709	Boolean false
+D71	Quantity 5.50 'mg'
+D710	null
+D711	null
+D712	Boolean false
+D713	null
+D714	null
+D715	Boolean false
+D716	null
+D717	null
+D718	Boolean false
+D719	null
+D72	Quantity -5.5 'mg'
+D720	null
+D721	Boolean false
+D722	null
+D723	null
+D724	Boolean false
+D725	null
+D726	null
+D727	Boolean false
+D728	null
+D729	null
+D73	Boolean true
+D730	Boolean false
+D731	null
+D732	null
+D733	Boolean false
+D734	null
+D735	null
+D736	Boolean false
+D737	null
+D738	null
+D739	Boolean false
+D74	Quantity -5.5 'mg'
+D740	null
+D741	null
+D742	Boolean false
+D743	null
+D744	null
+D745	Boolean false
+D746	null
+D747	null
+D748	Boolean false
+D749	null
+D75	Quantity -5.5 '1'
+D750	null
+D751	Boolean false
+D752	null
+D753	null
+D754	Boolean false
+D755	null
+D756	null
+D757	Boolean false
+D758	null
+D759	null
+D76	Boolean true
+D760	Boolean false
+D761	null
+D762	null
+D763	Boolean false
+D764	null
+D765	null
+D766	Boolean false
+D767	null
+D768	null
+D769	Boolean false
+D77	Quantity -5.5 '1'
+D770	null
+D771	null
+D772	Boolean false
+D773	null
+D774	Quantity -0.1 'mg'
+D775	Boolean true
+D776	Quantity -0.1 'mg'
+D777	Quantity 5 '{}'
+D778	Boolean true
+D779	Quantity 5 '{}'
+D78	Quantity -5.5 'mg'
+D780	Quantity 5 'mg'
+D781	Boolean true
+D782	Quantity 5 'mg'
+D783	Quantity 5 'mg'
+D784	Boolean true
+D785	Quantity 5 'mg'
+D786	Quantity 5 'mg'
+D787	Boolean true
+D788	Quantity 5 'mg'
+D789	Quantity 5 'mg'
+D79	Boolean true
+D790	Boolean true
+D791	Quantity 5 'mg'
+D792	Quantity 5 'mg'
+D793	Boolean true
+D794	Quantity 5 'mg'
+D795	Quantity 5 'mg'
+D796	Boolean true
+D797	Quantity 5 'mg'
+D798	Quantity 5 'mg'
+D799	Boolean true
+D8	Quantity 5 'mg'
+D80	Quantity -5.5 'mg'
+D800	Quantity 5 'mg'
+D801	Quantity 5 'mg'
+D802	Boolean true
+D803	Quantity 5 'mg'
+D804	Quantity 5 'mg'
+D805	Boolean true
+D806	Quantity 5 'mg'
+D807	Quantity 5 'mg'
+D808	Boolean true
+D809	Quantity 5 'mg'
+D81	Quantity 5 'mg'
+D810	null
+D811	Boolean false
+D812	null
+D813	null
+D814	Boolean false
+D815	null
+D816	Quantity 5 'mg'
+D817	Boolean true
+D818	Quantity 5 'mg'
+D819	null
+D82	Boolean true
+D820	Boolean false
+D821	null
+D822	null
+D823	Boolean false
+D824	null
+D825	null
+D826	Boolean false
+D827	null
+D828	Quantity 5 '1'
+D829	Boolean true
+D83	Quantity 5 'mg'
+D830	Quantity 5 '1'
+D831	Quantity 5 '1'
+D832	Boolean true
+D833	Quantity 5 '1'
+D834	Quantity 5 '1'
+D835	Boolean true
+D836	Quantity 5 '1'
+D837	Quantity 5 '1'
+D838	Boolean true
+D839	Quantity 5 '1'
+D84	Quantity 5 '1'
+D840	Quantity 5 'mg'
+D841	Boolean true
+D842	Quantity 5 'mg'
+D843	Quantity 55 'mg'
+D844	Boolean true
+D845	Quantity 55 'mg'
+D846	Quantity 0.1 '1'
+D847	Quantity 13 '1'
+D848	Quantity 13 '1'
+D849	Quantity 0 '1'
+D85	Boolean true
+D850	Quantity 5.50 '1'
+D851	error: CQL evaluation error: decimal overflow: too many fractional digits in 1.000000005
+D852	Quantity -2147483648 '1'
+D853	Quantity 99999999999999999999.99999999 '1'
+D854	Boolean true
+D855	Boolean true
+D856	Quantity 13 '1'
+D857	Quantity 0.1 '1'
+D858	null
+D859	null
+D86	Quantity 5 '1'
+D860	null
+D861	null
+D862	null
+D863	Boolean true
+D864	Boolean true
+D865	Boolean true
+D866	Boolean true
+D867	Boolean true
+D868	Boolean true
+D869	Boolean true
+D87	Quantity 5 'mg'
+D870	String "mg"
+D871	String "1"
+D872	String "1"
+D873	String "1"
+D874	String "days"
+D875	Decimal 150
+D876	null
+D877	Boolean false
+D878	null
+D879	null
+D88	Boolean true
+D880	Boolean false
+D881	null
+D882	null
+D883	Boolean false
+D884	null
+D885	null
+D886	Boolean false
+D887	null
+D888	Quantity 5000 'mg'
+D889	Boolean true
+D89	Quantity 5 'mg'
+D890	Quantity 5000 'mg'
+D891	Quantity 0.0055 'mg'
+D892	Boolean true
+D893	Quantity 0.0055 'mg'
+D9	Quantity -5 'mg'
+D90	Quantity 5.500 'mg'
+D91	Boolean true
+D92	Quantity 5.500 'mg'
+D93	Quantity 5.500 '1'
+D94	Boolean true
+D95	Quantity 5.500 '1'
+D96	Quantity 5.500 'mg'
+D97	Boolean true
+D98	Quantity 5.500 'mg'
+D99	Quantity 5 'mg'

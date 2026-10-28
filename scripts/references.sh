@@ -25,7 +25,7 @@ trap 'rm -rf "$work"' EXIT
 java_image=maven:3.10.0-eclipse-temurin-25
 node_image=node:24.22.1
 
-areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings"
+areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings quantitystrings"
 
 # The harness, built from what it pins.
 docker run --rm -v "$harness":/w -w /w "$java_image" sh -c \

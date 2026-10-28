@@ -81,35 +81,49 @@ func FloatScaled(f float64) (d decimal.Decimal, ok bool) {
 
 // splitDecimal reads s by the grammar a string is read by as a Decimal:
 //
-//	[+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]+)?
+//	[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?
 //
 // digits with an optional point and an optional exponent, the Java engine's
-// BigDecimal read with ASCII digits and no sign after the point. The
-// specification's format, (+|-)?#0(.0#)? (CQL Reference, ToDecimal), has
-// neither the exponent nor '1.', which the reference engine reads, nor '.5',
-// which cql-execution reads and the Java engine answers null; this engine has
-// read all three since #134, and keeps '.5' as it was (an own defect, backlog
-// 1c23 of docs/plans/README.md). The grammar is the engine's and not the
-// decimal library's: what that library accepts moved in v1.5.0 and v1.6.0 (a
-// Unicode minus, a bound on the exponent), and with it this engine's answers
-// did (docs/plans/009-decimal-1-6.md). It is read byte by byte, as a regular
-// expression took over a second on a string of ten million digits under the
-// race detector.
+// BigDecimal read with ASCII digits, no sign after the point and a digit
+// before it. The specification's format, (+|-)?#0(.0#)? (CQL Reference,
+// ToDecimal), has neither the exponent nor '1.', which the reference engine
+// reads; it has no '.5' either, which cql-execution reads and the Java engine
+// answers null, and which this engine read from #134 to plan 010. The grammar
+// is the engine's and not the decimal library's: what that library accepts
+// moved in v1.5.0 and v1.6.0 (a Unicode minus, a bound on the exponent), and
+// with it this engine's answers did (docs/plans/009-decimal-1-6.md).
 func splitDecimal(s string) (negative bool, whole, fraction, exponent string, ok bool) {
+	p, end, ok := scanDecimal(s)
+	return p.negative, p.whole, p.fraction, p.exponent, ok && end == len(s)
+}
+
+// decimalParts are the parts of a number written by the grammar of
+// splitDecimal: its sign, the digits before and after the point, and the
+// written exponent.
+type decimalParts struct {
+	negative                  bool
+	whole, fraction, exponent string
+}
+
+// scanDecimal reads the number s starts with, by the grammar of splitDecimal,
+// and where it ends; ToQuantity reads a unit after it. It is read byte by
+// byte, as a regular expression took over a second on a string of ten million
+// digits under the race detector.
+func scanDecimal(s string) (p decimalParts, end int, ok bool) {
 	i := 0
 	if i < len(s) && (s[i] == '+' || s[i] == '-') {
-		negative = s[i] == '-'
+		p.negative = s[i] == '-'
 		i++
 	}
 	j := digitsFrom(s, i)
-	whole = s[i:j]
+	p.whole = s[i:j]
+	if p.whole == "" {
+		return decimalParts{}, 0, false
+	}
 	if j < len(s) && s[j] == '.' {
 		k := digitsFrom(s, j+1)
-		fraction = s[j+1 : k]
+		p.fraction = s[j+1 : k]
 		j = k
-	}
-	if whole == "" && fraction == "" {
-		return false, "", "", "", false
 	}
 	if j < len(s) && (s[j] == 'e' || s[j] == 'E') {
 		k := j + 1
@@ -118,11 +132,11 @@ func splitDecimal(s string) (negative bool, whole, fraction, exponent string, ok
 		}
 		end := digitsFrom(s, k)
 		if end == k {
-			return false, "", "", "", false
+			return decimalParts{}, 0, false
 		}
-		exponent, j = s[j+1:end], end
+		p.exponent, j = s[j+1:end], end
 	}
-	return negative, whole, fraction, exponent, j == len(s)
+	return p, j, true
 }
 
 // exponentOf reads the written exponent, which has to be within an int32. Its
