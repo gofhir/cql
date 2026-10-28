@@ -157,12 +157,6 @@ var upstreamContradictions = map[string]string{
 		"expects Interval[256,1936] and DateTimeDurationBetweenUncertainAdd doubles it and expects Interval[32,88]. " +
 		"Both of those put the base at [16,44] (√256=16, 32/2=16), which is what the engine computes. Three tests " +
 		"require [16,44] and this one requires [17,44].",
-
-	"FloorIntegerGreaterThanMaxInteger": "expects null for Floor(2147483648), while CeilingIntegerGreaterThanMaxInteger " +
-		"marks the structurally identical Ceiling(2147483648) invalid=\"syntax\" and expects an error. The engine keeps " +
-		"the compile error, which is what the spec asks of an out-of-range Integer literal.",
-
-	"FloorIntegerLessThanMinInteger": "expects null for Floor(-2147483649); see FloorIntegerGreaterThanMaxInteger.",
 }
 
 // untypedOutputs are the cases whose expected output is written without the
@@ -219,11 +213,24 @@ func runTestCase(t *testing.T, engine *cql.Engine, parser outputParser, tc TestC
 	}
 
 	if reason, known := upstreamContradictions[tc.Name]; known {
-		if runsClean(engine, parser, tc) {
+		if clean, _ := runsClean(engine, parser, tc); clean {
 			t.Fatalf("%s passes now, so upstream has settled it — remove this entry from "+
 				"upstreamContradictions.\n\nRecorded reason: %s", tc.Name, reason)
 		}
 		t.Logf("known upstream contradiction: %s", reason)
+		return
+	}
+
+	if kf, known := knownFailures[tc.Name]; known {
+		clean, err := runsClean(engine, parser, tc)
+		if clean {
+			t.Fatalf("%s passes now; remove it from knownFailures.\n\nIts group: %s", tc.Name, failureGroups[kf.group])
+		}
+		if (err != nil) != kf.errs {
+			t.Fatalf("%s fails another way now (error: %v), and knownFailures records errs %v; classify it again",
+				tc.Name, err, kf.errs)
+		}
+		t.Logf("known failure: %s", failureGroups[kf.group])
 		return
 	}
 
@@ -284,35 +291,36 @@ func runTestCase(t *testing.T, engine *cql.Engine, parser outputParser, tc TestC
 	}
 }
 
-// runsClean answers whether a test case would pass, without reporting anything. It
+// runsClean answers whether a test case would pass, and the error the engine
+// gave if any, without reporting anything. It
 // mirrors the verdicts of runTestCase and exists only so an entry in
-// upstreamContradictions can be checked for still being contradictory.
-func runsClean(engine *cql.Engine, parser outputParser, tc TestCase) bool {
+// upstreamContradictions or knownFailures can be checked for still failing.
+func runsClean(engine *cql.Engine, parser outputParser, tc TestCase) (bool, error) {
 	expr := strings.TrimSpace(tc.Expression.Value)
 	cqlSource := wrapExpression(expr)
 	got, err := engine.EvaluateExpression(context.Background(), cqlSource, "result", nil, nil)
 
 	if invalid := tc.Expression.Invalid; invalid != "" && invalid != "false" {
-		return err != nil
+		return err != nil, err
 	}
 	if err != nil {
-		return false
+		return false, err
 	}
 	if len(tc.Outputs) == 0 {
-		return true
+		return true, nil
 	}
 	if len(tc.Outputs) == 1 {
 		want, perr := parser.parse(strings.TrimSpace(tc.Outputs[0].Value))
-		return perr == nil && equalFor(tc)(got, want)
+		return perr == nil && equalFor(tc)(got, want), nil
 	}
 
 	wantValues := make(fptypes.Collection, 0, len(tc.Outputs))
 	for _, out := range tc.Outputs {
 		w, perr := parser.parse(strings.TrimSpace(out.Value))
 		if perr != nil {
-			return false
+			return false, nil
 		}
 		wantValues = append(wantValues, w)
 	}
-	return equalFor(tc)(got, cqltypes.NewList(wantValues))
+	return equalFor(tc)(got, cqltypes.NewList(wantValues)), nil
 }

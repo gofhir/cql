@@ -1,0 +1,127 @@
+{
+  "library": "corpus suitegaps.cql",
+  "sourceSha256": "2d6ae103e03bbe089520ca4e09b209102e5cffe3b06efd9f506d753f65980d40",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": null,
+    "D1": null,
+    "D2": null,
+    "D3": null,
+    "D4": null,
+    "D5": {
+      "type": "Decimal",
+      "value": "0"
+    },
+    "D6": {
+      "type": "Decimal",
+      "value": "1.00999999"
+    },
+    "D7": {
+      "type": "Quantity",
+      "value": "0",
+      "unit": "cm"
+    },
+    "D8": {
+      "type": "DateTime",
+      "value": "0000-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "0000-12-31T23:59:59.999-03:00"
+    },
+    "D9": null,
+    "D10": {
+      "type": "Decimal",
+      "value": "2"
+    },
+    "D11": {
+      "type": "Decimal",
+      "value": "1.01000001"
+    },
+    "D12": null,
+    "D13": null,
+    "D14": null,
+    "D15": null,
+    "D16": null,
+    "D17": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D18": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D20": null,
+    "D21": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "D22": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "D23": null,
+    "D24": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D25": null,
+    "D26": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D27": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D28": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D29": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D30": null,
+    "D31": null,
+    "D32": {
+      "type": "Interval",
+      "low": null,
+      "lowClosed": true,
+      "high": null,
+      "highClosed": true
+    },
+    "D38": null,
+    "D39": null,
+    "D44": {
+      "type": "List",
+      "elements": []
+    },
+    "D49": {
+      "type": "Date",
+      "value": "2014-01-01",
+      "precision": "day"
+    },
+    "D50": {
+      "type": "Date",
+      "value": "2014-01",
+      "precision": "month"
+    },
+    "D51": {
+      "type": "Date",
+      "value": "2014",
+      "precision": "year"
+    },
+    "D52": null,
+    "D53": {
+      "type": "Date",
+      "value": "2014-01-01",
+      "precision": "day"
+    },
+    "D54": null,
+    "D55": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D56": null
+  }
+}

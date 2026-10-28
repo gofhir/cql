@@ -18,13 +18,14 @@ import (
 // A checker that reports errors on correct code is worse than no checker,
 // because the first false alarm teaches everyone to ignore the rest. So this
 // runs the phase over every expression in the conformance corpus that upstream
-// considers valid — a few over 1,700 of them — and requires silence.
+// considers valid — a few under 2,000 of them — and requires silence.
 //
 // It is not a measure of how much the phase finds. The corpus is a test of
-// evaluation semantics, and the 39 expressions it marks invalid are invalid at
-// evaluation, not statically: Exp(1000) overflows, Ln(0) is undefined,
-// `successor of` the last representable DateTime has nowhere to go. None of
-// them is a type error, and a phase that reported them would be guessing.
+// evaluation semantics. Of the 38 expressions it marks invalid, this engine
+// refuses one as a syntax error, 34 at evaluation (an Integer out of range, a
+// Time past its last millisecond), and evaluates three, which are in
+// knownFailures. Nine are marked "semantic"; refusing them before evaluation
+// is backlog 1c25 (plan 012).
 func TestSemanticPhaseAcceptsEverythingTheEngineEvaluates(t *testing.T) {
 	t.Parallel()
 

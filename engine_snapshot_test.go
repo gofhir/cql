@@ -65,6 +65,9 @@ var snapshotAreas = []struct {
 	// Written by hand: the Decimal literals of docs/plans/011-literal-decimal.md,
 	// at the borders of the suite's precision and magnitude.
 	{"decimalliterals", 60, true},
+	// The cql-tests cases this engine fails, as the suite writes them: the
+	// knownFailures of conformance/known_failures_test.go (plan 012).
+	{"suitegaps", 57, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over
@@ -384,6 +387,34 @@ func TestEveryCorpusIsInTheManifest(t *testing.T) {
 		if area := strings.TrimSuffix(filepath.Base(path), ".cql"); !listed[area] {
 			t.Errorf("%s is not in snapshotAreas", path)
 		}
+	}
+}
+
+// TestEveryAreaIsRunByTheReferences holds the areas scripts/references.sh
+// runs the two references over to snapshotAreas: an area left out of it keeps
+// the references it had, and nothing regenerates them when the corpus or the
+// references move (plan 012).
+func TestEveryAreaIsRunByTheReferences(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("scripts", "references.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := regexp.MustCompile(`(?m)^areas="([^"]*)"$`).FindSubmatch(raw)
+	if m == nil {
+		t.Fatal(`scripts/references.sh has no areas="..." line`)
+	}
+	run := map[string]bool{}
+	for _, area := range strings.Fields(string(m[1])) {
+		run[area] = true
+	}
+	for _, a := range snapshotAreas {
+		if !run[a.area] {
+			t.Errorf("%s is in snapshotAreas and scripts/references.sh does not run it", a.area)
+		}
+		delete(run, a.area)
+	}
+	for area := range run {
+		t.Errorf("scripts/references.sh runs %s, which is not in snapshotAreas", area)
 	}
 }
 
