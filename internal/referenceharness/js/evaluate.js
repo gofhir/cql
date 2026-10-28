@@ -29,6 +29,11 @@ const EVALUATION = '2026-01-01T00:00:00.000-03:00';
 
 const SYSTEM = '{urn:hl7-org:elm-types:r1}';
 
+// Standard output is the answers and nothing else. ucum-lhc logs a unit it
+// cannot read with console.log ("Unit requested for unit string m g…", plan
+// 010), which would land ahead of the JSON; the log goes to standard error.
+console.log = (...args) => console.error(...args);
+
 async function main() {
   if (process.argv[2] === '--each') return each(process.argv.slice(3));
   const [elmPath, cqlPath] = process.argv.slice(2);

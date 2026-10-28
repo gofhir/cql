@@ -3312,6 +3312,16 @@ func (e *Evaluator) evalConvert(n *ast.ConvertExpression) (fptypes.Value, error)
 	}
 	if n.ToType != nil {
 		if nt, ok := n.ToType.(*ast.NamedType); ok {
+			// convert to Quantity is ToQuantity, as the translator lowers it
+			// (plan 010). It is here and not in convertToType, which a cast
+			// shares and which does not convert to a Quantity.
+			if strings.EqualFold(nt.Name, "Quantity") && (nt.Namespace == "" || nt.Namespace == "System") {
+				converted, err := funcs.ToQuantity(operand)
+				if err != nil {
+					return nil, err
+				}
+				return e.situateConversion(operand, converted), nil
+			}
 			converted, err := convertToType(operand, nt.Name)
 			if errors.Is(err, funcs.ErrNotADecimal) {
 				return nil, nil // as ToDecimal (see funcs.DecimalFromString)

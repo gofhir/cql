@@ -22,7 +22,7 @@ D116	null
 D117	null
 D118	Boolean false
 D119	null
-D12	Decimal 0.5
+D12	null
 D120	null
 D121	Boolean false
 D122	null
@@ -33,7 +33,7 @@ D126	Decimal 0.00000000
 D127	Boolean true
 D128	Decimal 0.00000000
 D129	Decimal 0.00000000
-D13	Boolean true
+D13	Boolean false
 D130	Boolean true
 D131	Decimal 0.00000000
 D132	Decimal -0.00000001
@@ -44,7 +44,7 @@ D136	Boolean true
 D137	Decimal 0
 D138	Decimal 0
 D139	Boolean true
-D14	Decimal 0.5
+D14	null
 D140	Decimal 0
 D141	null
 D142	Boolean false
@@ -55,7 +55,7 @@ D146	null
 D147	Decimal 0.00000000
 D148	Boolean true
 D149	Decimal 0.00000000
-D15	Decimal 0.5
+D15	null
 D150	Decimal 0.00000000
 D151	Boolean true
 D152	Decimal 0.00000000
@@ -66,7 +66,7 @@ D156	null
 D157	Boolean false
 D158	null
 D159	null
-D16	Boolean true
+D16	Boolean false
 D160	Boolean false
 D161	null
 D162	null
@@ -77,7 +77,7 @@ D166	Boolean true
 D167	Decimal 12345678901234567890
 D168	null
 D169	Boolean false
-D17	Decimal 0.5
+D17	null
 D170	null
 D171	Decimal 99999999999999999999.99999999
 D172	Boolean true
@@ -88,7 +88,7 @@ D176	null
 D177	null
 D178	Boolean false
 D179	null
-D18	Decimal -0.5
+D18	null
 D180	Decimal 0.00000000
 D181	Boolean true
 D182	Decimal 0.00000000
@@ -99,7 +99,7 @@ D186	Decimal 1.00000000
 D187	Boolean true
 D188	Decimal 1.00000000
 D189	Decimal -1.00000001
-D19	Boolean true
+D19	Boolean false
 D190	Boolean true
 D191	Decimal -1.00000001
 D192	Decimal 0
@@ -111,7 +111,7 @@ D197	Decimal 0
 D198	Decimal 1.00000000
 D199	Boolean true
 D2	Decimal 1
-D20	Decimal -0.5
+D20	null
 D200	Decimal 1.00000000
 D201	Decimal -0.00000002
 D202	Boolean true
