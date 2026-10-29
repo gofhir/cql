@@ -1,16 +1,11 @@
-D0	error: CQL evaluation error: division by zero
-D1	error: CQL evaluation error: Exp: overflow for value 1000
 D10	Decimal 1.00000001
 D11	Decimal 1.01000001
-D12	error: CQL evaluation error: not a date or time on the calendar and the clock: date arithmetic reaches year 10000, outside 1 to 9999
-D13	error: CQL evaluation error: successor overflow: Time exceeds maximum
 D14	Quantity -3 'cm'
 D15	Quantity 2 'g'
 D16	Quantity 2 'm'
 D17	null
 D18	null
 D19	Boolean false
-D2	error: CQL evaluation error: Exp: overflow for value 1000
 D20	Integer 0
 D21	Integer 1
 D22	Integer 1
@@ -21,7 +16,6 @@ D26	Boolean false
 D27	null
 D28	null
 D29	null
-D3	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)
 D30	null
 D31	null
 D32	null
@@ -32,7 +26,6 @@ D36	error: CQL evaluation error: unknown function: contains
 D37	error: CQL evaluation error: unknown function: contains
 D38	List[]
 D39	List[]
-D4	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)
 D40	error: CQL syntax error: CQL syntax error: line 7:17 extraneous input 'in' expecting {'library', 'version', 'using', 'called', 'include', 'public', 'private', 'parameter', 'default', 'codesystem', 'valueset', 'codesystems', '{', 'code', 'from', 'concept', 'List', 'Interval', 'Tuple', 'define', 'context', 'fluent', 'function', '(', '[', 'where', 'distinct', 'starting', 'by', 'asc', 'ascending', 'desc', 'descending', 'not', 'null', 'true', 'false', 'cast', 'exists', 'duration', 'difference', 'union', 'intersect', 'except', 'contains', 'xor', 'implies', 'year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond', 'date', 'time', 'timezone', 'timezoneoffset', 'years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds', 'convert', '+', '-', 'start', 'end', 'width', 'successor', 'predecessor', 'singleton', 'point', 'minimum', 'maximum', 'div', 'mod', 'if', 'case', 'flatten', 'expand', 'collapse', 'or before', 'or after', 'or more', 'or less', 'starts', 'ends', 'includes', 'meets', 'overlaps', '$this', '$index', '$total', '%', 'display', 'Code', 'Concept', QUOTEDIDENTIFIER, DATETIME, LONGNUMBER, DATE, TIME, IDENTIFIER, DELIMITEDIDENTIFIER, STRING, NUMBER}
 D41	error: CQL syntax error: CQL syntax error: line 7:17 extraneous input 'in' expecting {'library', 'version', 'using', 'called', 'include', 'public', 'private', 'parameter', 'default', 'codesystem', 'valueset', 'codesystems', '{', 'code', 'from', 'concept', 'List', 'Interval', 'Tuple', 'define', 'context', 'fluent', 'function', '(', '[', 'where', 'distinct', 'starting', 'by', 'asc', 'ascending', 'desc', 'descending', 'not', 'null', 'true', 'false', 'cast', 'exists', 'duration', 'difference', 'union', 'intersect', 'except', 'contains', 'xor', 'implies', 'year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond', 'date', 'time', 'timezone', 'timezoneoffset', 'years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds', 'convert', '+', '-', 'start', 'end', 'width', 'successor', 'predecessor', 'singleton', 'point', 'minimum', 'maximum', 'div', 'mod', 'if', 'case', 'flatten', 'expand', 'collapse', 'or before', 'or after', 'or more', 'or less', 'starts', 'ends', 'includes', 'meets', 'overlaps', '$this', '$index', '$total', '%', 'display', 'Code', 'Concept', QUOTEDIDENTIFIER, DATETIME, LONGNUMBER, DATE, TIME, IDENTIFIER, DELIMITEDIDENTIFIER, STRING, NUMBER}
 D42	error: CQL syntax error: CQL syntax error: line 7:17 extraneous input 'in' expecting {'library', 'version', 'using', 'called', 'include', 'public', 'private', 'parameter', 'default', 'codesystem', 'valueset', 'codesystems', '{', 'code', 'from', 'concept', 'List', 'Interval', 'Tuple', 'define', 'context', 'fluent', 'function', '(', '[', 'where', 'distinct', 'starting', 'by', 'asc', 'ascending', 'desc', 'descending', 'not', 'null', 'true', 'false', 'cast', 'exists', 'duration', 'difference', 'union', 'intersect', 'except', 'contains', 'xor', 'implies', 'year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond', 'date', 'time', 'timezone', 'timezoneoffset', 'years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds', 'convert', '+', '-', 'start', 'end', 'width', 'successor', 'predecessor', 'singleton', 'point', 'minimum', 'maximum', 'div', 'mod', 'if', 'case', 'flatten', 'expand', 'collapse', 'or before', 'or after', 'or more', 'or less', 'starts', 'ends', 'includes', 'meets', 'overlaps', '$this', '$index', '$total', '%', 'display', 'Code', 'Concept', QUOTEDIDENTIFIER, DATETIME, LONGNUMBER, DATE, TIME, IDENTIFIER, DELIMITEDIDENTIFIER, STRING, NUMBER}
@@ -53,5 +46,3 @@ D55	error: CQL evaluation error: unknown function: ToRatio
 D56	error: CQL evaluation error: unknown function: ToRatio
 D6	Decimal 1.00999999
 D7	Quantity 0.99999999 'cm'
-D8	error: CQL evaluation error: not a date or time on the calendar and the clock: date arithmetic reaches year 0, outside 1 to 9999
-D9	error: CQL evaluation error: predecessor underflow: Time below minimum

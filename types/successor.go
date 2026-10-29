@@ -39,8 +39,12 @@ func HasSuccessor(v fptypes.Value) bool {
 func Successor(v fptypes.Value) (fptypes.Value, error) { return step(v, 1) }
 
 // ErrPastRange is a successor or predecessor past the range of its type: of
-// the largest Long, or — the evaluator's to tell, from the static type — of
-// the largest Integer. The specification makes it an error, not null.
+// the largest Long, of the last Date, DateTime or Time, or — the evaluator's
+// to tell, from the static type — of the largest Integer. The operators
+// answer it with null, as the specification does (CQL 1.5.3, Appendix B,
+// Successor: "If the argument is already the maximum value for the type, a
+// null is returned"; plan 013); an interval boundary reads it as no step to
+// take. A Decimal has no such edge here: its range is the operator's to hold.
 var ErrPastRange = errors.New("the result is past the range of its type")
 
 // Predecessor returns the previous value of an ordered type.
@@ -78,54 +82,26 @@ func step(v fptypes.Value, delta int) (fptypes.Value, error) {
 		unit := DateTimeUnit(t.Precision())
 		if delta > 0 {
 			result, err := t.AddDuration(1, unit)
-			if err != nil {
-				return nil, err
-			}
-			if result.Year() > 9999 {
-				return nil, fmt.Errorf("successor overflow: DateTime exceeds maximum")
-			}
-			return result, nil
+			return calendarStep(t, delta, result, err)
 		}
 		result, err := t.SubtractDuration(1, unit)
-		if err != nil {
-			return nil, err
-		}
-		if result.Year() < 1 {
-			return nil, fmt.Errorf("predecessor underflow: DateTime below minimum")
-		}
-		return result, nil
+		return calendarStep(t, delta, result, err)
 
 	case fptypes.Date:
-		// Guarded the way the DateTime branch above is: a Date has the same
-		// representable range, and stepping past it produced year 0 and year
-		// 10000 rather than saying there is no such date.
+		// The same range as a DateTime: stepping past it produced year 0 and
+		// year 10000 rather than saying there is no such date.
 		unit := DateUnit(t.Precision())
 		if delta > 0 {
 			result, err := t.AddDuration(1, unit)
-			if err != nil {
-				return nil, err
-			}
-			if result.Year() > 9999 {
-				return nil, fmt.Errorf("successor overflow: Date exceeds maximum")
-			}
-			return result, nil
+			return calendarStep(t, delta, result, err)
 		}
 		result, err := t.SubtractDuration(1, unit)
-		if err != nil {
-			return nil, err
-		}
-		if result.Year() < 1 {
-			return nil, fmt.Errorf("predecessor underflow: Date below minimum")
-		}
-		return result, nil
+		return calendarStep(t, delta, result, err)
 
 	case fptypes.Time:
 		result := AdjustTime(t, delta)
 		if result == nil {
-			if delta > 0 {
-				return nil, fmt.Errorf("successor overflow: Time exceeds maximum")
-			}
-			return nil, fmt.Errorf("predecessor underflow: Time below minimum")
+			return nil, stepError(t, delta)
 		}
 		return result, nil
 
@@ -136,6 +112,29 @@ func step(v fptypes.Value, delta int) (fptypes.Value, error) {
 		return fptypes.NewQuantityFromDecimal(t.Value().Sub(decimalStep), t.Unit()), nil
 	}
 	return nil, fmt.Errorf("successor/predecessor not supported for %s", v.Type())
+}
+
+// calendarStep reads the step of a Date or a DateTime: fhirpath refuses a
+// date outside the years 1 to 9999 with ErrInvalidTemporal, and that is the
+// only way a step of one unit of the value's own precision can fail — the
+// unit is never finer than the value, so no day is off the calendar but past
+// the last and the first. That refusal is the step past the range.
+func calendarStep(from fptypes.Value, delta int, result fptypes.Value, err error) (fptypes.Value, error) {
+	if errors.Is(err, fptypes.ErrInvalidTemporal) {
+		return nil, fmt.Errorf("%w: %w", stepError(from, delta), err)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// stepError is ErrPastRange, naming the value a step left from.
+func stepError(v fptypes.Value, delta int) error {
+	if delta > 0 {
+		return fmt.Errorf("successor of %v: %w", v, ErrPastRange)
+	}
+	return fmt.Errorf("predecessor of %v: %w", v, ErrPastRange)
 }
 
 func newDecimal(d decimal.Decimal) (fptypes.Value, error) {

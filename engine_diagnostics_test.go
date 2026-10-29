@@ -25,13 +25,13 @@ func TestEvaluationErrorsCarryTheirLocation(t *testing.T) {
 		// not check out is refused before evaluation. See
 		// TestSemanticErrorsCarryTheirLocation for the other path.
 		{
-			"overflow",
-			"library T version '1.0'\n\ndefine A: Exp(1000)\n",
+			"not a unit interval",
+			"library T version '1.0'\n\ndefine A: point from Interval[1, 3]\n",
 			"3:11",
 		},
 		{
-			"undefined for zero",
-			"library T version '1.0'\n\ndefine A: Ln(0)\n",
+			"more than one element",
+			"library T version '1.0'\n\ndefine A: singleton from {1, 2}\n",
 			"3:11",
 		},
 		{

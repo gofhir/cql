@@ -40,7 +40,7 @@ D132	Integer 1073741845
 D133	null
 D134	null
 D135	null
-D136	error: CQL evaluation error: successor of 2147483647: the result is past the range of its type
+D136	null
 D137	Integer 9
 D138	Integer -2147483648
 D139	null
@@ -105,7 +105,7 @@ D191	null
 D192	Integer 1
 D193	null
 D194	Integer -92680
-D195	error: CQL evaluation error: predecessor of -2147483648: the result is past the range of its type
+D195	null
 D196	Integer 1073741824
 D197	Integer -1
 D198	Integer -2147437305
@@ -235,7 +235,7 @@ D308	Integer 2146483637
 D309	Integer 357975727
 D31	null
 D310	Integer 2147483647
-D311	error: CQL evaluation error: successor of 2147483647: the result is past the range of its type
+D311	null
 D312	Integer 1518500250
 D313	Integer 1073741824
 D314	null
@@ -245,7 +245,7 @@ D317	Integer 0
 D318	Integer -2147483647
 D319	null
 D32	null
-D320	error: CQL evaluation error: successor of 2147483647: the result is past the range of its type
+D320	null
 D321	Integer -1072741824
 D322	Integer 1
 D323	Integer 46346
@@ -255,7 +255,7 @@ D326	null
 D327	null
 D328	Integer 0
 D329	Integer 2147483648
-D33	error: CQL evaluation error: predecessor of -2147483648: the result is past the range of its type
+D33	null
 D330	null
 D331	Integer -1073741823
 D332	Integer 0
@@ -328,7 +328,7 @@ D392	Integer 0
 D393	Integer 1074741824
 D394	null
 D395	null
-D396	error: CQL evaluation error: successor of 9223372036854775807: the result is past the range of its type
+D396	null
 D397	Integer 4294967296
 D398	Integer 0
 D399	Integer 0
@@ -374,7 +374,7 @@ D433	null
 D434	null
 D435	null
 D436	Integer 2147483648
-D437	error: CQL evaluation error: successor of 9223372036854775807: the result is past the range of its type
+D437	null
 D438	Integer 4611686018427387905
 D439	Integer 2147483650
 D44	null
@@ -492,7 +492,7 @@ D54	Integer 2147483645
 D540	Integer 1
 D541	Integer 1
 D542	Integer -333333
-D543	error: CQL evaluation error: successor of 2147483647: the result is past the range of its type
+D543	null
 D544	Integer 0
 D545	Integer 1
 D546	null
@@ -900,7 +900,7 @@ D907	null
 D908	null
 D909	Integer -2147483647
 D91	null
-D910	error: CQL evaluation error: successor of 9223372036854775807: the result is past the range of its type
+D910	null
 D911	Integer 4611686021464388402
 D912	null
 D913	Integer -8
@@ -918,7 +918,7 @@ D923	Integer 1073741824
 D924	Integer 4294967296
 D925	Integer -19195
 D926	Integer 0
-D927	error: CQL evaluation error: predecessor of -2147483648: the result is past the range of its type
+D927	null
 D928	Integer -1
 D929	Integer -21
 D93	null

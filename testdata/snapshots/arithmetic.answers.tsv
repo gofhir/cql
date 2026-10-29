@@ -16,8 +16,8 @@ D110	Decimal 0.4
 D111	null
 D112	null
 D113	null
-D114	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)
-D115	error: CQL evaluation error: Exp: overflow for value 1001.5
+D114	null
+D115	null
 D116	Decimal 0
 D117	Decimal 334.33333333
 D118	Decimal 2.0625
@@ -77,7 +77,7 @@ D166	Decimal 0.69314718
 D167	null
 D168	Decimal 9
 D169	Decimal 0.045
-D17	error: CQL evaluation error: Ln: undefined for zero (results in negative infinity)
+D17	null
 D170	Decimal 2.75
 D171	null
 D172	null
@@ -125,7 +125,7 @@ D209	Decimal 39
 D21	null
 D210	Integer 0
 D211	null
-D212	error: CQL evaluation error: Exp: overflow for value 1000
+D212	null
 D213	null
 D214	Decimal 2.302585092994046
 D215	null
@@ -309,7 +309,7 @@ D375	null
 D376	Decimal 1
 D377	Decimal 12.25
 D378	null
-D379	Decimal 1907346572495099500000
+D379	null
 D38	null
 D380	Decimal 65500
 D381	Decimal -12.99382712
@@ -332,7 +332,7 @@ D396	null
 D397	Decimal 0.13793103
 D398	Decimal 0.0
 D399	Decimal 1
-D4	Decimal 1
+D4	null
 D40	Integer 0
 D400	Integer -1
 D401	Integer -1
@@ -363,7 +363,7 @@ D423	Integer 1000
 D424	null
 D425	null
 D426	null
-D427	Decimal 26881171418161356000000000000000000000000000
+D427	null
 D428	null
 D429	null
 D43	null
@@ -525,7 +525,7 @@ D57	null
 D570	Decimal 0.45825756
 D571	null
 D572	Decimal 0
-D573	error: CQL evaluation error: Exp: overflow for value 1000
+D573	null
 D574	Integer -7
 D575	Decimal -1.5
 D576	null
@@ -664,8 +664,8 @@ D695	Integer 4
 D696	null
 D697	Decimal 999.68191918
 D698	null
-D699	Decimal 26881171149349810000000000000000000000000000
-D7	error: CQL evaluation error: Exp: overflow for value 1000
+D699	null
+D7	null
 D70	null
 D700	null
 D701	Decimal 0.03345678
@@ -755,7 +755,7 @@ D777	Decimal -6
 D778	Decimal 42.15077104
 D779	Integer -4000
 D78	null
-D780	Decimal 26881171418161356000000000000000000000000000
+D780	null
 D781	null
 D782	Integer 0
 D783	Decimal 1

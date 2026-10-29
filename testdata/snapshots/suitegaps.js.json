@@ -1,14 +1,9 @@
 {
   "library": "corpus suitegaps.cql",
-  "sourceSha256": "2d6ae103e03bbe089520ca4e09b209102e5cffe3b06efd9f506d753f65980d40",
+  "sourceSha256": "42a6e119d6366a75c0278a5eb2d6258dfb6d392694dc4852f62f14b243438331",
   "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
-    "D0": null,
-    "D1": null,
-    "D2": null,
-    "D3": null,
-    "D4": null,
     "D5": {
       "type": "Decimal",
       "value": "0"
@@ -22,13 +17,6 @@
       "value": "0",
       "unit": "cm"
     },
-    "D8": {
-      "type": "DateTime",
-      "value": "0000-12-31T23:59:59.999-03:00",
-      "precision": "millisecond",
-      "instant": "0000-12-31T23:59:59.999-03:00"
-    },
-    "D9": null,
     "D10": {
       "type": "Decimal",
       "value": "2"
@@ -37,8 +25,6 @@
       "type": "Decimal",
       "value": "1.01000001"
     },
-    "D12": null,
-    "D13": null,
     "D14": null,
     "D15": null,
     "D16": null,

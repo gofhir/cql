@@ -118,11 +118,11 @@ func Ln(v fptypes.Value) (fptypes.Value, error) {
 	if !ok {
 		return nil, fmt.Errorf("Ln: expected numeric, got %s", v.Type())
 	}
-	if d.IsZero() {
-		return nil, fmt.Errorf("Ln: undefined for zero (results in negative infinity)")
-	}
-	if d.Sign() < 0 {
-		return nil, nil // CQL: Ln of negative value returns null
+	// Of zero, negative infinity, and of a negative number, no real number:
+	// neither can be represented, and "If the result of the operation cannot
+	// be represented, the result is null" (CQL 1.5.3, Appendix B, Ln).
+	if d.Sign() <= 0 {
+		return nil, nil
 	}
 	result := lnOf(d)
 	// Not brought to the Decimal scale, although the reference engine floors it
@@ -174,10 +174,17 @@ func Exp(v fptypes.Value) (fptypes.Value, error) {
 	}
 	f, _ := d.Float64()
 	result := math.Exp(f)
+	// Past what a float holds, or past the largest Decimal: "If the result of
+	// the operation cannot be represented, the result is null" (CQL 1.5.3,
+	// Appendix B, Exp; plan 013).
 	if math.IsInf(result, 0) || math.IsNaN(result) {
-		return nil, fmt.Errorf("Exp: overflow for value %v", d)
+		return nil, nil
 	}
-	return decimalToValue(decimal.NewFromFloat(result)), nil
+	exp := decimal.NewFromFloat(result)
+	if !WithinDecimal(exp) {
+		return nil, nil
+	}
+	return decimalToValue(exp), nil
 }
 
 // Power returns value raised to the exponent power.

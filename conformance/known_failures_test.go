@@ -28,7 +28,6 @@ type knownFailure struct {
 // docs/plans/README.md that holds it.
 var failureGroups = map[string]string{
 	"G1":  "1c25 G1: CQL 2.0, after the 1.5.3 this engine is written from (ADR 001)",
-	"G2":  "1c25 G2: an error where CQL 1.5.3 and Java answer null",
 	"G3a": "1c25 G3a: a component the DateTime does not have answers 0, not null",
 	"G3b": "1c25 G3b: years between dates on a leap day",
 	"G3c": "1c25 G3c: Distinct and Flatten of a null list answer an empty list, not null",
@@ -49,20 +48,11 @@ var failureGroups = map[string]string{
 // what Java and cql-execution do.
 var knownFailures = map[string]knownFailure{
 	// CqlArithmeticFunctionsTest.xml
-	"DivideQuantityByZero":                {group: "G2", errs: true, suite: `1.0.. invalid="" outputs=["null"]`},
-	"Exp1000":                             {group: "G2", errs: true, suite: `1.0.. invalid="" outputs=["null"]`},
-	"Exp1000D":                            {group: "G2", errs: true, suite: `1.0.. invalid="" outputs=["null"]`},
-	"Ln0":                                 {group: "G2", errs: true, suite: `1.4.. invalid="" outputs=["null"]`},
-	"LnNeg0":                              {group: "G2", errs: true, suite: `1.4.. invalid="" outputs=["null"]`},
 	"PredecessorOf101DPrecision":          {group: "G1", errs: false, suite: `2.0.. invalid="" outputs=["1.00"]`},
 	"PredecessorOf1DPrecision":            {group: "G1", errs: false, suite: `2.0.. invalid="" outputs=["0.9"]`},
 	"PredecessorOf1QCMPrecision":          {group: "G1", errs: false, suite: `2.0.. invalid="" outputs=["0.9'cm'"]`},
-	"PredecessorUnderflowDt":              {group: "G2", errs: true, suite: `1.0.. invalid="" outputs=["null"]`},
-	"PredecessorUnderflowT":               {group: "G2", errs: true, suite: `1.0.. invalid="" outputs=["null"]`},
 	"SuccessorOf101DPrecision":            {group: "G1", errs: false, suite: `2.0.. invalid="" outputs=["1.02"]`},
 	"SuccessorOf1DPrecision":              {group: "G1", errs: false, suite: `2.0.. invalid="" outputs=["1.1"]`},
-	"SuccessorOverflowDt":                 {group: "G2", errs: true, suite: `1.0.. invalid="" outputs=["null"]`},
-	"SuccessorOverflowT":                  {group: "G2", errs: true, suite: `1.0.. invalid="" outputs=["null"]`},
 	"TruncatedDivide10By5DQuantity":       {group: "G3g", errs: false, suite: `1.0.. invalid="" outputs=["2.0 '1'"]`},
 	"TruncatedDivide10d1ByNeg3D1Quantity": {group: "G3g", errs: false, suite: `1.0.. invalid="" outputs=["-3.0 '1'"]`},
 	"TruncatedDivide414By206DQuantity":    {group: "G3g", errs: false, suite: `1.0.. invalid="" outputs=["2.0 '1'"]`},

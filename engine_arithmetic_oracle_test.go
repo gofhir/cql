@@ -1543,14 +1543,9 @@ func TestTheArithmeticOracleAllowsWhatAllAgreeOn(t *testing.T) {
 // arithmeticAgreedOutsideTheSpecification is the answers a reference gives
 // as this engine does that the specification does not allow, with why. Each
 // holds only while the other reference tells this engine apart.
-var arithmeticAgreedOutsideTheSpecification = map[string]string{
-	"D4 java": pastTheRange,
-}
-
-// pastTheRange is why the Java engine answers D4 as this engine does: it computes
-// with Exp(100), past the Decimal range, which the specification makes null
-// (PR 4, decision 2). This engine's own defect is the verdict of the js row.
-const pastTheRange = "the Java engine answers past the Decimal range, as this engine does; the specification makes it null (PR 4, decision 2), and this engine's own defect is the verdict of the js row"
+// D4 was one, Java and this engine past the Decimal range with Exp(100),
+// until Exp gave null there (plan 013).
+var arithmeticAgreedOutsideTheSpecification = map[string]string{}
 
 // TestTheArithmeticDecisionNamesItsRows holds the plan to the rows decision 1
 // covers: it names each of them. -classify-arithmetic writes the list.

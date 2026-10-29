@@ -240,10 +240,10 @@ define IntegerProductOverflow: Product({65536, 65536})
 define IntegerPowerOverflow: 2 ^ 31
 define IntegerTruncatePastTheType: Truncate(3000000000.5)
 define IntegerSumWithinTheType: Sum({2147483647, 1, -1}) // control
-define IntegerSuccessorOfMaximum: successor of 2147483647 // control
+define IntegerSuccessorOfMaximum: successor of 2147483647
 define LongAddOverflow: 9223372036854775807L + 1L
 define LongMultiplyOverflow: 4611686018427387904L * 2L
-define LongSuccessorOfMaximum: successor of 9223372036854775807L // control
+define LongSuccessorOfMaximum: successor of 9223372036854775807L
 // A definition evaluates in its library's scope, not in the query or the
 // function it is referenced from.
 define ScopeY: 1

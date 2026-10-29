@@ -78,6 +78,12 @@ var runtimeReferences = []struct {
 			// engine both bind it.
 			"AggregateLetWithout":      "it fails resolving a let inside aggregate",
 			"AggregateDistinctLetWith": "it fails resolving a let inside aggregate distinct, after a with",
+			// The successor of the largest value is null in the specification
+			// (CQL 1.5.3, Appendix B, Successor: "a null is returned"; plan
+			// 013); the Java engine raises TypeOverflow, and cql-execution
+			// answers null.
+			"IntegerSuccessorOfMaximum": "it raises TypeOverflow where the specification answers null",
+			"LongSuccessorOfMaximum":    "it raises TypeOverflow where the specification answers null",
 		},
 	},
 	{
@@ -89,10 +95,6 @@ var runtimeReferences = []struct {
 			// evaluate.js reads a number's type from the translator's annotation.
 			// On a row about the type itself, that is the translator answering.
 			"ListIntDec": "it cannot tell Integer from Decimal; the type it records is the translator's",
-			// The successor of the largest value is an error in the
-			// specification, and in the Java engine; cql-execution answers null.
-			"IntegerSuccessorOfMaximum": "it answers null where the specification raises an error",
-			"LongSuccessorOfMaximum":    "it answers null where the specification raises an error",
 			// Decimal arithmetic runs in binary floating point there, below the
 			// scale of 8 the specification gives the type.
 			"DecimalDivision":                 "it divides in binary floating point: 3.3333333333333335",

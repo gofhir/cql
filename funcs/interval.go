@@ -327,6 +327,12 @@ func intervalEndMeetsStart(aHigh fptypes.Value, aHighClosed bool, bLow fptypes.V
 		if ok {
 			return succ.Equal(bLow)
 		}
+		// At the last value of its type there is no point after a.High for b
+		// to start on, so nothing meets it; equal boundaries there overlap.
+		// Only a type without a successor at all is read by equality.
+		if cqltypes.HasSuccessor(aHigh) {
+			return false
+		}
 		return aHigh.Equal(bLow)
 	}
 	if aHighClosed && !bLowClosed {

@@ -1741,6 +1741,11 @@ func (e *Evaluator) evalArithmetic(op ast.BinaryOp, left, right fptypes.Value) (
 		case ast.OpMultiply:
 			return lq.Multiply(rd), nil
 		case ast.OpDivide:
+			// "or the right argument is 0, the result is null" (CQL 1.5.3,
+			// Appendix B, Divide), as a Quantity divisor is above.
+			if rd.IsZero() {
+				return nil, nil
+			}
 			return lq.Divide(rd)
 		}
 	}
@@ -2825,12 +2830,14 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		// value, so the first included point is the successor of it. Interval
 		// equality needs the same answer, which is why it lives on the type.
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return iv.Start()
+			v, err := iv.Start()
+			return e.stepWithinItsType(n, v, err)
 		}
 		return nil, nil
 	case ast.OpEndOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return iv.End()
+			v, err := iv.End()
+			return e.stepWithinItsType(n, v, err)
 		}
 		return nil, nil
 	case ast.OpWidthOf:
@@ -2840,7 +2847,7 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		return nil, nil
 	case ast.OpSuccessorOf, ast.OpPredecessorOf:
 		v, err := e.evalSuccessorPredecessor(n.Operator, operand)
-		return e.stepWithinInteger(n, v, err)
+		return e.stepWithinItsType(n, v, err)
 	case ast.OpPointFrom:
 		if operand == nil {
 			return nil, nil

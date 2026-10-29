@@ -1,0 +1,255 @@
+{
+  "library": "corpus limits.cql",
+  "sourceSha256": "1e63a8b8d09be78dc5104df247a689b5b9135738eccfff45b2cf8e08c4e4ae34",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": null,
+    "D1": null,
+    "D2": null,
+    "D3": null,
+    "D4": {
+      "type": "Integer",
+      "value": "2147483647"
+    },
+    "D5": {
+      "type": "Integer",
+      "value": "-2147483648"
+    },
+    "D6": null,
+    "D7": null,
+    "D8": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tMaximum not supported for {urn:hl7-org:elm-types:r1}Long\n\tCQL Library:\tD8|1.0\n\tExpression:\tMaxValue\n\tELM Local ID:\t210\n\tCQL Locator:\t8:25-8:36\n"
+    },
+    "D9": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tMinimum not supported for {urn:hl7-org:elm-types:r1}Long\n\tCQL Library:\tD9|1.0\n\tExpression:\tMinValue\n\tELM Local ID:\t210\n\tCQL Locator:\t8:27-8:38\n"
+    },
+    "D10": null,
+    "D11": null,
+    "D12": null,
+    "D13": null,
+    "D14": null,
+    "D15": null,
+    "D16": null,
+    "D17": null,
+    "D18": null,
+    "D19": null,
+    "D20": null,
+    "D21": null,
+    "D22": null,
+    "D23": null,
+    "D24": null,
+    "D25": null,
+    "D26": null,
+    "D27": null,
+    "D28": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D29": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D30": null,
+    "D31": null,
+    "D32": null,
+    "D33": null,
+    "D34": null,
+    "D35": null,
+    "D36": null,
+    "D37": {
+      "type": "DateTime",
+      "value": "0000-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "0000-12-31T23:59:59.999-03:00"
+    },
+    "D38": {
+      "type": "DateTime",
+      "value": "0000-12-31",
+      "precision": "day",
+      "instant": "0000-12-31T00:00:00-03:00"
+    },
+    "D39": {
+      "type": "DateTime",
+      "value": "0000",
+      "precision": "year",
+      "instant": "0000-01-01T00:00:00-03:00"
+    },
+    "D40": null,
+    "D41": {
+      "type": "DateTime",
+      "value": "10000-01-01T00:00:00.000+14:00",
+      "precision": "millisecond",
+      "instant": "10000-01-01T00:00:00+14:00"
+    },
+    "D42": null,
+    "D43": {
+      "type": "DateTime",
+      "value": "0000-12-31T23:59:59.999-12:00",
+      "precision": "millisecond",
+      "instant": "0000-12-31T23:59:59.999-12:00"
+    },
+    "D44": null,
+    "D45": null,
+    "D46": {
+      "type": "DateTime",
+      "value": "0000-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "0000-12-31T23:59:59.999-03:00"
+    },
+    "D47": null,
+    "D48": null,
+    "D49": null,
+    "D50": null,
+    "D51": null,
+    "D52": null,
+    "D53": null,
+    "D54": null,
+    "D55": null,
+    "D56": null,
+    "D57": null,
+    "D58": {
+      "type": "Time",
+      "value": "23:59:59.999",
+      "precision": "millisecond"
+    },
+    "D59": {
+      "type": "Time",
+      "value": "00:00:00.000",
+      "precision": "millisecond"
+    },
+    "D60": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D61": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D62": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D63": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD63|1.0\n\tExpression:\tStart\n\tELM Local ID:\t209\n\tCQL Locator:\t8:13-8:47\n"
+    },
+    "D64": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD64|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t209\n\tCQL Locator:\t8:13-8:46\n"
+    },
+    "D65": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tMaximum not supported for {urn:hl7-org:elm-types:r1}Long\n\tCQL Library:\tD65|1.0\n\tExpression:\tMaxValue\n\tELM Local ID:\t211\n\tCQL Locator:\t8:31-8:42\n"
+    },
+    "D66": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD66|1.0\n\tExpression:\tStart\n\tELM Local ID:\t209\n\tCQL Locator:\t8:13-8:52\n"
+    },
+    "D67": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD67|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t209\n\tCQL Locator:\t8:13-8:50\n"
+    },
+    "D68": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD68|1.0\n\tExpression:\tStart\n\tELM Local ID:\t209\n\tCQL Locator:\t8:13-8:48\n"
+    },
+    "D70": {
+      "type": "DateTime",
+      "value": "0000-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "0000-12-31T23:59:59.999-03:00"
+    },
+    "D71": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD71|1.0\n\tExpression:\tStart\n\tELM Local ID:\t209\n\tCQL Locator:\t8:13-8:51\n"
+    },
+    "D72": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD72|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t209\n\tCQL Locator:\t8:13-8:49\n"
+    },
+    "D73": {
+      "type": "Integer",
+      "value": "2147483647"
+    },
+    "D74": {
+      "type": "Time",
+      "value": "00:00:00.000",
+      "precision": "millisecond"
+    },
+    "D75": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D76": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D77": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D78": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D79": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D80": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D81": {
+      "type": "Boolean",
+      "value": false
+    },
+    "D82": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D83": null,
+    "D84": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Interval",
+          "low": {
+            "type": "Decimal",
+            "value": "0"
+          },
+          "lowClosed": true,
+          "high": {
+            "type": "Decimal",
+            "value": "100000000000000000000"
+          },
+          "highClosed": true
+        }
+      ]
+    },
+    "D85": {
+      "type": "Boolean",
+      "value": true
+    },
+    "D109": null,
+    "D110": null,
+    "D111": null,
+    "D112": null,
+    "D113": {
+      "type": "Quantity",
+      "value": "2.5",
+      "unit": "g"
+    },
+    "D114": null,
+    "D115": null,
+    "D116": null,
+    "D117": null,
+    "D118": null,
+    "D119": null
+  }
+}
