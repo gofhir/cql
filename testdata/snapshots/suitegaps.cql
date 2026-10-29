@@ -4,20 +4,11 @@ library Differential version '1.0'
 // with the name of its test after it. Their classes are those of
 // knownFailures (conformance/known_failures_test.go) and of
 // docs/plans/012-suite-cql-tests.md.
-define D0: 5.0 'g' / 0 // DivideQuantityByZero
-define D1: Exp(1000) // Exp1000
-define D2: Exp(1000.0) // Exp1000D
-define D3: Ln(0) // Ln0
-define D4: Ln(-0) // LnNeg0
 define D5: predecessor of 1.0 // PredecessorOf1DPrecision
 define D6: predecessor of 1.01 // PredecessorOf101DPrecision
 define D7: predecessor of 1.0 'cm' // PredecessorOf1QCMPrecision
-define D8: predecessor of DateTime(0001, 1, 1, 0, 0, 0, 0) // PredecessorUnderflowDt
-define D9: predecessor of @T00:00:00.000 // PredecessorUnderflowT
 define D10: successor of 1.0 // SuccessorOf1DPrecision
 define D11: successor of 1.01 // SuccessorOf101DPrecision
-define D12: successor of DateTime(9999, 12, 31, 23, 59, 59, 999) // SuccessorOverflowDt
-define D13: successor of @T23:59:59.999 // SuccessorOverflowT
 define D14: 10.1 'cm' div -3.1 'cm' // TruncatedDivide10d1ByNeg3D1Quantity
 define D15: 10.0 'g' div 5.0 'g' // TruncatedDivide10By5DQuantity
 define D16: 4.14 'm' div 2.06 'm' // TruncatedDivide414By206DQuantity

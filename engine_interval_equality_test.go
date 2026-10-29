@@ -83,10 +83,12 @@ func TestIntervalEqualityOverATypeWithNoSuccessor(t *testing.T) {
 	}
 }
 
-// TestSteppingPastTheLimitIsAnError covers a boundary at the edge of its type.
+// TestSteppingPastTheLimitIsNull covers a boundary at the edge of its type.
 // There is no successor to the last representable DateTime, and answering with
 // the boundary the interval excludes would name a point it does not contain.
-func TestSteppingPastTheLimitIsAnError(t *testing.T) {
+// The specification makes that successor null, and the start of an interval
+// open there with it (plan 013, decision C); it was an error.
+func TestSteppingPastTheLimitIsNull(t *testing.T) {
 	for _, expr := range []string{
 		`end of Interval[null, @0001-01-01T00:00:00.000)`,
 		`start of Interval(@9999-12-31T23:59:59.999, null]`,
@@ -97,9 +99,9 @@ func TestSteppingPastTheLimitIsAnError(t *testing.T) {
 		`successor of @9999-12-31`,
 	} {
 		src := "library T version '1.0'\ndefine X: " + expr + "\n"
-		if _, err := NewEngine().EvaluateExpression(
-			context.Background(), src, "X", nil, nil); err == nil {
-			t.Errorf("%s evaluated, want an error about the limit", expr)
+		if v, err := NewEngine().EvaluateExpression(
+			context.Background(), src, "X", nil, nil); err != nil || v != nil {
+			t.Errorf("%s = %v, %v; want null", expr, v, err)
 		}
 	}
 }

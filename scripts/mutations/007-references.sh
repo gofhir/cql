@@ -51,8 +51,9 @@ mutations = [
     ("an own defect dropped from its file",
      ("testdata/snapshots/fhir.own-defects.tsv", "\nD19\t", "\nD19-gone\t"), FOLLOWS, "does not record it"),
     ("an own defect recorded with another answer of the engine",
-     ("testdata/snapshots/arithmetic.own-defects.tsv", "\nD427\tnull\tDecimal 2688", "\nD427\tnull\tDecimal 2788"),
-     FOLLOWS, "recorded Decimal 2788"),
+     # arithmetic's own defects were D427 and its kind, until plan 013.
+     ("testdata/snapshots/membership.own-defects.tsv", "\nD241\ttrue\tfalse\t", "\nD241\ttrue\tnull\t"),
+     FOLLOWS, "recorded null"),
     ("the fhir oracle finds no defect",
      (OWN, "\t\tif engine[name] != v.expected {", "\t\tif false && engine[name] != v.expected {"), FOLLOWS, "no longer finds"),
     ("the arithmetic oracle reads every answer the other way",

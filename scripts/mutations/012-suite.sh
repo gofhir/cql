@@ -84,7 +84,7 @@ mutations = [
       'var upstreamContradictions = map[string]string{\n\t"FloorIntegerGreaterThanMaxInteger": "kept",\n'),
      CONFORMANCE, "passes now, so upstream has settled it"),
     ("the area left out of what the references run",
-     ("scripts/references.sh", " decimalliterals suitegaps\"", " decimalliterals\""),
+     ("scripts/references.sh", " decimalliterals suitegaps ", " decimalliterals "),
      run("TestEveryAreaIsRunByTheReferences"), "scripts/references.sh does not run it"),
     ("versionTo not read",
      ("conformance/xmlmodel.go", 'xml:"versionTo,attr"', 'xml:"versionto,attr"'), RANGE,

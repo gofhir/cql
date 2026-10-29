@@ -1,0 +1,96 @@
+D0	null
+D1	null
+D10	Integer 2147483648
+D109	null
+D11	null
+D110	null
+D111	null
+D112	null
+D113	Quantity 2.5 'g'
+D114	null
+D115	null
+D116	null
+D117	null
+D118	null
+D119	null
+D12	null
+D13	null
+D14	null
+D15	Decimal 99999999999999999999.99999999
+D16	Decimal -99999999999999999999.99999999
+D17	null
+D18	null
+D19	Quantity 99999999999999999999.99999999 'mg'
+D2	null
+D20	null
+D21	null
+D22	null
+D23	null
+D24	null
+D25	null
+D26	null
+D27	null
+D28	Date 9999-12-31
+D29	Date 0001-01-01
+D3	null
+D30	null
+D31	null
+D32	null
+D33	null
+D34	null
+D35	null
+D36	null
+D37	null
+D38	null
+D39	null
+D4	Integer 2147483647
+D40	null
+D41	null
+D42	null
+D43	null
+D44	null
+D45	null
+D46	null
+D47	DateTime 9999-12-31T23:59:59.999-03:00
+D48	null
+D49	null
+D5	Integer -2147483648
+D50	null
+D51	null
+D52	null
+D53	null
+D54	null
+D55	null
+D56	null
+D57	null
+D58	Time 23:59:59.999
+D59	Time 00:00:00.000
+D6	null
+D60	Integer 1
+D61	Boolean true
+D62	Boolean true
+D63	null
+D64	null
+D65	null
+D66	null
+D67	null
+D68	null
+D7	null
+D70	null
+D71	null
+D72	null
+D73	Integer 2147483647
+D74	Time 00:00:00.000
+D75	Boolean false
+D76	Boolean false
+D77	Boolean true
+D78	Boolean false
+D79	Boolean false
+D8	null
+D80	Boolean true
+D81	Boolean false
+D82	Boolean false
+D83	Interval[Decimal 100000000000000000000, Decimal 99999999999999999999.99999999]
+D84	List[Interval[Decimal 0.0, Decimal 99999999999999999999.99999999]]
+D85	Boolean true
+D9	null

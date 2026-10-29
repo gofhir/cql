@@ -2,7 +2,6 @@ package eval
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
+	"github.com/gofhir/cql/funcs"
 	"github.com/gofhir/cql/sema"
 	cqltypes "github.com/gofhir/cql/types"
 )
@@ -72,7 +72,26 @@ func (e *Evaluator) pastInteger(node ast.Expression, v fptypes.Value) bool {
 // certainty is what a walk has settled about each definition it met: a
 // definition used twice is walked once, and one that refers to itself is not
 // certain.
-type certainty map[string]certain
+type certainty map[settled]certain
+
+// settled is what a walk settles about a definition: that it is an Integer,
+// a list of them, or an interval whose low or high boundary is one. Each is
+// its own question, kept apart from the name: a text joining the two, as
+// "low of I" did, is also the name a definition may have (review 2 of plan
+// 013).
+type settled struct {
+	what settledWhat
+	name string
+}
+
+type settledWhat uint8
+
+const (
+	settledInteger settledWhat = iota
+	settledList
+	settledLow
+	settledHigh
+)
 
 type certain uint8
 
@@ -109,10 +128,7 @@ func (e *Evaluator) certainInteger(expr ast.Expression, seen certainty) bool {
 			return e.certainInteger(x.Left, seen) && e.certainInteger(x.Right, seen)
 		}
 	case *ast.UnaryExpression:
-		switch x.Operator {
-		case ast.OpNegate, ast.OpPositive, ast.OpSuccessorOf, ast.OpPredecessorOf:
-			return e.certainInteger(x.Operand, seen)
-		}
+		return e.certainUnary(x, seen)
 	case *ast.FunctionCall:
 		return e.certainCall(x, seen)
 	case *ast.IdentifierRef:
@@ -124,7 +140,47 @@ func (e *Evaluator) certainInteger(expr ast.Expression, seen certainty) bool {
 			return false
 		}
 		root := e.inLibraryScope()
-		return root.certainDefinition(x.Name, stmt.Expression, seen, root.certainInteger)
+		return root.certainDefinition(settled{settledInteger, x.Name}, stmt.Expression, seen, root.certainInteger)
+	}
+	return false
+}
+
+// certainUnary is certainInteger of a unary operation: a sign or a step of a
+// certain Integer, or the start or end of an interval whose boundary is one.
+func (e *Evaluator) certainUnary(x *ast.UnaryExpression, seen certainty) bool {
+	switch x.Operator {
+	case ast.OpNegate, ast.OpPositive, ast.OpSuccessorOf, ast.OpPredecessorOf:
+		return e.certainInteger(x.Operand, seen)
+	case ast.OpStartOf, ast.OpEndOf:
+		return e.certainBoundary(x.Operand, x.Operator == ast.OpStartOf, seen)
+	}
+	return false
+}
+
+// certainBoundary reports whether the low boundary of an interval, or its
+// high, is an Integer for certain: of an interval written in place, or held by
+// a definition of this library, read as certainInteger reads one. A boundary
+// is settled apart from the definition's own certainty.
+func (e *Evaluator) certainBoundary(expr ast.Expression, low bool, seen certainty) bool {
+	switch x := expr.(type) {
+	case *ast.IntervalExpression:
+		if low {
+			return e.certainInteger(x.Low, seen)
+		}
+		return e.certainInteger(x.High, seen)
+	case *ast.IdentifierRef:
+		stmt := e.definitionOf(x)
+		if stmt == nil {
+			return false
+		}
+		key := settled{settledHigh, x.Name}
+		if low {
+			key = settled{settledLow, x.Name}
+		}
+		root := e.inLibraryScope()
+		return root.certainDefinition(key, stmt.Expression, seen, func(def ast.Expression, seen certainty) bool {
+			return root.certainBoundary(def, low, seen)
+		})
 	}
 	return false
 }
@@ -151,20 +207,20 @@ func (e *Evaluator) definitionOf(n *ast.IdentifierRef) *ast.ExpressionDef {
 
 // certainDefinition is check of a definition's expression, settled once per
 // walk. A definition met again while it is being walked refers to itself.
-func (e *Evaluator) certainDefinition(name string, expr ast.Expression, seen certainty,
+func (e *Evaluator) certainDefinition(key settled, expr ast.Expression, seen certainty,
 	check func(ast.Expression, certainty) bool) bool {
-	switch seen[name] {
+	switch seen[key] {
 	case walking, notCertain:
 		return false
 	case isCertain:
 		return true
 	}
-	seen[name] = walking
+	seen[key] = walking
 	if check(expr, seen) {
-		seen[name] = isCertain
+		seen[key] = isCertain
 		return true
 	}
-	seen[name] = notCertain
+	seen[key] = notCertain
 	return false
 }
 
@@ -210,7 +266,7 @@ func (e *Evaluator) certainList(expr ast.Expression, seen certainty) bool {
 			return false
 		}
 		root := e.inLibraryScope()
-		return root.certainDefinition("list "+x.Name, stmt.Expression, seen, root.certainList)
+		return root.certainDefinition(settled{settledList, x.Name}, stmt.Expression, seen, root.certainList)
 	}
 	return false
 }
@@ -223,17 +279,32 @@ func (e *Evaluator) withinInteger(node ast.Expression, v fptypes.Value, err erro
 	return nil, nil
 }
 
-// stepWithinInteger is the successor or predecessor v, or an error when it is
-// an Integer past the 32 bits of one.
-func (e *Evaluator) stepWithinInteger(node *ast.UnaryExpression, v fptypes.Value, err error) (fptypes.Value, error) {
-	if err != nil || !e.pastInteger(node, v) {
-		return v, err
+// stepWithinItsType is the result of a step — successor of, predecessor of,
+// and the start or end of an interval open at a boundary, which is a step from
+// it — or null where there is no such value of the type: past the calendar,
+// the clock or a Long (types.ErrPastRange), past the largest Decimal, or an
+// Integer past its 32 bits. CQL 1.5.3, Appendix B, Successor: "If the argument
+// is already the maximum value for the type, a null is returned"; Start is
+// "the successor of the low value" of an open boundary (plan 013). The 32-bit
+// edge is the static type's, so it holds only for an Integer for certain.
+func (e *Evaluator) stepWithinItsType(node ast.Expression, v fptypes.Value, err error) (fptypes.Value, error) {
+	if errors.Is(err, cqltypes.ErrPastRange) {
+		return nil, nil
 	}
-	// The operand is the edge the step left from, as the 64-bit error names it.
-	if node.Operator == ast.OpPredecessorOf {
-		return nil, fmt.Errorf("predecessor of %d: %w", math.MinInt32, cqltypes.ErrPastRange)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("successor of %d: %w", math.MaxInt32, cqltypes.ErrPastRange)
+	switch x := v.(type) {
+	case fptypes.Decimal:
+		if !funcs.WithinDecimal(x.Value()) {
+			return nil, nil
+		}
+	case fptypes.Quantity:
+		if !funcs.WithinDecimal(x.Value()) {
+			return nil, nil
+		}
+	}
+	return e.withinInteger(node, v, nil)
 }
 
 // exactInteger is the result of an exact int64 operation, null where it lies

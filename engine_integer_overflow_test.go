@@ -2,19 +2,17 @@ package cql
 
 import (
 	"context"
-	"errors"
 	"testing"
-
-	cqltypes "github.com/gofhir/cql/types"
 )
 
 // TestAResultPastItsTypeIsNull covers arithmetic past the 32 bits of an
 // Integer and the 64 of a Long. Both wrapped, or for an Integer did not even
 // do that: 2147483647 + 1 was 2147483648, still typed an Integer. The
-// specification makes each null, and the successor of the largest value an
-// error. The edge is the static type's — the same 2147483648 is a Long's —
-// so a Long beside an Integer carries the sum, and a duration is left whole,
-// as the overflow rule is about arithmetic.
+// specification makes each null, and the successor of the largest value too
+// (plan 013; it was an error, as the cql-tests of the time asked). The edge is
+// the static type's — the same 2147483648 is a Long's — so a Long beside an
+// Integer carries the sum, and a duration is left whole, as the overflow rule
+// is about arithmetic.
 func TestAResultPastItsTypeIsNull(t *testing.T) {
 	for expr, want := range map[string]string{
 		"2147483647 + 1":                       "null",
@@ -43,6 +41,9 @@ func TestAResultPastItsTypeIsNull(t *testing.T) {
 		"Product({4611686018427387904L, 2L})":  "null",
 		"3037000499L * 3037000499L":            "9223372030926249001",
 		"milliseconds between @2000-01-01T00:00:00.000Z and @2020-01-01T00:00:00.000Z": "631152000000",
+		"successor of 2147483647":           "null",
+		"predecessor of (-2147483648)":      "null",
+		"successor of 9223372036854775807L": "null",
 	} {
 		v, err := NewEngine().EvaluateExpression(context.Background(), "library T version '1.0'\ndefine R: "+expr+"\n", "R", nil, nil)
 		got := "null"
@@ -51,16 +52,6 @@ func TestAResultPastItsTypeIsNull(t *testing.T) {
 		}
 		if err != nil || got != want {
 			t.Errorf("%s = %s, %v; want %s", expr, got, err, want)
-		}
-	}
-	for _, expr := range []string{
-		"successor of 2147483647",
-		"predecessor of (-2147483648)",
-		"successor of 9223372036854775807L",
-	} {
-		_, err := NewEngine().EvaluateExpression(context.Background(), "library T version '1.0'\ndefine R: "+expr+"\n", "R", nil, nil)
-		if !errors.Is(err, cqltypes.ErrPastRange) {
-			t.Errorf("%s: err = %v; want ErrPastRange", expr, err)
 		}
 	}
 }
@@ -151,10 +142,10 @@ func TestTheCertainIntegersAreFollowedThrough(t *testing.T) {
 		}
 	}
 	for _, expr := range []string{"successor of maximum Integer", "predecessor of minimum Integer"} {
-		_, err := NewEngine().EvaluateExpression(context.Background(),
+		v, err := NewEngine().EvaluateExpression(context.Background(),
 			"library T version '1.0'\ndefine R: "+expr+"\n", "R", nil, nil)
-		if !errors.Is(err, cqltypes.ErrPastRange) {
-			t.Errorf("%s: err = %v; want ErrPastRange", expr, err)
+		if err != nil || v != nil {
+			t.Errorf("%s = %v, %v; want null (plan 013)", expr, v, err)
 		}
 	}
 }

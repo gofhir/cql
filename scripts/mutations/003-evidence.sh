@@ -376,12 +376,16 @@ mutations = [
     ("a cql-execution answer a micro off its value",
      replace("testdata/snapshots/arithmetic.js.json", '"0.8555992052357225"', '"0.8555982052357225"'),
      ["go", "test", "-count=1", "-run", "TestTheArithmeticVerdictsFollowTheOracle", "."], "the oracle gives"),
-    ("an exception where all agree that no longer is one",
-     replace("engine_arithmetic_oracle_test.go", '"D4 java": pastTheRange', '"D4x java": pastTheRange'),
-     ["go", "test", "-count=1", "-run", "TestTheArithmeticOracleAllowsWhatAllAgreeOn", "."], "D4: java answers"),
+    # D4 was the one agreement outside the specification, until Exp gave null
+    # past the largest Decimal (plan 013); a reference answer moved off it
+    # stands in for one.
+    ("an agreement outside the specification without its exception",
+     replace("testdata/snapshots/arithmetic.java.json", '"0.0081"', '"0.0082"'),
+     ["go", "test", "-count=1", "-run", "TestTheArithmeticOracleAllowsWhatAllAgreeOn", "."], "D2: java answers"),
     ("an exception for a row where the answers no longer agree",
-     replace("engine_arithmetic_oracle_test.go", '"D4 java": pastTheRange,', '"D4 java": pastTheRange,\n\t"D114 java": pastTheRange,'),
-     ["go", "test", "-count=1", "-run", "TestTheArithmeticOracleAllowsWhatAllAgreeOn", "."], "D114 java: the exception applies to no definition"),
+     replace("engine_arithmetic_oracle_test.go", "var arithmeticAgreedOutsideTheSpecification = map[string]string{}",
+             'var arithmeticAgreedOutsideTheSpecification = map[string]string{"D379 java": "none"}'),
+     ["go", "test", "-count=1", "-run", "TestTheArithmeticOracleAllowsWhatAllAgreeOn", "."], "D379 java: the exception applies to no definition"),
     ("this engine off the policy where no divergence reaches it",
      replace("testdata/snapshots/arithmetic.answers.tsv", "D2\tDecimal 0.0081", "D2\tDecimal 0.0082"),
      ["go", "test", "-count=1", "-run", "TestTheEngineFollowsTheScalePolicy", "."], "this engine answers"),
