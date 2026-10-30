@@ -1,0 +1,265 @@
+D0	Date 2014-01-01
+D1	Boolean true
+D10	Date 2014-01-01
+D100	Quantity 2 '1'
+D101	Boolean true
+D102	Boolean true
+D103	Quantity 1.0 'mg'
+D104	Quantity 2.0 'mg'
+D105	Boolean true
+D106	Boolean true
+D107	Quantity 1 'mg'
+D108	Quantity 2 'mL'
+D109	Boolean true
+D11	Boolean true
+D110	Boolean true
+D111	Quantity 1 '1'
+D112	Quantity 0 '1'
+D113	Boolean true
+D114	Boolean true
+D115	Quantity 0 '1'
+D116	Quantity 0 '1'
+D117	Boolean true
+D118	Boolean false
+D119	null
+D12	null
+D120	null
+D121	Boolean false
+D122	Boolean false
+D123	null
+D124	null
+D125	Boolean false
+D126	Boolean false
+D127	null
+D128	null
+D129	Boolean false
+D13	Boolean false
+D130	Boolean false
+D131	null
+D132	null
+D133	Boolean false
+D134	Boolean false
+D135	null
+D136	null
+D137	Boolean false
+D138	Boolean false
+D139	null
+D14	Date 2014-01-01
+D140	null
+D141	Boolean false
+D142	Boolean true
+D143	Quantity 1 '1'
+D144	Quantity 2 '1'
+D145	Boolean true
+D146	Boolean true
+D147	Quantity 1 '1'
+D148	Quantity 2 '1'
+D149	Boolean true
+D15	Boolean true
+D150	Boolean true
+D151	Quantity -1 '1'
+D152	Quantity 2 '1'
+D153	Boolean true
+D154	Boolean true
+D155	Quantity 1 '1'
+D156	Quantity -2 '1'
+D157	Boolean true
+D158	Boolean true
+D159	Quantity 100 '1'
+D16	Date 2014-01-01
+D160	Quantity 3 '1'
+D161	Boolean true
+D162	Boolean false
+D163	null
+D164	null
+D165	Boolean false
+D166	Boolean true
+D167	Quantity 1 '{a:b}'
+D168	Quantity 2 '1'
+D169	Boolean true
+D17	Boolean true
+D170	Boolean true
+D171	Quantity 1.5 'mg/dL'
+D172	Quantity 1 '1'
+D173	Boolean true
+D174	Boolean true
+D175	Quantity 1 'mg'
+D176	Quantity 2 'mg'
+D177	Boolean true
+D178	Boolean true
+D179	Quantity 1 'mg'
+D18	Date 2014-01-01
+D180	Quantity 2 'mg'
+D181	Boolean true
+D182	Boolean true
+D183	Quantity 1 'mg'
+D184	Quantity 2 'mg'
+D185	Boolean true
+D186	Boolean false
+D187	null
+D188	null
+D189	Boolean false
+D19	Boolean true
+D190	Boolean false
+D191	null
+D192	null
+D193	Boolean false
+D194	Boolean true
+D195	Quantity 1 'g'
+D196	Quantity 1000 'mg'
+D197	Boolean true
+D198	Boolean true
+D199	Quantity 99999999999999999999.99999999 '1'
+D2	Date 2014-01
+D20	Date 2014-01-01
+D200	Quantity 1 '1'
+D201	Boolean true
+D202	Boolean true
+D203	Quantity 1.123456789 '1'
+D204	Quantity 1 '1'
+D205	Boolean true
+D206	null
+D207	null
+D208	Boolean true
+D209	Boolean true
+D21	Boolean true
+D210	Boolean true
+D211	String "1 'mg':2 'mg'"
+D212	String "1 'mg':2 'mg'"
+D213	Boolean false
+D214	Boolean true
+D215	Boolean true
+D216	Quantity 1 'mg'
+D217	Quantity 2 'mg'
+D218	Quantity 1.0 'mg'
+D219	String "1 'mg':2 'mg'"
+D22	Date 2014-01-01
+D220	String "1 'mg':2 'mg'"
+D221	String "1 'mg'"
+D222	Boolean false
+D223	Boolean false
+D224	Boolean true
+D225	Boolean true
+D226	Boolean true
+D227	Quantity 1 '1'
+D228	null
+D23	Boolean true
+D230	null
+D231	null
+D232	Date 2014-01-01
+D233	Date 2014-01-01
+D234	Date 2014-01-01
+D235	null
+D238	DateTime 2014-01-01
+D239	Date 2014
+D24	Date 2014-01-01
+D240	Date 2014-01
+D241	DateTime 2014-01T12:30
+D242	null
+D243	null
+D244	Date 2014-01-01
+D245	Date 2014-01-01
+D246	Quantity 1 '1'
+D247	Quantity 1 '1'
+D248	Boolean true
+D249	Quantity 2 '{a:b}'
+D25	Boolean true
+D250	Boolean true
+D251	Boolean true
+D252	Boolean true
+D253	Boolean true
+D254	Boolean false
+D255	Boolean true
+D256	Boolean false
+D257	Boolean false
+D258	error: CQL evaluation error: cannot convert date to Date
+D259	error: CQL evaluation error: cannot convert Ratio to Ratio
+D26	null
+D260	Boolean false
+D261	Boolean false
+D262	Boolean false
+D263	Quantity 1 day
+D264	Quantity 1 'foo'
+D265	Quantity 1 '1'
+D266	String "1 'day':2 'days'"
+D267	Quantity 1 day
+D27	Boolean false
+D28	null
+D29	Boolean false
+D3	Boolean true
+D30	null
+D31	Boolean false
+D32	null
+D33	Boolean false
+D34	null
+D35	Boolean false
+D36	null
+D37	Boolean false
+D38	null
+D39	Boolean false
+D4	Date 2014
+D40	null
+D41	Boolean false
+D42	null
+D43	Boolean false
+D44	null
+D45	Boolean false
+D46	Date 0001-01-01
+D47	Boolean true
+D48	Date 9999-12-31
+D49	Boolean true
+D5	Boolean true
+D50	null
+D51	Boolean false
+D52	null
+D53	Boolean false
+D54	null
+D55	Boolean false
+D56	null
+D57	Boolean false
+D58	null
+D59	Boolean false
+D6	Date 2014-01-01
+D60	null
+D61	Boolean false
+D62	Date 2016-02-29
+D63	Boolean true
+D64	null
+D65	Boolean false
+D66	null
+D67	Boolean false
+D68	null
+D69	Boolean false
+D7	Boolean true
+D70	null
+D71	null
+D72	Date 2014-01-01
+D73	Date 2014
+D74	Date 2014-01
+D75	Date 2014-01-01
+D76	Date 2014-01-01
+D77	Date 2014-01-01
+D78	Boolean true
+D79	Boolean true
+D8	Date 2014-01-01
+D80	Boolean false
+D81	Date 2014-01-01
+D82	Date 2014-01
+D83	Boolean true
+D84	Boolean true
+D85	Boolean true
+D86	Boolean true
+D87	Quantity 1.0 'mg'
+D88	Quantity 2.0 'mg'
+D89	Boolean true
+D9	Boolean true
+D90	Boolean false
+D91	null
+D92	null
+D93	Boolean false
+D94	Boolean true
+D95	Quantity 1 '1'
+D96	Quantity 2 '1'
+D97	Boolean true
+D98	Boolean true
+D99	Quantity 1 '1'

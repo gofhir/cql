@@ -67,12 +67,15 @@ var snapshotAreas = []struct {
 	{"decimalliterals", 60, true},
 	// The cql-tests cases this engine fails, as the suite writes them: the
 	// knownFailures of conformance/known_failures_test.go (plan 012).
-	{"suitegaps", 48, true},
+	{"suitegaps", 40, true},
 	// Written by hand: the edges of docs/plans/013-null-donde-va-null.md, where
 	// a step or a division cannot be represented; and apart, Exp and Ln, which
 	// a float computes.
 	{"limits", 96, true},
 	{"limitsexp", 23, false},
+	// Written by hand: the strings and values of docs/plans/014-todate-toratio.md,
+	// read by ToDate, ToRatio, their ConvertsTo, convert and the Ratio literal.
+	{"conversions", 265, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over

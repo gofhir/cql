@@ -831,9 +831,37 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 		return t, nil
 	case ast.LiteralQuantity:
 		return fptypes.NewQuantity(n.Value)
+	case ast.LiteralRatio:
+		// Two Quantity literals and a ':' (plan 014, decision D), each read
+		// as a Quantity literal is: a calendar keyword unquoted, or a unit
+		// UCUM does not know, is as valid here as there. It was a String.
+		left, right, ok := funcs.RatioSides(n.Value)
+		if !ok {
+			return nil, fmt.Errorf("invalid ratio: %s", n.Value)
+		}
+		numerator, err := ratioSide(left)
+		if err != nil {
+			return nil, err
+		}
+		denominator, err := ratioSide(right)
+		if err != nil {
+			return nil, err
+		}
+		return cqltypes.NewRatio(numerator, denominator), nil
 	default:
 		return fptypes.NewString(n.Value), nil
 	}
+}
+
+// ratioSide reads a side of a Ratio literal as a Quantity literal, and a
+// number written without a unit has "a unit of '1' (the default unit)" (CQL
+// 1.5.3, Appendix B, ToQuantity), as in `1:2`.
+func ratioSide(s string) (fptypes.Quantity, error) {
+	q, err := fptypes.NewQuantity(s)
+	if err != nil || q.Unit() != "" {
+		return q, err
+	}
+	return fptypes.NewQuantityFromDecimal(q.Value(), "1"), nil
 }
 
 // ---------------------------------------------------------------------------
@@ -1091,6 +1119,13 @@ func (e *Evaluator) elementOf(v fptypes.Value, name string, at ast.Expression) (
 			return optionalElement(src.Display), true
 		case "version":
 			return optionalElement(src.Version), true
+		}
+	case cqltypes.Ratio:
+		switch name {
+		case "numerator":
+			return src.Numerator, true
+		case "denominator":
+			return src.Denominator, true
 		}
 	case cqltypes.Concept:
 		switch name {
@@ -3329,6 +3364,23 @@ func (e *Evaluator) evalConvert(n *ast.ConvertExpression) (fptypes.Value, error)
 				}
 				return e.situateConversion(operand, converted), nil
 			}
+			// convert to Date is ToDate: "If the conversion cannot be
+			// performed, the result is null" (CQL 1.5.3, Appendix B, Convert),
+			// and a DateTime gives its date (plan 014). A cast does not
+			// convert, and keeps convertToType.
+			if strings.EqualFold(nt.Name, "Date") && (nt.Namespace == "" || nt.Namespace == "System") {
+				return funcs.ToDate(operand)
+			}
+			// And convert to Ratio is ToRatio: the conversion from String is
+			// explicit (CQL 1.5.3, Appendix B, Convert, Table 9-E).
+			if strings.EqualFold(nt.Name, "Ratio") && (nt.Namespace == "" || nt.Namespace == "System") {
+				return funcs.ToRatio(operand)
+			}
+			// A Ratio to String is ToString, each Quantity with its unit
+			// quoted, so that it reads back (plan 014, review 2).
+			if _, ok := operand.(cqltypes.Ratio); ok && strings.EqualFold(nt.Name, "String") && (nt.Namespace == "" || nt.Namespace == "System") {
+				return funcs.ToString(operand), nil
+			}
 			converted, err := convertToType(operand, nt.Name)
 			if errors.Is(err, funcs.ErrNotADecimal) {
 				return nil, nil // as ToDecimal (see funcs.DecimalFromString)
@@ -4850,6 +4902,19 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return nil, err
 		}
 		return funcs.ToQuantity(src)
+	case "todate":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		// Not situated: the date of a string is the one written (plan 014).
+		return funcs.ToDate(src)
+	case "toratio":
+		src, err := resolveSource()
+		if err != nil {
+			return nil, err
+		}
+		return funcs.ToRatio(src)
 	case "toconcept":
 		src, err := resolveSource()
 		if err != nil {
@@ -4993,17 +5058,18 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if src == nil {
 			return nil, nil
 		}
-		switch v := src.(type) {
-		case fptypes.Date:
-			return fptypes.NewBoolean(true), nil
-		case fptypes.DateTime:
-			return fptypes.NewBoolean(true), nil
-		case fptypes.String:
-			_, parseErr := fptypes.NewDate(v.Value())
-			return fptypes.NewBoolean(parseErr == nil), nil
-		default:
-			return fptypes.NewBoolean(false), nil
+		// "returns true if its argument is or can be converted to a Date
+		// value. See the ToDate operator" (CQL 1.5.3, Appendix B): ToDate's
+		// overloads, and what ToDate reads (plan 014).
+		switch src.(type) {
+		case fptypes.Date, fptypes.DateTime, fptypes.String:
+			converted, err := funcs.ToDate(src)
+			if err != nil {
+				return nil, err
+			}
+			return fptypes.NewBoolean(converted != nil), nil
 		}
+		return fptypes.NewBoolean(false), nil
 
 	case "convertstodatetime":
 		src, err := resolveSource()
@@ -5051,21 +5117,16 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		if src == nil {
 			return nil, nil
 		}
-		if _, ok := src.(cqltypes.Ratio); ok {
-			return fptypes.NewBoolean(true), nil
+		// What ToRatio converts (plan 014): a Ratio, or a string it reads.
+		switch src.(type) {
+		case cqltypes.Ratio, fptypes.String:
+			converted, err := funcs.ToRatio(src)
+			if err != nil {
+				return nil, err
+			}
+			return fptypes.NewBoolean(converted != nil), nil
 		}
-		s, ok := src.(fptypes.String)
-		if !ok {
-			return fptypes.NewBoolean(false), nil
-		}
-		parts := strings.SplitN(s.Value(), ":", 2)
-		if len(parts) != 2 {
-			return fptypes.NewBoolean(false), nil
-		}
-		n, errN := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
-		d, errD := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
-		valid := errN == nil && errD == nil && !math.IsInf(n, 0) && !math.IsNaN(n) && !math.IsInf(d, 0) && !math.IsNaN(d)
-		return fptypes.NewBoolean(valid), nil
+		return fptypes.NewBoolean(false), nil
 
 	case "anyinvalueset":
 		src, err := resolveSource()

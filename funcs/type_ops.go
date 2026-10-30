@@ -20,6 +20,11 @@ func ToString(v fptypes.Value) fptypes.Value {
 	if q, ok := v.(fptypes.Quantity); ok {
 		return fptypes.NewString(fmt.Sprintf("%s '%s'", q.Value().String(), q.Unit()))
 	}
+	// A Ratio is <quantity>:<quantity> (CQL 1.5.3, Appendix B, ToString), each
+	// side written as above, so that its unit is quoted and reads back.
+	if r, ok := v.(cqltypes.Ratio); ok && r.Numerator != nil && r.Denominator != nil {
+		return fptypes.NewString(ToString(r.Numerator).String() + ":" + ToString(r.Denominator).String())
+	}
 	return fptypes.NewString(v.String())
 }
 
@@ -119,26 +124,46 @@ func ToDateTime(v fptypes.Value) (fptypes.Value, error) {
 	}
 }
 
-// ToDate converts a value to a Date.
+// ToDate converts a value to a Date. CQL 1.5.3, Appendix B, ToDate: "For the
+// DateTime overload, the operator is equivalent to invoking date from on the
+// DateTime value", the date as the value holds it; and a string is a date,
+// "'2014-01-01T12:30:00' // Still January 1st, 2014, time portion will be
+// ignored". A string with a time is read as ToDateTime reads one, and its date
+// is the one written, at the string's own offset (plan 014, decisions A and
+// B). Whatever does not read is null. A Date, which has no overload but which
+// the reference translator reaches through DateTime, is a System.Date of the
+// same date, whatever model type it carried. Any other type has no overload,
+// which the reference translator refuses, and it fails here as ToQuantity does.
 func ToDate(v fptypes.Value) (fptypes.Value, error) {
-	if v == nil {
+	switch val := v.(type) {
+	case nil:
 		return nil, nil
-	}
-	switch v.(type) {
-	case fptypes.Date:
-		return v, nil
-	case fptypes.DateTime:
-		// Extract date part
-		s := v.String()
-		if idx := strings.IndexByte(s, 'T'); idx >= 0 {
-			s = s[:idx]
-		}
-		return fptypes.NewDate(s)
+	case fptypes.Date, fptypes.DateTime:
+		return dateOf(val.String())
 	case fptypes.String:
-		return fptypes.NewDate(v.String())
-	default:
-		return nil, nil
+		s := val.Value()
+		if strings.IndexByte(s, 'T') < 0 {
+			d, err := fptypes.NewDate(s)
+			if err != nil {
+				return nil, nil
+			}
+			return d, nil
+		}
+		dt, err := cqltypes.NewDateTime(s)
+		if err != nil {
+			return nil, nil
+		}
+		return dateOf(dt.String())
 	}
+	return nil, fmt.Errorf("cannot convert %s to Date", v.Type())
+}
+
+// dateOf is the Date of the text of a Date or a DateTime: what precedes its T.
+func dateOf(s string) (fptypes.Value, error) {
+	if idx := strings.IndexByte(s, 'T'); idx >= 0 {
+		s = s[:idx]
+	}
+	return fptypes.NewDate(s)
 }
 
 // ToQuantity converts a value to a Quantity: a string as QuantityFromString
