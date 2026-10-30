@@ -1,6 +1,6 @@
 {
   "library" : "corpus suitegaps.cql",
-  "sourceSha256" : "42a6e119d6366a75c0278a5eb2d6258dfb6d392694dc4852f62f14b243438331",
+  "sourceSha256" : "ce40d4bb195b4fff8f50b4377893bda20c5e947aa7ed75765f5cbedf8ad2cdcb",
   "engine" : "5.4.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -131,33 +131,6 @@
     "D48" : {
       "error" : "Translation",
       "message" : "Could not resolve call to operator MatchesFull with signature (System.String, System.Any)."
-    },
-    "D49" : {
-      "type" : "Date",
-      "value" : "2014-01-01",
-      "precision" : "day"
-    },
-    "D50" : {
-      "type" : "Date",
-      "value" : "2014-01",
-      "precision" : "month"
-    },
-    "D51" : {
-      "type" : "Date",
-      "value" : "2014",
-      "precision" : "year"
-    },
-    "D52" : null,
-    "D53" : {
-      "type" : "Date",
-      "value" : "2014-01-01",
-      "precision" : "day"
-    },
-    "D54" : null,
-    "D55" : {
-      "type" : "Boolean",
-      "value" : true
-    },
-    "D56" : null
+    }
   }
 }

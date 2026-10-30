@@ -44,11 +44,3 @@ define D45: Coalesce(null, 15, null, null, null, null) // CoalesceMoreThanFiveAr
 define D46: MatchesFull('N8000123123', 'N[0-9]{10}') // MatchesFullTrue
 define D47: MatchesFull('N8000123123', 'N[0-9]{8}') // MatchesFullFalse
 define D48: MatchesFull('ABC', null) // MatchesFullNull
-define D49: ToDate('2014-01-01') // ToDate1
-define D50: ToDate('2014-01') // ToDateYearMonth
-define D51: ToDate('2014') // ToDateYear
-define D52: ToDate('2014-01-01T12:05:05.955') // ToDateIgnoresTime
-define D53: ToDate(DateTime(2014, 01, 01, 12, 30, 0, 0)) // ToDateFromDateTime
-define D54: ToDate('2014/01/01') // ToDateMalformed
-define D55: ToRatio('1.0 \'mg\':2.0 \'mg\'') is Ratio // StringToRatio
-define D56: ToRatio('1.0 \'mg\';2.0 \'mg\'') // StringMalformedToRatio

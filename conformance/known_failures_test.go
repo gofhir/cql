@@ -33,7 +33,6 @@ var failureGroups = map[string]string{
 	"G3c": "1c25 G3c: Distinct and Flatten of a null list answer an empty list, not null",
 	"G3d": "1c25 G3d: Skip of a negative number answers the list, not an empty one",
 	"G3e": "1c25 G3e: Coalesce of six arguments is evaluated, past its signatures",
-	"G3f": "1c25 G3f: ToDate and ToRatio are missing",
 	"G3g": "1c25 G3g: div of two Quantities of a unit keeps the unit, not '1'",
 	"G3h": "1c25 G3h: tuple equality with a null element is not a conjunction",
 	"G3i": "1c25 G3i: a closed null boundary is not the point type's minimum or maximum",
@@ -95,14 +94,6 @@ var knownFailures = map[string]knownFailure{
 	"MatchesFullNull":  {group: "G1", errs: true, suite: `2.0.. invalid="" outputs=["null"]`},
 	"MatchesFullTrue":  {group: "G1", errs: true, suite: `2.0.. invalid="" outputs=["true"]`},
 	// CqlTypeOperatorsTest.xml
-	"StringMalformedToRatio": {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["null"]`},
-	"StringToRatio":          {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["true"]`},
-	"ToDate1":                {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["@2014-01-01"]`},
-	"ToDateFromDateTime":     {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["@2014-01-01"]`},
-	"ToDateIgnoresTime":      {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["@2014-01-01"]`},
-	"ToDateMalformed":        {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["null"]`},
-	"ToDateYear":             {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["@2014"]`},
-	"ToDateYearMonth":        {group: "G3f", errs: true, suite: `1.5.. invalid="" outputs=["@2014-01"]`},
 }
 
 // suiteContract writes what the suite asks of a test: the versions of CQL it

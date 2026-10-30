@@ -4,7 +4,9 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**013: null donde la especificación dice null** (1c25 G2). Rama `fix/null-where-due-1c25`. Paso 9: cerrado. El review convergió en la ronda 3 (29-10-2026) y `make check` está en verde. Sin commit ni PR: falta el pedido del usuario. Plan: [013-null-donde-va-null.md](013-null-donde-va-null.md). Decisiones A, B y C: null, como la especificación.
+**014: `ToDate` y `ToRatio`** (1c25 G3f). Rama `fix/todate-toratio-1c25`, sin commit. Paso 9 terminado: la review convergió en la ronda 3 (siete hallazgos en la 1, uno en la 2, uno bajo en la 3; todos resueltos), 21 mutaciones del 014 detectadas, make check verde (468) y diferencial idéntica a main. Próximo paso: commit y PR cuando el usuario lo pida. Plan: [014-todate-toratio.md](014-todate-toratio.md).
+
+**013 cerrado:** #169 (a623d74), mergeado el 29-10-2026. Plan: [013-null-donde-va-null.md](013-null-donde-va-null.md).
 
 **012 cerrado:** #168 (4bf4d94), mergeado el 28-10-2026 con el CI en verde. Plan: [012-suite-cql-tests.md](012-suite-cql-tests.md). Issue para cql-tests: cqframework/cql-tests#172.
 
@@ -82,7 +84,7 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
     - **la suite pide 28 cifras enteras y la especificación da 20:** ya estaba en [cqframework/cql-tests#145](https://github.com/cqframework/cql-tests/issues/145), donde se agregó la evidencia. [#153](https://github.com/cqframework/cql-tests/issues/153) discute los tests en que se apoya la decisión del 011: revisarla en 1c24.
 1c24. **(Cerrado en el 012, #168.) La suite de conformance estaba atrasada:** `conformance/testdata/SOURCE.tsv` fija cqframework/cql-tests en 727219f, 56 commits detrás de main (f724ee4, 19-10-2026 en −0600), con unas 1 200 líneas de tests nuevas en los 15 archivos. Lo encontró la revisión previa del 011.
 1c25. **Las fallas de la suite al día** (cql-tests f724ee4; ver [012-suite-cql-tests.md](012-suite-cql-tests.md)). Cada test está en `knownFailures` (`conformance/known_failures_test.go`) con su grupo, y en `testdata/snapshots/suitegaps.cql` con las respuestas de Java y cql-execution. Un frente por incremento:
-  - **G2. Error donde va null** (9): cerrado en el 013, sin merge.
+  - **G2. Error donde va null** (9): cerrado en el 013 (#169).
   - **Lo que el 013 dejó para después** (ver su plan, «Fuera del alcance»):
     - el borde de 32 bits sin Plan (ELM) o con un Integer no certero;
     - `+`, `-` y `*` de Decimal que pasan de `maximum Decimal`;
@@ -98,7 +100,16 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
   - **G3c.** `Distinct` y `Flatten` de una lista null dan `{}` y no null.
   - **G3d.** `Skip` con un número negativo da la lista entera, y la especificación dice vacía (Java da error).
   - **G3e.** `Coalesce` de seis argumentos se evalúa; sus firmas son de 2 a 5.
-  - **G3f.** Faltan `ToDate` y `ToRatio`. En `ToDate('2014-01-01T12:05:05.955')` las dos referencias dan null, y la especificación dice ignorar la hora.
+  - **G3f** (cerrado en el 014, sin mergear). Faltaban `ToDate` y `ToRatio`.
+  - **Lo que el 014 deja para después** (ver su plan, «Fuera del alcance»):
+    - la equivalencia de Ratio, que debe compararse en cruz;
+    - la escala en `ToString` de una Quantity, que un Ratio hereda;
+    - `convert … to String` de una Quantity no pasa por `ToString`: `convert (1 'day') to String` da `1 day`, sin comillas, y no vuelve por `ToQuantity`. Es anterior al 014, que lo arregló solo para un Ratio;
+    - el lector de `ToDateTime`, que acepta `'2014-01-01T'`, `'2014-01T12:30'` y `.1234`;
+    - `cast` de String a Date o a Ratio;
+    - las firmas de las conversiones en `sema`;
+    - un tipo sin calificar bajo `using FHIR`: Java lee `Ratio` y `Quantity` como los de FHIR.
+    - un literal Quantity con una unidad que no es de UCUM (`1 'foo'`) se lee, y el traductor de referencia lo rechaza; el literal Ratio lo comparte (D264 de `conversions`).
   - **G3g.** `div` de dos Quantity de la misma unidad conserva la unidad, y debe ser `'1'` (Java también la conserva).
   - **G3h.** La igualdad de tuplas con un elemento null da null, y es una conjunción (Java también da null).
   - **G3i.** Un límite cerrado en null no se lee como el mínimo o el máximo del tipo (8 tests; Java responde igual que el motor).

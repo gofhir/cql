@@ -35,14 +35,6 @@ D45	Integer 15
 D46	error: CQL evaluation error: unknown function: MatchesFull
 D47	error: CQL evaluation error: unknown function: MatchesFull
 D48	error: CQL evaluation error: unknown function: MatchesFull
-D49	error: CQL evaluation error: unknown function: ToDate
 D5	Decimal 0.99999999
-D50	error: CQL evaluation error: unknown function: ToDate
-D51	error: CQL evaluation error: unknown function: ToDate
-D52	error: CQL evaluation error: unknown function: ToDate
-D53	error: CQL evaluation error: unknown function: ToDate
-D54	error: CQL evaluation error: unknown function: ToDate
-D55	error: CQL evaluation error: unknown function: ToRatio
-D56	error: CQL evaluation error: unknown function: ToRatio
 D6	Decimal 1.00999999
 D7	Quantity 0.99999999 'cm'

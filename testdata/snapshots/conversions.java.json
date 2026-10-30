@@ -1,0 +1,964 @@
+{
+  "library" : "corpus conversions.cql",
+  "sourceSha256" : "d549d00171f5cf002ace83f2c8f666115932a6506958ab3762f2278e9a7cd52a",
+  "engine" : "5.4.0",
+  "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
+  "results" : {
+    "D0" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D1" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D2" : {
+      "type" : "Date",
+      "value" : "2014-01",
+      "precision" : "month"
+    },
+    "D3" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D4" : {
+      "type" : "Date",
+      "value" : "2014",
+      "precision" : "year"
+    },
+    "D5" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D6" : null,
+    "D7" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D8" : null,
+    "D9" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D10" : null,
+    "D11" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D12" : null,
+    "D13" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D14" : null,
+    "D15" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D16" : null,
+    "D17" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D18" : null,
+    "D19" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D20" : null,
+    "D21" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D22" : null,
+    "D23" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D24" : null,
+    "D25" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D26" : null,
+    "D27" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D28" : null,
+    "D29" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D30" : null,
+    "D31" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D32" : null,
+    "D33" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D34" : null,
+    "D35" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D36" : null,
+    "D37" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D38" : null,
+    "D39" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D40" : null,
+    "D41" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D42" : null,
+    "D43" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D44" : null,
+    "D45" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D46" : {
+      "type" : "Date",
+      "value" : "0001-01-01",
+      "precision" : "day"
+    },
+    "D47" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D48" : {
+      "type" : "Date",
+      "value" : "9999-12-31",
+      "precision" : "day"
+    },
+    "D49" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D50" : null,
+    "D51" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D52" : null,
+    "D53" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D54" : null,
+    "D55" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D56" : null,
+    "D57" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D58" : null,
+    "D59" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D60" : null,
+    "D61" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D62" : {
+      "type" : "Date",
+      "value" : "2016-02-29",
+      "precision" : "day"
+    },
+    "D63" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D64" : null,
+    "D65" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D66" : null,
+    "D67" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D68" : null,
+    "D69" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D70" : null,
+    "D71" : null,
+    "D72" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D73" : {
+      "type" : "Date",
+      "value" : "2014",
+      "precision" : "year"
+    },
+    "D74" : {
+      "type" : "Date",
+      "value" : "2014-01",
+      "precision" : "month"
+    },
+    "D75" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D76" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D77" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D78" : {
+      "error" : "InvalidOperatorArgument",
+      "message" : "Expected ConvertsToDate(String), Found ConvertsToDate(DateTime)"
+    },
+    "D79" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D80" : {
+      "error" : "InvalidOperatorArgument",
+      "message" : "Expected ConvertsToDate(String), Found ConvertsToDate(Integer)"
+    },
+    "D81" : null,
+    "D82" : {
+      "type" : "Date",
+      "value" : "2014-01",
+      "precision" : "month"
+    },
+    "D83" : null,
+    "D84" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D85" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D86" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D87" : {
+      "type" : "Quantity",
+      "value" : "1.0",
+      "unit" : "mg"
+    },
+    "D88" : {
+      "type" : "Quantity",
+      "value" : "2.0",
+      "unit" : "mg"
+    },
+    "D89" : {
+      "type" : "String",
+      "value" : "1.0 'mg':2.0 'mg'"
+    },
+    "D90" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D91" : null,
+    "D92" : null,
+    "D93" : {
+      "type" : "String",
+      "value" : "1.0 'mg';2.0 'mg'"
+    },
+    "D94" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D95" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D96" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "1"
+    },
+    "D97" : {
+      "type" : "String",
+      "value" : "1:2"
+    },
+    "D98" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D99" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D100" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "1"
+    },
+    "D101" : {
+      "type" : "String",
+      "value" : "1 : 2"
+    },
+    "D102" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D103" : {
+      "type" : "Quantity",
+      "value" : "1.0",
+      "unit" : "mg"
+    },
+    "D104" : {
+      "type" : "Quantity",
+      "value" : "2.0",
+      "unit" : "mg"
+    },
+    "D105" : {
+      "type" : "String",
+      "value" : "1.0 'mg' : 2.0 'mg'"
+    },
+    "D106" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D107" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "mg"
+    },
+    "D108" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "mL"
+    },
+    "D109" : {
+      "type" : "String",
+      "value" : "1 'mg':2 'mL'"
+    },
+    "D110" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D111" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D112" : {
+      "type" : "Quantity",
+      "value" : "0",
+      "unit" : "1"
+    },
+    "D113" : {
+      "type" : "String",
+      "value" : "1:0"
+    },
+    "D114" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D115" : {
+      "type" : "Quantity",
+      "value" : "0",
+      "unit" : "1"
+    },
+    "D116" : {
+      "type" : "Quantity",
+      "value" : "0",
+      "unit" : "1"
+    },
+    "D117" : {
+      "type" : "String",
+      "value" : "0:0"
+    },
+    "D118" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D119" : null,
+    "D120" : null,
+    "D121" : {
+      "type" : "String",
+      "value" : "1"
+    },
+    "D122" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D123" : null,
+    "D124" : null,
+    "D125" : {
+      "type" : "String",
+      "value" : "1:2:3"
+    },
+    "D126" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D127" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D128" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D129" : {
+      "type" : "String",
+      "value" : ":2"
+    },
+    "D130" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D131" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D132" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D133" : {
+      "type" : "String",
+      "value" : "1:"
+    },
+    "D134" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D135" : null,
+    "D136" : null,
+    "D137" : {
+      "type" : "String",
+      "value" : ""
+    },
+    "D138" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D139" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D140" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D141" : {
+      "type" : "String",
+      "value" : ":"
+    },
+    "D142" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D143" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D144" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "1"
+    },
+    "D145" : {
+      "type" : "String",
+      "value" : " 1:2"
+    },
+    "D146" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D147" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D148" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "1"
+    },
+    "D149" : {
+      "type" : "String",
+      "value" : "1:2 "
+    },
+    "D150" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D151" : {
+      "type" : "Quantity",
+      "value" : "-1",
+      "unit" : "1"
+    },
+    "D152" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "1"
+    },
+    "D153" : {
+      "type" : "String",
+      "value" : "-1:2"
+    },
+    "D154" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D155" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D156" : {
+      "type" : "Quantity",
+      "value" : "-2",
+      "unit" : "1"
+    },
+    "D157" : {
+      "type" : "String",
+      "value" : "1:-2"
+    },
+    "D158" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D159" : {
+      "type" : "Quantity",
+      "value" : "100",
+      "unit" : "1"
+    },
+    "D160" : {
+      "type" : "Quantity",
+      "value" : "3",
+      "unit" : "1"
+    },
+    "D161" : {
+      "type" : "String",
+      "value" : "1e2:3"
+    },
+    "D162" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D163" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "foo"
+    },
+    "D164" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "1"
+    },
+    "D165" : {
+      "type" : "String",
+      "value" : "1 'foo':2"
+    },
+    "D166" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D167" : null,
+    "D168" : null,
+    "D169" : {
+      "type" : "String",
+      "value" : "1 '{a:b}':2"
+    },
+    "D170" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D171" : {
+      "type" : "Quantity",
+      "value" : "1.5",
+      "unit" : "mg/dL"
+    },
+    "D172" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D173" : {
+      "type" : "String",
+      "value" : "1.5 'mg/dL':1 '1'"
+    },
+    "D174" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D175" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "mg"
+    },
+    "D176" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "mg"
+    },
+    "D177" : {
+      "type" : "String",
+      "value" : "1 'mg' :2 'mg'"
+    },
+    "D178" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D179" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "mg"
+    },
+    "D180" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "mg"
+    },
+    "D181" : {
+      "type" : "String",
+      "value" : "1 'mg': 2 'mg'"
+    },
+    "D182" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D183" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D184" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D185" : {
+      "type" : "String",
+      "value" : "1'mg':2'mg'"
+    },
+    "D186" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D187" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "mg"
+    },
+    "D188" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "mg"
+    },
+    "D189" : {
+      "type" : "String",
+      "value" : "1 mg:2 mg"
+    },
+    "D190" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D191" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "day"
+    },
+    "D192" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "days"
+    },
+    "D193" : {
+      "type" : "String",
+      "value" : "1 day:2 days"
+    },
+    "D194" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D195" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "g"
+    },
+    "D196" : {
+      "type" : "Quantity",
+      "value" : "1000",
+      "unit" : "mg"
+    },
+    "D197" : {
+      "type" : "String",
+      "value" : "1 'g':1000 'mg'"
+    },
+    "D198" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D199" : {
+      "type" : "Quantity",
+      "value" : "99999999999999999999.99999999",
+      "unit" : "1"
+    },
+    "D200" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D201" : {
+      "type" : "String",
+      "value" : "99999999999999999999.99999999:1"
+    },
+    "D202" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D203" : {
+      "type" : "Quantity",
+      "value" : "1.123456789",
+      "unit" : "1"
+    },
+    "D204" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D205" : {
+      "type" : "String",
+      "value" : "1.123456789:1"
+    },
+    "D206" : null,
+    "D207" : null,
+    "D208" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D209" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D210" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D211" : {
+      "type" : "String",
+      "value" : "1.0 'mg':2.0 'mg'"
+    },
+    "D212" : {
+      "type" : "String",
+      "value" : "1 'mg':2 'mg'"
+    },
+    "D213" : {
+      "type" : "Integer",
+      "value" : "5"
+    },
+    "D214" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D215" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D216" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "mg"
+    },
+    "D217" : {
+      "type" : "Quantity",
+      "value" : "2",
+      "unit" : "mg"
+    },
+    "D218" : {
+      "type" : "Quantity",
+      "value" : "1.0",
+      "unit" : "mg"
+    },
+    "D219" : {
+      "type" : "String",
+      "value" : "1.0 'mg':2.0 'mg'"
+    },
+    "D220" : {
+      "type" : "String",
+      "value" : "1 'mg':2 'mg'"
+    },
+    "D221" : {
+      "type" : "String",
+      "value" : "1.0 'mg'"
+    },
+    "D222" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D223" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D224" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D225" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D226" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D227" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D228" : null,
+    "D230" : null,
+    "D231" : null,
+    "D232" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D233" : {
+      "type" : "Date",
+      "value" : "2014-01-01",
+      "precision" : "day"
+    },
+    "D234" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.String' cannot be cast as a value of type 'System.Date'."
+    },
+    "D235" : {
+      "error" : "Translation",
+      "message" : "Expression of type 'System.String' cannot be cast as a value of type 'System.Ratio'."
+    },
+    "D238" : null,
+    "D239" : null,
+    "D240" : null,
+    "D241" : null,
+    "D242" : null,
+    "D243" : null,
+    "D244" : null,
+    "D245" : null,
+    "D246" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D247" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D248" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D249" : null,
+    "D250" : {
+      "error" : "CqlException",
+      "message" : "null"
+    },
+    "D251" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D252" : {
+      "type" : "Boolean",
+      "value" : true
+    },
+    "D253" : {
+      "type" : "Boolean",
+      "value" : false
+    },
+    "D254" : {
+      "type" : "String",
+      "value" : "Inf:NaN"
+    },
+    "D255" : {
+      "type" : "String",
+      "value" : "1:128"
+    },
+    "D256" : {
+      "error" : "CqlException",
+      "message" : "Could not resolve data provider for model 'http://hl7.org/fhir'."
+    },
+    "D257" : {
+      "error" : "CqlException",
+      "message" : "Could not resolve data provider for model 'http://hl7.org/fhir'."
+    },
+    "D258" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToDate with signature (FHIR.date)."
+    },
+    "D259" : {
+      "error" : "Translation",
+      "message" : "Could not resolve call to operator ToRatio with signature (FHIR.Ratio)."
+    },
+    "D260" : {
+      "error" : "InvalidOperatorArgument",
+      "message" : "Expected ConvertsToDate(String), Found ConvertsToDate(Quantity)"
+    },
+    "D261" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "mg"
+    },
+    "D262" : {
+      "error" : "InvalidOperatorArgument",
+      "message" : "Expected ConvertsToDate(String), Found ConvertsToDate(Time)"
+    },
+    "D263" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "day"
+    },
+    "D264" : {
+      "error" : "Translation",
+      "message" : "Error processing unit 'foo': The unit 'foo' is unknown' at position 0"
+    },
+    "D265" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "1"
+    },
+    "D266" : {
+      "type" : "String",
+      "value" : "1 'day':2 'days'"
+    },
+    "D267" : {
+      "type" : "Quantity",
+      "value" : "1",
+      "unit" : "day"
+    }
+  }
+}
