@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.24.0](https://github.com/gofhir/cql/compare/v1.23.3...v1.24.0) (2026-10-31)
+
+
+### Features
+
+* keep an empty String in a Code or Concept field apart from null ([#158](https://github.com/gofhir/cql/issues/158)) ([8a6d2f9](https://github.com/gofhir/cql/commit/8a6d2f9186e37f5ed064cc604a4979cd6556e38f))
+
+
+### Bug Fixes
+
+* a truncated division with a Decimal operand is a Decimal ([#148](https://github.com/gofhir/cql/issues/148)) ([871e6ee](https://github.com/gofhir/cql/commit/871e6ee60568b44e57a735c797fefbc62afcf718))
+* an include is the library it asked for, once, in the model it was written for ([#146](https://github.com/gofhir/cql/issues/146)) ([461acd6](https://github.com/gofhir/cql/commit/461acd62f158d9473d590b4f06b338170c5c2db0))
+* answer in, contains and the inclusions with a null as the specification says ([#160](https://github.com/gofhir/cql/issues/160)) ([bc0bc79](https://github.com/gofhir/cql/commit/bc0bc795b1a3b15cc1ee4d8f82aefffe9465e13f))
+* answer null where the specification does, at the edge of a type and where a result cannot be represented ([#169](https://github.com/gofhir/cql/issues/169)) ([a623d74](https://github.com/gofhir/cql/commit/a623d745abcf6d5cae33a2181a3327f752080740))
+* bound a Decimal literal by its digits of value, as cql-tests reads it ([#167](https://github.com/gofhir/cql/issues/167)) ([2dc918f](https://github.com/gofhir/cql/commit/2dc918ff852b9a5d3b5291aa65fe02af70485479))
+* compare Codes by CQL equality in the operations that hold values ([#159](https://github.com/gofhir/cql/issues/159)) ([a01570d](https://github.com/gofhir/cql/commit/a01570d07432a0d44d6c324138df2a4af1e934a0))
+* count years and months between by whole calendar periods, and measure ages by the same count ([#171](https://github.com/gofhir/cql/issues/171)) ([1614601](https://github.com/gofhir/cql/commit/1614601f618e3c59dc35f566b9d2e741f692fb0a))
+* decide the overload of the inclusions through the FHIR model ([#161](https://github.com/gofhir/cql/issues/161)) ([32f8aef](https://github.com/gofhir/cql/commit/32f8aeffecf86d0a63683b4b9942312022203be1))
+* hold an included library to its semantic phase, and check the include graph ([#147](https://github.com/gofhir/cql/issues/147)) ([ed8f1d1](https://github.com/gofhir/cql/commit/ed8f1d14e58c9280217ef2ba3c9a5719735ad207))
+* read a string as a Decimal by the engine's grammar, and move to shopspring/decimal v1.6.0 ([#165](https://github.com/gofhir/cql/issues/165)) ([dd35249](https://github.com/gofhir/cql/commit/dd35249a9136a7d9c42b9bb0f3ee85ee006473ce))
+* read a string as a Quantity by the specification's format, and validate its unit against UCUM ([#166](https://github.com/gofhir/cql/issues/166)) ([3a2f48e](https://github.com/gofhir/cql/commit/3a2f48e8c16c78b98cd663abea37540e3fbcc7a1))
+* read ToDate and ToRatio as the specification does, and evaluate a Ratio literal as a Ratio ([#170](https://github.com/gofhir/cql/issues/170)) ([e1a83e0](https://github.com/gofhir/cql/commit/e1a83e002ae63d1db809ca890257e19783424b6f))
+* report a canceled or expired evaluation, and stop the loops that outlast it ([#144](https://github.com/gofhir/cql/issues/144)) ([6ec1f99](https://github.com/gofhir/cql/commit/6ec1f992b39a760e772fcdf0debcbb067b11bf80))
+
 ## [1.23.3](https://github.com/gofhir/cql/compare/v1.23.2...v1.23.3) (2026-10-18)
 
 
