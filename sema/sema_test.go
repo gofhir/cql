@@ -531,3 +531,21 @@ func TestANumericPromotionIsRecordedButCallsNothing(t *testing.T) {
 		}
 	}
 }
+
+// TestTheAgeAtOperatorsAreTypedAsIntegers covers CalculateAgeIn{Years,Months,
+// Weeks,Days}At. CQL 1.5.3, Appendix B, CalculateAgeAt: each is declared
+// `CalculateAgeIn…At(birthDate Date, asOf Date) Integer`, with a DateTime form,
+// as the operators without At are (plan 015).
+func TestTheAgeAtOperatorsAreTypedAsIntegers(t *testing.T) {
+	result := check(t, preamble+`
+define Years: CalculateAgeInYearsAt(@2012-02-29, @2014-02-28)
+define Months: CalculateAgeInMonthsAt(@2012-02-29T10:00:00, @2014-02-28T10:00:00)
+define Weeks: CalculateAgeInWeeksAt(@2012-02-29, @2014-02-28)
+define Days: CalculateAgeInDaysAt(@2012-02-29, @2014-02-28)
+`)
+	for _, name := range []string{"Years", "Months", "Weeks", "Days"} {
+		if got := result.Defines[name]; got == nil || got.String() != "System.Integer" {
+			t.Errorf("%s = %v, want System.Integer", name, got)
+		}
+	}
+}

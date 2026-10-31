@@ -6,68 +6,26 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
-// CalculateAgeInYears calculates years between birthDate and asOf (or today if nil).
+// CalculateAgeInYears calculates years between birthDate and asOf. CQL 1.5.3,
+// Appendix B, CalculateAgeAt: "The CalculateAgeAt operators are defined in terms
+// of a datetime duration calculation", so the age is `years between`, and a
+// person born on 29 February is a year older on 28 February of a common year
+// (plan 015). With no reference to measure against there is no age, which CQL
+// answers with null rather than an age against the machine's clock.
 func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	bd, err := toTime(birthDate)
-	if err != nil || bd.IsZero() {
+	if birthDate == nil || asOf == nil {
 		return nil, nil
 	}
-	ref := referenceDate(asOf)
-	if ref.IsZero() {
-		// No reference to measure against: there is no age, which CQL answers
-		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
-		// against the machine's clock instead.
-		return nil, nil
-	}
-	// Month and day, not day-of-year. A leap year's day numbers run one ahead of a
-	// common year's after the 29th of February, so comparing them read the
-	// anniversary as not yet reached for anyone born in a leap year after that
-	// date: someone born 2000-06-01 was 18 on 2019-06-01, the day they turned 19.
-	//
-	// That is everyone born between the 1st of March and the 31st of December of a
-	// leap year, on their birthday.
-	//
-	// Who it reaches in published CQL is narrower than that sounds, and was
-	// measured rather than assumed. Of the 25 uses of AgeInYearsAt across the 19
-	// published measures, 21 measure against the start of the measurement period —
-	// which every one of them puts on the 1st of January, so the reference can only
-	// be an anniversary for someone born in January, before the leap day, where
-	// day-of-year numbers still agree. Those do not move.
-	//
-	// The other three measure against a clinical date: an encounter's period, a
-	// test's effective time. Those land on any day of the year, so a patient born
-	// in a leap year after February whose encounter begins on their birthday was
-	// counted a year younger, and a threshold like `>= 18` turns on that.
-	//
-	// The engine already answered this correctly one function over, which is what
-	// settles it without reaching for the specification: CalculateAgeInMonths
-	// compares month and day and returned 228 for that pair, and 228 months is 19
-	// years. The two now agree.
-	years := ref.Year() - bd.Year()
-	if ref.Month() < bd.Month() || (ref.Month() == bd.Month() && ref.Day() < bd.Day()) {
-		years--
-	}
-	return fptypes.NewInteger(int64(years)), nil
+	return YearsBetween(birthDate, asOf)
 }
 
-// CalculateAgeInMonths calculates months between birthDate and asOf (or today if nil).
+// CalculateAgeInMonths calculates months between birthDate and asOf. See
+// CalculateAgeInYears.
 func CalculateAgeInMonths(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	bd, err := toTime(birthDate)
-	if err != nil || bd.IsZero() {
+	if birthDate == nil || asOf == nil {
 		return nil, nil
 	}
-	ref := referenceDate(asOf)
-	if ref.IsZero() {
-		// No reference to measure against: there is no age, which CQL answers
-		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
-		// against the machine's clock instead.
-		return nil, nil
-	}
-	months := (ref.Year()-bd.Year())*12 + int(ref.Month()) - int(bd.Month())
-	if ref.Day() < bd.Day() {
-		months--
-	}
-	return fptypes.NewInteger(int64(months)), nil
+	return MonthsBetween(birthDate, asOf)
 }
 
 // CalculateAgeInWeeks calculates weeks between birthDate and asOf (or today if nil).

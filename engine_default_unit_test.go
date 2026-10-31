@@ -1565,12 +1565,15 @@ func TestAgeIsRightOnTheAnniversary(t *testing.T) {
 		}
 	}
 
-	// Someone born on the 29th of February has no anniversary in a common year.
-	// This engine gives it to them on the 1st of March — recorded because it is a
-	// convention rather than arithmetic, and jurisdictions differ.
+	// Someone born on the 29th of February has the 28th for an anniversary in a
+	// common year, which is where the engine's own `+` puts the day: `@2000-02-29
+	// + 19 years` is @2019-02-28. Both reference engines agree, and the plan that
+	// moved this from the 1st of March is docs/plans/015-years-between-leap.md.
 	for _, tt := range []struct{ at, want string }{
-		{"2019-02-28", "18"},
+		{"2019-02-27", "18"},
+		{"2019-02-28", "19"},
 		{"2019-03-01", "19"},
+		{"2020-02-28", "19"},
 		{"2020-02-29", "20"},
 	} {
 		if got := ask("2000-02-29", tt.at, "Y"); got != tt.want {
@@ -1632,7 +1635,10 @@ func TestTheWholeAgeMatrixAgrees(t *testing.T) {
 // birth date stated only to the year is read at the start of it. A birth date in
 // the future gives a negative age — that is what the arithmetic says, the corpus
 // has no case for it, and it is recorded rather than decided here, so that
-// choosing null instead is a deliberate change with a test to break.
+// choosing null instead is a deliberate change with a test to break. It is the
+// whole periods from the evaluation to the birth date, negated (plan 015): the
+// 10 whole years from 2019-06-01 to 2030-01-15, not the 11 that counting back from
+// the birth date found.
 func TestAgeWithoutABirthDate(t *testing.T) {
 	at := time.Date(2019, 6, 1, 12, 0, 0, 0, time.UTC)
 	ask := func(patient, expr string) string {
@@ -1662,8 +1668,8 @@ func TestAgeWithoutABirthDate(t *testing.T) {
 	if got := ask(yearOnly, "AgeInYears()"); got != "19" {
 		t.Errorf("a birth date of 2000 alone gives %s at a 2019 evaluation, want 19", got)
 	}
-	if got := ask(future, "AgeInYears()"); got != "-11" {
-		t.Errorf("a birth date in the future gives %s; it was -11. If this is now null, "+
+	if got := ask(future, "AgeInYears()"); got != "-10" {
+		t.Errorf("a birth date in the future gives %s; it was -10. If this is now null, "+
 			"that is a decision worth keeping — check the other units follow it.", got)
 	}
 }

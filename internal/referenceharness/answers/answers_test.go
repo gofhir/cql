@@ -424,3 +424,28 @@ func TestTheRuntimeReferencesTuplesAreReadAsTuples(t *testing.T) {
 		}
 	}
 }
+
+// TestAnUncertaintyIsReadWithBothBounds covers cql-execution's Uncertainty,
+// which evaluate.js writes with its two bounds: two uncertainties are the same
+// answer only when both bounds agree, and neither is a number or an interval
+// (plan 015). Written as Unencoded, every uncertainty read the same.
+func TestAnUncertaintyIsReadWithBothBounds(t *testing.T) {
+	src := "library T version '1.0'\ndefine U: years between @2012 and @2014\ndefine V: years between @2014 and @2012\n"
+	raw := func(low, high string) json.RawMessage {
+		return json.RawMessage(`{"type":"Uncertainty","low":{"type":"Integer","value":"` + low +
+			`"},"high":{"type":"Integer","value":"` + high + `"}}`)
+	}
+	engine := cql.NewEngine()
+	if ref := Reference(raw("1", "2")); !Same(ref, evaluate(engine, src, "U")) {
+		t.Errorf("an uncertainty and the same one were reported different: %+v %+v", ref, evaluate(engine, src, "U"))
+	}
+	if ref := Reference(raw("1", "3")); Same(ref, evaluate(engine, src, "U")) {
+		t.Error("[1, 3] and [1, 2] were reported the same")
+	}
+	if ref := Reference(raw("-2", "-1")); !Same(ref, evaluate(engine, src, "V")) {
+		t.Error("the reverse uncertainty was reported different from [-2, -1]")
+	}
+	if Same(Reference(raw("1", "2")), Reference(json.RawMessage(`{"type":"Integer","value":"2"}`))) {
+		t.Error("an uncertainty was reported the same as its upper bound")
+	}
+}

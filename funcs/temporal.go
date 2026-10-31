@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"fmt"
 	"time"
 
 	fptypes "github.com/gofhir/fhirpath/types"
@@ -33,34 +34,116 @@ func TimeOfDayAt(t time.Time) (fptypes.Value, error) {
 	return fptypes.NewTime(t.Format("15:04:05.000"))
 }
 
-// YearsBetween calculates the number of whole years between two dates.
-func YearsBetween(low, high fptypes.Value) (fptypes.Value, error) {
-	tl := toGoTime(low)
-	th := toGoTime(high)
-	if tl.IsZero() || th.IsZero() {
+// temporalParts holds a Date or DateTime as its written components, year to
+// millisecond, and the precision that says how many of them are known.
+type temporalParts struct {
+	field [7]int // year, month, day, hour, minute, second, millisecond
+	prec  int    // index of the last component written
+}
+
+// partsOf reads a Date or DateTime, or the string of one, as its components.
+// A missing month or day reads as 1, as the engine's own arithmetic reads it;
+// the comparison never looks past the precision, so they decide nothing.
+func partsOf(v fptypes.Value) (temporalParts, bool) {
+	switch t := v.(type) {
+	case fptypes.DateTime:
+		return temporalParts{
+			field: [7]int{t.Year(), max(t.Month(), 1), max(t.Day(), 1), t.Hour(), t.Minute(), t.Second(), t.Millisecond()},
+			prec:  int(t.Precision()),
+		}, true
+	case fptypes.Date:
+		return temporalParts{
+			field: [7]int{t.Year(), max(t.Month(), 1), max(t.Day(), 1)},
+			prec:  int(t.Precision()),
+		}, true
+	case nil:
+		return temporalParts{}, false
+	}
+	if dt, err := fptypes.NewDateTime(v.String()); err == nil {
+		return partsOf(dt)
+	}
+	if d, err := fptypes.NewDate(v.String()); err == nil {
+		return partsOf(d)
+	}
+	return temporalParts{}, false
+}
+
+// compareParts orders two values at the given precision: -1, 0 or 1. A
+// component finer than the precision is not compared (CQL 1.5.3, Comparison
+// Operators: "the comparison is performed at the highest precision both
+// operands share"), which is why a Date beside a DateTime assumes no midnight.
+func compareParts(a, b temporalParts, prec int) int {
+	for i := 0; i <= prec; i++ {
+		if a.field[i] != b.field[i] {
+			if a.field[i] < b.field[i] {
+				return -1
+			}
+			return 1
+		}
+	}
+	return 0
+}
+
+// calendarPeriodsBetween counts the whole calendar periods, years or months, from
+// low to high. CQL 1.5.3, Appendix B, Duration: "the number of whole calendar
+// periods for the specified precision between the first and second arguments. If
+// the first argument is after the second argument, the result is negative".
+//
+// A whole period is the largest n for which low + n periods is not after high
+// (plan 015, decision A), the sum being the one the `+` operator performs: a day
+// the target month does not have falls on its last day, so 29 February 2012 is a
+// year old on 28 February 2013. The comparison runs at the precision both
+// operands share, down to the millisecond (decision B).
+func calendarPeriodsBetween(low, high temporalParts, unit string) int64 {
+	prec := min(low.prec, high.prec)
+	if compareParts(low, high, prec) > 0 {
+		return -calendarPeriodsBetween(high, low, unit)
+	}
+	periods := int64(high.field[0] - low.field[0])
+	if unit == "month" {
+		periods = periods*12 + int64(high.field[1]-low.field[1])
+	}
+	if periods > 0 && !periodsFit(low, high, prec, periods, unit) {
+		// The year or month field of low + periods is high's own, so one period
+		// fewer is always short of high.
+		periods--
+	}
+	return periods
+}
+
+// periodsFit reports whether low + periods is not after high at the precision.
+func periodsFit(low, high temporalParts, prec int, periods int64, unit string) bool {
+	day, err := fptypes.NewDate(fmt.Sprintf("%04d-%02d-%02d", low.field[0], low.field[1], low.field[2]))
+	if err != nil {
+		return false
+	}
+	moved, err := day.AddDuration(int(periods), unit)
+	if err != nil {
+		// Past year 9999: no such date, which is later than any that exists.
+		return false
+	}
+	candidate := low
+	candidate.field[0], candidate.field[1], candidate.field[2] = moved.Year(), moved.Month(), moved.Day()
+	return compareParts(candidate, high, prec) <= 0
+}
+
+func calendarBetween(low, high fptypes.Value, unit string) (fptypes.Value, error) {
+	l, lok := partsOf(low)
+	h, hok := partsOf(high)
+	if !lok || !hok {
 		return nil, nil
 	}
-	years := th.Year() - tl.Year()
-	// Compare month/day to determine if a full year has elapsed.
-	// Using YearDay is incorrect because leap years shift the day count.
-	if th.Month() < tl.Month() || (th.Month() == tl.Month() && th.Day() < tl.Day()) {
-		years--
-	}
-	return fptypes.NewInteger(int64(years)), nil
+	return fptypes.NewInteger(calendarPeriodsBetween(l, h, unit)), nil
+}
+
+// YearsBetween calculates the number of whole years between two dates.
+func YearsBetween(low, high fptypes.Value) (fptypes.Value, error) {
+	return calendarBetween(low, high, "year")
 }
 
 // MonthsBetween calculates the number of whole months between two dates.
 func MonthsBetween(low, high fptypes.Value) (fptypes.Value, error) {
-	tl := toGoTime(low)
-	th := toGoTime(high)
-	if tl.IsZero() || th.IsZero() {
-		return nil, nil
-	}
-	months := (th.Year()-tl.Year())*12 + int(th.Month()) - int(tl.Month())
-	if th.Day() < tl.Day() {
-		months--
-	}
-	return fptypes.NewInteger(int64(months)), nil
+	return calendarBetween(low, high, "month")
 }
 
 // WeeksBetween calculates the number of whole weeks between two dates.

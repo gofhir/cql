@@ -60,9 +60,7 @@ var knownFailures = map[string]knownFailure{
 	"TupleEqDifferentNamesWithOneNullId":    {group: "G3h", errs: false, suite: `1.5.. invalid="" outputs=["false"]`},
 	"TupleNotEqDifferingNamesWithOneNullId": {group: "G3h", errs: false, suite: `1.5.. invalid="" outputs=["true"]`},
 	// CqlDateTimeOperatorsTest.xml
-	"DateTimeComponentFromMonthIsNull":     {group: "G3a", errs: false, suite: `1.4.. invalid="" outputs=["null"]`},
-	"YearsBetweenLeapYearDateTimesEquals2": {group: "G3b", errs: false, suite: `1.4.. invalid="" outputs=["2"]`},
-	"YearsBetweenLeapYearDatesEquals2":     {group: "G3b", errs: false, suite: `1.4.. invalid="" outputs=["2"]`},
+	"DateTimeComponentFromMonthIsNull": {group: "G3a", errs: false, suite: `1.4.. invalid="" outputs=["null"]`},
 	// CqlIntervalOperatorsTest.xml
 	"TestIntegerInMaxIntervalTrue":      {group: "G3i", errs: false, suite: `1.0.. invalid="" outputs=["true"]`},
 	"TestIntegerInUnknownIntervalNull":  {group: "G3j", errs: false, suite: `1.0.. invalid="" outputs=["null"]`},

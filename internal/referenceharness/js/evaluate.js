@@ -20,6 +20,8 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const cql = require('cql-execution');
+// The top-level module does not export the class.
+const { Uncertainty } = require('cql-execution/lib/datatypes/uncertainty');
 const cqlfhir = require('cql-exec-fhir');
 
 // The same instant as Evaluate.java, at the same offset, for the same reason:
@@ -210,6 +212,14 @@ function encode(v, spec) {
   }
   if (v instanceof cql.DateTime) return encodeDateTime(v);
   if (v instanceof cql.Date) return { type: 'Date', value: v.toString(), precision: v.getPrecision() };
+  // An Uncertainty holds the two bounds of a value the engine could not pin
+  // down, `years between @2012 and @2014`. Written with both, as a type of its
+  // own: as Unencoded it was its constructor's name and a String, which is the
+  // same for every uncertainty (plan 015). By class: a tuple can carry an
+  // isUncertainty field.
+  if (v instanceof Uncertainty) {
+    return { type: 'Uncertainty', low: encode(v.low, spec), high: encode(v.high, spec) };
+  }
   if (v instanceof cql.Interval) {
     const point = spec && spec.type === 'IntervalTypeSpecifier' ? spec.pointType : null;
     return {

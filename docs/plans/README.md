@@ -4,7 +4,9 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
 
 ## Incremento activo
 
-**014: `ToDate` y `ToRatio`** (1c25 G3f). Rama `fix/todate-toratio-1c25`, sin commit. Paso 9 terminado: la review convergió en la ronda 3 (siete hallazgos en la 1, uno en la 2, uno bajo en la 3; todos resueltos), 21 mutaciones del 014 detectadas, make check verde (468) y diferencial idéntica a main. Próximo paso: commit y PR cuando el usuario lo pida. Plan: [014-todate-toratio.md](014-todate-toratio.md).
+**015: `years between` y `months between` por períodos de calendario** (1c25 G3b). Rama `fix/years-between-leap-1c25`, sin commit. Review convergido en la ronda 2 de Codex el 31-10-2026 (ronda 1: un hallazgo medio, el codificador JS reconocía una incertidumbre por un campo; corregido y cubierto por D298). Diferencial contra main idéntica antes y después del review. `make check` final en verde el 31-10-2026 (491 mutaciones detectadas, 0 issues de lint). Siguiente: commit y PR cuando el usuario lo pida. Plan: [015-years-between-leap.md](015-years-between-leap.md).
+
+**014 cerrado:** #170 (e1a83e0), mergeado el 30-10-2026 con el CI en verde. Plan: [014-todate-toratio.md](014-todate-toratio.md).
 
 **013 cerrado:** #169 (a623d74), mergeado el 29-10-2026. Plan: [013-null-donde-va-null.md](013-null-donde-va-null.md).
 
@@ -96,11 +98,16 @@ Al reanudar el trabajo o después de una compactación, este archivo es lo prime
     - fecha más una duración que pasa del año 9999;
     - el comparador lee un DateTime por su texto, y un DateTime sin offset no se compara con el de Java.
   - **G3a.** `month from DateTime(2012)` da 0 y no null («is not specified to the level of precision being extracted, the result is null»).
-  - **G3b.** `years between @2012-02-29 and @2014-02-28` da 1, y Java y cql-execution dan 2, como la especificación: un año sumado a un 29 de febrero cae en el último día de febrero (Author's Guide, Date and Time Arithmetic).
+  - **G3b** (corregido en el 015, sin merge). `years between @2012-02-29 and @2014-02-28` da 1, y Java y cql-execution dan 2, como la especificación: un año sumado a un 29 de febrero cae en el último día de febrero (Author's Guide, Date and Time Arithmetic).
+  - **Lo que el 015 deja para después** (ver su plan, «Fuera del alcance»):
+    - la regla que decide cuándo una duración es una incertidumbre: D46, D266 y D297 de `durations` dan 2 donde cql-execution da `[1, 2]`, y el Author's Guide da `[6, 7]` para `days between @2017-08-07T17:00 and @2017-08-14T`;
+    - los offsets de `years between` y `months between` (decisión C);
+    - `CalculateAgeIn{Hours,Minutes,Seconds}At`, `CalculateAgeAt` de ELM y `CalculateAgeInYears` de dos argumentos;
+    - un test ejecutable del codificador JS del arnés (hoy solo lo cubre la regeneración de las referencias).
   - **G3c.** `Distinct` y `Flatten` de una lista null dan `{}` y no null.
   - **G3d.** `Skip` con un número negativo da la lista entera, y la especificación dice vacía (Java da error).
   - **G3e.** `Coalesce` de seis argumentos se evalúa; sus firmas son de 2 a 5.
-  - **G3f** (cerrado en el 014, sin mergear). Faltaban `ToDate` y `ToRatio`.
+  - **G3f** (cerrado en el 014, #170). Faltaban `ToDate` y `ToRatio`.
   - **Lo que el 014 deja para después** (ver su plan, «Fuera del alcance»):
     - la equivalencia de Ratio, que debe compararse en cruz;
     - la escala en `ToString` de una Quantity, que un Ratio hereda;
