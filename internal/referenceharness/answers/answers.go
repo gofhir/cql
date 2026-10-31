@@ -195,6 +195,8 @@ func referenceScalar(v referenceValue) (Answer, bool) {
 		}
 	case "Interval":
 		return interval(Reference(v.Low), Reference(v.High), v.LowClosed, v.HighClosed), true
+	case "Uncertainty":
+		return uncertainty(Reference(v.Low), Reference(v.High)), true
 	case "Integer", "Long", "Decimal":
 		if json.Unmarshal(v.Value, &s) == nil {
 			if d, err := decimal.NewFromString(s); err == nil {
@@ -234,6 +236,8 @@ func Value(v fptypes.Value) Answer {
 		return Answer{Kind: "temporal", Text: "Time " + n.String()}
 	case cqltypes.Interval:
 		return interval(Value(n.Low), Value(n.High), n.LowClosed, n.HighClosed)
+	case cqltypes.Uncertainty:
+		return uncertainty(Value(n.Low), Value(n.High))
 	case nil:
 		return Answer{Kind: "null", Text: "null"}
 	case fptypes.Integer:
@@ -541,6 +545,13 @@ func interval(low, high Answer, lowClosed, highClosed bool) Answer {
 	}
 	return Answer{Kind: kind, Text: "Interval" + open + partText(low) + ", " + partText(high) + closeBracket,
 		Parts: []Answer{low, high}, form: "interval"}
+}
+
+// uncertainty is an Uncertainty by its two bounds: the range a value is
+// somewhere in, which is not an interval and not one of its bounds. The Java
+// engine answers a number for the same expression; cql-execution answers this.
+func uncertainty(low, high Answer) Answer {
+	return Answer{Kind: "uncertainty", Text: "Uncertainty[" + partText(low) + ", " + partText(high) + "]"}
 }
 
 // Failed is the answer of a definition that failed to evaluate, or panicked.

@@ -16,8 +16,6 @@ define D17: Tuple { Id : null, Name : 'John' } = Tuple { Id : 1, Name : 'James' 
 define D18: Tuple{ Id : null, Name : 'John' } != Tuple{ Id : 1, Name : 'Joe' } // TupleNotEqDifferingNamesWithOneNullId
 define D19: null !~ null // NotEquivalentNullNull
 define D20: month from DateTime(2012) // DateTimeComponentFromMonthIsNull
-define D21: years between @2012-02-29 and @2014-02-28 // YearsBetweenLeapYearDatesEquals2
-define D22: years between @2012-02-29T12:34:56 and @2014-02-28T12:34:56 // YearsBetweenLeapYearDateTimesEquals2
 define D23: Interval[1, 10] ends Interval[null, null] // TestMaxIntervalEndsFalse
 define D24: 5 in Interval[null, null] // TestIntegerInMaxIntervalTrue
 define D25: 5 in Interval(null, null) // TestIntegerInUnknownIntervalNull

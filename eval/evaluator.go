@@ -4033,7 +4033,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return funcs.AgeInDaysAt(bd, asOf)
 		}
 		return funcs.AgeInDaysAt(bd, e.evaluationNow())
-	case "calculateageinyears":
+	case "calculateageinyears", "calculateageinyearsat":
 		if len(n.Operands) > 0 {
 			bd, err := e.Eval(n.Operands[0])
 			if err != nil {
@@ -4055,7 +4055,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return funcs.CalculateAgeInYears(bd, asOf)
 		}
 		return nil, nil
-	case "calculateageinmonths":
+	case "calculateageinmonths", "calculateageinmonthsat":
 		if len(n.Operands) > 0 {
 			bd, err := e.Eval(n.Operands[0])
 			if err != nil {
@@ -4071,7 +4071,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return funcs.CalculateAgeInMonths(bd, asOf)
 		}
 		return nil, nil
-	case "calculateageinweeks":
+	case "calculateageinweeks", "calculateageinweeksat":
 		if len(n.Operands) > 0 {
 			bd, err := e.Eval(n.Operands[0])
 			if err != nil {
@@ -4087,7 +4087,7 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 			return funcs.CalculateAgeInWeeks(bd, asOf)
 		}
 		return nil, nil
-	case "calculateageindays":
+	case "calculateageindays", "calculateageindaysat":
 		if len(n.Operands) > 0 {
 			bd, err := e.Eval(n.Operands[0])
 			if err != nil {

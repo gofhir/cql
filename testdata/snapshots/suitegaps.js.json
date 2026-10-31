@@ -1,6 +1,6 @@
 {
   "library": "corpus suitegaps.cql",
-  "sourceSha256": "ce40d4bb195b4fff8f50b4377893bda20c5e947aa7ed75765f5cbedf8ad2cdcb",
+  "sourceSha256": "c81e224ee41b8ce1143eedaaab07cb2146b01243867ef41db8d2f802f9585418",
   "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
   "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
   "results": {
@@ -37,14 +37,6 @@
       "value": true
     },
     "D20": null,
-    "D21": {
-      "type": "Integer",
-      "value": "2"
-    },
-    "D22": {
-      "type": "Integer",
-      "value": "2"
-    },
     "D23": null,
     "D24": {
       "type": "Boolean",
