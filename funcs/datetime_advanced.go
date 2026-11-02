@@ -234,6 +234,14 @@ func TimeConstructor(hour, minute, second, millisecond fptypes.Value) (fptypes.V
 // DurationBetween calculates the duration between two date/time values at a given precision.
 // When operands have different precisions, returns an Interval representing the uncertainty range.
 func DurationBetween(low, high fptypes.Value, precision string) (fptypes.Value, error) {
+	return DurationBetweenAt(low, high, precision, nil)
+}
+
+// DurationBetweenAt is DurationBetween for an evaluation at the offset of
+// evaluation, nil for UTC. CQL 1.5.3 puts a DateTime that states no offset at the
+// evaluation request's, and a DateTime to the day or coarser cannot carry one (it
+// has no time of day to place), so the range of its day is read in this frame.
+func DurationBetweenAt(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
 	if low == nil || high == nil {
 		return nil, nil
 	}
@@ -249,7 +257,7 @@ func DurationBetween(low, high fptypes.Value, precision string) (fptypes.Value, 
 
 	if precIdx >= 0 && (lowPrec < maxPossiblePrec || highPrec < maxPossiblePrec) && (lowPrec <= precIdx || highPrec <= precIdx) {
 		// One or both operands have precision at or below the requested level
-		return durationBetweenUncertain(low, high, precision, precIdx)
+		return durationBetweenUncertain(low, high, precision, evaluation)
 	}
 
 	return durationBetweenExact(low, high, precision)
@@ -304,25 +312,39 @@ func durationPrecisionIndex(precision string) int {
 }
 
 // valuePrecisionIndex returns the precision level of a temporal value.
+//
+// Seconds and milliseconds are one precision: CQL 1.5.3, Language Semantics,
+// Determining Difference and Duration, "consider seconds and milliseconds as a
+// single combined precision". A value to the second is therefore as precise as
+// one to the millisecond, and both report the millisecond's index, so that
+// `seconds between @T01:00:00 and @T01:00:01.0` is 1 and not an uncertainty.
 func valuePrecisionIndex(v fptypes.Value) int {
 	switch t := v.(type) {
 	case fptypes.DateTime:
-		return int(t.Precision())
+		return combinedSecondsAndMilliseconds(int(t.Precision()))
 	case fptypes.Date:
 		return int(t.Precision())
 	case fptypes.Time:
-		return int(t.Precision()) + 3
+		return combinedSecondsAndMilliseconds(int(t.Precision()) + 3)
 	default:
 		return 6 // assume full precision for unknown
 	}
 }
 
+// combinedSecondsAndMilliseconds maps the second's index to the millisecond's.
+func combinedSecondsAndMilliseconds(index int) int {
+	if index == 5 {
+		return 6
+	}
+	return index
+}
+
 // durationBetweenUncertain computes the min/max range of the duration
 // when one or both operands have insufficient precision.
-func durationBetweenUncertain(low, high fptypes.Value, precision string, _ int) (fptypes.Value, error) {
+func durationBetweenUncertain(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
 	// Compute the earliest and latest possible time.Time for each operand
-	lowEarliest, lowLatest := temporalRange(low)
-	highEarliest, highLatest := temporalRange(high)
+	lowEarliest, lowLatest := temporalRange(low, evaluation)
+	highEarliest, highLatest := temporalRange(high, evaluation)
 
 	// Min duration: latest low to earliest high
 	// Max duration: earliest low to latest high
@@ -389,10 +411,22 @@ func dateTimeInstant(t fptypes.DateTime) time.Time {
 }
 
 // temporalRange returns the earliest and latest possible time.Time for a temporal value.
-func temporalRange(v fptypes.Value) (earliest, latest time.Time) {
+//
+// The range of a DateTime is built in the frame of the value: the end of its day
+// is the end of the day it sits in. A value with no offset of its own, one to the
+// day or coarser (fhirpath places no offset on a value without a time of day),
+// is read at the evaluation's: measuring it from UTC against a value at -12:00
+// moved the end of its day twelve hours, and `days between
+// @2017-08-07T17:00 and @2017-08-14T` was [5, 6] where the specification says
+// [6, 7]. With no frame on either side both sit at UTC.
+func temporalRange(v fptypes.Value, frame *time.Location) (earliest, latest time.Time) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		earliest := dateTimeInstant(t)
+		if _, placed := t.EffectiveOffset(); !placed && frame != nil {
+			earliest = time.Date(earliest.Year(), earliest.Month(), earliest.Day(), earliest.Hour(),
+				earliest.Minute(), earliest.Second(), earliest.Nanosecond(), frame)
+		}
 		latest := earliest
 		switch t.Precision() {
 		case 0: // year

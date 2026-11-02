@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/gofhir/cql/eval"
 )
@@ -145,7 +146,10 @@ define Days: "CumulativeDays"(Periods)
 `
 	ask := func(expr string) (string, error) {
 		t.Helper()
-		got, err := NewEngine(WithDataProvider(mixedPrecisionPeriods{})).EvaluateExpression(
+		// At UTC: a dateTime written to the month is read at the evaluation's
+		// offset (plan 016), and the bounds below are UTC's.
+		got, err := NewEngine(WithDataProvider(mixedPrecisionPeriods{}),
+			WithEvaluationTimestamp(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))).EvaluateExpression(
 			context.Background(), src+"define A: "+expr+"\n", "A",
 			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"1980-05-15"}`), nil)
 		if err != nil {

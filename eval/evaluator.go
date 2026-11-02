@@ -736,7 +736,7 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 			return nil, err
 		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return funcs.DurationBetween(iv.Low, iv.High, n.Precision)
+			return funcs.DurationBetweenAt(iv.Low, iv.High, n.Precision, e.evaluationFrame())
 		}
 		return nil, nil
 	case *ast.DifferenceOf:
@@ -2724,6 +2724,15 @@ func (e *Evaluator) nullMembership(n *ast.TimingExpression, left, right fptypes.
 }
 
 func (e *Evaluator) evalInContains(op ast.BinaryOp, left, right fptypes.Value) (fptypes.Value, error) {
+	// An uncertainty is a point of unknown value, asked about each bound of an
+	// interval or each element of a list (plan 016).
+	x, container := left, right
+	if op == ast.OpContains {
+		x, container = right, left
+	}
+	if res, handled, err := uncertainContained(x, container, false); handled {
+		return res, err
+	}
 	// An interval on both sides is an inclusion question, not a membership one:
 	// CQL reads `X in Y` as IncludedIn when X is an interval and as In when it
 	// is a point, a distinction the translator makes from static types. Deciding
@@ -6524,6 +6533,11 @@ func (e *Evaluator) evalBetween(n *ast.BetweenExpression) (fptypes.Value, error)
 	if operand, err = e.coerceToSystem(operand); err != nil {
 		return nil, err
 	}
+	// An uncertainty is asked about each bound, not read as an interval of its
+	// own (plan 016). `between` is `>= and <=`, and `properly between` `> and <`.
+	if isUncertainty(operand) || isUncertainty(low) || isUncertainty(high) {
+		return uncertainWithin(operand, cqltypes.NewInterval(low, high, true, true), n.Properly)
+	}
 	interval := cqltypes.NewInterval(low, high, !n.Properly, !n.Properly)
 	result, err := interval.Contains(operand)
 	if err != nil {
@@ -6544,7 +6558,7 @@ func (e *Evaluator) evalDurationBetween(n *ast.DurationBetween) (fptypes.Value, 
 	if err != nil {
 		return nil, err
 	}
-	return funcs.DurationBetween(low, high, n.Precision)
+	return funcs.DurationBetweenAt(low, high, n.Precision, e.evaluationFrame())
 }
 
 func (e *Evaluator) evalDifferenceBetween(n *ast.DifferenceBetween) (fptypes.Value, error) {
@@ -7050,6 +7064,12 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	// whether the list contains it, not how it converts.
 	if !leftIsList && !rightIsList && (isUnconvertedFHIR(left) || isUnconvertedFHIR(right)) {
 		return nil, nil
+	}
+	// An uncertainty is a point of unknown value, and the phrases that ask about
+	// a point ask it about each value it could be (plan 016). Before the list
+	// branch: `U in { 1, 2 }` is a question about U.
+	if res, handled, uerr := uncertainTiming(n.Operator, left, right); handled {
+		return res, uerr
 	}
 	if leftIsList || rightIsList {
 		// For includes/includedIn: null scalar with list needs special handling
@@ -8696,15 +8716,30 @@ func asRange(v fptypes.Value) (cqltypes.Interval, bool) {
 // compareIntervalWithScalar compares an uncertainty interval with a scalar value.
 // Returns true if the entire range satisfies the comparison, false if no value
 // in the range satisfies it, and null (nil) if uncertain.
+//
+// The scalar may itself be an uncertainty, and then the answer is about every
+// pair of what each could be: `[1, 2] >= [0, 1]` is true, because the least of
+// the first is not below the greatest of the second. The bounds that decide are
+// the first's least against the second's greatest, and the first's greatest
+// against the second's least; for a single value they are the same comparison.
 func compareIntervalWithScalar(iv cqltypes.Interval, scalar fptypes.Value, op ast.BinaryOp) (fptypes.Value, error) {
 	lowC, lowOk := iv.Low.(fptypes.Comparable)
 	highC, highOk := iv.High.(fptypes.Comparable)
 	if !lowOk || !highOk {
 		return nil, nil
 	}
+	scalarLow, scalarHigh := scalar, scalar
+	if u, isUncertain := scalar.(cqltypes.Uncertainty); isUncertain {
+		scalarLow, scalarHigh = u.Low, u.High
+	}
+	if scalarLow == nil || scalarHigh == nil {
+		return nil, nil
+	}
 
-	lowCmp, lowErr := lowC.Compare(scalar)
-	highCmp, highErr := highC.Compare(scalar)
+	// lowCmp is the first's least against the second's greatest, highCmp its
+	// greatest against the second's least.
+	lowCmp, lowErr := lowC.Compare(scalarHigh)
+	highCmp, highErr := highC.Compare(scalarLow)
 	if lowErr != nil || highErr != nil {
 		return nil, nil
 	}
@@ -8946,4 +8981,11 @@ func strictlyBefore(a, b fptypes.Value) (before, ok bool) {
 		return false, false
 	}
 	return cmp < 0, true
+}
+
+// evaluationFrame is the offset of the evaluation request, which CQL gives a
+// DateTime that states none: the one the literals are given, as a location.
+func (e *Evaluator) evaluationFrame() *time.Location {
+	_, seconds := e.ctx.EvaluationTimestamp.Zone()
+	return time.FixedZone("", seconds)
 }

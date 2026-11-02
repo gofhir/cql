@@ -79,6 +79,10 @@ var snapshotAreas = []struct {
 	// Written by hand, then a grid: the cases of docs/plans/015-years-between-leap.md,
 	// where years and months between count calendar periods, and the ages with them.
 	{"durations", 298, true},
+	// Written by hand, then a grid: the cases of docs/plans/016-duration-uncertainty.md,
+	// where an uncertainty is a point of unknown value asked about each value it
+	// could be, and seconds and milliseconds are one precision.
+	{"uncertainty", 1237, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over
