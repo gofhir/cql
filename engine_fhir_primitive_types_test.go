@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/gofhir/cql/eval"
 )
@@ -36,7 +37,10 @@ func (primitiveProvider) Retrieve(_ context.Context, req eval.RetrieveRequest) (
 func evalPrimitive(t *testing.T, expr string) string {
 	t.Helper()
 	src := primitivePreamble + "define A: " + expr + "\n"
-	got, err := NewEngine(WithDataProvider(primitiveProvider{})).EvaluateExpression(
+	// The evaluation sits at UTC: a dateTime written to the day is read at the
+	// evaluation's offset (plan 016), so the uncertain counts below are UTC's.
+	got, err := NewEngine(WithDataProvider(primitiveProvider{}),
+		WithEvaluationTimestamp(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))).EvaluateExpression(
 		context.Background(), src, "A", []byte(`{"resourceType":"Patient","id":"p1"}`), nil)
 	if err != nil {
 		t.Fatalf("%s: %v", expr, err)

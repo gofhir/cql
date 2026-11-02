@@ -1,0 +1,1237 @@
+D0	Uncertainty[Integer 17, Integer 44]
+D1	Uncertainty[Integer 6, Integer 7]
+D10	Integer 1
+D100	Boolean true
+D1000	Boolean false
+D1001	Boolean true
+D1002	null
+D1003	Boolean false
+D1004	Boolean true
+D1005	Boolean true
+D1006	Boolean false
+D1007	Boolean false
+D1008	Boolean false
+D1009	Boolean true
+D101	Boolean true
+D1010	Boolean false
+D1011	Boolean true
+D1012	Boolean false
+D1013	Boolean false
+D1014	Boolean true
+D1015	Boolean true
+D1016	Boolean true
+D1017	Boolean true
+D1018	Boolean true
+D1019	Boolean true
+D102	Boolean true
+D1020	Boolean true
+D1021	Boolean true
+D1022	Boolean true
+D1023	Boolean true
+D1024	Boolean true
+D1025	Boolean true
+D1026	Boolean true
+D1027	Boolean true
+D1028	Boolean true
+D1029	Boolean true
+D103	null
+D1030	Boolean true
+D1031	Boolean true
+D1032	Boolean true
+D1033	Boolean true
+D1034	Boolean true
+D1035	Boolean true
+D1036	Boolean true
+D1037	Boolean true
+D1038	Boolean true
+D1039	Boolean true
+D104	null
+D1040	Boolean true
+D1041	null
+D1042	null
+D1043	null
+D1044	null
+D1045	null
+D1046	null
+D1047	null
+D1048	null
+D1049	null
+D105	null
+D1050	null
+D1051	null
+D1052	null
+D1053	null
+D1054	null
+D1055	null
+D1056	Boolean true
+D1057	null
+D1058	Boolean true
+D1059	Boolean true
+D106	null
+D1060	Boolean true
+D1061	Boolean true
+D1062	Boolean true
+D1063	null
+D1064	null
+D1065	null
+D1066	null
+D1067	null
+D1068	null
+D1069	null
+D107	null
+D1070	null
+D1071	null
+D1072	null
+D1073	Boolean true
+D1074	Boolean true
+D1075	Boolean true
+D1076	Boolean true
+D1077	Boolean true
+D1078	Boolean true
+D1079	null
+D108	Boolean true
+D1080	Boolean true
+D1081	Boolean true
+D1082	Boolean true
+D1083	Boolean true
+D1084	Boolean true
+D1085	null
+D1086	null
+D1087	null
+D1088	null
+D1089	null
+D109	null
+D1090	Boolean true
+D1091	Boolean true
+D1092	Boolean true
+D1093	Boolean true
+D1094	Boolean true
+D1095	null
+D1096	null
+D1097	null
+D1098	null
+D1099	null
+D11	Integer 1
+D110	Boolean true
+D1100	Boolean true
+D1101	null
+D1102	null
+D1103	null
+D1104	null
+D1105	null
+D1106	null
+D1107	null
+D1108	null
+D1109	null
+D111	Boolean true
+D1110	null
+D1111	null
+D1112	null
+D1113	null
+D1114	null
+D1115	null
+D1116	null
+D1117	null
+D1118	null
+D1119	null
+D112	Boolean true
+D1120	null
+D1121	null
+D1122	null
+D1123	null
+D1124	null
+D1125	Boolean false
+D1126	null
+D1127	null
+D1128	null
+D1129	null
+D113	Boolean true
+D1130	null
+D1131	null
+D1132	null
+D1133	null
+D1134	null
+D1135	null
+D1136	null
+D1137	Boolean true
+D1138	Boolean true
+D1139	Boolean false
+D114	Boolean true
+D1140	Boolean false
+D1141	Boolean false
+D1142	null
+D1143	null
+D1144	null
+D1145	null
+D1146	null
+D1147	Boolean true
+D1148	Boolean true
+D1149	Boolean false
+D115	null
+D1150	Boolean false
+D1151	Boolean false
+D1152	Boolean true
+D1153	Boolean true
+D1154	Boolean false
+D1155	Boolean false
+D1156	Boolean false
+D1157	Boolean false
+D1158	Boolean false
+D1159	Boolean true
+D116	null
+D1160	Boolean true
+D1161	Boolean false
+D1162	null
+D1163	null
+D1164	null
+D1165	null
+D1166	null
+D1167	Boolean true
+D1168	Boolean true
+D1169	Boolean false
+D117	null
+D1170	Boolean false
+D1171	Boolean false
+D1172	null
+D1173	null
+D1174	null
+D1175	null
+D1176	null
+D1177	null
+D1178	null
+D1179	null
+D118	null
+D1180	null
+D1181	null
+D1182	null
+D1183	null
+D1184	null
+D1185	null
+D1186	null
+D1187	Boolean false
+D1188	Boolean false
+D1189	Boolean true
+D119	null
+D1190	Boolean true
+D1191	Boolean false
+D1192	null
+D1193	null
+D1194	null
+D1195	null
+D1196	null
+D1197	Boolean false
+D1198	Boolean false
+D1199	Boolean true
+D12	Integer 1000
+D120	null
+D1200	Boolean true
+D1201	Boolean false
+D1202	Boolean false
+D1203	Boolean false
+D1204	Boolean true
+D1205	Boolean true
+D1206	Boolean false
+D1207	Boolean true
+D1208	Boolean true
+D1209	Boolean false
+D121	null
+D1210	Boolean false
+D1211	Boolean false
+D1212	null
+D1213	null
+D1214	null
+D1215	null
+D1216	null
+D1217	Boolean false
+D1218	Boolean false
+D1219	Boolean true
+D122	null
+D1220	Boolean true
+D1221	Boolean false
+D1222	null
+D1223	null
+D1224	null
+D1225	null
+D1226	null
+D1227	null
+D1228	null
+D1229	null
+D123	null
+D1230	null
+D1231	null
+D1232	Boolean true
+D1233	Boolean true
+D1234	Boolean true
+D1235	Uncertainty[Integer 7, Integer 8]
+D1236	Uncertainty[Integer -8, Integer -7]
+D124	null
+D125	Boolean true
+D126	Boolean true
+D127	Boolean true
+D128	Boolean true
+D129	Boolean true
+D13	Integer 1
+D130	Boolean true
+D131	null
+D132	Boolean true
+D133	Boolean true
+D134	Boolean true
+D135	Boolean true
+D136	Boolean true
+D137	null
+D138	null
+D139	null
+D14	Uncertainty[Integer 0, Integer 119]
+D140	null
+D141	null
+D142	Boolean true
+D143	Boolean true
+D144	Boolean true
+D145	Boolean true
+D146	Boolean true
+D147	null
+D148	null
+D149	null
+D15	Uncertainty[Integer 60, Integer 179]
+D150	null
+D151	null
+D152	Boolean true
+D153	null
+D154	null
+D155	null
+D156	null
+D157	null
+D158	null
+D159	Boolean false
+D16	Boolean true
+D160	Boolean false
+D161	Boolean false
+D162	Boolean false
+D163	Boolean false
+D164	null
+D165	null
+D166	null
+D167	null
+D168	null
+D169	Boolean false
+D17	Boolean false
+D170	Boolean false
+D171	Boolean false
+D172	Boolean false
+D173	Boolean false
+D174	null
+D175	Boolean false
+D176	null
+D177	Boolean false
+D178	null
+D179	Boolean false
+D18	null
+D180	Boolean false
+D181	Boolean true
+D182	Boolean true
+D183	Boolean false
+D184	Boolean false
+D185	Boolean true
+D186	Boolean false
+D187	Boolean true
+D188	Boolean false
+D189	Boolean false
+D19	Boolean true
+D190	null
+D191	null
+D192	Boolean true
+D193	null
+D194	Boolean false
+D195	null
+D196	null
+D197	Boolean true
+D198	Boolean false
+D199	null
+D2	Uncertainty[Integer 1, Integer 59]
+D20	Boolean false
+D200	Boolean true
+D201	Boolean false
+D202	null
+D203	null
+D204	null
+D205	Boolean false
+D206	Boolean true
+D207	null
+D208	Boolean false
+D209	Boolean true
+D21	null
+D210	Boolean true
+D211	Boolean false
+D212	Boolean false
+D213	Boolean false
+D214	Boolean true
+D215	Boolean false
+D216	Boolean true
+D217	Boolean false
+D218	Boolean false
+D219	Boolean true
+D22	Boolean true
+D220	Boolean true
+D221	Boolean true
+D222	Boolean true
+D223	Boolean true
+D224	Boolean true
+D225	Boolean true
+D226	Boolean true
+D227	Boolean true
+D228	Boolean true
+D229	Boolean true
+D23	Boolean true
+D230	Boolean true
+D231	Boolean true
+D232	Boolean true
+D233	Boolean true
+D234	Boolean true
+D235	Boolean true
+D236	Boolean true
+D237	Boolean true
+D238	Boolean true
+D239	Boolean true
+D24	null
+D240	Boolean true
+D241	Boolean true
+D242	Boolean true
+D243	Boolean true
+D244	Boolean true
+D245	Boolean true
+D246	null
+D247	null
+D248	null
+D249	null
+D25	null
+D250	null
+D251	Boolean true
+D252	Boolean true
+D253	Boolean true
+D254	Boolean true
+D255	Boolean true
+D256	null
+D257	null
+D258	null
+D259	null
+D26	Boolean false
+D260	null
+D261	Boolean true
+D262	null
+D263	Boolean true
+D264	Boolean true
+D265	Boolean true
+D266	Boolean true
+D267	Boolean true
+D268	null
+D269	null
+D27	Boolean false
+D270	null
+D271	null
+D272	null
+D273	null
+D274	null
+D275	null
+D276	null
+D277	null
+D278	Boolean true
+D279	Boolean true
+D28	Boolean true
+D280	Boolean true
+D281	Boolean true
+D282	Boolean true
+D283	Boolean true
+D284	null
+D285	Boolean true
+D286	Boolean true
+D287	Boolean true
+D288	Boolean true
+D289	Boolean true
+D29	Boolean true
+D290	null
+D291	null
+D292	null
+D293	null
+D294	null
+D295	Boolean true
+D296	Boolean true
+D297	Boolean true
+D298	Boolean true
+D299	Boolean true
+D3	Uncertainty[Integer 4, Integer 5]
+D30	Boolean false
+D300	null
+D301	null
+D302	null
+D303	null
+D304	null
+D305	Boolean true
+D306	null
+D307	null
+D308	null
+D309	null
+D31	Boolean false
+D310	null
+D311	null
+D312	Boolean false
+D313	Boolean false
+D314	Boolean false
+D315	Boolean false
+D316	Boolean false
+D317	null
+D318	null
+D319	null
+D32	Boolean true
+D320	null
+D321	null
+D322	Boolean false
+D323	Boolean false
+D324	Boolean false
+D325	Boolean false
+D326	Boolean false
+D327	null
+D328	Boolean false
+D329	null
+D33	Boolean false
+D330	Boolean false
+D331	null
+D332	Boolean false
+D333	Boolean false
+D334	Boolean true
+D335	Boolean true
+D336	Boolean false
+D337	Boolean false
+D338	Boolean true
+D339	Boolean false
+D34	Boolean true
+D340	Boolean true
+D341	Boolean false
+D342	Boolean false
+D343	null
+D344	null
+D345	Boolean true
+D346	null
+D347	Boolean false
+D348	null
+D349	null
+D35	Boolean false
+D350	Boolean true
+D351	Boolean false
+D352	null
+D353	Boolean true
+D354	Boolean false
+D355	null
+D356	null
+D357	null
+D358	Boolean false
+D359	Boolean true
+D36	Boolean false
+D360	null
+D361	Boolean false
+D362	Boolean true
+D363	Boolean true
+D364	Boolean false
+D365	Boolean false
+D366	Boolean false
+D367	Boolean true
+D368	Boolean false
+D369	Boolean true
+D37	null
+D370	Boolean false
+D371	Boolean false
+D372	Boolean true
+D373	Boolean true
+D374	Boolean true
+D375	Boolean true
+D376	Boolean true
+D377	Boolean true
+D378	Boolean true
+D379	Boolean true
+D38	null
+D380	Boolean true
+D381	Boolean true
+D382	Boolean true
+D383	Boolean true
+D384	Boolean true
+D385	Boolean true
+D386	Boolean true
+D387	Boolean true
+D388	Boolean true
+D389	Boolean true
+D39	Boolean true
+D390	Boolean true
+D391	Boolean true
+D392	Boolean true
+D393	Boolean true
+D394	Boolean true
+D395	Boolean true
+D396	Boolean true
+D397	Boolean true
+D398	Boolean true
+D399	null
+D4	Uncertainty[Integer 1, Integer 2]
+D40	null
+D400	null
+D401	null
+D402	null
+D403	null
+D404	Boolean true
+D405	Boolean true
+D406	Boolean true
+D407	Boolean true
+D408	Boolean true
+D409	null
+D41	Boolean false
+D410	null
+D411	null
+D412	null
+D413	null
+D414	Boolean true
+D415	null
+D416	Boolean true
+D417	Boolean true
+D418	Boolean true
+D419	Boolean true
+D42	null
+D420	Boolean true
+D421	null
+D422	null
+D423	null
+D424	null
+D425	null
+D426	null
+D427	null
+D428	null
+D429	null
+D43	null
+D430	null
+D431	Boolean true
+D432	Boolean true
+D433	Boolean true
+D434	Boolean true
+D435	Boolean true
+D436	Boolean true
+D437	null
+D438	Boolean true
+D439	Boolean true
+D44	Boolean true
+D440	Boolean true
+D441	Boolean true
+D442	Boolean true
+D443	null
+D444	null
+D445	null
+D446	null
+D447	null
+D448	Boolean true
+D449	Boolean true
+D45	Boolean false
+D450	Boolean true
+D451	Boolean true
+D452	Boolean true
+D453	null
+D454	null
+D455	null
+D456	null
+D457	null
+D458	Boolean true
+D459	null
+D46	null
+D460	null
+D461	null
+D462	null
+D463	null
+D464	null
+D465	Boolean false
+D466	Boolean false
+D467	Boolean false
+D468	Boolean false
+D469	Boolean false
+D47	Boolean true
+D470	null
+D471	null
+D472	null
+D473	null
+D474	null
+D475	Boolean false
+D476	Boolean false
+D477	Boolean false
+D478	Boolean false
+D479	Boolean false
+D48	Boolean false
+D480	null
+D481	Boolean false
+D482	null
+D483	Boolean false
+D484	null
+D485	Boolean false
+D486	Boolean false
+D487	Boolean true
+D488	Boolean true
+D489	Boolean false
+D49	null
+D490	Boolean false
+D491	Boolean true
+D492	Boolean false
+D493	Boolean true
+D494	Boolean false
+D495	Boolean false
+D496	null
+D497	null
+D498	Boolean true
+D499	null
+D5	Uncertainty[Integer 6, Integer 7]
+D50	null
+D500	Boolean false
+D501	null
+D502	null
+D503	Boolean true
+D504	Boolean false
+D505	null
+D506	null
+D507	null
+D508	null
+D509	null
+D51	null
+D510	null
+D511	null
+D512	null
+D513	null
+D514	Boolean false
+D515	null
+D516	Boolean true
+D517	Boolean false
+D518	null
+D519	null
+D52	Boolean false
+D520	null
+D521	Boolean false
+D522	Boolean true
+D523	null
+D524	Boolean false
+D525	Boolean true
+D526	Boolean true
+D527	Boolean false
+D528	Boolean false
+D529	Boolean false
+D53	Boolean true
+D530	Boolean true
+D531	Boolean false
+D532	Boolean true
+D533	Boolean false
+D534	Boolean false
+D535	Boolean true
+D536	Boolean true
+D537	Boolean true
+D538	Boolean true
+D539	Boolean true
+D54	null
+D540	Boolean true
+D541	Boolean true
+D542	Boolean true
+D543	Boolean true
+D544	Boolean true
+D545	Boolean true
+D546	Boolean true
+D547	Boolean true
+D548	Boolean true
+D549	Boolean true
+D55	Boolean false
+D550	Boolean true
+D551	Boolean true
+D552	Boolean true
+D553	Boolean true
+D554	Boolean true
+D555	Boolean true
+D556	Boolean true
+D557	Boolean true
+D558	Boolean true
+D559	Boolean true
+D56	Boolean true
+D560	Boolean true
+D561	Boolean true
+D562	null
+D563	null
+D564	null
+D565	null
+D566	null
+D567	null
+D568	null
+D569	null
+D57	Boolean true
+D570	null
+D571	null
+D572	null
+D573	null
+D574	null
+D575	null
+D576	null
+D577	Boolean true
+D578	null
+D579	Boolean true
+D58	Boolean false
+D580	Boolean true
+D581	Boolean true
+D582	Boolean true
+D583	Boolean true
+D584	null
+D585	null
+D586	null
+D587	null
+D588	null
+D589	null
+D59	Boolean false
+D590	null
+D591	null
+D592	null
+D593	null
+D594	Boolean true
+D595	Boolean true
+D596	Boolean true
+D597	Boolean true
+D598	Boolean true
+D599	Boolean true
+D6	Uncertainty[Integer -7, Integer -6]
+D60	Boolean false
+D600	null
+D601	Boolean true
+D602	Boolean true
+D603	Boolean true
+D604	Boolean true
+D605	Boolean true
+D606	null
+D607	null
+D608	null
+D609	null
+D61	Boolean true
+D610	null
+D611	Boolean true
+D612	Boolean true
+D613	Boolean true
+D614	Boolean true
+D615	Boolean true
+D616	null
+D617	null
+D618	null
+D619	null
+D62	Boolean false
+D620	null
+D621	Boolean true
+D622	null
+D623	null
+D624	null
+D625	null
+D626	null
+D627	null
+D628	null
+D629	null
+D63	Boolean true
+D630	null
+D631	null
+D632	null
+D633	null
+D634	null
+D635	null
+D636	null
+D637	null
+D638	null
+D639	null
+D64	Boolean false
+D640	null
+D641	null
+D642	null
+D643	null
+D644	null
+D645	null
+D646	Boolean false
+D647	null
+D648	Boolean false
+D649	Boolean false
+D65	Boolean false
+D650	Boolean true
+D651	Boolean true
+D652	Boolean false
+D653	Boolean false
+D654	Boolean true
+D655	Boolean false
+D656	Boolean true
+D657	Boolean false
+D658	Boolean false
+D659	null
+D66	Boolean true
+D660	null
+D661	Boolean true
+D662	null
+D663	Boolean false
+D664	null
+D665	null
+D666	Boolean true
+D667	Boolean false
+D668	null
+D669	null
+D67	Boolean true
+D670	null
+D671	null
+D672	null
+D673	null
+D674	null
+D675	null
+D676	null
+D677	Boolean false
+D678	null
+D679	Boolean true
+D68	Boolean true
+D680	Boolean false
+D681	null
+D682	null
+D683	null
+D684	Boolean false
+D685	Boolean true
+D686	null
+D687	Boolean false
+D688	Boolean true
+D689	Boolean true
+D69	Boolean true
+D690	Boolean false
+D691	Boolean false
+D692	Boolean false
+D693	Boolean true
+D694	Boolean false
+D695	Boolean true
+D696	Boolean false
+D697	Boolean false
+D698	Boolean true
+D699	Boolean true
+D7	Uncertainty[Integer 6, Integer 7]
+D70	Boolean true
+D700	Boolean true
+D701	Boolean true
+D702	Boolean true
+D703	Boolean true
+D704	Boolean true
+D705	Boolean true
+D706	Boolean true
+D707	Boolean true
+D708	Boolean true
+D709	Boolean true
+D71	Boolean true
+D710	Boolean true
+D711	Boolean true
+D712	Boolean true
+D713	Boolean true
+D714	Boolean true
+D715	Boolean true
+D716	Boolean true
+D717	Boolean true
+D718	Boolean true
+D719	Boolean true
+D72	Boolean true
+D720	Boolean true
+D721	Boolean true
+D722	Boolean true
+D723	Boolean true
+D724	Boolean true
+D725	null
+D726	null
+D727	null
+D728	null
+D729	null
+D73	Boolean true
+D730	null
+D731	null
+D732	null
+D733	null
+D734	null
+D735	null
+D736	null
+D737	null
+D738	null
+D739	null
+D74	Boolean true
+D740	Boolean true
+D741	null
+D742	Boolean true
+D743	Boolean true
+D744	Boolean true
+D745	Boolean true
+D746	Boolean true
+D747	null
+D748	null
+D749	null
+D75	Boolean true
+D750	null
+D751	null
+D752	null
+D753	null
+D754	null
+D755	null
+D756	null
+D757	Boolean true
+D758	Boolean true
+D759	Boolean true
+D76	Boolean true
+D760	Boolean true
+D761	Boolean true
+D762	Boolean true
+D763	null
+D764	Boolean true
+D765	Boolean true
+D766	Boolean true
+D767	Boolean true
+D768	Boolean true
+D769	null
+D77	Boolean true
+D770	null
+D771	null
+D772	null
+D773	null
+D774	Boolean true
+D775	Boolean true
+D776	Boolean true
+D777	Boolean true
+D778	Boolean true
+D779	null
+D78	Boolean true
+D780	null
+D781	null
+D782	null
+D783	null
+D784	Boolean true
+D785	null
+D786	null
+D787	null
+D788	null
+D789	null
+D79	Boolean true
+D790	null
+D791	null
+D792	null
+D793	null
+D794	null
+D795	null
+D796	null
+D797	null
+D798	null
+D799	null
+D8	Integer 1
+D80	Boolean true
+D800	null
+D801	null
+D802	null
+D803	null
+D804	null
+D805	null
+D806	null
+D807	null
+D808	null
+D809	Boolean false
+D81	Boolean true
+D810	null
+D811	Boolean false
+D812	Boolean false
+D813	Boolean true
+D814	Boolean true
+D815	Boolean false
+D816	Boolean false
+D817	Boolean true
+D818	Boolean false
+D819	Boolean true
+D82	Boolean true
+D820	Boolean false
+D821	Boolean false
+D822	null
+D823	null
+D824	Boolean true
+D825	null
+D826	Boolean false
+D827	null
+D828	null
+D829	Boolean true
+D83	Boolean true
+D830	Boolean false
+D831	null
+D832	Boolean true
+D833	Boolean false
+D834	null
+D835	null
+D836	null
+D837	Boolean false
+D838	Boolean true
+D839	null
+D84	Boolean true
+D840	Boolean false
+D841	Boolean true
+D842	Boolean true
+D843	Boolean false
+D844	Boolean false
+D845	Boolean false
+D846	Boolean true
+D847	Boolean false
+D848	Boolean true
+D849	Boolean false
+D85	Boolean true
+D850	Boolean false
+D851	Boolean true
+D852	Boolean true
+D853	Boolean true
+D854	Boolean true
+D855	Boolean true
+D856	Boolean true
+D857	Boolean true
+D858	Boolean true
+D859	Boolean true
+D86	Boolean true
+D860	Boolean true
+D861	Boolean true
+D862	Boolean true
+D863	Boolean true
+D864	Boolean true
+D865	Boolean true
+D866	Boolean true
+D867	Boolean true
+D868	Boolean true
+D869	Boolean true
+D87	Boolean true
+D870	Boolean true
+D871	Boolean true
+D872	Boolean true
+D873	Boolean true
+D874	Boolean true
+D875	Boolean true
+D876	Boolean true
+D877	Boolean true
+D878	null
+D879	null
+D88	Boolean true
+D880	null
+D881	null
+D882	null
+D883	Boolean true
+D884	Boolean true
+D885	Boolean true
+D886	Boolean true
+D887	Boolean true
+D888	null
+D889	null
+D89	Boolean true
+D890	null
+D891	null
+D892	null
+D893	Boolean true
+D894	null
+D895	Boolean true
+D896	Boolean true
+D897	Boolean true
+D898	Boolean true
+D899	Boolean true
+D9	Integer 1
+D90	Boolean true
+D900	null
+D901	null
+D902	null
+D903	null
+D904	null
+D905	null
+D906	null
+D907	null
+D908	null
+D909	null
+D91	Boolean true
+D910	Boolean true
+D911	Boolean true
+D912	Boolean true
+D913	Boolean true
+D914	Boolean true
+D915	Boolean true
+D916	null
+D917	Boolean true
+D918	Boolean true
+D919	Boolean true
+D92	Boolean true
+D920	Boolean true
+D921	Boolean true
+D922	null
+D923	null
+D924	null
+D925	null
+D926	null
+D927	Boolean true
+D928	Boolean true
+D929	Boolean true
+D93	null
+D930	Boolean true
+D931	Boolean true
+D932	null
+D933	null
+D934	null
+D935	null
+D936	null
+D937	Boolean true
+D938	null
+D939	null
+D94	null
+D940	null
+D941	null
+D942	null
+D943	null
+D944	Boolean false
+D945	Boolean false
+D946	Boolean false
+D947	Boolean false
+D948	Boolean false
+D949	null
+D95	null
+D950	null
+D951	null
+D952	null
+D953	null
+D954	Boolean false
+D955	Boolean false
+D956	Boolean false
+D957	Boolean false
+D958	Boolean false
+D959	null
+D96	null
+D960	Boolean false
+D961	null
+D962	Boolean false
+D963	null
+D964	Boolean false
+D965	Boolean false
+D966	Boolean true
+D967	Boolean true
+D968	Boolean false
+D969	Boolean false
+D97	null
+D970	Boolean true
+D971	Boolean false
+D972	Boolean true
+D973	Boolean false
+D974	Boolean false
+D975	null
+D976	null
+D977	Boolean true
+D978	null
+D979	Boolean false
+D98	Boolean true
+D980	null
+D981	null
+D982	Boolean true
+D983	Boolean false
+D984	null
+D985	null
+D986	null
+D987	null
+D988	null
+D989	null
+D99	Boolean true
+D990	null
+D991	null
+D992	null
+D993	Boolean false
+D994	null
+D995	Boolean true
+D996	Boolean false
+D997	null
+D998	null
+D999	null
