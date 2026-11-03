@@ -38,8 +38,8 @@ CLINICAL = "funcs/clinical.go"
 EVAL = "eval/evaluator.go"
 PLAN = "docs/plans/015-years-between-leap.md"
 ANSWERS_GO = "internal/referenceharness/answers/answers.go"
-AGE_YEARS = "\treturn YearsBetween(birthDate, asOf)\n"
-AGE_MONTHS = "\treturn MonthsBetween(birthDate, asOf)\n"
+AGE_YEARS = "\treturn DurationBetweenAt(birthDate, asOf, unit, evaluation)\n"
+AGE_MONTHS = AGE_YEARS
 
 # name, (path, old, new), command, text the failure has to hold
 mutations = [
@@ -73,28 +73,28 @@ mutations = [
      "years between @2012 and @2014 = 2, want Interval[1, 2]"),
     # The ages.
     ("the age in years by a count of its own",
-     (CLINICAL, AGE_YEARS, "\tb, _ := partsOf(birthDate)\n\tr, _ := partsOf(asOf)\n\tyears := r.field[0] - b.field[0]\n"
+     (CLINICAL, AGE_YEARS, "\tif unit == \"years\" {\n\tb, _ := partsOf(birthDate)\n\tr, _ := partsOf(asOf)\n\tyears := r.field[0] - b.field[0]\n"
       "\tif r.field[1] < b.field[1] || (r.field[1] == b.field[1] && r.field[2] < b.field[2]) {\n\t\tyears--\n\t}\n"
-      "\treturn fptypes.NewInteger(int64(years)), nil\n"), AGES,
+      "\treturn fptypes.NewInteger(int64(years)), nil\n\t}\n" + AGE_YEARS), AGES,
      "CalculateAgeInYearsAt(@2012-02-29, @2014-02-28) = 1, want 2"),
     ("the age in months by a count of its own",
-     (CLINICAL, AGE_MONTHS, "\tb, _ := partsOf(birthDate)\n\tr, _ := partsOf(asOf)\n\tmonths := (r.field[0]-b.field[0])*12 + r.field[1] - b.field[1]\n"
-      "\tif r.field[2] < b.field[2] {\n\t\tmonths--\n\t}\n\treturn fptypes.NewInteger(int64(months)), nil\n"), AGES,
+     (CLINICAL, AGE_MONTHS, "\tif unit == \"months\" {\n\tb, _ := partsOf(birthDate)\n\tr, _ := partsOf(asOf)\n\tmonths := (r.field[0]-b.field[0])*12 + r.field[1] - b.field[1]\n"
+      "\tif r.field[2] < b.field[2] {\n\t\tmonths--\n\t}\n\treturn fptypes.NewInteger(int64(months)), nil\n\t}\n" + AGE_MONTHS), AGES,
      "CalculateAgeInMonthsAt(@2014-01-31, @2014-02-28) = 0, want 1"),
     ("CalculateAgeInYearsAt not dispatched",
-     (EVAL, 'case "calculateageinyears", "calculateageinyearsat":', 'case "calculateageinyears":'), AGES,
+     (EVAL, '"calculateageinyearsat", ', ''), AGES,
      "CalculateAgeInYearsAt(@2012-02-29, @2014-02-28) = error"),
     ("CalculateAgeInMonthsAt not dispatched",
-     (EVAL, 'case "calculateageinmonths", "calculateageinmonthsat":', 'case "calculateageinmonths":'), AGES,
+     (EVAL, '"calculateageinmonthsat", ', ''), AGES,
      "CalculateAgeInMonthsAt(@2014-01-31, @2014-02-28) = error"),
     ("CalculateAgeInWeeksAt not dispatched",
-     (EVAL, 'case "calculateageinweeks", "calculateageinweeksat":', 'case "calculateageinweeks":'), AGES,
+     (EVAL, '"calculateageinweeksat", ', ''), AGES,
      "CalculateAgeInWeeksAt(@2012-02-29, @2012-03-07) = error"),
     ("CalculateAgeInDaysAt not dispatched",
-     (EVAL, 'case "calculateageindays", "calculateageindaysat":', 'case "calculateageindays":'), AGES,
+     (EVAL, '"calculateageindaysat",\n', '\n'), AGES,
      "CalculateAgeInDaysAt(@2012-02-29, @2013-02-28) = error"),
     ("CalculateAgeInYearsAt not typed",
-     ("sema/systemfuncs.go", '\t"calculateageinyearsat":  fixed(Integer),\n', ""),
+     ("sema/systemfuncs.go", '\t"calculateageinyearsat":   fixed(Integer),\n', ""),
      run("TestTheAgeAtOperatorsAreTypedAsIntegers", package="./sema/"), "Years = ?, want System.Integer"),
     # The harness.
     ("an uncertainty of the reference left unread",

@@ -1,0 +1,462 @@
+D0	Integer 15
+D1	null
+D10	Integer 1380
+D100	Integer 21
+D101	Integer 21
+D102	Uncertainty[Integer 240, Integer 263]
+D103	Uncertainty[Integer 241, Integer 253]
+D104	Uncertainty[Integer 242, Integer 253]
+D105	Uncertainty[Integer 241, Integer 253]
+D106	Uncertainty[Integer 241, Integer 253]
+D107	Uncertainty[Integer 250, Integer 262]
+D108	Uncertainty[Integer 251, Integer 252]
+D109	Integer 252
+D11	Uncertainty[Integer 0, Integer 119]
+D110	Uncertainty[Integer 251, Integer 252]
+D111	Uncertainty[Integer 251, Integer 252]
+D112	Uncertainty[Integer 250, Integer 262]
+D113	Uncertainty[Integer 251, Integer 252]
+D114	Integer 252
+D115	Integer 252
+D116	Integer 252
+D117	Uncertainty[Integer 250, Integer 262]
+D118	Uncertainty[Integer 251, Integer 252]
+D119	Integer 252
+D12	Uncertainty[Integer 0, Integer 47]
+D120	Integer 252
+D121	Integer 252
+D122	Uncertainty[Integer 250, Integer 262]
+D123	Uncertainty[Integer 251, Integer 252]
+D124	Integer 252
+D125	Integer 252
+D126	Integer 252
+D127	Uncertainty[Integer 250, Integer 262]
+D128	Uncertainty[Integer 251, Integer 252]
+D129	Integer 252
+D13	Uncertainty[Integer 0, Integer 2879]
+D130	Integer 252
+D131	Integer 252
+D132	Uncertainty[Integer 252, Integer 275]
+D133	Uncertainty[Integer 253, Integer 265]
+D134	Uncertainty[Integer 254, Integer 265]
+D135	Uncertainty[Integer 253, Integer 265]
+D136	Uncertainty[Integer 253, Integer 265]
+D137	Uncertainty[Integer 252, Integer 264]
+D138	Uncertainty[Integer 253, Integer 254]
+D139	Integer 254
+D14	Uncertainty[Integer 0, Integer 172799]
+D140	Uncertainty[Integer 253, Integer 254]
+D141	Uncertainty[Integer 253, Integer 254]
+D142	Uncertainty[Integer 252, Integer 264]
+D143	Uncertainty[Integer 253, Integer 254]
+D144	Integer 254
+D145	Integer 254
+D146	Integer 254
+D147	Uncertainty[Integer 252, Integer 264]
+D148	Uncertainty[Integer 253, Integer 254]
+D149	Integer 254
+D15	Integer -10
+D150	Integer 254
+D151	Integer 254
+D152	Uncertainty[Integer 252, Integer 264]
+D153	Uncertainty[Integer 253, Integer 254]
+D154	Integer 254
+D155	Integer 253
+D156	Integer 253
+D157	Uncertainty[Integer 252, Integer 264]
+D158	Uncertainty[Integer 253, Integer 254]
+D159	Integer 254
+D16	Integer -2
+D160	Integer 253
+D161	Integer 253
+D162	Uncertainty[Integer 1043, Integer 1147]
+D163	Uncertainty[Integer 1048, Integer 1104]
+D164	Uncertainty[Integer 1052, Integer 1104]
+D165	Uncertainty[Integer 1051, Integer 1104]
+D166	Uncertainty[Integer 1051, Integer 1104]
+D167	Uncertainty[Integer 1087, Integer 1143]
+D168	Uncertainty[Integer 1091, Integer 1099]
+D169	Uncertainty[Integer 1095, Integer 1099]
+D17	Integer -9
+D170	Uncertainty[Integer 1095, Integer 1099]
+D171	Uncertainty[Integer 1095, Integer 1099]
+D172	Uncertainty[Integer 1087, Integer 1139]
+D173	Uncertainty[Integer 1091, Integer 1095]
+D174	Integer 1095
+D175	Integer 1095
+D176	Integer 1095
+D177	Uncertainty[Integer 1087, Integer 1139]
+D178	Uncertainty[Integer 1091, Integer 1095]
+D179	Integer 1095
+D18	Integer -23
+D180	Integer 1095
+D181	Integer 1095
+D182	Uncertainty[Integer 1087, Integer 1139]
+D183	Uncertainty[Integer 1091, Integer 1095]
+D184	Integer 1095
+D185	Integer 1095
+D186	Integer 1095
+D187	Uncertainty[Integer 1087, Integer 1139]
+D188	Uncertainty[Integer 1091, Integer 1095]
+D189	Integer 1095
+D19	Integer 21
+D190	Integer 1095
+D191	Integer 1095
+D192	Uncertainty[Integer 1096, Integer 1200]
+D193	Uncertainty[Integer 1100, Integer 1156]
+D194	Uncertainty[Integer 1104, Integer 1156]
+D195	Uncertainty[Integer 1104, Integer 1156]
+D196	Uncertainty[Integer 1104, Integer 1156]
+D197	Uncertainty[Integer 1096, Integer 1152]
+D198	Uncertainty[Integer 1100, Integer 1108]
+D199	Uncertainty[Integer 1104, Integer 1108]
+D2	null
+D20	Integer 20
+D200	Uncertainty[Integer 1104, Integer 1108]
+D201	Uncertainty[Integer 1104, Integer 1108]
+D202	Uncertainty[Integer 1096, Integer 1148]
+D203	Uncertainty[Integer 1100, Integer 1104]
+D204	Integer 1104
+D205	Integer 1104
+D206	Integer 1104
+D207	Uncertainty[Integer 1095, Integer 1148]
+D208	Uncertainty[Integer 1100, Integer 1104]
+D209	Integer 1104
+D21	Integer 1
+D210	Integer 1104
+D211	Integer 1104
+D212	Uncertainty[Integer 1095, Integer 1148]
+D213	Uncertainty[Integer 1100, Integer 1104]
+D214	Integer 1104
+D215	Integer 1104
+D216	Integer 1104
+D217	Uncertainty[Integer 1095, Integer 1148]
+D218	Uncertainty[Integer 1100, Integer 1104]
+D219	Integer 1104
+D22	Integer 26
+D220	Integer 1104
+D221	Integer 1104
+D222	Uncertainty[Integer 7306, Integer 8035]
+D223	Uncertainty[Integer 7337, Integer 7729]
+D224	Uncertainty[Integer 7364, Integer 7729]
+D225	Uncertainty[Integer 7363, Integer 7729]
+D226	Uncertainty[Integer 7363, Integer 7729]
+D227	Uncertainty[Integer 7612, Integer 8004]
+D228	Uncertainty[Integer 7643, Integer 7698]
+D229	Uncertainty[Integer 7670, Integer 7698]
+D23	Integer 25
+D230	Uncertainty[Integer 7669, Integer 7698]
+D231	Uncertainty[Integer 7669, Integer 7698]
+D232	Uncertainty[Integer 7612, Integer 7976]
+D233	Uncertainty[Integer 7643, Integer 7670]
+D234	Integer 7670
+D235	Uncertainty[Integer 7669, Integer 7670]
+D236	Uncertainty[Integer 7669, Integer 7670]
+D237	Uncertainty[Integer 7611, Integer 7976]
+D238	Uncertainty[Integer 7642, Integer 7670]
+D239	Uncertainty[Integer 7669, Integer 7670]
+D24	Integer -5
+D240	Uncertainty[Integer 7669, Integer 7670]
+D241	Uncertainty[Integer 7669, Integer 7670]
+D242	Uncertainty[Integer 7611, Integer 7976]
+D243	Uncertainty[Integer 7642, Integer 7670]
+D244	Uncertainty[Integer 7669, Integer 7670]
+D245	Integer 7670
+D246	Integer 7670
+D247	Uncertainty[Integer 7611, Integer 7976]
+D248	Uncertainty[Integer 7642, Integer 7670]
+D249	Uncertainty[Integer 7669, Integer 7670]
+D25	Integer -3
+D250	Integer 7670
+D251	Integer 7670
+D252	Uncertainty[Integer 7672, Integer 8400]
+D253	Uncertainty[Integer 7703, Integer 8094]
+D254	Uncertainty[Integer 7730, Integer 8094]
+D255	Uncertainty[Integer 7729, Integer 8094]
+D256	Uncertainty[Integer 7729, Integer 8094]
+D257	Uncertainty[Integer 7672, Integer 8066]
+D258	Uncertainty[Integer 7703, Integer 7760]
+D259	Uncertainty[Integer 7730, Integer 7760]
+D26	Integer 0
+D260	Uncertainty[Integer 7729, Integer 7760]
+D261	Uncertainty[Integer 7729, Integer 7760]
+D262	Uncertainty[Integer 7672, Integer 8036]
+D263	Uncertainty[Integer 7703, Integer 7730]
+D264	Integer 7730
+D265	Uncertainty[Integer 7729, Integer 7730]
+D266	Uncertainty[Integer 7729, Integer 7730]
+D267	Uncertainty[Integer 7671, Integer 8036]
+D268	Uncertainty[Integer 7702, Integer 7730]
+D269	Uncertainty[Integer 7729, Integer 7730]
+D27	Integer 60
+D270	Uncertainty[Integer 7729, Integer 7730]
+D271	Uncertainty[Integer 7729, Integer 7730]
+D272	Uncertainty[Integer 7671, Integer 8036]
+D273	Uncertainty[Integer 7702, Integer 7730]
+D274	Uncertainty[Integer 7729, Integer 7730]
+D275	Integer 7729
+D276	Integer 7729
+D277	Uncertainty[Integer 7671, Integer 8036]
+D278	Uncertainty[Integer 7702, Integer 7730]
+D279	Uncertainty[Integer 7729, Integer 7730]
+D28	Integer 727
+D280	Integer 7729
+D281	Integer 7729
+D282	Uncertainty[Integer 175320, Integer 192863]
+D283	Uncertainty[Integer 176064, Integer 185519]
+D284	Uncertainty[Integer 176712, Integer 185519]
+D285	Uncertainty[Integer 176723, Integer 185507]
+D286	Uncertainty[Integer 176723, Integer 185507]
+D287	Uncertainty[Integer 182664, Integer 192119]
+D288	Uncertainty[Integer 183408, Integer 184775]
+D289	Uncertainty[Integer 184056, Integer 184775]
+D29	Integer 2
+D290	Uncertainty[Integer 184067, Integer 184763]
+D291	Uncertainty[Integer 184067, Integer 184763]
+D292	Uncertainty[Integer 182664, Integer 191447]
+D293	Uncertainty[Integer 183408, Integer 184103]
+D294	Uncertainty[Integer 184056, Integer 184103]
+D295	Uncertainty[Integer 184067, Integer 184091]
+D296	Uncertainty[Integer 184067, Integer 184091]
+D297	Uncertainty[Integer 182664, Integer 191447]
+D298	Uncertainty[Integer 183408, Integer 184103]
+D299	Uncertainty[Integer 184056, Integer 184103]
+D3	Uncertainty[Integer 53, Integer 54]
+D30	Integer 1
+D300	Uncertainty[Integer 184067, Integer 184091]
+D301	Uncertainty[Integer 184067, Integer 184091]
+D302	Uncertainty[Integer 182677, Integer 191437]
+D303	Uncertainty[Integer 183421, Integer 184093]
+D304	Uncertainty[Integer 184069, Integer 184093]
+D305	Integer 184080
+D306	Integer 184080
+D307	Uncertainty[Integer 182677, Integer 191437]
+D308	Uncertainty[Integer 183421, Integer 184093]
+D309	Uncertainty[Integer 184069, Integer 184093]
+D31	Integer 31
+D310	Integer 184080
+D311	Integer 184080
+D312	Uncertainty[Integer 184104, Integer 201623]
+D313	Uncertainty[Integer 184848, Integer 194279]
+D314	Uncertainty[Integer 185496, Integer 194279]
+D315	Uncertainty[Integer 185507, Integer 194267]
+D316	Uncertainty[Integer 185507, Integer 194267]
+D317	Uncertainty[Integer 184104, Integer 193607]
+D318	Uncertainty[Integer 184848, Integer 186263]
+D319	Uncertainty[Integer 185496, Integer 186263]
+D32	Integer 24
+D320	Uncertainty[Integer 185507, Integer 186251]
+D321	Uncertainty[Integer 185507, Integer 186251]
+D322	Uncertainty[Integer 184104, Integer 192887]
+D323	Uncertainty[Integer 184848, Integer 185543]
+D324	Uncertainty[Integer 185496, Integer 185543]
+D325	Uncertainty[Integer 185507, Integer 185531]
+D326	Uncertainty[Integer 185507, Integer 185531]
+D327	Uncertainty[Integer 184104, Integer 192887]
+D328	Uncertainty[Integer 184848, Integer 185543]
+D329	Uncertainty[Integer 185496, Integer 185543]
+D33	Integer 60
+D330	Uncertainty[Integer 185507, Integer 185531]
+D331	Uncertainty[Integer 185507, Integer 185531]
+D332	Uncertainty[Integer 184104, Integer 192864]
+D333	Uncertainty[Integer 184848, Integer 185520]
+D334	Uncertainty[Integer 185496, Integer 185520]
+D335	Integer 185507
+D336	Integer 185507
+D337	Uncertainty[Integer 184104, Integer 192864]
+D338	Uncertainty[Integer 184848, Integer 185520]
+D339	Uncertainty[Integer 185496, Integer 185520]
+D34	Integer 60
+D340	Integer 185507
+D341	Integer 185507
+D342	Uncertainty[Integer 10519200, Integer 11571839]
+D343	Uncertainty[Integer 10563840, Integer 11131199]
+D344	Uncertainty[Integer 10602720, Integer 11131199]
+D345	Uncertainty[Integer 10603380, Integer 11130420]
+D346	Uncertainty[Integer 10603380, Integer 11130420]
+D347	Uncertainty[Integer 10959840, Integer 11527199]
+D348	Uncertainty[Integer 11004480, Integer 11086559]
+D349	Uncertainty[Integer 11043360, Integer 11086559]
+D35	Uncertainty[Integer 0, Integer 24]
+D350	Uncertainty[Integer 11044020, Integer 11085780]
+D351	Uncertainty[Integer 11044020, Integer 11085780]
+D352	Uncertainty[Integer 10959840, Integer 11486879]
+D353	Uncertainty[Integer 11004480, Integer 11046239]
+D354	Uncertainty[Integer 11043360, Integer 11046239]
+D355	Uncertainty[Integer 11044020, Integer 11045460]
+D356	Uncertainty[Integer 11044020, Integer 11045460]
+D357	Uncertainty[Integer 10959840, Integer 11486879]
+D358	Uncertainty[Integer 11004480, Integer 11046239]
+D359	Uncertainty[Integer 11043360, Integer 11046239]
+D36	Uncertainty[Integer 60, Integer 61]
+D360	Uncertainty[Integer 11044020, Integer 11045460]
+D361	Uncertainty[Integer 11044020, Integer 11045460]
+D362	Uncertainty[Integer 10960649, Integer 11486249]
+D363	Uncertainty[Integer 11005289, Integer 11045609]
+D364	Uncertainty[Integer 11044169, Integer 11045609]
+D365	Uncertainty[Integer 11044829, Integer 11044830]
+D366	Uncertainty[Integer 11044829, Integer 11044830]
+D367	Uncertainty[Integer 10960649, Integer 11486249]
+D368	Uncertainty[Integer 11005289, Integer 11045609]
+D369	Uncertainty[Integer 11044169, Integer 11045609]
+D37	null
+D370	Uncertainty[Integer 11044829, Integer 11044830]
+D371	Integer 11044829
+D372	Uncertainty[Integer 11046240, Integer 12097439]
+D373	Uncertainty[Integer 11090880, Integer 11656799]
+D374	Uncertainty[Integer 11129760, Integer 11656799]
+D375	Uncertainty[Integer 11130420, Integer 11656020]
+D376	Uncertainty[Integer 11130420, Integer 11656020]
+D377	Uncertainty[Integer 11046240, Integer 11616479]
+D378	Uncertainty[Integer 11090880, Integer 11175839]
+D379	Uncertainty[Integer 11129760, Integer 11175839]
+D38	Integer 26
+D380	Uncertainty[Integer 11130420, Integer 11175060]
+D381	Uncertainty[Integer 11130420, Integer 11175060]
+D382	Uncertainty[Integer 11046240, Integer 11573279]
+D383	Uncertainty[Integer 11090880, Integer 11132639]
+D384	Uncertainty[Integer 11129760, Integer 11132639]
+D385	Uncertainty[Integer 11130420, Integer 11131860]
+D386	Uncertainty[Integer 11130420, Integer 11131860]
+D387	Uncertainty[Integer 11046240, Integer 11573279]
+D388	Uncertainty[Integer 11090880, Integer 11132639]
+D389	Uncertainty[Integer 11129760, Integer 11132639]
+D39	Uncertainty[Integer 0, Integer 1]
+D390	Uncertainty[Integer 11130420, Integer 11131860]
+D391	Uncertainty[Integer 11130420, Integer 11131860]
+D392	Uncertainty[Integer 11046240, Integer 11571840]
+D393	Uncertainty[Integer 11090880, Integer 11131200]
+D394	Uncertainty[Integer 11129760, Integer 11131200]
+D395	Uncertainty[Integer 11130420, Integer 11130421]
+D396	Uncertainty[Integer 11130420, Integer 11130421]
+D397	Uncertainty[Integer 11046240, Integer 11571840]
+D398	Uncertainty[Integer 11090880, Integer 11131200]
+D399	Uncertainty[Integer 11129760, Integer 11131200]
+D4	Uncertainty[Integer 636, Integer 648]
+D40	Integer 1
+D400	Uncertainty[Integer 11130420, Integer 11130421]
+D401	Integer 11130420
+D402	Uncertainty[Integer 631152000, Integer 694310399]
+D403	Uncertainty[Integer 633830400, Integer 667871999]
+D404	Uncertainty[Integer 636163200, Integer 667871999]
+D405	Uncertainty[Integer 636202800, Integer 667825259]
+D406	Uncertainty[Integer 636202800, Integer 667825200]
+D407	Uncertainty[Integer 657590400, Integer 691631999]
+D408	Uncertainty[Integer 660268800, Integer 665193599]
+D409	Uncertainty[Integer 662601600, Integer 665193599]
+D41	Integer 21
+D410	Uncertainty[Integer 662641200, Integer 665146859]
+D411	Uncertainty[Integer 662641200, Integer 665146800]
+D412	Uncertainty[Integer 657590400, Integer 689212799]
+D413	Uncertainty[Integer 660268800, Integer 662774399]
+D414	Uncertainty[Integer 662601600, Integer 662774399]
+D415	Uncertainty[Integer 662641200, Integer 662727659]
+D416	Uncertainty[Integer 662641200, Integer 662727600]
+D417	Uncertainty[Integer 657590400, Integer 689212799]
+D418	Uncertainty[Integer 660268800, Integer 662774399]
+D419	Uncertainty[Integer 662601600, Integer 662774399]
+D42	Uncertainty[Integer 20, Integer 21]
+D420	Uncertainty[Integer 662641200, Integer 662727659]
+D421	Uncertainty[Integer 662641200, Integer 662727600]
+D422	Uncertainty[Integer 657638940, Integer 689174999]
+D423	Uncertainty[Integer 660317340, Integer 662736599]
+D424	Uncertainty[Integer 662650140, Integer 662736599]
+D425	Uncertainty[Integer 662689740, Integer 662689859]
+D426	Uncertainty[Integer 662689740, Integer 662689800]
+D427	Uncertainty[Integer 657638984, Integer 689174984]
+D428	Uncertainty[Integer 660317384, Integer 662736584]
+D429	Uncertainty[Integer 662650184, Integer 662736584]
+D43	Uncertainty[Integer 20, Integer 21]
+D430	Uncertainty[Integer 662689784, Integer 662689844]
+D431	Integer 662689784
+D432	Uncertainty[Integer 662774400, Integer 725846399]
+D433	Uncertainty[Integer 665452800, Integer 699407999]
+D434	Uncertainty[Integer 667785600, Integer 699407999]
+D435	Uncertainty[Integer 667825200, Integer 699361259]
+D436	Uncertainty[Integer 667825200, Integer 699361200]
+D437	Uncertainty[Integer 662774400, Integer 696988799]
+D438	Uncertainty[Integer 665452800, Integer 670550399]
+D439	Uncertainty[Integer 667785600, Integer 670550399]
+D44	Uncertainty[Integer 20, Integer 21]
+D440	Uncertainty[Integer 667825200, Integer 670503659]
+D441	Uncertainty[Integer 667825200, Integer 670503600]
+D442	Uncertainty[Integer 662774400, Integer 694396799]
+D443	Uncertainty[Integer 665452800, Integer 667958399]
+D444	Uncertainty[Integer 667785600, Integer 667958399]
+D445	Uncertainty[Integer 667825200, Integer 667911659]
+D446	Uncertainty[Integer 667825200, Integer 667911600]
+D447	Uncertainty[Integer 662774400, Integer 694396799]
+D448	Uncertainty[Integer 665452800, Integer 667958399]
+D449	Uncertainty[Integer 667785600, Integer 667958399]
+D45	Uncertainty[Integer 20, Integer 21]
+D450	Uncertainty[Integer 667825200, Integer 667911659]
+D451	Uncertainty[Integer 667825200, Integer 667911600]
+D452	Uncertainty[Integer 662774400, Integer 694310459]
+D453	Uncertainty[Integer 665452800, Integer 667872059]
+D454	Uncertainty[Integer 667785600, Integer 667872059]
+D455	Uncertainty[Integer 667825200, Integer 667825319]
+D456	Uncertainty[Integer 667825200, Integer 667825260]
+D457	Uncertainty[Integer 662774400, Integer 694310400]
+D458	Uncertainty[Integer 665452800, Integer 667872000]
+D459	Uncertainty[Integer 667785600, Integer 667872000]
+D46	Uncertainty[Integer 20, Integer 21]
+D460	Uncertainty[Integer 667825200, Integer 667825260]
+D461	Integer 667825200
+D47	Uncertainty[Integer 20, Integer 21]
+D48	Integer 21
+D49	Integer 21
+D5	Uncertainty[Integer 4, Integer 8]
+D50	Integer 21
+D51	Integer 21
+D52	Uncertainty[Integer 20, Integer 21]
+D53	Integer 21
+D54	Integer 21
+D55	Integer 21
+D56	Integer 21
+D57	Uncertainty[Integer 20, Integer 21]
+D58	Integer 21
+D59	Integer 21
+D6	Uncertainty[Integer 29, Integer 59]
+D60	Integer 21
+D61	Integer 21
+D62	Uncertainty[Integer 20, Integer 21]
+D63	Integer 21
+D64	Integer 21
+D65	Integer 21
+D66	Integer 21
+D67	Uncertainty[Integer 20, Integer 21]
+D68	Integer 21
+D69	Integer 21
+D7	Integer 0
+D70	Integer 21
+D71	Integer 21
+D72	Uncertainty[Integer 21, Integer 22]
+D73	Uncertainty[Integer 21, Integer 22]
+D74	Uncertainty[Integer 21, Integer 22]
+D75	Uncertainty[Integer 21, Integer 22]
+D76	Uncertainty[Integer 21, Integer 22]
+D77	Uncertainty[Integer 21, Integer 22]
+D78	Integer 21
+D79	Integer 21
+D8	Integer 23
+D80	Integer 21
+D81	Integer 21
+D82	Uncertainty[Integer 21, Integer 22]
+D83	Integer 21
+D84	Integer 21
+D85	Integer 21
+D86	Integer 21
+D87	Uncertainty[Integer 21, Integer 22]
+D88	Integer 21
+D89	Integer 21
+D9	Uncertainty[Integer 1379, Integer 1380]
+D90	Integer 21
+D91	Integer 21
+D92	Uncertainty[Integer 21, Integer 22]
+D93	Integer 21
+D94	Integer 21
+D95	Integer 21
+D96	Integer 21
+D97	Uncertainty[Integer 21, Integer 22]
+D98	Integer 21
+D99	Integer 21
