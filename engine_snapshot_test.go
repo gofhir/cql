@@ -87,6 +87,11 @@ var snapshotAreas = []struct {
 	// where an age is a duration in the unit, in the seven units from years to
 	// seconds.
 	{"ages", 462, true},
+	// Written by hand, then a grid: the cases of docs/plans/020-difference-uncertainty.md,
+	// where `difference in X between` counts the boundaries of X crossed (Sundays
+	// for weeks, in the evaluation's offset below the day) and is an uncertainty
+	// where an operand is coarser than X.
+	{"differences", 776, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over

@@ -749,7 +749,7 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 			return nil, err
 		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return funcs.DifferenceBetween(iv.Low, iv.High, n.Precision)
+			return funcs.DifferenceBetweenAt(iv.Low, iv.High, n.Precision, e.evaluationFrame())
 		}
 		return nil, nil
 	default:
@@ -6452,7 +6452,7 @@ func (e *Evaluator) evalDifferenceBetween(n *ast.DifferenceBetween) (fptypes.Val
 	if err != nil {
 		return nil, err
 	}
-	return funcs.DifferenceBetween(low, high, n.Precision)
+	return funcs.DifferenceBetweenAt(low, high, n.Precision, e.evaluationFrame())
 }
 
 func (e *Evaluator) evalDateTimeComponentFrom(n *ast.DateTimeComponentFrom) (fptypes.Value, error) {
