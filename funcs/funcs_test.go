@@ -277,7 +277,7 @@ func TestConvert(t *testing.T) {
 func TestCalculateAgeInYears(t *testing.T) {
 	bd, _ := fptypes.NewDate("1990-01-15")
 	asOf, _ := fptypes.NewDate("2024-06-01")
-	result, err := CalculateAgeInYears(bd, asOf)
+	result, err := CalculateAgeIn("years", bd, asOf, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -287,7 +287,7 @@ func TestCalculateAgeInYears(t *testing.T) {
 func TestCalculateAgeInMonths(t *testing.T) {
 	bd, _ := fptypes.NewDate("2000-03-15")
 	asOf, _ := fptypes.NewDate("2000-06-20")
-	result, err := CalculateAgeInMonths(bd, asOf)
+	result, err := CalculateAgeIn("months", bd, asOf, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -297,7 +297,7 @@ func TestCalculateAgeInMonths(t *testing.T) {
 func TestCalculateAgeInDays(t *testing.T) {
 	bd, _ := fptypes.NewDate("2024-01-01")
 	asOf, _ := fptypes.NewDate("2024-01-11")
-	result, err := CalculateAgeInDays(bd, asOf)
+	result, err := CalculateAgeIn("days", bd, asOf, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -307,7 +307,7 @@ func TestCalculateAgeInDays(t *testing.T) {
 func TestCalculateAgeInWeeks(t *testing.T) {
 	bd, _ := fptypes.NewDate("2024-01-01")
 	asOf, _ := fptypes.NewDate("2024-01-15")
-	result, err := CalculateAgeInWeeks(bd, asOf)
+	result, err := CalculateAgeIn("weeks", bd, asOf, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

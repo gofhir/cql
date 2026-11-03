@@ -199,7 +199,11 @@ func evalImported(t *testing.T, expr string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := eval.NewEvaluator(eval.NewContext(context.Background(), imported)).EvaluateExpression("R")
+	ctx := eval.NewContext(context.Background(), imported)
+	// The same instant evalConversion evaluates at, or an operator that reads the
+	// clock answers by the real one and not as the AST does (plan 017).
+	ctx.EvaluationTimestamp = time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", -12*3600))
+	got, err := eval.NewEvaluator(ctx).EvaluateExpression("R")
 	if err != nil {
 		return "error: " + err.Error()
 	}

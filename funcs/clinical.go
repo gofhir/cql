@@ -6,122 +6,65 @@ import (
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
-// CalculateAgeInYears calculates years between birthDate and asOf. CQL 1.5.3,
-// Appendix B, CalculateAgeAt: "The CalculateAgeAt operators are defined in terms
-// of a datetime duration calculation", so the age is `years between`, and a
-// person born on 29 February is a year older on 28 February of a common year
-// (plan 015). With no reference to measure against there is no age, which CQL
-// answers with null rather than an age against the machine's clock.
-func CalculateAgeInYears(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
+// CalculateAgeIn is the age of someone born at birthDate, as of asOf, in the unit
+// ("years", "months", "weeks", "days", "hours", "minutes" or "seconds"). CQL
+// 1.5.3, Appendix B, CalculateAgeAt: "The CalculateAgeAt operators are defined in
+// terms of a datetime duration calculation", so the age is `<unit> between
+// birthDate and asOf`: whole calendar periods (a person born on 29 February is a
+// year older on 28 February of a common year, plan 015), and an uncertainty where
+// either date is too imprecise to say (plan 016). With no reference to measure
+// against there is no age, which CQL answers with null rather than an age
+// against the machine's clock.
+//
+// The Date overloads cover years to days and the DateTime ones add hours, minutes
+// and seconds. A Date beside a DateTime is converted with ToDateTime, as is a
+// Date in a unit finer than a day, which only the DateTime overload has: "the
+// Date values will be implicitly converted to DateTime" (Appendix B, Duration).
+// The conversion is of the date as written, to the day, so its time of day is
+// every moment of it and an age in hours is an uncertainty.
+//
+// evaluation is the offset of the evaluation request, which a DateTime that
+// states none is read at, nil for UTC. See DurationBetweenAt.
+func CalculateAgeIn(unit string, birthDate, asOf fptypes.Value, evaluation *time.Location) (fptypes.Value, error) {
 	if birthDate == nil || asOf == nil {
 		return nil, nil
 	}
-	return YearsBetween(birthDate, asOf)
-}
-
-// CalculateAgeInMonths calculates months between birthDate and asOf. See
-// CalculateAgeInYears.
-func CalculateAgeInMonths(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	if birthDate == nil || asOf == nil {
-		return nil, nil
+	birthDate, asOf, err := convertAgeDates(unit, birthDate, asOf)
+	if err != nil {
+		return nil, err
 	}
-	return MonthsBetween(birthDate, asOf)
+	return DurationBetweenAt(birthDate, asOf, unit, evaluation)
 }
 
-// CalculateAgeInWeeks calculates weeks between birthDate and asOf (or today if nil).
-func CalculateAgeInWeeks(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	bd, err := toTime(birthDate)
-	if err != nil || bd.IsZero() {
-		return nil, nil
+// convertAgeDates converts the Date among the two to a DateTime where the age
+// calls for one: the other is a DateTime, or the unit is finer than a day.
+func convertAgeDates(unit string, birthDate, asOf fptypes.Value) (birth, reference fptypes.Value, err error) {
+	_, birthIsDate := birthDate.(fptypes.Date)
+	_, asOfIsDate := asOf.(fptypes.Date)
+	if !birthIsDate && !asOfIsDate {
+		return birthDate, asOf, nil
 	}
-	ref := referenceDate(asOf)
-	if ref.IsZero() {
-		// No reference to measure against: there is no age, which CQL answers
-		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
-		// against the machine's clock instead.
-		return nil, nil
+	if birthIsDate && asOfIsDate && !AgeNeedsDateTime(unit) {
+		return birthDate, asOf, nil
 	}
-	days := int(ref.Sub(bd).Hours() / 24)
-	return fptypes.NewInteger(int64(days / 7)), nil
-}
-
-// CalculateAgeInDays calculates days between birthDate and asOf (or today if nil).
-func CalculateAgeInDays(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	bd, err := toTime(birthDate)
-	if err != nil || bd.IsZero() {
-		return nil, nil
+	birth, err = ToDateTime(birthDate)
+	if err != nil {
+		return nil, nil, err
 	}
-	ref := referenceDate(asOf)
-	if ref.IsZero() {
-		// No reference to measure against: there is no age, which CQL answers
-		// with null. `CalculateAgeInYears(bd, null)` used to answer an age
-		// against the machine's clock instead.
-		return nil, nil
+	reference, err = ToDateTime(asOf)
+	if err != nil {
+		return nil, nil, err
 	}
-	days := int(ref.Sub(bd).Hours() / 24)
-	return fptypes.NewInteger(int64(days)), nil
+	return birth, reference, nil
 }
 
-// AgeInYearsAt calculates the patient's age in years at a given date.
-func AgeInYearsAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInYears(birthDate, asOf)
-}
-
-// AgeInMonthsAt calculates the patient's age in months at a given date.
-func AgeInWeeksAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInWeeks(birthDate, asOf)
-}
-
-// AgeInDaysAt calculates age in days as of the given instant.
-func AgeInDaysAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInDays(birthDate, asOf)
-}
-
-// AgeInMonthsAt calculates age in months as of the given instant.
-func AgeInMonthsAt(birthDate, asOf fptypes.Value) (fptypes.Value, error) {
-	return CalculateAgeInMonths(birthDate, asOf)
-}
-
-func referenceDate(asOf fptypes.Value) time.Time {
-	if asOf != nil {
-		t, err := toTime(asOf)
-		if err == nil && !t.IsZero() {
-			return t
-		}
+// AgeNeedsDateTime reports whether an age in the unit is only defined for
+// DateTime: CQL has no Date overload of CalculateAgeIn… for hours, minutes and
+// seconds.
+func AgeNeedsDateTime(unit string) bool {
+	switch unit {
+	case "hours", "minutes", "seconds":
+		return true
 	}
-	// No clock is read here. The comment that used to stand in its place said the
-	// evaluator always passes the evaluation's frozen timestamp and that only a
-	// direct caller of this package could land here — and that was not true: two
-	// branches of the evaluator's age switch passed a nil through, and an age came
-	// back seven years off the Today() beside it.
-	//
-	// With nothing to measure against there is no age, which is null in CQL rather
-	// than an age against whatever the machine's clock says. The callers turn this
-	// zero time into that null.
-	return time.Time{}
-}
-
-func toTime(v fptypes.Value) (time.Time, error) { //nolint:unparam // error kept for future format additions
-	if v == nil {
-		return time.Time{}, nil
-	}
-	s := v.String()
-	// Try common FHIR date/datetime formats
-	for _, layout := range []string{
-		"2006-01-02T15:04:05Z07:00",
-		"2006-01-02T15:04:05.000Z07:00",
-		"2006-01-02T15:04:05",
-		"2006-01-02",
-		"2006-01",
-		"2006",
-		"15:04:05.000",
-		"15:04:05",
-		"15:04",
-	} {
-		t, err := time.Parse(layout, s)
-		if err == nil {
-			return t, nil
-		}
-	}
-	return time.Time{}, nil
+	return false
 }

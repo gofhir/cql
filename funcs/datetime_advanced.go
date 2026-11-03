@@ -836,3 +836,28 @@ func intVal(v fptypes.Value) int {
 	}
 	return 0
 }
+
+func toTime(v fptypes.Value) (time.Time, error) { //nolint:unparam // error kept for future format additions
+	if v == nil {
+		return time.Time{}, nil
+	}
+	s := v.String()
+	// Try common FHIR date/datetime formats
+	for _, layout := range []string{
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02T15:04:05.000Z07:00",
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+		"2006-01",
+		"2006",
+		"15:04:05.000",
+		"15:04:05",
+		"15:04",
+	} {
+		t, err := time.Parse(layout, s)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, nil
+}

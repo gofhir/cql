@@ -3985,133 +3985,15 @@ func (e *Evaluator) evalBuiltinFunction(n *ast.FunctionCall) (fptypes.Value, err
 		return e.distinctList(toCollection(src))
 
 	// Clinical functions
-	case "ageinyears":
-		bd := e.getPatientBirthDate()
-		return funcs.AgeInYearsAt(bd, e.evaluationNow())
-	case "ageinmonths":
-		bd := e.getPatientBirthDate()
-		return funcs.AgeInMonthsAt(bd, e.evaluationNow())
-	case "ageinweeks":
-		bd := e.getPatientBirthDate()
-		return funcs.AgeInWeeksAt(bd, e.evaluationNow())
-	case "ageindays":
-		bd := e.getPatientBirthDate()
-		return funcs.AgeInDaysAt(bd, e.evaluationNow())
-	case "ageinyearsat":
-		bd := e.getPatientBirthDate()
-		if len(n.Operands) > 0 {
-			asOf, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			return funcs.AgeInYearsAt(bd, asOf)
-		}
-		return funcs.AgeInYearsAt(bd, e.evaluationNow())
-	case "ageinmonthsat":
-		bd := e.getPatientBirthDate()
-		if len(n.Operands) > 0 {
-			asOf, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			return funcs.AgeInMonthsAt(bd, asOf)
-		}
-		return funcs.AgeInMonthsAt(bd, e.evaluationNow())
-	// CQL defines the same four units for AgeIn…At as for AgeIn…, and funcs has
-	// all four; only years and months were registered, so `AgeInWeeksAt(x)` was an
-	// unknown function while `AgeInWeeks()` was not. The two that were missing are
-	// the two whose CalculateAgeIn… branches were ignoring their reference, which
-	// is how they came to be looked at at all.
-	case "ageinweeksat":
-		bd := e.getPatientBirthDate()
-		if len(n.Operands) > 0 {
-			asOf, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			return funcs.AgeInWeeksAt(bd, asOf)
-		}
-		return funcs.AgeInWeeksAt(bd, e.evaluationNow())
-	case "ageindaysat":
-		bd := e.getPatientBirthDate()
-		if len(n.Operands) > 0 {
-			asOf, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			return funcs.AgeInDaysAt(bd, asOf)
-		}
-		return funcs.AgeInDaysAt(bd, e.evaluationNow())
-	case "calculateageinyears", "calculateageinyearsat":
-		if len(n.Operands) > 0 {
-			bd, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			// Without a second operand the reference is the evaluation's
-			// timestamp, not the machine's clock — the same instant Today()
-			// answers with in the same expression. The weeks and days cases below
-			// already did this; these two passed a nil through to funcs, where
-			// reading the clock is the documented last resort, and an age came out
-			// seven years off the Today() beside it.
-			asOf := e.evaluationNow()
-			if len(n.Operands) > 1 {
-				asOf, err = e.Eval(n.Operands[1])
-				if err != nil {
-					return nil, err
-				}
-			}
-			return funcs.CalculateAgeInYears(bd, asOf)
-		}
-		return nil, nil
-	case "calculateageinmonths", "calculateageinmonthsat":
-		if len(n.Operands) > 0 {
-			bd, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			asOf := e.evaluationNow()
-			if len(n.Operands) > 1 {
-				asOf, err = e.Eval(n.Operands[1])
-				if err != nil {
-					return nil, err
-				}
-			}
-			return funcs.CalculateAgeInMonths(bd, asOf)
-		}
-		return nil, nil
-	case "calculateageinweeks", "calculateageinweeksat":
-		if len(n.Operands) > 0 {
-			bd, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			asOf := e.evaluationNow()
-			if len(n.Operands) > 1 {
-				asOf, err = e.Eval(n.Operands[1])
-				if err != nil {
-					return nil, err
-				}
-			}
-			return funcs.CalculateAgeInWeeks(bd, asOf)
-		}
-		return nil, nil
-	case "calculateageindays", "calculateageindaysat":
-		if len(n.Operands) > 0 {
-			bd, err := e.Eval(n.Operands[0])
-			if err != nil {
-				return nil, err
-			}
-			asOf := e.evaluationNow()
-			if len(n.Operands) > 1 {
-				asOf, err = e.Eval(n.Operands[1])
-				if err != nil {
-					return nil, err
-				}
-			}
-			return funcs.CalculateAgeInDays(bd, asOf)
-		}
-		return nil, nil
+	case "ageinyears", "ageinmonths", "ageinweeks", "ageindays",
+		"ageinhours", "ageinminutes", "ageinseconds",
+		"ageinyearsat", "ageinmonthsat", "ageinweeksat", "ageindaysat",
+		"ageinhoursat", "ageinminutesat", "ageinsecondsat",
+		"calculateageinyears", "calculateageinmonths", "calculateageinweeks", "calculateageindays",
+		"calculateageinhours", "calculateageinminutes", "calculateageinseconds",
+		"calculateageinyearsat", "calculateageinmonthsat", "calculateageinweeksat", "calculateageindaysat",
+		"calculateageinhoursat", "calculateageinminutesat", "calculateageinsecondsat":
+		return e.evalAge(name, n.Operands)
 
 	// String functions
 	case "upper":
@@ -8988,4 +8870,57 @@ func strictlyBefore(a, b fptypes.Value) (before, ok bool) {
 func (e *Evaluator) evaluationFrame() *time.Location {
 	_, seconds := e.ctx.EvaluationTimestamp.Zone()
 	return time.FixedZone("", seconds)
+}
+
+// evalAge evaluates AgeIn<Unit>(), AgeIn<Unit>At(asOf), CalculateAgeIn<Unit>(birthDate)
+// and CalculateAgeIn<Unit>At(birthDate, asOf), in the seven units. The age is
+// the duration in the unit from the birth date to the reference (funcs.CalculateAgeIn).
+//
+// With no asOf the reference is the evaluation's own Today() or Now(), never the
+// machine's clock, and which of the two is the overload the Java translator
+// picks (plan 017). AgeIn…() reads the Patient's birthDate as a Date against
+// Today() for years and months, and as ToDateTime(birthDate) against Now() for
+// every finer unit. CalculateAgeIn…(x) is a Date against Today() where the Date
+// overload of the unit exists, and a DateTime against Now() otherwise.
+func (e *Evaluator) evalAge(name string, operands []ast.Expression) (fptypes.Value, error) {
+	calculate := strings.HasPrefix(name, "calculate")
+	// The unit is the word the operator's name ends in, as the duration spells it.
+	unit := strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(name, "calculate"), "agein"), "at")
+
+	var birthDate fptypes.Value
+	rest := operands
+	if calculate {
+		if len(operands) == 0 {
+			return nil, nil
+		}
+		var err error
+		if birthDate, err = e.Eval(operands[0]); err != nil {
+			return nil, err
+		}
+		rest = operands[1:]
+	} else {
+		birthDate = e.getPatientBirthDate()
+	}
+
+	var asOf fptypes.Value
+	switch {
+	case len(rest) > 0:
+		var err error
+		if asOf, err = e.Eval(rest[0]); err != nil {
+			return nil, err
+		}
+	case birthDate == nil:
+		return nil, nil
+	default:
+		_, isDate := birthDate.(fptypes.Date)
+		if isDate && (unit == "years" || unit == "months" || calculate && !funcs.AgeNeedsDateTime(unit)) {
+			var err error
+			if asOf, err = funcs.TodayAt(e.ctx.EvaluationTimestamp); err != nil {
+				return nil, err
+			}
+		} else {
+			asOf = e.evaluationNow()
+		}
+	}
+	return funcs.CalculateAgeIn(unit, birthDate, asOf, e.evaluationFrame())
 }

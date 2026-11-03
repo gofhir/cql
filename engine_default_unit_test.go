@@ -1607,8 +1607,35 @@ func TestTheWholeAgeMatrixAgrees(t *testing.T) {
 	}
 	for _, unit := range []string{"Years", "Months", "Weeks", "Days"} {
 		toEvaluation := ask("AgeIn" + unit + "()")
-		if got := ask("CalculateAgeIn" + unit + "(@2000-01-15)"); got != toEvaluation {
-			t.Errorf("%s: AgeIn…() = %s but CalculateAgeIn…(bd) = %s", unit, toEvaluation, got)
+		// Plan 017, decision of 02-11-2026: AgeInWeeks() and AgeInDays() read the
+		// birth date as ToDateTime(birthDate) against Now(), the overload the Java
+		// translator writes, so the birth date is a day with no time of day and
+		// the age an uncertainty (CQL 1.5.3, Appendix B, Duration; the example
+		// `days between @2017-08-07T17:00 and @2017-08-14T` = [6, 7]). Years and
+		// months stay a Date against Today(), exact. Both spellings measure to
+		// the same evaluation, so the exact one is the DateTime spelling here, and
+		// the uncertainty is checked below against the whole days in between.
+		viaDate := "CalculateAgeIn" + unit + "(@2000-01-15)"
+		if unit == "Weeks" || unit == "Days" {
+			viaDate = "CalculateAgeIn" + unit + "(ToDateTime(@2000-01-15))"
+		}
+		if got := ask(viaDate); got != toEvaluation {
+			t.Errorf("%s: AgeIn…() = %s but %s = %s", unit, toEvaluation, viaDate, got)
+		}
+		if unit == "Weeks" || unit == "Days" {
+			// From any moment of 2000-01-15 to noon on 2019-06-01 UTC: n or n-1
+			// whole days, n being the days between the two dates.
+			n := int64(time.Date(2019, 6, 1, 0, 0, 0, 0, time.UTC).Sub(time.Date(2000, 1, 15, 0, 0, 0, 0, time.UTC)).Hours() / 24)
+			low, high := n-1, n
+			if unit == "Weeks" {
+				low, high = (n-1)/7, n/7
+			}
+			if want := fmt.Sprintf("Interval[%d, %d]", low, high); toEvaluation != want {
+				t.Errorf("%s: AgeIn…() = %s, want %s", unit, toEvaluation, want)
+			}
+			if got, want := ask("CalculateAgeIn"+unit+"(@2000-01-15)"), fmt.Sprint(high); got != want {
+				t.Errorf("%s: a Date against Today() = %s, want the whole periods, %s", unit, got, want)
+			}
 		}
 		toDate := ask("AgeIn" + unit + "At(@2010-01-15)")
 		if got := ask("CalculateAgeIn" + unit + "(@2000-01-15, @2010-01-15)"); got != toDate {
@@ -1665,8 +1692,11 @@ func TestAgeWithoutABirthDate(t *testing.T) {
 			}
 		}
 	}
-	if got := ask(yearOnly, "AgeInYears()"); got != "19" {
-		t.Errorf("a birth date of 2000 alone gives %s at a 2019 evaluation, want 19", got)
+	// A year is every day of it (plan 017; CQL 1.5.3, Appendix B, Duration, whose
+	// example `months between @2012-01-02 and @2012` is [0, 10]): from the last
+	// day of 2000 to 2019-06-01 are 18 whole years, and from the first, 19.
+	if got := ask(yearOnly, "AgeInYears()"); got != "Interval[18, 19]" {
+		t.Errorf("a birth date of 2000 alone gives %s at a 2019 evaluation, want Interval[18, 19]", got)
 	}
 	if got := ask(future, "AgeInYears()"); got != "-10" {
 		t.Errorf("a birth date in the future gives %s; it was -10. If this is now null, "+
@@ -1699,9 +1729,24 @@ func TestTheFourUnitsStayCoherentOverAWideSweep(t *testing.T) {
 		if err != nil || got == nil {
 			t.Fatalf("born %s at %s, %s: %v (%v)", birth, at.Format("2006-01-02"), define, got, err)
 		}
-		var n int64
-		if _, err := fmt.Sscanf(got.String(), "%d", &n); err != nil {
-			t.Fatalf("not a number: %s", got.String())
+		// Weeks and days are an uncertainty of two whole periods at most (plan
+		// 017, decision of 02-11-2026): the birth date is a day with no time of
+		// day, so its age at noon is the days from the date, or one fewer from
+		// the end of the day. The upper bound is the days between the two dates,
+		// which is what the age was before.
+		var low, n int64
+		if _, err := fmt.Sscanf(got.String(), "Interval[%d, %d]", &low, &n); err != nil {
+			if _, err := fmt.Sscanf(got.String(), "%d", &n); err != nil {
+				t.Fatalf("not a number: %s", got.String())
+			}
+			low = n
+		}
+		switch {
+		case define == "D" && low != n-1, define == "W" && low != n && low != n-1:
+			t.Errorf("born %s at %s, %s = %s, want the whole periods and the one before",
+				birth, at.Format("2006-01-02"), define, got.String())
+		case (define == "Y" || define == "M") && low != n:
+			t.Errorf("born %s at %s, %s = %s, want an exact age", birth, at.Format("2006-01-02"), define, got.String())
 		}
 		return n
 	}
@@ -1738,13 +1783,14 @@ func TestTheFourUnitsStayCoherentOverAWideSweep(t *testing.T) {
 	}
 }
 
-// TestAPartialBirthDateIsReadAtItsStart covers the dates FHIR allows and real
-// data uses, since a birth date need not be complete.
-func TestAPartialBirthDateIsReadAtItsStart(t *testing.T) {
+// TestAPartialBirthDateIsAnUncertaintyOverItsPeriod covers the dates FHIR allows
+// and real data uses, since a birth date need not be complete: one too imprecise
+// for the unit is every day of its period, so the age is an uncertainty (plan 017).
+func TestAPartialBirthDateIsAnUncertaintyOverItsPeriod(t *testing.T) {
 	at := time.Date(2019, 6, 15, 12, 0, 0, 0, time.UTC)
 	ask := func(birth, define string) string {
 		src := "library T version '1.0'\nusing FHIR version '4.0.1'\ncontext Patient\n" +
-			"define Y: AgeInYears()\ndefine Agree: AgeInMonths() div 12 = AgeInYears()\n"
+			"define Y: AgeInYears()\ndefine M: AgeInMonths()\n"
 		got, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(
 			context.Background(), src, define,
 			[]byte(`{"resourceType":"Patient","id":"p1","birthDate":"`+birth+`"}`), nil)
@@ -1756,18 +1802,26 @@ func TestAPartialBirthDateIsReadAtItsStart(t *testing.T) {
 		}
 		return got.String()
 	}
-	for _, tt := range []struct{ birth, years string }{
-		{"2000", "19"},       // read at 2000-01-01
-		{"2000-06", "19"},    // at 2000-06-01
-		{"2000-06-15", "19"}, // the anniversary itself
-		{"2000-06-16", "18"}, // a day short of it
-		{"2000-07", "18"},    // next month, so not yet
+	// Plan 017: the age is the duration from the birth date, so a partial one is
+	// every date it could be, and the age every value that gives (CQL 1.5.3,
+	// Appendix B, Duration, whose example `months between @2012-01-02 and @2012`
+	// is [0, 10]). The bounds are counted by hand, to the evaluation on
+	// 2019-06-15: from the last day of the period (the lower bound) and from the
+	// first (the upper bound). Where the birth date is finer than the unit (2000-06
+	// in years) the count is of whole periods at its own precision, the rule of
+	// plan 016, and not an uncertainty.
+	for _, tt := range []struct{ birth, years, months string }{
+		{"2000", "Interval[18, 19]", "Interval[221, 233]"}, // 2000-12-31 and 2000-01-01
+		{"2000-06", "19", "Interval[227, 228]"},            // years: both operands finer than the unit, plan 016
+		{"2000-06-15", "19", "228"},                        // the anniversary itself
+		{"2000-06-16", "18", "227"},                        // a day short of it
+		{"2000-07", "18", "Interval[226, 227]"},            // 2000-07-31 and 2000-07-01: not yet 19 either way
 	} {
 		if got := ask(tt.birth, "Y"); got != tt.years {
 			t.Errorf("birthDate %s = %s years, want %s", tt.birth, got, tt.years)
 		}
-		if got := ask(tt.birth, "Agree"); got != "true" {
-			t.Errorf("birthDate %s: the months and the years disagree", tt.birth)
+		if got := ask(tt.birth, "M"); got != tt.months {
+			t.Errorf("birthDate %s = %s months, want %s", tt.birth, got, tt.months)
 		}
 	}
 }

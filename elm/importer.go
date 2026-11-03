@@ -260,10 +260,13 @@ func ImportExpression(node *ExpressionNode) ast.Expression {
 
 	// Property (member access)
 	case "Property":
-		return &ast.MemberAccess{
-			Source: ImportExpression(node.Source),
-			Member: node.Path,
+		// A path is a series of period-separated identifiers (ELM, Property), as
+		// the Java translator writes `birthDate.value`: one member after another.
+		source := ImportExpression(node.Source)
+		for _, member := range strings.Split(node.Path, ".") {
+			source = &ast.MemberAccess{Source: source, Member: member}
 		}
+		return source
 
 	// Retrieve
 	case "Retrieve":
@@ -408,6 +411,16 @@ func ImportExpression(node *ExpressionNode) ast.Expression {
 	// Function call
 	case "FunctionRef":
 		return importFunctionCall(node)
+
+	// ToDateTime, which the Java translator writes around a Date that is given to
+	// an age in a unit finer than a month.
+	case "ToDateTime":
+		return &ast.FunctionCall{Name: "ToDateTime", Operands: []ast.Expression{importSingleOperand(node)}}
+
+	// The age operators, which ELM writes as CalculateAge and CalculateAgeAt with
+	// the unit in the precision, where the AST holds a call named for the unit.
+	case "CalculateAge", "CalculateAgeAt":
+		return importCalculateAge(node)
 
 	// Indexer
 	case "Indexer":
@@ -740,6 +753,19 @@ func importFunctionCall(node *ExpressionNode) *ast.FunctionCall {
 	ops := importOperandSlice(node)
 	fc.Operands = ops
 	return fc
+}
+
+// importCalculateAge reads CalculateAge (the birth date) and CalculateAgeAt (the
+// birth date and the date to measure at) as the call the AST holds for them,
+// CalculateAgeIn<Unit> with the operands in the same order, so that an imported
+// age is evaluated by the code a parsed one is. A precision that is not one of
+// the units of an age leaves a name no function has, which the evaluator refuses.
+func importCalculateAge(node *ExpressionNode) *ast.FunctionCall {
+	name := "CalculateAgeIn" + node.Precision + "s"
+	if node.Type == "CalculateAgeAt" {
+		name += "At"
+	}
+	return &ast.FunctionCall{Name: name, Operands: importOperandSlice(node)}
 }
 
 func importQuery(node *ExpressionNode) *ast.Query {

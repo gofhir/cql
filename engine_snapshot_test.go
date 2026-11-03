@@ -83,6 +83,10 @@ var snapshotAreas = []struct {
 	// where an uncertainty is a point of unknown value asked about each value it
 	// could be, and seconds and milliseconds are one precision.
 	{"uncertainty", 1237, true},
+	// Written by hand, then a grid: the cases of docs/plans/017-age-duration.md,
+	// where an age is a duration in the unit, in the seven units from years to
+	// seconds.
+	{"ages", 462, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over
