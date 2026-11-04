@@ -470,117 +470,150 @@ func temporalRange(v fptypes.Value, frame *time.Location) (earliest, latest time
 	}
 }
 
-// DifferenceBetween calculates the number of boundaries crossed between two values at a precision.
-// Unlike DurationBetween, this counts the number of calendar boundaries crossed.
-// For day and coarser precision, uses nominal (stated) values rather than UTC-normalized values.
+// DifferenceBetween is DifferenceBetweenAt with no evaluation offset, UTC.
 func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value, error) {
+	return DifferenceBetweenAt(low, high, precision, nil)
+}
+
+// DifferenceBetweenAt is the number of boundaries of the precision crossed from
+// low to high, in an evaluation at the offset of evaluation (nil for UTC).
+//
+// CQL 1.5.3, Appendix B, Difference: "the number of boundaries crossed for the
+// specified precision", "any fractional boundaries are dropped", Sunday the
+// first day of a week, and DateTime values with different offsets "normalized to
+// the timezone offset of the evaluation request timestamp, but only when the
+// comparison precision is hours, minutes, seconds, or milliseconds". So years to
+// days are counted on the fields as written, weeks on the Sundays that start
+// them, and hours and finer on the instants in the evaluation's frame, each cut
+// down to the unit before they are subtracted: 23:59:59.999 to 00:00:00.000 is
+// one hour, one minute and one second.
+//
+// An operand coarser than the precision (a second and a millisecond count as two
+// here, as both reference engines read it) makes the answer an uncertainty, from
+// the low bound's latest moment to the high bound's earliest, to the low
+// bound's earliest to the high bound's latest (Language Semantics, Determining
+// Difference and Duration). Two operands at the precision or finer are exact,
+// where `duration` is uncertain for any operand short of a millisecond.
+func DifferenceBetweenAt(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
 	if low == nil || high == nil {
 		return nil, nil
 	}
+	unit := durationPrecisionIndex(precision)
+	if unit < 0 {
+		return DurationBetweenAt(low, high, precision, evaluation)
+	}
+	lowEarliest, lowLatest, okLow := differenceRange(low, evaluation)
+	highEarliest, highLatest, okHigh := differenceRange(high, evaluation)
+	if !okLow || !okHigh {
+		return nil, nil
+	}
+	_, lowIsTime := low.(fptypes.Time)
+	_, highIsTime := high.(fptypes.Time)
+	if differencePrecision(low) < unit || differencePrecision(high) < unit {
+		smallest := boundariesCrossed(lowLatest, highEarliest, precision, evaluation, lowIsTime || highIsTime)
+		largest := boundariesCrossed(lowEarliest, highLatest, precision, evaluation, lowIsTime || highIsTime)
+		if smallest == largest {
+			return fptypes.NewInteger(smallest), nil
+		}
+		return cqltypes.NewUncertainty(fptypes.NewInteger(smallest), fptypes.NewInteger(largest)), nil
+	}
+	return fptypes.NewInteger(boundariesCrossed(lowEarliest, highEarliest, precision, evaluation, lowIsTime || highIsTime)), nil
+}
 
-	switch precision {
-	case "year", "years":
-		lComps := nominalComponents(low)
-		hComps := nominalComponents(high)
-		if lComps == nil || hComps == nil {
-			return nil, nil
-		}
-		return fptypes.NewInteger(int64(hComps[0] - lComps[0])), nil
-	case "month", "months":
-		lComps := nominalComponents(low)
-		hComps := nominalComponents(high)
-		if lComps == nil || hComps == nil {
-			return nil, nil
-		}
-		months := (hComps[0]-lComps[0])*12 + hComps[1] - lComps[1]
-		return fptypes.NewInteger(int64(months)), nil
-	case "week", "weeks":
-		lComps := nominalComponents(low)
-		hComps := nominalComponents(high)
-		if lComps == nil || hComps == nil {
-			return nil, nil
-		}
-		lDay := time.Date(lComps[0], time.Month(lComps[1]), lComps[2], 0, 0, 0, 0, time.UTC)
-		hDay := time.Date(hComps[0], time.Month(hComps[1]), hComps[2], 0, 0, 0, 0, time.UTC)
-		days := int(hDay.Sub(lDay).Hours() / 24)
-		weeks := days / 7
-		return fptypes.NewInteger(int64(weeks)), nil
-	case "day", "days":
-		lComps := nominalComponents(low)
-		hComps := nominalComponents(high)
-		if lComps == nil || hComps == nil {
-			return nil, nil
-		}
-		lDay := time.Date(lComps[0], time.Month(lComps[1]), lComps[2], 0, 0, 0, 0, time.UTC)
-		hDay := time.Date(hComps[0], time.Month(hComps[1]), hComps[2], 0, 0, 0, 0, time.UTC)
-		days := int(hDay.Sub(lDay).Hours() / 24)
-		return fptypes.NewInteger(int64(days)), nil
-	case "hour", "hours":
-		tl := toGoTime(low)
-		th := toGoTime(high)
-		if tl.IsZero() || th.IsZero() {
-			return nil, nil
-		}
-		hours := int(th.Sub(tl).Hours())
-		return fptypes.NewInteger(int64(hours)), nil
-	case precMinute, "minutes":
-		tl := toGoTime(low)
-		th := toGoTime(high)
-		if tl.IsZero() || th.IsZero() {
-			return nil, nil
-		}
-		minutes := int(th.Sub(tl).Minutes())
-		return fptypes.NewInteger(int64(minutes)), nil
-	case precSecond, "seconds":
-		tl := toGoTime(low)
-		th := toGoTime(high)
-		if tl.IsZero() || th.IsZero() {
-			return nil, nil
-		}
-		seconds := int(th.Sub(tl).Seconds())
-		return fptypes.NewInteger(int64(seconds)), nil
-	case precMillisecond, "milliseconds":
-		tl := toGoTime(low)
-		th := toGoTime(high)
-		if tl.IsZero() || th.IsZero() {
-			return nil, nil
-		}
-		ms := th.Sub(tl).Milliseconds()
-		return fptypes.NewInteger(ms), nil
+// differencePrecision is the index of the finest component a value states,
+// 0 for the year to 6 for the millisecond, the second and the millisecond apart.
+func differencePrecision(v fptypes.Value) int {
+	switch t := v.(type) {
+	case fptypes.DateTime:
+		return int(t.Precision())
+	case fptypes.Time:
+		return int(t.Precision()) + 3
+	case fptypes.Date:
+		return int(t.Precision())
 	default:
-		return DurationBetween(low, high, precision)
+		return 6
 	}
 }
 
-// nominalComponents extracts the nominal (stated) year, month, day, hour, minute, second, millis
-// from a temporal value without timezone normalization.
-func nominalComponents(v fptypes.Value) []int {
+// differenceRange is the earliest and latest moment a value could be, each as a
+// wall clock in the offset it is written at or read at. A Date is read as a
+// DateTime to the day; a Time has no date and no offset.
+func differenceRange(v fptypes.Value, frame *time.Location) (earliest, latest time.Time, ok bool) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
-		m := t.Month()
-		if m == 0 {
-			m = 1
-		}
-		d := t.Day()
-		if d == 0 {
-			d = 1
-		}
-		return []int{t.Year(), m, d, t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
+		earliest, latest = temporalRange(t, frame)
+		return earliest, latest, true
 	case fptypes.Date:
-		m := t.Month()
-		if m == 0 {
-			m = 1
+		earliest = t.ToTime()
+		latest = earliest
+		switch t.Precision() {
+		case 0:
+			latest = time.Date(t.Year(), 12, 31, 0, 0, 0, 0, time.UTC)
+		case 1:
+			latest = time.Date(t.Year(), time.Month(max(t.Month(), 1))+1, 0, 0, 0, 0, 0, time.UTC)
 		}
-		d := t.Day()
-		if d == 0 {
-			d = 1
-		}
-		return []int{t.Year(), m, d, 0, 0, 0, 0}
+		latest = time.Date(latest.Year(), latest.Month(), latest.Day(), 23, 59, 59, 999999999, time.UTC)
+		return earliest, latest, true
 	case fptypes.Time:
-		return []int{0, 0, 0, t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
+		earliest = time.Date(0, 1, 1, t.Hour(), t.Minute(), t.Second(), t.Millisecond()*1e6, time.UTC)
+		latest = earliest
+		switch t.Precision() {
+		case 0: // hour
+			latest = time.Date(0, 1, 1, t.Hour(), 59, 59, 999999999, time.UTC)
+		case 1: // minute
+			latest = time.Date(0, 1, 1, t.Hour(), t.Minute(), 59, 999999999, time.UTC)
+		case 2: // second
+			latest = time.Date(0, 1, 1, t.Hour(), t.Minute(), t.Second(), 999999999, time.UTC)
+		}
+		return earliest, latest, true
 	default:
-		return nil
+		return time.Time{}, time.Time{}, false
 	}
+}
+
+// boundariesCrossed counts the boundaries of the unit from a to b, as Appendix B
+// defines Difference. Years to days are read on the fields a and b are written
+// with; hours and finer are read in the frame, unless both are a Time.
+func boundariesCrossed(a, b time.Time, precision string, frame *time.Location, isTime bool) int64 {
+	switch precision {
+	case "year", "years":
+		return int64(b.Year() - a.Year())
+	case "month", "months":
+		return int64((b.Year()-a.Year())*12 + int(b.Month()) - int(a.Month()))
+	case "week", "weeks":
+		return (sundayOf(b) - sundayOf(a)) / 7
+	case "day", "days":
+		return dayNumber(b) - dayNumber(a)
+	}
+	if !isTime {
+		if frame == nil {
+			frame = time.UTC
+		}
+		a, b = a.In(frame), b.In(frame)
+	}
+	wall := func(t time.Time, nanos int) time.Time {
+		return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond()/nanos*nanos, time.UTC)
+	}
+	switch precision {
+	case "hour", "hours":
+		return (dayNumber(b)*24 + int64(b.Hour())) - (dayNumber(a)*24 + int64(a.Hour()))
+	case precMinute, "minutes":
+		return (dayNumber(b)*1440 + int64(b.Hour()*60+b.Minute())) - (dayNumber(a)*1440 + int64(a.Hour()*60+a.Minute()))
+	case precSecond, "seconds":
+		return wall(b, 1e9).Unix() - wall(a, 1e9).Unix()
+	default:
+		return wall(b, 1e6).UnixMilli() - wall(a, 1e6).UnixMilli()
+	}
+}
+
+// dayNumber is the number of days from 1970-01-01 to the day t is written on.
+func dayNumber(t time.Time) int64 {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC).Unix() / 86400
+}
+
+// sundayOf is the day number of the Sunday that starts the week of t.
+func sundayOf(t time.Time) int64 {
+	return dayNumber(t) - int64(time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC).Weekday())
 }
 
 // toGoTime converts a fptypes.Value to a time.Time using the type's built-in ToTime method.
