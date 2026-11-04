@@ -66,7 +66,7 @@ mutations = [
      (TEMPORAL, 'if unit == "month" {\n', 'if false {\n'), COUNT,
      "months between @2014-01-01 and @2014-03-15 = 0, want 2"),
     ("Go's zero time as no value",
-     (TEMPORAL, "\tif !lok || !hok {\n", "\tif !lok || !hok || l.field == [7]int{1, 1, 1} {\n"), COUNT,
+     (TEMPORAL, "\th, hok := partsOf(high)\n\tif !lok || !hok {\n", "\th, hok := partsOf(high)\n\tif !lok || !hok || l.field == [7]int{1, 1, 1} {\n"), COUNT,
      "years between @0001-01-01 and @0002-01-01 = null, want 1"),
     ("the lower bound of an uncertainty from the other extreme",
      ("funcs/datetime_advanced.go", "minLow := lowLatest\n", "minLow := lowEarliest\n\t_ = lowLatest\n"), COUNT,

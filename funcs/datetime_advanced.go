@@ -343,8 +343,11 @@ func combinedSecondsAndMilliseconds(index int) int {
 // when one or both operands have insufficient precision.
 func durationBetweenUncertain(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
 	// Compute the earliest and latest possible time.Time for each operand
-	lowEarliest, lowLatest := temporalRange(low, evaluation)
-	highEarliest, highLatest := temporalRange(high, evaluation)
+	lowEarliest, lowLatest, lowOK := temporalRange(low, evaluation)
+	highEarliest, highLatest, highOK := temporalRange(high, evaluation)
+	if !lowOK || !highOK {
+		return nil, nil
+	}
 
 	// Min duration: latest low to earliest high
 	// Max duration: earliest low to latest high
@@ -419,7 +422,9 @@ func dateTimeInstant(t fptypes.DateTime) time.Time {
 // moved the end of its day twelve hours, and `days between
 // @2017-08-07T17:00 and @2017-08-14T` was [5, 6] where the specification says
 // [6, 7]. With no frame on either side both sit at UTC.
-func temporalRange(v fptypes.Value, frame *time.Location) (earliest, latest time.Time) {
+//
+// ok is false for a value with no instant, which has no range to measure.
+func temporalRange(v fptypes.Value, frame *time.Location) (earliest, latest time.Time, ok bool) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		earliest := dateTimeInstant(t)
@@ -448,7 +453,7 @@ func temporalRange(v fptypes.Value, frame *time.Location) (earliest, latest time
 		case 5: // second
 			latest = time.Date(earliest.Year(), earliest.Month(), earliest.Day(), earliest.Hour(), earliest.Minute(), earliest.Second(), 999999999, earliest.Location())
 		}
-		return earliest, latest
+		return earliest, latest, true
 	case fptypes.Date:
 		earliest := t.ToTime()
 		latest := earliest
@@ -463,10 +468,10 @@ func temporalRange(v fptypes.Value, frame *time.Location) (earliest, latest time
 			lastDay := time.Date(t.Year(), time.Month(m+1), 0, 0, 0, 0, 0, time.UTC)
 			latest = lastDay
 		}
-		return earliest, latest
+		return earliest, latest, true
 	default:
-		tt := toGoTime(v)
-		return tt, tt
+		tt, ok := toGoTime(v)
+		return tt, tt, ok
 	}
 }
 
@@ -541,8 +546,7 @@ func differencePrecision(v fptypes.Value) int {
 func differenceRange(v fptypes.Value, frame *time.Location) (earliest, latest time.Time, ok bool) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
-		earliest, latest = temporalRange(t, frame)
-		return earliest, latest, true
+		return temporalRange(t, frame)
 	case fptypes.Date:
 		earliest = t.ToTime()
 		latest = earliest
@@ -617,7 +621,9 @@ func sundayOf(t time.Time) int64 {
 }
 
 // toGoTime converts a fptypes.Value to a time.Time using the type's built-in ToTime method.
-func toGoTime(v fptypes.Value) time.Time {
+// ok is false for a value with no instant. The zero time.Time is not that
+// signal: it is 0001-01-01T00:00:00Z, the first instant of the calendar.
+func toGoTime(v fptypes.Value) (time.Time, bool) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		// EffectiveOffset rather than ToTime alone. ToTime places a value that
@@ -629,31 +635,25 @@ func toGoTime(v fptypes.Value) time.Time {
 		//
 		// This is the single conversion the duration and difference operators go
 		// through, which is why the fix belongs here rather than in each of them.
-		return dateTimeInstant(t)
+		return dateTimeInstant(t), true
 	case fptypes.Date:
-		return t.ToTime()
+		return t.ToTime(), true
 	case fptypes.Time:
 		// Time has no ToTime() method; construct from components
-		return time.Date(0, 1, 1, t.Hour(), t.Minute(), t.Second(), t.Millisecond()*1e6, time.UTC)
+		return time.Date(0, 1, 1, t.Hour(), t.Minute(), t.Second(), t.Millisecond()*1e6, time.UTC), true
 	default:
 		// Fall back to string parsing
-		tt, err := toTime(v)
-		if err != nil {
-			return time.Time{}
-		}
-		return tt
+		return parseTemporal(v)
 	}
 }
 
 // MillisecondsBetween calculates the number of milliseconds between two datetimes.
 func MillisecondsBetween(low, high fptypes.Value) (fptypes.Value, error) {
-	tl := toGoTime(low)
-	th := toGoTime(high)
-	if tl.IsZero() || th.IsZero() {
+	seconds, nanos, ok := elapsed(low, high)
+	if !ok {
 		return nil, nil
 	}
-	ms := th.Sub(tl).Milliseconds()
-	return fptypes.NewInteger(ms), nil
+	return fptypes.NewInteger(seconds*1000 + nanos/1e6), nil
 }
 
 // DateAdd adds a duration to a date/time value.
@@ -871,11 +871,17 @@ func intVal(v fptypes.Value) int {
 }
 
 func toTime(v fptypes.Value) (time.Time, error) { //nolint:unparam // error kept for future format additions
+	t, _ := parseTemporal(v)
+	return t, nil
+}
+
+// parseTemporal reads the string of a value in the common FHIR date and time
+// layouts. ok is false for a nil value or one in none of them.
+func parseTemporal(v fptypes.Value) (t time.Time, ok bool) {
 	if v == nil {
-		return time.Time{}, nil
+		return time.Time{}, false
 	}
 	s := v.String()
-	// Try common FHIR date/datetime formats
 	for _, layout := range []string{
 		"2006-01-02T15:04:05Z07:00",
 		"2006-01-02T15:04:05.000Z07:00",
@@ -887,10 +893,9 @@ func toTime(v fptypes.Value) (time.Time, error) { //nolint:unparam // error kept
 		"15:04:05",
 		"15:04",
 	} {
-		t, err := time.Parse(layout, s)
-		if err == nil {
-			return t, nil
+		if t, err := time.Parse(layout, s); err == nil {
+			return t, true
 		}
 	}
-	return time.Time{}, nil
+	return time.Time{}, false
 }
