@@ -156,46 +156,56 @@ func WeeksBetween(low, high fptypes.Value) (fptypes.Value, error) {
 	return fptypes.NewInteger(d / 7), nil
 }
 
-// DaysBetween calculates the number of whole days between two dates.
-func DaysBetween(low, high fptypes.Value) (fptypes.Value, error) {
-	tl := toGoTime(low)
-	th := toGoTime(high)
-	if tl.IsZero() || th.IsZero() {
+// elapsed is the time from low to high as whole seconds and the nanoseconds
+// left over, both of the sign of the span. time.Time.Sub saturates at about 292
+// years, the range of a time.Duration, and a calendar runs 9998, so the span is
+// kept in two integers instead: a unit is then the seconds divided by its length,
+// truncated toward zero, which is how CQL drops "any fractional boundaries".
+func elapsed(low, high fptypes.Value) (seconds, nanos int64, ok bool) {
+	tl, lok := toGoTime(low)
+	th, hok := toGoTime(high)
+	if !lok || !hok {
+		return 0, 0, false
+	}
+	seconds = th.Unix() - tl.Unix()
+	nanos = int64(th.Nanosecond() - tl.Nanosecond())
+	switch {
+	case seconds > 0 && nanos < 0:
+		seconds--
+		nanos += 1e9
+	case seconds < 0 && nanos > 0:
+		seconds++
+		nanos -= 1e9
+	}
+	return seconds, nanos, true
+}
+
+// wholeSeconds is the span from low to high in units of the given length in
+// seconds, truncated toward zero. A nil value means an operand has no instant.
+func wholeSeconds(low, high fptypes.Value, length int64) (fptypes.Value, error) {
+	seconds, _, ok := elapsed(low, high)
+	if !ok {
 		return nil, nil
 	}
-	days := int(th.Sub(tl).Hours() / 24)
-	return fptypes.NewInteger(int64(days)), nil
+	return fptypes.NewInteger(seconds / length), nil
+}
+
+// DaysBetween calculates the number of whole days between two dates.
+func DaysBetween(low, high fptypes.Value) (fptypes.Value, error) {
+	return wholeSeconds(low, high, 86400)
 }
 
 // HoursBetween calculates the number of whole hours between two datetimes.
 func HoursBetween(low, high fptypes.Value) (fptypes.Value, error) {
-	tl := toGoTime(low)
-	th := toGoTime(high)
-	if tl.IsZero() || th.IsZero() {
-		return nil, nil
-	}
-	hours := int(th.Sub(tl).Hours())
-	return fptypes.NewInteger(int64(hours)), nil
+	return wholeSeconds(low, high, 3600)
 }
 
 // MinutesBetween calculates the number of whole minutes between two datetimes.
 func MinutesBetween(low, high fptypes.Value) (fptypes.Value, error) {
-	tl := toGoTime(low)
-	th := toGoTime(high)
-	if tl.IsZero() || th.IsZero() {
-		return nil, nil
-	}
-	minutes := int(th.Sub(tl).Minutes())
-	return fptypes.NewInteger(int64(minutes)), nil
+	return wholeSeconds(low, high, 60)
 }
 
 // SecondsBetween calculates the number of whole seconds between two datetimes.
 func SecondsBetween(low, high fptypes.Value) (fptypes.Value, error) {
-	tl := toGoTime(low)
-	th := toGoTime(high)
-	if tl.IsZero() || th.IsZero() {
-		return nil, nil
-	}
-	seconds := int(th.Sub(tl).Seconds())
-	return fptypes.NewInteger(int64(seconds)), nil
+	return wholeSeconds(low, high, 1)
 }
