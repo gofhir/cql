@@ -1,0 +1,2991 @@
+{
+  "library": "corpus intervalbounds.cql",
+  "sourceSha256": "f3d3752fe9e45ee9d771cf2ada5210aedf06c044003261f142722288b9301ddf",
+  "engine": "cql-execution 3.3.2, cql-exec-fhir 2.2.0",
+  "evaluationDateTime": "2026-01-01T00:00:00.000-03:00",
+  "results": {
+    "D0": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D1": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D2": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D3": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D4": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D5": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D6": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D7": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D8": {
+      "type": "Date",
+      "value": "2012-01-01",
+      "precision": "day"
+    },
+    "D9": {
+      "type": "Date",
+      "value": "2012-01-05",
+      "precision": "day"
+    },
+    "D10": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D11": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D12": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D13": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D14": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D15": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D16": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "D17": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "D18": {
+      "type": "Date",
+      "value": "2012-01-02",
+      "precision": "day"
+    },
+    "D19": {
+      "type": "Date",
+      "value": "2012-01-04",
+      "precision": "day"
+    },
+    "D20": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D21": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D22": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D23": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D24": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D25": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D26": {
+      "type": "Integer",
+      "value": "3"
+    },
+    "D27": {
+      "type": "Integer",
+      "value": "3"
+    },
+    "D28": {
+      "type": "Date",
+      "value": "2012-01-01",
+      "precision": "day"
+    },
+    "D29": {
+      "type": "Date",
+      "value": "2012-01-04",
+      "precision": "day"
+    },
+    "D30": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D31": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D32": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D33": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D34": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D35": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D36": {
+      "type": "Integer",
+      "value": "3"
+    },
+    "D37": {
+      "type": "Integer",
+      "value": "3"
+    },
+    "D38": {
+      "type": "Date",
+      "value": "2012-01-02",
+      "precision": "day"
+    },
+    "D39": {
+      "type": "Date",
+      "value": "2012-01-05",
+      "precision": "day"
+    },
+    "D40": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D41": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D42": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D43": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D44": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D45": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D46": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D47": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D48": {
+      "type": "Date",
+      "value": "2012-01-02",
+      "precision": "day"
+    },
+    "D49": {
+      "type": "Date",
+      "value": "2012-01-01",
+      "precision": "day"
+    },
+    "D50": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D51": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D52": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D53": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D54": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D55": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D56": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D57": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D58": {
+      "type": "Date",
+      "value": "2012-01-01",
+      "precision": "day"
+    },
+    "D59": {
+      "type": "Date",
+      "value": "2012-01-01",
+      "precision": "day"
+    },
+    "D60": {
+      "type": "Integer",
+      "value": "7987"
+    },
+    "D61": {
+      "type": "Integer",
+      "value": "7987"
+    },
+    "D62": {
+      "type": "Integer",
+      "value": "95855"
+    },
+    "D63": {
+      "type": "Integer",
+      "value": "95855"
+    },
+    "D64": {
+      "type": "Integer",
+      "value": "416793"
+    },
+    "D65": {
+      "type": "Integer",
+      "value": "416793"
+    },
+    "D66": {
+      "type": "Integer",
+      "value": "2917556"
+    },
+    "D67": {
+      "type": "Integer",
+      "value": "2917556"
+    },
+    "D68": {
+      "type": "Date",
+      "value": "2012-01-01",
+      "precision": "day"
+    },
+    "D69": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D70": {
+      "type": "Integer",
+      "value": "7987"
+    },
+    "D71": {
+      "type": "Integer",
+      "value": "7987"
+    },
+    "D72": {
+      "type": "Integer",
+      "value": "95855"
+    },
+    "D73": {
+      "type": "Integer",
+      "value": "95855"
+    },
+    "D74": {
+      "type": "Integer",
+      "value": "416793"
+    },
+    "D75": {
+      "type": "Integer",
+      "value": "416793"
+    },
+    "D76": {
+      "type": "Integer",
+      "value": "2917555"
+    },
+    "D77": {
+      "type": "Integer",
+      "value": "2917555"
+    },
+    "D78": {
+      "type": "Date",
+      "value": "2012-01-02",
+      "precision": "day"
+    },
+    "D79": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D80": {
+      "type": "Integer",
+      "value": "2011"
+    },
+    "D81": {
+      "type": "Integer",
+      "value": "2011"
+    },
+    "D82": {
+      "type": "Integer",
+      "value": "24132"
+    },
+    "D83": {
+      "type": "Integer",
+      "value": "24132"
+    },
+    "D84": {
+      "type": "Integer",
+      "value": "104928"
+    },
+    "D85": {
+      "type": "Integer",
+      "value": "104929"
+    },
+    "D86": {
+      "type": "Integer",
+      "value": "734502"
+    },
+    "D87": {
+      "type": "Integer",
+      "value": "734502"
+    },
+    "D88": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D89": {
+      "type": "Date",
+      "value": "2012-01-01",
+      "precision": "day"
+    },
+    "D90": {
+      "type": "Integer",
+      "value": "2010"
+    },
+    "D91": {
+      "type": "Integer",
+      "value": "2010"
+    },
+    "D92": {
+      "type": "Integer",
+      "value": "24131"
+    },
+    "D93": {
+      "type": "Integer",
+      "value": "24131"
+    },
+    "D94": {
+      "type": "Integer",
+      "value": "104928"
+    },
+    "D95": {
+      "type": "Integer",
+      "value": "104928"
+    },
+    "D96": {
+      "type": "Integer",
+      "value": "734501"
+    },
+    "D97": {
+      "type": "Integer",
+      "value": "734501"
+    },
+    "D98": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D99": {
+      "type": "Date",
+      "value": "2011-12-31",
+      "precision": "day"
+    },
+    "D100": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D101": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D102": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D103": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D104": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D105": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D106": {
+      "type": "Integer",
+      "value": "3652058"
+    },
+    "D107": {
+      "type": "Integer",
+      "value": "3652058"
+    },
+    "D108": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D109": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D110": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D111": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D112": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D113": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D114": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D115": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D116": {
+      "type": "Integer",
+      "value": "3652056"
+    },
+    "D117": {
+      "type": "Integer",
+      "value": "3652056"
+    },
+    "D118": {
+      "type": "Date",
+      "value": "0001-01-02",
+      "precision": "day"
+    },
+    "D119": {
+      "type": "Date",
+      "value": "9999-12-30",
+      "precision": "day"
+    },
+    "D120": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D121": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D122": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D123": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D124": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D125": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D126": {
+      "type": "Integer",
+      "value": "3652058"
+    },
+    "D127": {
+      "type": "Integer",
+      "value": "3652058"
+    },
+    "D128": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D129": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D130": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D131": {
+      "type": "Integer",
+      "value": "9998"
+    },
+    "D132": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D133": {
+      "type": "Integer",
+      "value": "119987"
+    },
+    "D134": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D135": {
+      "type": "Integer",
+      "value": "521722"
+    },
+    "D136": {
+      "type": "Integer",
+      "value": "3652058"
+    },
+    "D137": {
+      "type": "Integer",
+      "value": "3652058"
+    },
+    "D138": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D139": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D140": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD140|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D141": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD141|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D142": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD142|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D143": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD143|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D144": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD144|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D145": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD145|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D146": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD146|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D147": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD147|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D148": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D149": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD149|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t213\n\tCQL Locator:\t11:14-11:47\n"
+    },
+    "D150": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD150|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D151": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD151|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D152": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD152|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D153": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD153|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D154": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD154|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D155": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD155|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D156": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD156|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D157": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD157|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D158": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD158|1.0\n\tExpression:\tStart\n\tELM Local ID:\t213\n\tCQL Locator:\t11:14-11:49\n"
+    },
+    "D159": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D160": null,
+    "D161": null,
+    "D162": null,
+    "D163": null,
+    "D164": null,
+    "D165": null,
+    "D166": null,
+    "D167": null,
+    "D168": null,
+    "D169": null,
+    "D170": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D171": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D172": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "4"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "5"
+      }
+    },
+    "D173": {
+      "type": "Integer",
+      "value": "5"
+    },
+    "D174": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "17"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "26"
+      }
+    },
+    "D175": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "18"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "26"
+      }
+    },
+    "D176": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "123"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "183"
+      }
+    },
+    "D177": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "123"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "183"
+      }
+    },
+    "D178": {
+      "type": "Date",
+      "value": "2012-03",
+      "precision": "month"
+    },
+    "D179": {
+      "type": "Date",
+      "value": "2012-08",
+      "precision": "month"
+    },
+    "D180": {
+      "type": "Integer",
+      "value": "7987"
+    },
+    "D181": {
+      "type": "Integer",
+      "value": "7987"
+    },
+    "D182": {
+      "type": "Integer",
+      "value": "95852"
+    },
+    "D183": {
+      "type": "Integer",
+      "value": "95852"
+    },
+    "D184": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "416776"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "416780"
+      }
+    },
+    "D185": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "416776"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "416780"
+      }
+    },
+    "D186": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "2917436"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "2917465"
+      }
+    },
+    "D187": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "2917436"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "2917465"
+      }
+    },
+    "D188": {
+      "type": "Date",
+      "value": "2012-04",
+      "precision": "month"
+    },
+    "D189": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D190": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "2"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "3"
+      }
+    },
+    "D191": {
+      "type": "Integer",
+      "value": "3"
+    },
+    "D192": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "24"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "47"
+      }
+    },
+    "D193": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "25"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "47"
+      }
+    },
+    "D194": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "104"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "208"
+      }
+    },
+    "D195": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "104"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "208"
+      }
+    },
+    "D196": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "731"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "1460"
+      }
+    },
+    "D197": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "731"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "1460"
+      }
+    },
+    "D198": {
+      "type": "Date",
+      "value": "2012",
+      "precision": "year"
+    },
+    "D199": {
+      "type": "Date",
+      "value": "2015",
+      "precision": "year"
+    },
+    "D200": null,
+    "D201": null,
+    "D202": null,
+    "D203": null,
+    "D204": null,
+    "D205": null,
+    "D206": null,
+    "D207": null,
+    "D208": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Date",
+        "value": "0001-01-01",
+        "precision": "day"
+      },
+      "high": {
+        "type": "Date",
+        "value": "9999-12-31",
+        "precision": "day"
+      }
+    },
+    "D209": {
+      "type": "Date",
+      "value": "9999-12-31",
+      "precision": "day"
+    },
+    "D210": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D211": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D212": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D213": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D214": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-4"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D215": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-5"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D216": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-31"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D217": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-31"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D218": {
+      "type": "Date",
+      "value": "0001-01-01",
+      "precision": "day"
+    },
+    "D219": {
+      "type": "Date",
+      "value": "0000-12",
+      "precision": "month"
+    },
+    "D220": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D221": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D222": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D223": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D224": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D225": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D226": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D227": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D228": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D229": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D230": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "117"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "118"
+      }
+    },
+    "D231": {
+      "type": "Integer",
+      "value": "118"
+    },
+    "D232": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7020"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139"
+      }
+    },
+    "D233": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7021"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139"
+      }
+    },
+    "D234": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7020001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139999"
+      }
+    },
+    "D235": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7020001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139999"
+      }
+    },
+    "D236": {
+      "type": "DateTime",
+      "value": "2012-01-01T10:01-03:00",
+      "precision": "minute",
+      "instant": "2012-01-01T10:01:00-03:00"
+    },
+    "D237": {
+      "type": "DateTime",
+      "value": "2012-01-01T11:59-03:00",
+      "precision": "minute",
+      "instant": "2012-01-01T11:59:00-03:00"
+    },
+    "D238": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D239": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D240": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D241": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D242": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D243": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D244": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D245": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D246": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "2"
+      }
+    },
+    "D247": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "D248": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "119"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "120"
+      }
+    },
+    "D249": {
+      "type": "Integer",
+      "value": "120"
+    },
+    "D250": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7140"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259"
+      }
+    },
+    "D251": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7141"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259"
+      }
+    },
+    "D252": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7140001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259999"
+      }
+    },
+    "D253": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7140001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259999"
+      }
+    },
+    "D254": {
+      "type": "DateTime",
+      "value": "2012-01-01T10:00-03:00",
+      "precision": "minute",
+      "instant": "2012-01-01T10:00:00-03:00"
+    },
+    "D255": {
+      "type": "DateTime",
+      "value": "2012-01-01T12:00-03:00",
+      "precision": "minute",
+      "instant": "2012-01-01T12:00:00-03:00"
+    },
+    "D256": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D257": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D258": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D259": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D260": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D261": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D262": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D263": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D264": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D265": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D266": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D267": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D268": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D269": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D270": {
+      "type": "Integer",
+      "value": "998"
+    },
+    "D271": {
+      "type": "Integer",
+      "value": "998"
+    },
+    "D272": {
+      "type": "DateTime",
+      "value": "2012-01-01T10:00:00.001-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T10:00:00.001-03:00"
+    },
+    "D273": {
+      "type": "DateTime",
+      "value": "2012-01-01T10:00:00.999-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T10:00:00.999-03:00"
+    },
+    "D274": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D275": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D276": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D277": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D278": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D279": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D280": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D281": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D282": {
+      "type": "Integer",
+      "value": "106"
+    },
+    "D283": {
+      "type": "Integer",
+      "value": "106"
+    },
+    "D284": {
+      "type": "Integer",
+      "value": "6360"
+    },
+    "D285": {
+      "type": "Integer",
+      "value": "6360"
+    },
+    "D286": {
+      "type": "Integer",
+      "value": "381600"
+    },
+    "D287": {
+      "type": "Integer",
+      "value": "381600"
+    },
+    "D288": {
+      "type": "Integer",
+      "value": "381600000"
+    },
+    "D289": {
+      "type": "Integer",
+      "value": "381600000"
+    },
+    "D290": {
+      "type": "DateTime",
+      "value": "2012-01-01T00:00:00.000-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T00:00:00-03:00"
+    },
+    "D291": {
+      "type": "DateTime",
+      "value": "2012-01-05T10:00:00.000-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-05T10:00:00-03:00"
+    },
+    "D292": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D293": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D294": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D295": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D296": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D297": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D298": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D299": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D300": {
+      "type": "Integer",
+      "value": "105"
+    },
+    "D301": {
+      "type": "Integer",
+      "value": "105"
+    },
+    "D302": {
+      "type": "Integer",
+      "value": "6359"
+    },
+    "D303": {
+      "type": "Integer",
+      "value": "6359"
+    },
+    "D304": {
+      "type": "Integer",
+      "value": "381599"
+    },
+    "D305": {
+      "type": "Integer",
+      "value": "381599"
+    },
+    "D306": {
+      "type": "Integer",
+      "value": "381599998"
+    },
+    "D307": {
+      "type": "Integer",
+      "value": "381599998"
+    },
+    "D308": {
+      "type": "DateTime",
+      "value": "2012-01-01T00:00:00.001-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T00:00:00.001-03:00"
+    },
+    "D309": {
+      "type": "DateTime",
+      "value": "2012-01-05T09:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-05T09:59:59.999-03:00"
+    },
+    "D310": null,
+    "D311": null,
+    "D312": null,
+    "D313": null,
+    "D314": null,
+    "D315": null,
+    "D316": null,
+    "D317": null,
+    "D318": null,
+    "D319": null,
+    "D320": null,
+    "D321": null,
+    "D322": null,
+    "D323": null,
+    "D324": null,
+    "D325": null,
+    "D326": null,
+    "D327": {
+      "type": "DateTime",
+      "value": "2012-01-01T00:00:00.000-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T00:00:00-03:00"
+    },
+    "D328": null,
+    "D329": null,
+    "D330": null,
+    "D331": null,
+    "D332": null,
+    "D333": null,
+    "D334": null,
+    "D335": null,
+    "D336": null,
+    "D337": null,
+    "D338": null,
+    "D339": null,
+    "D340": null,
+    "D341": null,
+    "D342": null,
+    "D343": null,
+    "D344": {
+      "type": "DateTime",
+      "value": "2012-01-01T00:00:00.000-03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T00:00:00-03:00"
+    },
+    "D345": null,
+    "D346": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D347": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D348": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D349": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D350": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D351": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D352": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D353": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D354": {
+      "type": "Integer",
+      "value": "105"
+    },
+    "D355": {
+      "type": "Integer",
+      "value": "105"
+    },
+    "D356": {
+      "type": "Integer",
+      "value": "6359"
+    },
+    "D357": {
+      "type": "Integer",
+      "value": "6359"
+    },
+    "D358": {
+      "type": "Integer",
+      "value": "381599"
+    },
+    "D359": {
+      "type": "Integer",
+      "value": "381599"
+    },
+    "D360": {
+      "type": "Integer",
+      "value": "381599999"
+    },
+    "D361": {
+      "type": "Integer",
+      "value": "381599999"
+    },
+    "D362": {
+      "type": "DateTime",
+      "value": "2012-01-01T00:00:00.000+00:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T00:00:00Z"
+    },
+    "D363": {
+      "type": "DateTime",
+      "value": "2012-01-05T09:59:59.999+00:00",
+      "precision": "millisecond",
+      "instant": "2012-01-05T09:59:59.999Z"
+    },
+    "D364": {
+      "type": "Integer",
+      "value": "7988"
+    },
+    "D365": {
+      "type": "Integer",
+      "value": "7987"
+    },
+    "D366": {
+      "type": "Integer",
+      "value": "95856"
+    },
+    "D367": {
+      "type": "Integer",
+      "value": "95855"
+    },
+    "D368": {
+      "type": "Integer",
+      "value": "416793"
+    },
+    "D369": {
+      "type": "Integer",
+      "value": "416793"
+    },
+    "D370": {
+      "type": "Integer",
+      "value": "2917557"
+    },
+    "D371": {
+      "type": "Integer",
+      "value": "2917556"
+    },
+    "D372": {
+      "type": "Integer",
+      "value": "70021373"
+    },
+    "D373": {
+      "type": "Integer",
+      "value": "70021373"
+    },
+    "D374": {
+      "type": "Integer",
+      "value": "4201282439"
+    },
+    "D375": {
+      "type": "Integer",
+      "value": "4201282439"
+    },
+    "D376": {
+      "type": "Integer",
+      "value": "252076946399"
+    },
+    "D377": {
+      "type": "Integer",
+      "value": "252076946399"
+    },
+    "D378": {
+      "type": "Integer",
+      "value": "252076946399999"
+    },
+    "D379": {
+      "type": "Integer",
+      "value": "252076946399999"
+    },
+    "D380": {
+      "type": "DateTime",
+      "value": "2012-01-01T00:00:00.000+03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-01T00:00:00+03:00"
+    },
+    "D381": {
+      "type": "DateTime",
+      "value": "9999-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "9999-12-31T23:59:59.999-03:00"
+    },
+    "D382": {
+      "type": "Integer",
+      "value": "2011"
+    },
+    "D383": {
+      "type": "Integer",
+      "value": "2011"
+    },
+    "D384": {
+      "type": "Integer",
+      "value": "24132"
+    },
+    "D385": {
+      "type": "Integer",
+      "value": "24132"
+    },
+    "D386": {
+      "type": "Integer",
+      "value": "104929"
+    },
+    "D387": {
+      "type": "Integer",
+      "value": "104929"
+    },
+    "D388": {
+      "type": "Integer",
+      "value": "734506"
+    },
+    "D389": {
+      "type": "Integer",
+      "value": "734506"
+    },
+    "D390": {
+      "type": "Integer",
+      "value": "17628147"
+    },
+    "D391": {
+      "type": "Integer",
+      "value": "17628147"
+    },
+    "D392": {
+      "type": "Integer",
+      "value": "1057688879"
+    },
+    "D393": {
+      "type": "Integer",
+      "value": "1057688879"
+    },
+    "D394": {
+      "type": "Integer",
+      "value": "63461332799"
+    },
+    "D395": {
+      "type": "Integer",
+      "value": "63461332799"
+    },
+    "D396": {
+      "type": "Integer",
+      "value": "63461332799999"
+    },
+    "D397": {
+      "type": "Integer",
+      "value": "63461332799999"
+    },
+    "D398": {
+      "type": "DateTime",
+      "value": "0001-01-01T00:00:00.000-03:00",
+      "precision": "millisecond",
+      "instant": "0001-01-01T00:00:00-03:00"
+    },
+    "D399": {
+      "type": "DateTime",
+      "value": "2012-01-05T09:59:59.999+03:00",
+      "precision": "millisecond",
+      "instant": "2012-01-05T09:59:59.999+03:00"
+    },
+    "D400": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D401": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D402": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D403": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D404": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D405": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D406": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D407": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D408": {
+      "type": "Integer",
+      "value": "23"
+    },
+    "D409": {
+      "type": "Integer",
+      "value": "23"
+    },
+    "D410": {
+      "type": "Integer",
+      "value": "1439"
+    },
+    "D411": {
+      "type": "Integer",
+      "value": "1439"
+    },
+    "D412": {
+      "type": "Integer",
+      "value": "86399"
+    },
+    "D413": {
+      "type": "Integer",
+      "value": "86399"
+    },
+    "D414": {
+      "type": "Integer",
+      "value": "86399999"
+    },
+    "D415": {
+      "type": "Integer",
+      "value": "86399999"
+    },
+    "D416": {
+      "type": "DateTime",
+      "value": "9999-12-31T00:00:00.000-03:00",
+      "precision": "millisecond",
+      "instant": "9999-12-31T00:00:00-03:00"
+    },
+    "D417": {
+      "type": "DateTime",
+      "value": "9999-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "9999-12-31T23:59:59.999-03:00"
+    },
+    "D418": null,
+    "D419": null,
+    "D420": null,
+    "D421": null,
+    "D422": null,
+    "D423": null,
+    "D424": null,
+    "D425": null,
+    "D426": null,
+    "D427": null,
+    "D428": null,
+    "D429": null,
+    "D430": null,
+    "D431": null,
+    "D432": null,
+    "D433": null,
+    "D434": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "DateTime",
+        "value": "0001-01-01T00:00:00.000+00:00",
+        "precision": "millisecond",
+        "instant": "0001-01-01T00:00:00Z"
+      },
+      "high": {
+        "type": "DateTime",
+        "value": "9999-12-31T23:59:59.999+00:00",
+        "precision": "millisecond",
+        "instant": "9999-12-31T23:59:59.999Z"
+      }
+    },
+    "D435": {
+      "type": "DateTime",
+      "value": "9999-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "9999-12-31T23:59:59.999-03:00"
+    },
+    "D436": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D437": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D438": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D439": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D440": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D441": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D442": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D443": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D444": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D445": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D446": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D447": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D448": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D449": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D450": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D451": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D452": {
+      "type": "DateTime",
+      "value": "0001-01-01T00:00:00.000-03:00",
+      "precision": "millisecond",
+      "instant": "0001-01-01T00:00:00-03:00"
+    },
+    "D453": {
+      "type": "DateTime",
+      "value": "0000-12-31T23:59:59.999-03:00",
+      "precision": "millisecond",
+      "instant": "0000-12-31T23:59:59.999-03:00"
+    },
+    "D454": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D455": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D456": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D457": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D458": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D459": {
+      "type": "Integer",
+      "value": "0"
+    },
+    "D460": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D461": {
+      "type": "Integer",
+      "value": "4"
+    },
+    "D462": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "96"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "97"
+      }
+    },
+    "D463": {
+      "type": "Integer",
+      "value": "97"
+    },
+    "D464": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "5760"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "5879"
+      }
+    },
+    "D465": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "5761"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "5879"
+      }
+    },
+    "D466": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "345600"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "352799"
+      }
+    },
+    "D467": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "345601"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "352799"
+      }
+    },
+    "D468": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "345600001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "352799999"
+      }
+    },
+    "D469": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "345600001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "352799999"
+      }
+    },
+    "D470": {
+      "type": "DateTime",
+      "value": "2012-01-01T10-03:00",
+      "precision": "hour",
+      "instant": "2012-01-01T10:00:00-03:00"
+    },
+    "D471": {
+      "type": "DateTime",
+      "value": "2012-01-05T11-03:00",
+      "precision": "hour",
+      "instant": "2012-01-05T11:00:00-03:00"
+    },
+    "D472": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D473": {
+      "type": "Integer",
+      "value": "-1"
+    },
+    "D474": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-23"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D475": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-23"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D476": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-104"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D477": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-104"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D478": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-730"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D479": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-730"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D480": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-17543"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D481": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-17543"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D482": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-1052639"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D483": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-1052639"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D484": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-63158399"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "0"
+      }
+    },
+    "D485": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-63158399"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D486": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-63158399999"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D487": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "-63158399999"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "-1"
+      }
+    },
+    "D488": {
+      "type": "DateTime",
+      "value": "2013",
+      "precision": "year",
+      "instant": "2013-01-01T00:00:00-03:00"
+    },
+    "D489": {
+      "type": "DateTime",
+      "value": "2012",
+      "precision": "year",
+      "instant": "2012-01-01T00:00:00-03:00"
+    },
+    "D490": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "2"
+      }
+    },
+    "D491": {
+      "type": "Integer",
+      "value": "2"
+    },
+    "D492": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "119"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "120"
+      }
+    },
+    "D493": {
+      "type": "Integer",
+      "value": "120"
+    },
+    "D494": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7140"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259"
+      }
+    },
+    "D495": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7141"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259"
+      }
+    },
+    "D496": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7140001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259999"
+      }
+    },
+    "D497": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7140001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7259999"
+      }
+    },
+    "D498": {
+      "type": "Time",
+      "value": "10:00",
+      "precision": "minute"
+    },
+    "D499": {
+      "type": "Time",
+      "value": "12:00",
+      "precision": "minute"
+    },
+    "D500": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D501": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D502": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "117"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "118"
+      }
+    },
+    "D503": {
+      "type": "Integer",
+      "value": "118"
+    },
+    "D504": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7020"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139"
+      }
+    },
+    "D505": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7021"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139"
+      }
+    },
+    "D506": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7020001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139999"
+      }
+    },
+    "D507": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7020001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7139999"
+      }
+    },
+    "D508": {
+      "type": "Time",
+      "value": "10:01",
+      "precision": "minute"
+    },
+    "D509": {
+      "type": "Time",
+      "value": "11:59",
+      "precision": "minute"
+    },
+    "D510": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D511": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D512": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "118"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "119"
+      }
+    },
+    "D513": {
+      "type": "Integer",
+      "value": "119"
+    },
+    "D514": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7080"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199"
+      }
+    },
+    "D515": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7081"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199"
+      }
+    },
+    "D516": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7080001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199999"
+      }
+    },
+    "D517": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "7080001"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199999"
+      }
+    },
+    "D518": {
+      "type": "Time",
+      "value": "10:00",
+      "precision": "minute"
+    },
+    "D519": {
+      "type": "Time",
+      "value": "11:59",
+      "precision": "minute"
+    },
+    "D520": {
+      "type": "Integer",
+      "value": "13"
+    },
+    "D521": {
+      "type": "Integer",
+      "value": "13"
+    },
+    "D522": {
+      "type": "Integer",
+      "value": "838"
+    },
+    "D523": {
+      "type": "Integer",
+      "value": "838"
+    },
+    "D524": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "50280"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "50339"
+      }
+    },
+    "D525": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "50280"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "50339"
+      }
+    },
+    "D526": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "50280000"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "50339999"
+      }
+    },
+    "D527": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "50280000"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "50339999"
+      }
+    },
+    "D528": {
+      "type": "Time",
+      "value": "10:01",
+      "precision": "minute"
+    },
+    "D529": {
+      "type": "Time",
+      "value": "23:59:59.999",
+      "precision": "millisecond"
+    },
+    "D530": {
+      "type": "Integer",
+      "value": "12"
+    },
+    "D531": {
+      "type": "Integer",
+      "value": "12"
+    },
+    "D532": {
+      "type": "Integer",
+      "value": "720"
+    },
+    "D533": {
+      "type": "Integer",
+      "value": "720"
+    },
+    "D534": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43200"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43259"
+      }
+    },
+    "D535": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43200"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43259"
+      }
+    },
+    "D536": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43200000"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43259999"
+      }
+    },
+    "D537": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43200000"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43259999"
+      }
+    },
+    "D538": {
+      "type": "Time",
+      "value": "00:00:00.000",
+      "precision": "millisecond"
+    },
+    "D539": {
+      "type": "Time",
+      "value": "12:00",
+      "precision": "minute"
+    },
+    "D540": {
+      "type": "Integer",
+      "value": "11"
+    },
+    "D541": {
+      "type": "Integer",
+      "value": "11"
+    },
+    "D542": {
+      "type": "Integer",
+      "value": "719"
+    },
+    "D543": {
+      "type": "Integer",
+      "value": "719"
+    },
+    "D544": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43140"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43199"
+      }
+    },
+    "D545": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43140"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43199"
+      }
+    },
+    "D546": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43140000"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43199999"
+      }
+    },
+    "D547": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "43140000"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "43199999"
+      }
+    },
+    "D548": {
+      "type": "Time",
+      "value": "00:00:00.000",
+      "precision": "millisecond"
+    },
+    "D549": {
+      "type": "Time",
+      "value": "11:59",
+      "precision": "minute"
+    },
+    "D550": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "0"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "1"
+      }
+    },
+    "D551": {
+      "type": "Integer",
+      "value": "1"
+    },
+    "D552": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "0"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "119"
+      }
+    },
+    "D553": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "119"
+      }
+    },
+    "D554": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "0"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199"
+      }
+    },
+    "D555": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199"
+      }
+    },
+    "D556": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199999"
+      }
+    },
+    "D557": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "7199999"
+      }
+    },
+    "D558": {
+      "type": "Time",
+      "value": "10",
+      "precision": "hour"
+    },
+    "D559": {
+      "type": "Time",
+      "value": "11",
+      "precision": "hour"
+    },
+    "D560": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD560|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D561": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD561|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D562": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD562|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D563": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD563|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D564": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD564|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D565": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD565|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D566": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD566|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D567": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD567|1.0\n\tExpression:\tStart\n\tELM Local ID:\t223\n"
+    },
+    "D568": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD568|1.0\n\tExpression:\tStart\n\tELM Local ID:\t213\n\tCQL Locator:\t11:14-11:52\n"
+    },
+    "D569": {
+      "type": "Time",
+      "value": "23:59:59.999",
+      "precision": "millisecond"
+    },
+    "D570": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD570|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D571": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD571|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D572": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD572|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D573": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD573|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D574": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD574|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D575": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD575|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D576": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD576|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D577": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD577|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t224\n"
+    },
+    "D578": {
+      "type": "Time",
+      "value": "00:00:00.000",
+      "precision": "millisecond"
+    },
+    "D579": {
+      "error": "AnnotatedError",
+      "message": "Encountered unexpected error during execution.\n\n\tError Message:\tundefined\n\tCQL Library:\tD579|1.0\n\tExpression:\tEnd\n\tELM Local ID:\t213\n\tCQL Locator:\t11:14-11:50\n"
+    },
+    "D580": {
+      "type": "Integer",
+      "value": "23"
+    },
+    "D581": {
+      "type": "Integer",
+      "value": "23"
+    },
+    "D582": {
+      "type": "Integer",
+      "value": "1439"
+    },
+    "D583": {
+      "type": "Integer",
+      "value": "1439"
+    },
+    "D584": {
+      "type": "Integer",
+      "value": "86399"
+    },
+    "D585": {
+      "type": "Integer",
+      "value": "86399"
+    },
+    "D586": {
+      "type": "Integer",
+      "value": "86399999"
+    },
+    "D587": {
+      "type": "Integer",
+      "value": "86399999"
+    },
+    "D588": {
+      "type": "Time",
+      "value": "00:00:00.000",
+      "precision": "millisecond"
+    },
+    "D589": {
+      "type": "Time",
+      "value": "23:59:59.999",
+      "precision": "millisecond"
+    },
+    "D590": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "24"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "47"
+      }
+    },
+    "D591": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "3"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "4"
+      }
+    },
+    "D592": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Integer",
+          "value": "2917556"
+        },
+        {
+          "type": "Integer",
+          "value": "2"
+        }
+      ]
+    },
+    "D593": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Date",
+          "value": "9999-12-31",
+          "precision": "day"
+        },
+        {
+          "type": "Date",
+          "value": "2012-01-04",
+          "precision": "day"
+        }
+      ]
+    },
+    "D594": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "91"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "121"
+      }
+    },
+    "D595": {
+      "type": "Uncertainty",
+      "low": {
+        "type": "Integer",
+        "value": "1"
+      },
+      "high": {
+        "type": "Integer",
+        "value": "2"
+      }
+    },
+    "D596": null
+  }
+}

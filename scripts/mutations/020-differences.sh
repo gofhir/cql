@@ -66,7 +66,7 @@ mutations = [
      (EVALUATOR, "return funcs.DifferenceBetweenAt(low, high, n.Precision, e.evaluationFrame())", "return funcs.DifferenceBetweenAt(low, high, n.Precision, nil)"), HAND,
      "difference in hours between @2012-01-31T and @2012-02-01T00:00:00.000 = Interval[4, 27], want Interval[1, 24]"),
     ("the evaluation's frame never given by a difference of an interval",
-     (EVALUATOR, "return funcs.DifferenceBetweenAt(iv.Low, iv.High, n.Precision, e.evaluationFrame())", "return funcs.DifferenceBetweenAt(iv.Low, iv.High, n.Precision, nil)"), HAND,
+     (EVALUATOR, "return funcs.DifferenceBetweenAt(start, end, n.Precision, e.evaluationFrame())", "return funcs.DifferenceBetweenAt(start, end, n.Precision, nil)"), HAND,
      "difference in hours of Interval[@2012-01-31T, @2012-02-01T00:00:00.000] = Interval[4, 27], want Interval[1, 24]"),
     ("hours counted in UTC and not in the evaluation's frame (at +05:45)",
      (FUNC, "\t\ta, b = a.In(frame), b.In(frame)\n", "\t\ta, b = a.UTC(), b.UTC()\n"), OFFSETS,
