@@ -1,6 +1,6 @@
 {
   "library" : "corpus durationrange.cql",
-  "sourceSha256" : "aa9a93d13ea8eef9ec95b2154794e8a7e7bde9c386b71b9819d40e1c3910f37c",
+  "sourceSha256" : "09017306a337431ebe31982916eaa645426ee683d4cd18a814539da64da06247",
   "engine" : "5.4.0",
   "evaluationDateTime" : "2026-01-01T00:00:00-03:00",
   "results" : {
@@ -6718,6 +6718,1239 @@
         "value" : "21"
       },
       "highClosed" : true
+    },
+    "D1675" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1676" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1677" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1678" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1679" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1680" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1681" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1682" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1683" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1684" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1685" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1686" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1687" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1688" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1689" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1690" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1691" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1692" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1693" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1694" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1695" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1696" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1697" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1698" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1699" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1700" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1701" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1702" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1703" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1704" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1705" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1706" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1707" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1708" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1709" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1710" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1711" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1712" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1713" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1714" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1715" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1716" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1717" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1718" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1719" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1720" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1721" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1722" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1723" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1724" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1725" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1726" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1727" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1728" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1729" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1730" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1731" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1732" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1733" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1734" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1735" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1736" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1737" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1738" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1739" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1740" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1741" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1742" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1743" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1744" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1745" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1746" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1747" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1748" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1749" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1750" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1751" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1752" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1753" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1754" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1755" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1756" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1757" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1758" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1759" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1760" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1761" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1762" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1763" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1764" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1765" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1766" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1767" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1768" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1769" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1770" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1771" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1772" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1773" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1774" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1775" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1776" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1777" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1778" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1779" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1780" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1781" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1782" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1783" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1784" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1785" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1786" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1787" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1788" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1789" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1790" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1791" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1792" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1793" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1794" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1795" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1796" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1797" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1798" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1799" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1800" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1801" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1802" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1803" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1804" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1805" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1806" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1807" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1808" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1809" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1810" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1811" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1812" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1813" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1814" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1815" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1816" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1817" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1818" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1819" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1820" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1821" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1822" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1823" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1824" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1825" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1826" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1827" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1828" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1829" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1830" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1831" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1832" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1833" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1834" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1835" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1836" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1837" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1838" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1839" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1840" : {
+      "type" : "Integer",
+      "value" : "-2147483646"
+    },
+    "D1841" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1842" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1843" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1844" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1845" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1846" : {
+      "type" : "Integer",
+      "value" : "2147483646"
+    },
+    "D1847" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1848" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1849" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1850" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1851" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1852" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1853" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1854" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1855" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1856" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1857" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1858" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1859" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1860" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1861" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1862" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1863" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1864" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1865" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1866" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1867" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1868" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1869" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1870" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1871" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1872" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1873" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1874" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1875" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1876" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1877" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1878" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1879" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1880" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1881" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1882" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1883" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1884" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1885" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1886" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1887" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1888" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1889" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1890" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1891" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1892" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1893" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1894" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1895" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1896" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1897" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1898" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1899" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1900" : {
+      "type" : "Integer",
+      "value" : "-2147483648"
+    },
+    "D1901" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1902" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1903" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1904" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1905" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1906" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1907" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1908" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1909" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1910" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1911" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1912" : {
+      "type" : "Integer",
+      "value" : "2147483647"
+    },
+    "D1913" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1914" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1915" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1916" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1917" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1918" : {
+      "type" : "Integer",
+      "value" : "-2147483647"
+    },
+    "D1919" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2147340000"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2147399999"
+      },
+      "highClosed" : true
+    },
+    "D1920" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2147340000"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2147399999"
+      },
+      "highClosed" : true
+    },
+    "D1921" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2147399999"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2147340000"
+      },
+      "highClosed" : true
+    },
+    "D1922" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2147399999"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2147340000"
+      },
+      "highClosed" : true
+    },
+    "D1923" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147447297) must be greater than or equal to the starting boundary (2147460000)."
+    },
+    "D1924" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147447297) must be greater than or equal to the starting boundary (2147460000)."
+    },
+    "D1925" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147460000) must be greater than or equal to the starting boundary (2147447297)."
+    },
+    "D1926" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147460000) must be greater than or equal to the starting boundary (2147447297)."
+    },
+    "D1927" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2134967296"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2134907297"
+      },
+      "highClosed" : true
+    },
+    "D1928" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2134967296"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2134907297"
+      },
+      "highClosed" : true
+    },
+    "D1929" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2134907297"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2134967296"
+      },
+      "highClosed" : true
+    },
+    "D1930" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2134907297"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2134967296"
+      },
+      "highClosed" : true
+    },
+    "D1931" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2147483520"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2147483579"
+      },
+      "highClosed" : true
+    },
+    "D1932" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2147483520"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2147483579"
+      },
+      "highClosed" : true
+    },
+    "D1933" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2147483579"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2147483520"
+      },
+      "highClosed" : true
+    },
+    "D1934" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2147483579"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2147483520"
+      },
+      "highClosed" : true
+    },
+    "D1935" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147483597) must be greater than or equal to the starting boundary (2147483640)."
+    },
+    "D1936" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147483597) must be greater than or equal to the starting boundary (2147483640)."
+    },
+    "D1937" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147483640) must be greater than or equal to the starting boundary (2147483597)."
+    },
+    "D1938" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (-2147483640) must be greater than or equal to the starting boundary (2147483597)."
+    },
+    "D1939" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2147408896"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2147408837"
+      },
+      "highClosed" : true
+    },
+    "D1940" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "-2147408896"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "-2147408837"
+      },
+      "highClosed" : true
+    },
+    "D1941" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2147408837"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2147408896"
+      },
+      "highClosed" : true
+    },
+    "D1942" : {
+      "type" : "Interval",
+      "low" : {
+        "type" : "Integer",
+        "value" : "2147408837"
+      },
+      "lowClosed" : true,
+      "high" : {
+        "type" : "Integer",
+        "value" : "2147408896"
+      },
+      "highClosed" : true
+    },
+    "D1943" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (0) must be greater than or equal to the starting boundary (1616567297)."
+    },
+    "D1944" : null,
+    "D1945" : {
+      "error" : "InvalidInterval",
+      "message" : "Invalid Interval - the ending boundary (457032704) must be greater than or equal to the starting boundary (2073600001)."
+    },
+    "D1946" : {
+      "type" : "Integer",
+      "value" : "-2085978496"
+    },
+    "D1947" : {
+      "type" : "Integer",
+      "value" : "-1616567296"
     }
   }
 }

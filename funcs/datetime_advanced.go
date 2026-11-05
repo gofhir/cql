@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	cqltypes "github.com/gofhir/cql/types"
@@ -241,7 +242,46 @@ func DurationBetween(low, high fptypes.Value, precision string) (fptypes.Value, 
 // evaluation, nil for UTC. CQL 1.5.3 puts a DateTime that states no offset at the
 // evaluation request's, and a DateTime to the day or coarser cannot carry one (it
 // has no time of day to place), so the range of its day is read in this frame.
+//
+// The result is an Integer, and a count that cannot be represented as one is
+// null: see inIntegerRange.
 func DurationBetweenAt(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
+	v, err := durationBetweenAt(low, high, precision, evaluation)
+	if err != nil {
+		return nil, err
+	}
+	return inIntegerRange(v), nil
+}
+
+// inIntegerRange is v if it is an Integer, or an uncertainty between Integers,
+// that fits the 32 bits of one, and null if not. CQL 1.5.3, Appendix B, Duration
+// and Difference: "The result of this operation is always an integer"; and,
+// Arithmetic Operators, an operation whose result cannot be represented "will
+// result in null". An uncertainty is the set of values the result could be: one
+// of them out of range makes the operation impossible as an Integer, and the
+// whole is null (decision D1 of docs/plans/022-duration-out-of-range.md). The
+// bounds are 64-bit counts until here, so that none wraps on the way.
+func inIntegerRange(v fptypes.Value) fptypes.Value {
+	switch x := v.(type) {
+	case fptypes.Integer:
+		if !fitsInteger(x) {
+			return nil
+		}
+	case cqltypes.Uncertainty:
+		low, okLow := x.Low.(fptypes.Integer)
+		high, okHigh := x.High.(fptypes.Integer)
+		if (okLow && !fitsInteger(low)) || (okHigh && !fitsInteger(high)) {
+			return nil
+		}
+	}
+	return v
+}
+
+func fitsInteger(i fptypes.Integer) bool {
+	return i.Value() >= math.MinInt32 && i.Value() <= math.MaxInt32
+}
+
+func durationBetweenAt(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
 	if low == nil || high == nil {
 		return nil, nil
 	}
@@ -499,13 +539,24 @@ func DifferenceBetween(low, high fptypes.Value, precision string) (fptypes.Value
 // bound's earliest to the high bound's latest (Language Semantics, Determining
 // Difference and Duration). Two operands at the precision or finer are exact,
 // where `duration` is uncertain for any operand short of a millisecond.
+//
+// The result is an Integer, and a count that cannot be represented as one is
+// null: see inIntegerRange.
 func DifferenceBetweenAt(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
+	v, err := differenceBetweenAt(low, high, precision, evaluation)
+	if err != nil {
+		return nil, err
+	}
+	return inIntegerRange(v), nil
+}
+
+func differenceBetweenAt(low, high fptypes.Value, precision string, evaluation *time.Location) (fptypes.Value, error) {
 	if low == nil || high == nil {
 		return nil, nil
 	}
 	unit := durationPrecisionIndex(precision)
 	if unit < 0 {
-		return DurationBetweenAt(low, high, precision, evaluation)
+		return durationBetweenAt(low, high, precision, evaluation)
 	}
 	lowEarliest, lowLatest, okLow := differenceRange(low, evaluation)
 	highEarliest, highLatest, okHigh := differenceRange(high, evaluation)
@@ -648,6 +699,9 @@ func toGoTime(v fptypes.Value) (time.Time, bool) {
 }
 
 // MillisecondsBetween calculates the number of milliseconds between two datetimes.
+// Like the other XBetween functions it gives the count as it is, without the
+// guarantee of an Integer: past 2^31-1 it is a number no Integer holds. That
+// guarantee is DurationBetweenAt's and DifferenceBetweenAt's (plan 022).
 func MillisecondsBetween(low, high fptypes.Value) (fptypes.Value, error) {
 	seconds, nanos, ok := elapsed(low, high)
 	if !ok {

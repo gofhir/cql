@@ -63,12 +63,15 @@ func TestDurationsOverTheCalendarByHand(t *testing.T) {
 		{"minutes between @2020-01-01T00:00:00.000 and @1727-01-01T00:00:00.000", "-154103040"},
 		{"CalculateAgeInDaysAt(@1700-01-01, @2020-01-01)", "116877"},
 		{"days between @1700 and @2020-01-01", "Interval[116513, 116877]"},
-		// Seconds and milliseconds are Integers in CQL, and 2^31 is out of range
-		// (plan 022); the number is what cql-execution gives.
-		{"seconds between @1950-01-01T00:00:00.000 and @2020-01-01T00:00:00.000", "2208988800"},
+		// Seconds and milliseconds are Integers in CQL, and 2208988800, the
+		// seconds of these 70 years, is past 2^31-1: null (plan 022). cql-execution
+		// gives the JavaScript number and Java wraps it, to -2085978496.
+		{"seconds between @1950-01-01T00:00:00.000 and @2020-01-01T00:00:00.000", "null"},
 		// Below 292 years, and the difference, which never used a Duration.
 		{"days between @1900-01-01 and @2020-01-01", "43829"},
 		{"hours between @1900-01-01T00:00:00.000 and @2020-01-01T00:00:00.000", "1051896"},
+		// A Date beside a DateTime (plan 019) is a Date at the evaluation's midnight.
+		{"days between @2012-01-01 and @2012-01-05T00:00:00.000", "4"},
 		{"difference in days between @0001-01-01 and @9999-12-31", "3652058"},
 		{"difference in hours between @0001-01-01T00:00:00.000 and @9999-12-31T00:00:00.000", "87649392"},
 	} {
@@ -76,6 +79,198 @@ func TestDurationsOverTheCalendarByHand(t *testing.T) {
 			if got := differenceAt(t, tt.expr, -3*60, imported); got != tt.want {
 				t.Errorf("imported %v, %s = %s, want %s", imported, tt.expr, got, tt.want)
 			}
+		}
+	}
+}
+
+// TestDurationsAtTheIntegerEdge holds a duration, a difference and an age to the
+// 32 bits of a CQL Integer (plan 022, docs/plans/022-duration-out-of-range.md).
+// CQL 1.5.3, Appendix B, Duration and Difference: "The result of this operation
+// is always an integer", and Types: an Integer is from -2^31 to 2^31-1. So a
+// value past it "cannot be represented" and, as Arithmetic Operators states for
+// any such operation, "will result in null". -2^31 is representable.
+//
+// The expected values are counted by hand from the instants (2^31 ms is 24 days
+// 20:31:23.648, 2^31 s is 24855 days 03:14:08 and 2^31 min is 1491308 days
+// 02:08), at -03:00, compiled and through the ELM.
+func TestDurationsAtTheIntegerEdge(t *testing.T) {
+	const (
+		ms   = "@2012-01-01T00:00:00.000"
+		sec  = "@2000-01-01T00:00:00.000Z"
+		mins = "@0001-01-01T00:00:00.000Z"
+		msz  = "@2012-01-01T00:00:00.000Z"
+	)
+	rows := []struct{ expr, want string }{
+		// Milliseconds: 24 days 20:31:23.647 is 2147483647.
+		{"milliseconds between " + ms + " and @2012-01-25T20:31:23.646", "2147483646"},
+		{"milliseconds between " + ms + " and @2012-01-25T20:31:23.647", "2147483647"},
+		{"milliseconds between " + ms + " and @2012-01-25T20:31:23.648", "null"},
+		{"milliseconds between " + ms + " and @2012-01-25T20:31:23.649", "null"},
+		{"milliseconds between @2012-01-25T20:31:23.647 and " + ms, "-2147483647"},
+		{"milliseconds between @2012-01-25T20:31:23.648 and " + ms, "-2147483648"},
+		{"milliseconds between @2012-01-25T20:31:23.649 and " + ms, "null"},
+		{"difference in milliseconds between " + ms + " and @2012-01-25T20:31:23.647", "2147483647"},
+		{"difference in milliseconds between " + ms + " and @2012-01-25T20:31:23.648", "null"},
+		{"difference in milliseconds between @2012-01-25T20:31:23.648 and " + ms, "-2147483648"},
+		{"difference in milliseconds between @2012-01-25T20:31:23.649 and " + ms, "null"},
+		{"duration in milliseconds of Interval[" + ms + ", @2012-01-25T20:31:23.647]", "2147483647"},
+		{"duration in milliseconds of Interval[" + ms + ", @2012-01-25T20:31:23.648]", "null"},
+		{"difference in milliseconds of Interval[" + ms + ", @2012-01-25T20:31:23.647]", "2147483647"},
+		{"difference in milliseconds of Interval[" + ms + ", @2012-01-25T20:31:23.648]", "null"},
+		// With an offset the span is the same.
+		{"milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.647+03:00", "2147483647"},
+		{"milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.648+03:00", "null"},
+		// Seconds: 24855 days 03:14:07 is 2147483647, and a part of a second left
+		// over is dropped toward zero.
+		{"seconds between " + sec + " and @2068-01-19T03:14:06.000Z", "2147483646"},
+		{"seconds between " + sec + " and @2068-01-19T03:14:07.000Z", "2147483647"},
+		{"seconds between " + sec + " and @2068-01-19T03:14:07.999Z", "2147483647"},
+		{"seconds between " + sec + " and @2068-01-19T03:14:08.000Z", "null"},
+		{"seconds between " + sec + " and @2068-01-19T03:14:09.000Z", "null"},
+		{"seconds between @2068-01-19T03:14:07.999Z and " + sec, "-2147483647"},
+		{"seconds between @2068-01-19T03:14:08.000Z and " + sec, "-2147483648"},
+		{"seconds between @2068-01-19T03:14:08.999Z and " + sec, "-2147483648"},
+		{"seconds between @2068-01-19T03:14:09.000Z and " + sec, "null"},
+		{"difference in seconds between " + sec + " and @2068-01-19T03:14:07.000Z", "2147483647"},
+		{"difference in seconds between " + sec + " and @2068-01-19T03:14:08.000Z", "null"},
+		{"difference in seconds between @2068-01-19T03:14:08.000Z and " + sec, "-2147483648"},
+		{"difference in seconds between @2068-01-19T03:14:09.000Z and " + sec, "null"},
+		{"duration in seconds of Interval[" + sec + ", @2068-01-19T03:14:07.000Z]", "2147483647"},
+		{"duration in seconds of Interval[" + sec + ", @2068-01-19T03:14:08.000Z]", "null"},
+		{"difference in seconds of Interval[" + sec + ", @2068-01-19T03:14:07.000Z]", "2147483647"},
+		{"difference in seconds of Interval[" + sec + ", @2068-01-19T03:14:08.000Z]", "null"},
+		// Minutes: 1491308 days 02:07 is 2147483647.
+		{"minutes between " + mins + " and @4084-01-24T02:06:00.000Z", "2147483646"},
+		{"minutes between " + mins + " and @4084-01-24T02:07:00.000Z", "2147483647"},
+		{"minutes between " + mins + " and @4084-01-24T02:07:59.999Z", "2147483647"},
+		{"minutes between " + mins + " and @4084-01-24T02:08:00.000Z", "null"},
+		{"minutes between " + mins + " and @4084-01-24T02:09:00.000Z", "null"},
+		{"minutes between @4084-01-24T02:07:59.999Z and " + mins, "-2147483647"},
+		{"minutes between @4084-01-24T02:08:00.000Z and " + mins, "-2147483648"},
+		{"minutes between @4084-01-24T02:08:59.999Z and " + mins, "-2147483648"},
+		{"minutes between @4084-01-24T02:09:00.000Z and " + mins, "null"},
+		{"difference in minutes between " + mins + " and @4084-01-24T02:07:00.000Z", "2147483647"},
+		{"difference in minutes between " + mins + " and @4084-01-24T02:08:00.000Z", "null"},
+		{"difference in minutes between @4084-01-24T02:08:00.000Z and " + mins, "-2147483648"},
+		{"difference in minutes between @4084-01-24T02:09:00.000Z and " + mins, "null"},
+		{"duration in minutes of Interval[" + mins + ", @4084-01-24T02:07:00.000Z]", "2147483647"},
+		{"duration in minutes of Interval[" + mins + ", @4084-01-24T02:08:00.000Z]", "null"},
+		{"difference in minutes of Interval[" + mins + ", @4084-01-24T02:07:00.000Z]", "2147483647"},
+		{"difference in minutes of Interval[" + mins + ", @4084-01-24T02:08:00.000Z]", "null"},
+		// An age is a duration from the birth: CQL has it in seconds and minutes
+		// (Appendix B, CalculateAge), not in milliseconds. The evaluation is at
+		// 2026-01-01T00:00:00-03:00, that is 03:00:00Z.
+		{"CalculateAgeInSecondsAt(" + sec + ", @2068-01-19T03:14:07.000Z)", "2147483647"},
+		{"CalculateAgeInSecondsAt(" + sec + ", @2068-01-19T03:14:08.000Z)", "null"},
+		{"CalculateAgeInMinutesAt(" + mins + ", @4084-01-24T02:07:00.000Z)", "2147483647"},
+		{"CalculateAgeInMinutesAt(" + mins + ", @4084-01-24T02:08:00.000Z)", "null"},
+		// Born 2147483647 seconds before the evaluation: 1957-12-13T23:45:53Z.
+		{"CalculateAgeInSeconds(@1957-12-13T23:45:53.000Z)", "2147483647"},
+		{"CalculateAgeInSeconds(@1957-12-13T23:45:52.000Z)", "null"},
+		// An uncertainty is the set of values the result could be, and one of them
+		// that is no Integer makes the operation impossible: null as a whole
+		// (decision D1 of the plan). Inside the range it stays an uncertainty.
+		{"milliseconds between " + msz + " and @2012-01-25T20:29Z", "Interval[2147340000, 2147399999]"},
+		{"milliseconds between " + msz + " and @2012-01-25T20:31Z", "null"},
+		{"milliseconds between " + msz + " and @2012-01-26T00:00Z", "null"},
+		{"milliseconds between @2012-01-25T20:29Z and " + msz, "Interval[-2147399999, -2147340000]"},
+		{"milliseconds between @2012-01-25T20:31Z and " + msz, "null"},
+		{"milliseconds between @2012-01-26T00:00Z and " + msz, "null"},
+		{"difference in milliseconds between " + msz + " and @2012-01-25T20:29Z", "Interval[2147340000, 2147399999]"},
+		{"difference in milliseconds between " + msz + " and @2012-01-25T20:31Z", "null"},
+		{"difference in milliseconds between @2012-01-25T20:31Z and " + msz, "null"},
+		{"seconds between " + sec + " and @2068-01-19T03:12Z", "Interval[2147483520, 2147483579]"},
+		{"seconds between " + sec + " and @2068-01-19T03:14Z", "null"},
+		{"seconds between " + sec + " and @2068-01-20T00:00Z", "null"},
+		{"duration in seconds of Interval[" + sec + ", @2068-01-19T03:14Z]", "null"},
+		{"CalculateAgeInSecondsAt(" + sec + ", @2068-01-19T03:14Z)", "null"},
+		// A month left unknown spans [-2678399999, 0] ms, and 2678399999 is past 2^31.
+		{"difference in milliseconds between @2012-01T and @2012-01-01T00:00:00.000", "null"},
+		// Controls that do not change: spans that fit, whatever the unit.
+		{"hours between @T10:00:00.000 and @T12:00:00.000", "2"},
+		{"milliseconds between @T00:00:00.000 and @T23:59:59.999", "86399999"},
+		{"days between @0001-01-01T00:00:00.000 and @9999-12-31T00:00:00.000", "3652058"},
+		{"hours between @9999-12-31T00:00:00.000 and @0001-01-01T00:00:00.000", "-87649392"},
+		{"minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:07:00.000Z", "2147483647"},
+	}
+	// The spans do not depend on the offset of the evaluation, but for the age
+	// from a birth date to the evaluation's own instant.
+	for _, frame := range []int{-3 * 60, 5*60 + 45} {
+		for _, tt := range rows {
+			if frame != -3*60 && strings.HasPrefix(tt.expr, "CalculateAgeInSeconds(") {
+				continue
+			}
+			for _, imported := range []bool{false, true} {
+				if got := differenceAt(t, tt.expr, frame, imported); got != tt.want {
+					t.Errorf("imported %v, frame %d, %s = %s, want %s", imported, frame, tt.expr, got, tt.want)
+				}
+			}
+		}
+	}
+}
+
+// TestADurationIsAnIntegerForCertain holds the arithmetic of plan 022: the result
+// of a duration, a difference or an age is an Integer whatever the operands are,
+// so the Integer rule of "cannot be represented" applies to what is done with
+// it. -2^31 and 2^31-1 are durations; Abs(-2^31), its negation and the sum past
+// 2^31-1 are null, and with a Long they are the Long's number. Only the compiled
+// path has the plan of types that tells an Integer from a Long (plan 013): the
+// imported ELM keeps the 64-bit edge, the known limit of that plan.
+func TestADurationIsAnIntegerForCertain(t *testing.T) {
+	const (
+		least    = "(milliseconds between @2012-01-25T20:31:23.648 and @2012-01-01T00:00:00.000)" // -2147483648
+		greatest = "(milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.647)" // 2147483647
+		spanDiff = "(difference in milliseconds between @2012-01-25T20:31:23.648 and @2012-01-01T00:00:00.000)"
+		age      = "(CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:07.000Z))" // 2147483647
+		ageNow   = "(CalculateAgeInSeconds(@1957-12-13T23:45:53.000Z))"                              // 2147483647
+		interDif = "(difference in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.647])"
+		inter    = "(duration in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.647])"
+		// Uncertainties, for the time zone of the evaluation: the bounds are
+		// [-2147483648, -2147423649] and [2147340000, 2147399999].
+		uncertainLeast = "(milliseconds between @2012-01-25T20:31:23.648Z and @2012-01-01T00:00Z)"
+		uncertainGreat = "(milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:29Z)"
+	)
+	for _, tt := range []struct{ expr, want string }{
+		{"Abs(" + least + ")", "null"},
+		{"-" + least, "null"},
+		{least + " - 1", "null"},
+		{"Abs(" + spanDiff + ")", "null"},
+		{"-" + spanDiff, "null"},
+		{greatest + " + 1", "null"},
+		{age + " + 1", "null"},
+		{inter + " + 1", "null"},
+		{interDif + " + 1", "null"},
+		{ageNow + " + 1", "null"},
+		{"2 * " + greatest, "null"},
+		// The control: a Long holds the number.
+		{greatest + " + 1L", "2147483648"},
+		{least + " - 1L", "-2147483649"},
+		{"Abs(" + least + " + 0L)", "2147483648"},
+		// Within the range nothing changes.
+		{least + " + 1", "-2147483647"},
+		{"Abs(" + least + " + 1)", "2147483647"},
+		{"-" + greatest, "-2147483647"},
+		{"Abs(" + greatest + ")", "2147483647"},
+		{greatest + " - 1", "2147483646"},
+		{age + " - 1", "2147483646"},
+		{ageNow + " - 1", "2147483646"},
+		{interDif + " - 1", "2147483646"},
+		// An uncertainty of Integers is one whole: a bound past the 32 bits
+		// makes it null (plan 022, D1), for a negation, Abs and arithmetic.
+		{"-" + uncertainLeast, "null"},
+		{"Abs(" + uncertainLeast + ")", "null"},
+		{uncertainGreat + " + 100000", "null"},
+		{uncertainGreat + " + 100000 > 2147400000", "null"},
+		// The low bound too: [-2147483648, -2147423649] - 1 reaches -2^31-1.
+		{uncertainLeast + " - 1", "null"},
+		{"(" + uncertainLeast + " - 1) < 0", "null"},
+		// The control: within the range it stays an uncertainty.
+		{uncertainGreat + " + 100000L", "Interval[2147440000, 2147499999]"},
+		{uncertainGreat + " - 100000", "Interval[2147240000, 2147299999]"},
+		{"-" + uncertainGreat, "Interval[-2147399999, -2147340000]"},
+	} {
+		if got := differenceAt(t, tt.expr, -3*60, false); got != tt.want {
+			t.Errorf("%s = %s, want %s", tt.expr, got, tt.want)
 		}
 	}
 }
@@ -212,6 +407,30 @@ func boundaryOracle(unit string, a, b calendarOperand, frame int64) string {
 	return strconv.FormatInt(n, 10)
 }
 
+// integerOrNull is the answer for a count: the count if it is an Integer, which
+// is from -2^31 to 2^31-1, and null if not. The class says where the count is:
+// "edge" within two of either limit (-2^31 is one), "out of range" past it, and
+// "inside" otherwise.
+func integerOrNull(count string) (answer, class string) {
+	n, err := strconv.ParseInt(count, 10, 64)
+	if err != nil {
+		return count, "unparsed"
+	}
+	const limit = 1 << 31
+	switch {
+	case n >= limit || n < -limit:
+		class = "out of range"
+	case n >= limit-2 || n <= -limit+2:
+		class = "edge"
+	default:
+		class = "inside"
+	}
+	if class == "out of range" {
+		return "null", class
+	}
+	return count, class
+}
+
 // ageUnits maps the unit of CalculateAgeIn<Unit>At to the unit of a duration.
 var ageUnits = map[string]string{
 	"Years": "years", "Months": "months", "Weeks": "weeks", "Days": "days",
@@ -240,8 +459,10 @@ func readAnswers(t *testing.T, area string) map[string]string {
 // milliseconds, and uses neither the time package nor the engine's funcs: a
 // duration, a difference, the same of an Interval and an age, at -03:00 (the
 // evaluation offset of the snapshots, which also fixes the age's reference).
-// Operands that are imprecise are left to the references. An answer beyond an
-// Integer's 32 bits is held too: the engine gives the number (plan 022).
+// Operands that are imprecise are left to the references. A count past an
+// Integer's 32 bits, below -2^31 or above 2^31-1, is null (plan 022); the rows
+// are counted by class (inside the range, at its edge and out of it), and each
+// class has to be well represented, so that a change of the edge is seen.
 func TestTheDurationRangeAreaIsItsOracle(t *testing.T) {
 	const frame = -3 * 60
 	pair := regexp.MustCompile(`^define (D\d+): (?:(difference in |duration in )?(\w+) (?:between|of) (?:Interval\[)?(@[^\s,\]]+)(?: and |, )(@[^\s\]]+)\]?|CalculateAgeIn(\w+)At\((@[^,]+), (@[^)]+)\))$`)
@@ -251,6 +472,7 @@ func TestTheDurationRangeAreaIsItsOracle(t *testing.T) {
 	}
 	answers := readAnswers(t, "durationrange")
 	checked := 0
+	classes := map[string]int{}
 	for _, line := range strings.Split(string(cql), "\n") {
 		m := pair.FindStringSubmatch(line)
 		if m == nil {
@@ -271,12 +493,19 @@ func TestTheDurationRangeAreaIsItsOracle(t *testing.T) {
 		} else {
 			want = durationOracle(unit, a, b, frame)
 		}
+		want, class := integerOrNull(want)
 		if got := answers[name]; got != want {
 			t.Errorf("%s: %s = %s, the oracle gives %s", name, line, got, want)
 		}
+		classes[class]++
 		checked++
 	}
-	if checked < 1600 {
+	if checked < 1800 {
 		t.Fatalf("only %d definitions of the area were checked against the oracle", checked)
+	}
+	for class, least := range map[string]int{"inside": 1200, "edge": 120, "out of range": 300} {
+		if classes[class] < least {
+			t.Errorf("only %d %s rows were checked against the oracle, want at least %d", classes[class], class, least)
+		}
 	}
 }

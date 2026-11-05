@@ -29,7 +29,9 @@ import (
 
 // integerArithmetic is the system functions whose Integer result is an
 // arithmetic one, the result the specification's overflow rule is about.
-// Durations, widths and counts are left as they are.
+// Widths and counts are left as they are. A duration, a difference and an age
+// are not arithmetic: their result is an Integer by their own rule, null past
+// the 32 bits (plan 022), and the nodes that carry them are certain Integers.
 var integerArithmetic = []string{"Abs", "Sum", "Product", "Power", "ToInteger"}
 
 // fixedInteger is the system functions whose result is an Integer whatever
@@ -38,6 +40,19 @@ var fixedInteger = []string{
 	"Count", "Length", "ToInteger", "Truncate", "Floor", "Ceiling",
 	"IndexOf", "PositionOf", "LastPositionOf", "Precision",
 }
+
+// ageFunctions is the age functions, AgeIn<Unit>, AgeIn<Unit>At and the
+// Calculate forms, of the seven units: each is a duration from the birth, and so
+// an Integer whatever its operands are.
+var ageFunctions = func() []string {
+	names := make([]string, 0, 28)
+	for _, unit := range []string{"Years", "Months", "Weeks", "Days", "Hours", "Minutes", "Seconds"} {
+		for _, prefix := range []string{"AgeIn", "CalculateAgeIn"} {
+			names = append(names, prefix+unit, prefix+unit+"At")
+		}
+	}
+	return names
+}()
 
 // namedIn reports whether name is one of names, in any case: a fluent call is
 // matched so, `x.abs()` as `Abs(x)`. EqualFold allocates nothing, as lowering
@@ -62,11 +77,23 @@ func namedIn(name string, names []string) bool {
 // operation, is all there is. The walk runs only for a value already past 32
 // bits, so it costs nothing on the way an answer usually takes.
 func (e *Evaluator) pastInteger(node ast.Expression, v fptypes.Value) bool {
-	i, ok := v.(fptypes.Integer)
-	if !ok || (i.Value() >= math.MinInt32 && i.Value() <= math.MaxInt32) || e.ctx.Plan == nil {
+	if e.ctx.Plan == nil || !pastInteger32(v) {
 		return false
 	}
 	return e.certainInteger(node, certainty{})
+}
+
+// pastInteger32 reports whether v is an Integer past the 32 bits, or an
+// uncertainty of Integers with a bound past them: one bound that cannot be
+// represented makes the whole uncertainty null (plan 022, D1).
+func pastInteger32(v fptypes.Value) bool {
+	switch x := v.(type) {
+	case fptypes.Integer:
+		return x.Value() < math.MinInt32 || x.Value() > math.MaxInt32
+	case cqltypes.Uncertainty:
+		return pastInteger32(x.Low) || pastInteger32(x.High)
+	}
+	return false
 }
 
 // certainty is what a walk has settled about each definition it met: a
@@ -129,6 +156,10 @@ func (e *Evaluator) certainInteger(expr ast.Expression, seen certainty) bool {
 		}
 	case *ast.UnaryExpression:
 		return e.certainUnary(x, seen)
+	case *ast.DurationBetween, *ast.DifferenceBetween, *ast.DurationOf, *ast.DifferenceOf:
+		// A duration or a difference is an Integer whatever it measures (CQL
+		// 1.5.3, Appendix B), and null where the count is past the 32 bits.
+		return true
 	case *ast.FunctionCall:
 		return e.certainCall(x, seen)
 	case *ast.IdentifierRef:
@@ -245,7 +276,7 @@ func (e *Evaluator) certainCall(n *ast.FunctionCall, seen certainty) bool {
 	case namedIn(n.Name, []string{"Sum", "Product", "Max", "Min"}):
 		return len(operands) == 1 && e.certainList(operands[0], seen)
 	}
-	return namedIn(n.Name, fixedInteger)
+	return namedIn(n.Name, fixedInteger) || namedIn(n.Name, ageFunctions)
 }
 
 // certainList reports whether expr is a list of certain Integers: a list

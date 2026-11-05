@@ -2847,7 +2847,8 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		// years between @2000 and @2010-05-01 is [9, 10], and its negation
 		// [-10, -9]. It was read as zero.
 		if u, ok := operand.(cqltypes.Uncertainty); ok {
-			return negateUncertainty(u)
+			v, err := negateUncertainty(u)
+			return e.withinInteger(n, v, err)
 		}
 		v, err := negate(operand)
 		if _, isInteger := operand.(fptypes.Integer); isInteger {
