@@ -1,12 +1,12 @@
 # Pedido de aclaración a HL7 sobre CQL 1.5.3 (borrador, sin publicar)
 
-Reúne el borrador del 016 (`docs/plans/016-duration-uncertainty.md`, «Pedido de aclaración a HL7») con los puntos pendientes del 020 y del 022. Las respuestas de las referencias salen de los snapshots del repo (`testdata/snapshots/<área>.java.json` y `.js.json`, con el nombre de la definición entre paréntesis), evaluadas a -03:00. Las filas marcadas «sonda 016» salen de las sondas de la revisión previa del 016 (31-10-2026), con las mismas versiones de las referencias. Las citas se cotejaron contra cql.hl7.org el 05-11-2026. No se publica sin el visto bueno del usuario.
+Reúne el borrador del 016 (`docs/plans/016-duration-uncertainty.md`, «Pedido de aclaración a HL7») con los puntos pendientes del 020 y del 022. Las respuestas de las referencias salen de los snapshots del repo (`testdata/snapshots/<área>.java.json` y `.js.json`, con el nombre de la definición entre paréntesis), evaluadas a -03:00. Las filas marcadas «sonda 016» salen de las sondas de la revisión previa del 016 (31-10-2026), con las mismas versiones de las referencias. Las citas se cotejaron el 05-11-2026 contra la versión 1.5.3 publicada en cql.hl7.org/N1A, no contra la página sin versión, que hoy es la 2.0.0. No se publica sin el visto bueno del usuario.
 
 ---
 
 **Title:** Duration and Difference in CQL 1.5.3: when the result is an uncertainty, seconds with milliseconds, non-hour offsets, and the Integer range
 
-We maintain a Go implementation of CQL and compare it against the Java engine (5.4.0) and cql-execution (3.3.2). On the points below the two references answer differently from each other or from the text, and we could not settle the reading from the specification alone. All results are with an evaluation request at offset -03:00.
+We maintain a Go implementation of CQL 1.5.3 (https://cql.hl7.org/N1A/) and compare it against the Java engine (5.4.0) and cql-execution (3.3.2). On the points below the two references answer differently from each other or from the text, and we could not settle the reading from the specification alone. All results are with an evaluation request at offset -03:00.
 
 ### 1. What makes a duration an uncertainty?
 
@@ -32,7 +32,7 @@ Questions:
 
 ### 2. Seconds and milliseconds as a single precision
 
-Duration and Difference both say "seconds and milliseconds are considered a single precision with decimal semantics". The comparison operators say they "are combined and represented as a Decimal for the purposes of comparison, duration, and difference calculation. When milliseconds are null, they are combined as .0. In other words, if milliseconds are not specified, calculations for precisions above milliseconds are performed as though milliseconds had been specified as 0."
+Duration and Difference both say "seconds and milliseconds are considered a single precision with decimal semantics". The definition of DateTime says they "are combined and represented as a Decimal for the purposes of comparison, duration, and difference calculation. When milliseconds are null, they are combined as .0. In other words, if milliseconds are not specified, calculations for precisions above milliseconds should be performed as though milliseconds had been specified as 0."
 
 | Expression | Java 5.4.0 | cql-execution 3.3.2 |
 |---|---|---|
@@ -46,7 +46,7 @@ Read literally, `23:59:59` is `59.0` seconds and the second row is 1000. But the
 
 ### 3. Normalize, then truncate? Offsets that are not whole hours
 
-Difference says: "When computing the difference between DateTime values with different timezone offsets, the values are normalized to the timezone offset of the evaluation request timestamp, but only when the comparison precision is hours, minutes, seconds, or milliseconds." The text does not say whether each value is truncated to the precision before or after it is normalized. With an offset of +05:45 the order matters:
+Difference says: "When computing the difference between DateTime values with different timezone offsets, implementations should normalize to the timezone offset of the evaluation request timestamp, but only when the comparison precision is hours, minutes, seconds, or milliseconds." The text does not say whether each value is truncated to the precision before or after it is normalized. With an offset of +05:45 the order matters:
 
 | Expression | Normalize, then count | Java 5.4.0 | cql-execution 3.3.2 |
 |---|---|---|---|
