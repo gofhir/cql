@@ -42,7 +42,7 @@ PLAN = "docs/plans/013-null-donde-va-null.md"
 NULLED = "\tif errors.Is(err, cqltypes.ErrPastRange) {\n\t\treturn nil, nil\n\t}\n"
 DECIMAL = "\tcase fptypes.Decimal:\n\t\tif !funcs.WithinDecimal(x.Value()) {\n\t\t\treturn nil, nil\n\t\t}\n"
 QUANTITY = "\tcase fptypes.Quantity:\n\t\tif !funcs.WithinDecimal(x.Value()) {\n\t\t\treturn nil, nil\n\t\t}\n"
-START = "\t\t\tv, err := iv.Start()\n\t\t\treturn e.stepWithinItsType(n, v, err)\n"
+START = "\t\t\tv, err := startOf(iv)\n\t\t\treturn e.stepWithinItsType(n, v, err)\n"
 EXP_RANGE = "\tif !WithinDecimal(exp) {\n\t\treturn nil, nil\n\t}\n"
 LN = "\tif d.Sign() <= 0 {\n\t\treturn nil, nil\n\t}\n"
 QDIV = "\t\t\tif rd.IsZero() {\n\t\t\t\treturn nil, nil\n\t\t\t}\n\t\t\treturn lq.Divide(rd)\n"
@@ -76,7 +76,7 @@ mutations = [
      CONFORMANCE, "PredecessorUnderflowT"),
     # Start and end (decision C).
     ("start of not stepped within the type",
-     (EVAL, START, "\t\t\treturn iv.Start()\n"), EDGE, "start of Interval(2147483647, null]"),
+     (EVAL, START, "\t\t\treturn startOf(iv)\n"), EDGE, "start of Interval(2147483647, null]"),
     ("start of an Integer not certain",
      (RANGE, "\tcase ast.OpStartOf, ast.OpEndOf:\n", "\tcase ast.OpWidthOf:\n"), EDGE,
      "start of Interval(2147483647, null] = 2147483648"),

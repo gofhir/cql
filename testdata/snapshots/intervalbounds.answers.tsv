@@ -1,0 +1,597 @@
+D0	Integer 0
+D1	Integer 0
+D10	Integer 0
+D100	Integer 9998
+D101	Integer 9998
+D102	Integer 119987
+D103	Integer 119987
+D104	Integer 521722
+D105	Integer 521722
+D106	Integer 3652058
+D107	Integer 3652058
+D108	Date 0001-01-01
+D109	Date 9999-12-31
+D11	Integer 0
+D110	Integer 9998
+D111	Integer 9998
+D112	Integer 119987
+D113	Integer 119987
+D114	Integer 521722
+D115	Integer 521722
+D116	Integer 3652056
+D117	Integer 3652056
+D118	Date 0001-01-02
+D119	Date 9999-12-30
+D12	Integer 0
+D120	Integer 9998
+D121	Integer 9998
+D122	Integer 119987
+D123	Integer 119987
+D124	Integer 521722
+D125	Integer 521722
+D126	Integer 3652058
+D127	Integer 3652058
+D128	Date 0001-01-01
+D129	Date 9999-12-31
+D13	Integer 0
+D130	Integer 9998
+D131	Integer 9998
+D132	Integer 119987
+D133	Integer 119987
+D134	Integer 521722
+D135	Integer 521722
+D136	Integer 3652058
+D137	Integer 3652058
+D138	Date 0001-01-01
+D139	Date 9999-12-31
+D14	Integer 0
+D140	null
+D141	null
+D142	null
+D143	null
+D144	null
+D145	null
+D146	null
+D147	null
+D148	Date 0001-01-01
+D149	null
+D15	Integer 0
+D150	null
+D151	null
+D152	null
+D153	null
+D154	null
+D155	null
+D156	null
+D157	null
+D158	null
+D159	Date 9999-12-31
+D16	Integer 2
+D160	null
+D161	null
+D162	null
+D163	null
+D164	null
+D165	null
+D166	null
+D167	null
+D168	null
+D169	null
+D17	Integer 2
+D170	Integer 0
+D171	Integer 0
+D172	Uncertainty[Integer 4, Integer 5]
+D173	Integer 5
+D174	Uncertainty[Integer 17, Integer 26]
+D175	Uncertainty[Integer 18, Integer 26]
+D176	Uncertainty[Integer 123, Integer 183]
+D177	Uncertainty[Integer 123, Integer 183]
+D178	Date 2012-03
+D179	Date 2012-08
+D18	Date 2012-01-02
+D180	Integer 7987
+D181	Integer 7987
+D182	Integer 95852
+D183	Integer 95852
+D184	Uncertainty[Integer 416776, Integer 416780]
+D185	Uncertainty[Integer 416776, Integer 416780]
+D186	Uncertainty[Integer 2917436, Integer 2917465]
+D187	Uncertainty[Integer 2917436, Integer 2917465]
+D188	Date 2012-04
+D189	Date 9999-12-31
+D19	Date 2012-01-04
+D190	Uncertainty[Integer 2, Integer 3]
+D191	Integer 3
+D192	Uncertainty[Integer 24, Integer 47]
+D193	Uncertainty[Integer 25, Integer 47]
+D194	Uncertainty[Integer 104, Integer 208]
+D195	Uncertainty[Integer 104, Integer 208]
+D196	Uncertainty[Integer 731, Integer 1460]
+D197	Uncertainty[Integer 731, Integer 1460]
+D198	Date 2012
+D199	Date 2015
+D2	Integer 0
+D20	Integer 0
+D200	null
+D201	null
+D202	null
+D203	null
+D204	null
+D205	null
+D206	null
+D207	null
+D208	null
+D209	Date 9999-12-31
+D21	Integer 0
+D210	null
+D211	null
+D212	null
+D213	null
+D214	null
+D215	null
+D216	null
+D217	null
+D218	Date 0001-01-01
+D219	null
+D22	Integer 0
+D220	Integer 0
+D221	Integer 0
+D222	Integer 0
+D223	Integer 0
+D224	Integer 0
+D225	Integer 0
+D226	Integer 0
+D227	Integer 0
+D228	Integer 1
+D229	Integer 1
+D23	Integer 0
+D230	Uncertainty[Integer 117, Integer 118]
+D231	Integer 118
+D232	Uncertainty[Integer 7020, Integer 7139]
+D233	Uncertainty[Integer 7021, Integer 7139]
+D234	Uncertainty[Integer 7020001, Integer 7139999]
+D235	Uncertainty[Integer 7020001, Integer 7139999]
+D236	DateTime 2012-01-01T10:01
+D237	DateTime 2012-01-01T11:59
+D238	Integer 0
+D239	Integer 0
+D24	Integer 0
+D240	Integer 0
+D241	Integer 0
+D242	Integer 0
+D243	Integer 0
+D244	Integer 0
+D245	Integer 0
+D246	Integer 2
+D247	Integer 2
+D248	Uncertainty[Integer 119, Integer 120]
+D249	Integer 120
+D25	Integer 0
+D250	Uncertainty[Integer 7140, Integer 7259]
+D251	Uncertainty[Integer 7141, Integer 7259]
+D252	Uncertainty[Integer 7140001, Integer 7259999]
+D253	Uncertainty[Integer 7140001, Integer 7259999]
+D254	DateTime 2012-01-01T10:00
+D255	DateTime 2012-01-01T12:00
+D256	Integer 0
+D257	Integer 0
+D258	Integer 0
+D259	Integer 0
+D26	Integer 3
+D260	Integer 0
+D261	Integer 0
+D262	Integer 0
+D263	Integer 0
+D264	Integer 0
+D265	Integer 0
+D266	Integer 0
+D267	Integer 0
+D268	Integer 0
+D269	Integer 0
+D27	Integer 3
+D270	Integer 998
+D271	Integer 998
+D272	DateTime 2012-01-01T10:00:00.001
+D273	DateTime 2012-01-01T10:00:00.999
+D274	Integer 0
+D275	Integer 0
+D276	Integer 0
+D277	Integer 0
+D278	Integer 0
+D279	Integer 0
+D28	Date 2012-01-01
+D280	Integer 4
+D281	Integer 4
+D282	Integer 106
+D283	Integer 106
+D284	Integer 6360
+D285	Integer 6360
+D286	Integer 381600
+D287	Integer 381600
+D288	Integer 381600000
+D289	Integer 381600000
+D29	Date 2012-01-04
+D290	DateTime 2012-01-01T00:00:00.000
+D291	DateTime 2012-01-05T10:00:00.000
+D292	Integer 0
+D293	Integer 0
+D294	Integer 0
+D295	Integer 0
+D296	Integer 0
+D297	Integer 0
+D298	Integer 4
+D299	Integer 4
+D3	Integer 0
+D30	Integer 0
+D300	Integer 105
+D301	Integer 105
+D302	Integer 6359
+D303	Integer 6359
+D304	Integer 381599
+D305	Integer 381599
+D306	Integer 381599998
+D307	Integer 381599998
+D308	DateTime 2012-01-01T00:00:00.001
+D309	DateTime 2012-01-05T09:59:59.999
+D31	Integer 0
+D310	null
+D311	null
+D312	null
+D313	null
+D314	null
+D315	null
+D316	null
+D317	null
+D318	null
+D319	null
+D32	Integer 0
+D320	null
+D321	null
+D322	null
+D323	null
+D324	null
+D325	null
+D326	null
+D327	DateTime 2012-01-01T00:00:00.000
+D328	null
+D329	null
+D33	Integer 0
+D330	null
+D331	null
+D332	null
+D333	null
+D334	null
+D335	null
+D336	null
+D337	null
+D338	null
+D339	null
+D34	Integer 0
+D340	null
+D341	null
+D342	null
+D343	null
+D344	DateTime 2012-01-01T00:00:00.000
+D345	null
+D346	Integer 0
+D347	Integer 0
+D348	Integer 0
+D349	Integer 0
+D35	Integer 0
+D350	Integer 0
+D351	Integer 0
+D352	Integer 4
+D353	Integer 4
+D354	Integer 105
+D355	Integer 105
+D356	Integer 6359
+D357	Integer 6359
+D358	Integer 381599
+D359	Integer 381599
+D36	Integer 3
+D360	Integer 381599999
+D361	Integer 381599999
+D362	DateTime 2012-01-01T00:00:00.000Z
+D363	DateTime 2012-01-05T09:59:59.999Z
+D364	Integer 7987
+D365	Integer 7987
+D366	Integer 95855
+D367	Integer 95855
+D368	Integer 416793
+D369	Integer 416793
+D37	Integer 3
+D370	Integer 2917557
+D371	Integer 2917556
+D372	Integer 70021370
+D373	Integer 70021370
+D374	null
+D375	null
+D376	null
+D377	null
+D378	null
+D379	null
+D38	Date 2012-01-02
+D380	DateTime 2012-01-01T00:00:00.000+03:00
+D381	DateTime 9999-12-31T23:59:59.999Z
+D382	Integer 2011
+D383	Integer 2011
+D384	Integer 24132
+D385	Integer 24132
+D386	Integer 104929
+D387	Integer 104929
+D388	Integer 734506
+D389	Integer 734506
+D39	Date 2012-01-05
+D390	Integer 17628150
+D391	Integer 17628150
+D392	Integer 1057689059
+D393	Integer 1057689059
+D394	null
+D395	null
+D396	null
+D397	null
+D398	DateTime 0001-01-01T00:00:00.000Z
+D399	DateTime 2012-01-05T09:59:59.999+03:00
+D4	Integer 0
+D40	Integer 0
+D400	Integer 0
+D401	Integer 0
+D402	Integer 0
+D403	Integer 0
+D404	Integer 0
+D405	Integer 0
+D406	Integer 0
+D407	Integer 0
+D408	Integer 20
+D409	Integer 20
+D41	Integer 0
+D410	Integer 1259
+D411	Integer 1259
+D412	Integer 75599
+D413	Integer 75599
+D414	Integer 75599999
+D415	Integer 75599999
+D416	DateTime 9999-12-31T00:00:00.000
+D417	DateTime 9999-12-31T23:59:59.999Z
+D418	null
+D419	null
+D42	Integer 0
+D420	null
+D421	null
+D422	null
+D423	null
+D424	null
+D425	null
+D426	null
+D427	null
+D428	null
+D429	null
+D43	Integer 0
+D430	null
+D431	null
+D432	null
+D433	null
+D434	null
+D435	DateTime 9999-12-31T23:59:59.999Z
+D436	null
+D437	null
+D438	null
+D439	null
+D44	Integer 0
+D440	null
+D441	null
+D442	null
+D443	null
+D444	null
+D445	null
+D446	null
+D447	null
+D448	null
+D449	null
+D45	Integer 0
+D450	null
+D451	null
+D452	DateTime 0001-01-01T00:00:00.000Z
+D453	null
+D454	Integer 0
+D455	Integer 0
+D456	Integer 0
+D457	Integer 0
+D458	Integer 0
+D459	Integer 0
+D46	Integer -1
+D460	Integer 4
+D461	Integer 4
+D462	Uncertainty[Integer 96, Integer 97]
+D463	Integer 97
+D464	Uncertainty[Integer 5760, Integer 5879]
+D465	Uncertainty[Integer 5761, Integer 5879]
+D466	Uncertainty[Integer 345600, Integer 352799]
+D467	Uncertainty[Integer 345601, Integer 352799]
+D468	Uncertainty[Integer 345600001, Integer 352799999]
+D469	Uncertainty[Integer 345600001, Integer 352799999]
+D47	Integer -1
+D470	DateTime 2012-01-01T10
+D471	DateTime 2012-01-05T11
+D472	Uncertainty[Integer -1, Integer 0]
+D473	Integer -1
+D474	Uncertainty[Integer -23, Integer 0]
+D475	Uncertainty[Integer -23, Integer -1]
+D476	Uncertainty[Integer -104, Integer 0]
+D477	Uncertainty[Integer -104, Integer 0]
+D478	Uncertainty[Integer -730, Integer 0]
+D479	Uncertainty[Integer -730, Integer -1]
+D48	Date 2012-01-02
+D480	Uncertainty[Integer -17543, Integer 0]
+D481	Uncertainty[Integer -17543, Integer -1]
+D482	Uncertainty[Integer -1052639, Integer 0]
+D483	Uncertainty[Integer -1052639, Integer -1]
+D484	Uncertainty[Integer -63158399, Integer 0]
+D485	Uncertainty[Integer -63158399, Integer -1]
+D486	null
+D487	null
+D488	DateTime 2013
+D489	DateTime 2012
+D49	Date 2012-01-01
+D490	Integer 2
+D491	Integer 2
+D492	Integer 120
+D493	Integer 120
+D494	Integer 7200
+D495	Uncertainty[Integer 7141, Integer 7259]
+D496	Integer 7200000
+D497	Uncertainty[Integer 7140001, Integer 7259999]
+D498	Time 10:00
+D499	Time 12:00
+D5	Integer 0
+D50	Integer 0
+D500	Integer 1
+D501	Integer 1
+D502	Integer 118
+D503	Integer 118
+D504	Integer 7080
+D505	Uncertainty[Integer 7021, Integer 7139]
+D506	Integer 7080000
+D507	Uncertainty[Integer 7020001, Integer 7139999]
+D508	Time 10:01
+D509	Time 11:59
+D51	Integer 0
+D510	Integer 1
+D511	Integer 1
+D512	Integer 119
+D513	Integer 119
+D514	Integer 7140
+D515	Uncertainty[Integer 7081, Integer 7199]
+D516	Integer 7140000
+D517	Uncertainty[Integer 7080001, Integer 7199999]
+D518	Time 10:00
+D519	Time 11:59
+D52	Integer 0
+D520	Integer 13
+D521	Integer 13
+D522	Integer 838
+D523	Integer 838
+D524	Integer 50339
+D525	Uncertainty[Integer 50280, Integer 50339]
+D526	Integer 50339999
+D527	Uncertainty[Integer 50280000, Integer 50339999]
+D528	Time 10:01
+D529	Time 23:59:59.999
+D53	Integer 0
+D530	Integer 12
+D531	Integer 12
+D532	Integer 720
+D533	Integer 720
+D534	Integer 43200
+D535	Uncertainty[Integer 43200, Integer 43259]
+D536	Integer 43200000
+D537	Uncertainty[Integer 43200000, Integer 43259999]
+D538	Time 00:00:00.000
+D539	Time 12:00
+D54	Integer 0
+D540	Integer 11
+D541	Integer 11
+D542	Integer 719
+D543	Integer 719
+D544	Integer 43140
+D545	Uncertainty[Integer 43140, Integer 43199]
+D546	Integer 43140000
+D547	Uncertainty[Integer 43140000, Integer 43199999]
+D548	Time 00:00:00.000
+D549	Time 11:59
+D55	Integer 0
+D550	Integer 1
+D551	Integer 1
+D552	Integer 60
+D553	Uncertainty[Integer 1, Integer 119]
+D554	Integer 3600
+D555	Uncertainty[Integer 1, Integer 7199]
+D556	Integer 3600000
+D557	Uncertainty[Integer 1, Integer 7199999]
+D558	Time 10
+D559	Time 11
+D56	Integer 0
+D560	null
+D561	null
+D562	null
+D563	null
+D564	null
+D565	null
+D566	null
+D567	null
+D568	null
+D569	Time 23:59:59.999
+D57	Integer 0
+D570	null
+D571	null
+D572	null
+D573	null
+D574	null
+D575	null
+D576	null
+D577	null
+D578	Time 00:00:00.000
+D579	null
+D58	Date 2012-01-01
+D580	Integer 23
+D581	Integer 23
+D582	Integer 1439
+D583	Integer 1439
+D584	Integer 86399
+D585	Integer 86399
+D586	Integer 86399999
+D587	Integer 86399999
+D588	Time 00:00:00.000
+D589	Time 23:59:59.999
+D59	Date 2012-01-01
+D590	Integer 24
+D591	Integer 4
+D592	List[Integer 2917556, Integer 2]
+D593	List[Date 9999-12-31, Date 2012-01-04]
+D594	Uncertainty[Integer 91, Integer 121]
+D595	Uncertainty[Integer 1, Integer 2]
+D596	null
+D6	Integer 4
+D60	Integer 7987
+D61	Integer 7987
+D62	Integer 95855
+D63	Integer 95855
+D64	Integer 416793
+D65	Integer 416793
+D66	Integer 2917556
+D67	Integer 2917556
+D68	Date 2012-01-01
+D69	Date 9999-12-31
+D7	Integer 4
+D70	Integer 7987
+D71	Integer 7987
+D72	Integer 95855
+D73	Integer 95855
+D74	Integer 416793
+D75	Integer 416793
+D76	Integer 2917555
+D77	Integer 2917555
+D78	Date 2012-01-02
+D79	Date 9999-12-31
+D8	Date 2012-01-01
+D80	Integer 2011
+D81	Integer 2011
+D82	Integer 24132
+D83	Integer 24132
+D84	Integer 104928
+D85	Integer 104929
+D86	Integer 734502
+D87	Integer 734502
+D88	Date 0001-01-01
+D89	Date 2012-01-01
+D9	Date 2012-01-05
+D90	Integer 2010
+D91	Integer 2010
+D92	Integer 24131
+D93	Integer 24131
+D94	Integer 104928
+D95	Integer 104928
+D96	Integer 734501
+D97	Integer 734501
+D98	Date 0001-01-01
+D99	Date 2011-12-31

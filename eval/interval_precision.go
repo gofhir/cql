@@ -88,14 +88,20 @@ func properlyContainsPointAtPrecision(iv cqltypes.Interval, v fptypes.Value, pre
 
 // startOf and endOf are an interval's first and last points, with a closed
 // null bound read as the minimum or maximum value of the point type, and an
-// open one as an unknown start or end.
+// open one as an unknown start or end. They serve the phrases with a precision,
+// `start of`, `end of`, and `duration of` and `difference of`, which measure
+// from the start to the end of the interval (CQL 1.5.3, https://cql.hl7.org/N1A/,
+// Appendix B, Start and End; Author's Guide, Interval Operators). A step past
+// the calendar or the clock is for stepWithinItsType to turn into null.
 //
 // That is the specification's reading of a null boundary, and the Java
 // engine's: `Interval[@2020-01-01T00:00Z, null] overlaps day of
 // Interval[@2020-03-01T00:00Z, …]` is true. Reading every null as unknown made
 // that null, and `properly includes day of` a point inside an open-ended
 // period null where it had been true. The extreme is the actual value, so a
-// closed null start and an explicit minimum DateTime are the same day.
+// closed null start and an explicit minimum DateTime are the same day. Only a
+// temporal point type has it here: an Integer, a Long, a Decimal and a Quantity
+// keep the null of Interval.Start and End (plan 024).
 func startOf(iv cqltypes.Interval) (fptypes.Value, error) {
 	if iv.Low == nil && iv.LowClosed {
 		return extremeLike(iv.High, false), nil
@@ -440,4 +446,19 @@ func widenForPrecision(rng fptypes.Value, precision string) fptypes.Value {
 		return moved
 	}
 	return cqltypes.NewInterval(widen(iv.Low, -1), widen(iv.High, 1), iv.LowClosed, iv.HighClosed)
+}
+
+// measureStartToEnd is a duration or a difference of an interval: the measure
+// between its start and its end, null where either is, or is past the calendar
+// or the clock (plan 023).
+func (e *Evaluator) measureStartToEnd(node ast.Expression, iv cqltypes.Interval, measure func(start, end fptypes.Value) (fptypes.Value, error)) (fptypes.Value, error) {
+	start, err := startOf(iv)
+	if start, err = e.stepWithinItsType(node, start, err); err != nil || start == nil {
+		return nil, err
+	}
+	end, err := endOf(iv)
+	if end, err = e.stepWithinItsType(node, end, err); err != nil || end == nil {
+		return nil, err
+	}
+	return measure(start, end)
 }

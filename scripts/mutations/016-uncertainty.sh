@@ -87,7 +87,7 @@ mutations = [
      (EVAL, "if properly && len(items.Values) <= 1 {", "if false {"), HAND,
      "{ 1 } properly includes (years between @2012 and @2014) = null, want false"),
     ("duration in X of an interval back in UTC",
-     (EVALUATOR, "return funcs.DurationBetweenAt(iv.Low, iv.High, n.Precision, e.evaluationFrame())", "return funcs.DurationBetweenAt(iv.Low, iv.High, n.Precision, nil)"), HAND,
+     (EVALUATOR, "return funcs.DurationBetweenAt(start, end, n.Precision, e.evaluationFrame())", "return funcs.DurationBetweenAt(start, end, n.Precision, nil)"), HAND,
      "duration in days of Interval[@2017-08-07T17:00, @2017-08-14T] = Interval[5, 6], want Interval[6, 7]"),
     # The comparison of two uncertainties.
     ("the extremes of two uncertainties swapped",

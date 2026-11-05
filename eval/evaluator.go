@@ -736,7 +736,9 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 			return nil, err
 		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return funcs.DurationBetweenAt(iv.Low, iv.High, n.Precision, e.evaluationFrame())
+			return e.measureStartToEnd(n, iv, func(start, end fptypes.Value) (fptypes.Value, error) {
+				return funcs.DurationBetweenAt(start, end, n.Precision, e.evaluationFrame())
+			})
 		}
 		return nil, nil
 	case *ast.DifferenceOf:
@@ -749,7 +751,9 @@ func (e *Evaluator) eval(expr ast.Expression) (result fptypes.Value, err error) 
 			return nil, err
 		}
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			return funcs.DifferenceBetweenAt(iv.Low, iv.High, n.Precision, e.evaluationFrame())
+			return e.measureStartToEnd(n, iv, func(start, end fptypes.Value) (fptypes.Value, error) {
+				return funcs.DifferenceBetweenAt(start, end, n.Precision, e.evaluationFrame())
+			})
 		}
 		return nil, nil
 	default:
@@ -2875,13 +2879,13 @@ func (e *Evaluator) evalUnary(n *ast.UnaryExpression) (fptypes.Value, error) {
 		// value, so the first included point is the successor of it. Interval
 		// equality needs the same answer, which is why it lives on the type.
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			v, err := iv.Start()
+			v, err := startOf(iv)
 			return e.stepWithinItsType(n, v, err)
 		}
 		return nil, nil
 	case ast.OpEndOf:
 		if iv, ok := operand.(cqltypes.Interval); ok {
-			v, err := iv.End()
+			v, err := endOf(iv)
 			return e.stepWithinItsType(n, v, err)
 		}
 		return nil, nil
