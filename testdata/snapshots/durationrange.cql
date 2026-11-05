@@ -7,7 +7,9 @@ include FHIRHelpers version '4.0.1'
 // instant of the year 1 is a value like any other, and a span of more than 292
 // years (the range of a Go time.Duration) is counted whole. Nine pairs of
 // instants, both orders, as DateTime with no offset, Z and +03:00 and as Date, in
-// every unit valid for them; then the year 1 at an offset and imprecise operands.
+// every unit valid for them; then the year 1 at an offset and imprecise operands;
+// then the edge of an Integer (docs/plans/022-duration-out-of-range.md), where a
+// count past 2^31-1 or below -2^31 is null.
 define D0: years between @0001-01-01T00:00:00.000 and @0001-01-05T00:00:00.000
 define D1: difference in years between @0001-01-01T00:00:00.000 and @0001-01-05T00:00:00.000
 define D2: months between @0001-01-01T00:00:00.000 and @0001-01-05T00:00:00.000
@@ -1683,3 +1685,276 @@ define D1671: days between @0001 and @9999
 define D1672: hours between @1727 and @2020-01-01T00:00:00.000
 define D1673: difference in days between @0001 and @0002
 define D1674: difference in hours between @0001-01-01T and @0001-01-02T00:00:00.000Z
+define D1675: milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.646
+define D1676: difference in milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.646
+define D1677: milliseconds between @2012-01-25T20:31:23.646 and @2012-01-01T00:00:00.000
+define D1678: difference in milliseconds between @2012-01-25T20:31:23.646 and @2012-01-01T00:00:00.000
+define D1679: milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.646Z
+define D1680: difference in milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.646Z
+define D1681: milliseconds between @2012-01-25T20:31:23.646Z and @2012-01-01T00:00:00.000Z
+define D1682: difference in milliseconds between @2012-01-25T20:31:23.646Z and @2012-01-01T00:00:00.000Z
+define D1683: milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.646+03:00
+define D1684: difference in milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.646+03:00
+define D1685: milliseconds between @2012-01-25T20:31:23.646+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1686: difference in milliseconds between @2012-01-25T20:31:23.646+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1687: duration in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.646]
+define D1688: difference in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.646]
+define D1689: duration in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.646Z]
+define D1690: difference in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.646Z]
+define D1691: milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.647
+define D1692: difference in milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.647
+define D1693: milliseconds between @2012-01-25T20:31:23.647 and @2012-01-01T00:00:00.000
+define D1694: difference in milliseconds between @2012-01-25T20:31:23.647 and @2012-01-01T00:00:00.000
+define D1695: milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.647Z
+define D1696: difference in milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.647Z
+define D1697: milliseconds between @2012-01-25T20:31:23.647Z and @2012-01-01T00:00:00.000Z
+define D1698: difference in milliseconds between @2012-01-25T20:31:23.647Z and @2012-01-01T00:00:00.000Z
+define D1699: milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.647+03:00
+define D1700: difference in milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.647+03:00
+define D1701: milliseconds between @2012-01-25T20:31:23.647+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1702: difference in milliseconds between @2012-01-25T20:31:23.647+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1703: duration in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.647]
+define D1704: difference in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.647]
+define D1705: duration in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.647Z]
+define D1706: difference in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.647Z]
+define D1707: milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.648
+define D1708: difference in milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.648
+define D1709: milliseconds between @2012-01-25T20:31:23.648 and @2012-01-01T00:00:00.000
+define D1710: difference in milliseconds between @2012-01-25T20:31:23.648 and @2012-01-01T00:00:00.000
+define D1711: milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.648Z
+define D1712: difference in milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.648Z
+define D1713: milliseconds between @2012-01-25T20:31:23.648Z and @2012-01-01T00:00:00.000Z
+define D1714: difference in milliseconds between @2012-01-25T20:31:23.648Z and @2012-01-01T00:00:00.000Z
+define D1715: milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.648+03:00
+define D1716: difference in milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.648+03:00
+define D1717: milliseconds between @2012-01-25T20:31:23.648+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1718: difference in milliseconds between @2012-01-25T20:31:23.648+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1719: duration in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.648]
+define D1720: difference in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.648]
+define D1721: duration in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.648Z]
+define D1722: difference in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.648Z]
+define D1723: milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.649
+define D1724: difference in milliseconds between @2012-01-01T00:00:00.000 and @2012-01-25T20:31:23.649
+define D1725: milliseconds between @2012-01-25T20:31:23.649 and @2012-01-01T00:00:00.000
+define D1726: difference in milliseconds between @2012-01-25T20:31:23.649 and @2012-01-01T00:00:00.000
+define D1727: milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.649Z
+define D1728: difference in milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31:23.649Z
+define D1729: milliseconds between @2012-01-25T20:31:23.649Z and @2012-01-01T00:00:00.000Z
+define D1730: difference in milliseconds between @2012-01-25T20:31:23.649Z and @2012-01-01T00:00:00.000Z
+define D1731: milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.649+03:00
+define D1732: difference in milliseconds between @2012-01-01T00:00:00.000+03:00 and @2012-01-25T20:31:23.649+03:00
+define D1733: milliseconds between @2012-01-25T20:31:23.649+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1734: difference in milliseconds between @2012-01-25T20:31:23.649+03:00 and @2012-01-01T00:00:00.000+03:00
+define D1735: duration in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.649]
+define D1736: difference in milliseconds of Interval[@2012-01-01T00:00:00.000, @2012-01-25T20:31:23.649]
+define D1737: duration in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.649Z]
+define D1738: difference in milliseconds of Interval[@2012-01-01T00:00:00.000Z, @2012-01-25T20:31:23.649Z]
+define D1739: seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:06.000
+define D1740: difference in seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:06.000
+define D1741: seconds between @2068-01-19T03:14:06.000 and @2000-01-01T00:00:00.000
+define D1742: difference in seconds between @2068-01-19T03:14:06.000 and @2000-01-01T00:00:00.000
+define D1743: seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:06.000Z
+define D1744: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:06.000Z
+define D1745: seconds between @2068-01-19T03:14:06.000Z and @2000-01-01T00:00:00.000Z
+define D1746: difference in seconds between @2068-01-19T03:14:06.000Z and @2000-01-01T00:00:00.000Z
+define D1747: seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:06.000+03:00
+define D1748: difference in seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:06.000+03:00
+define D1749: seconds between @2068-01-19T03:14:06.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1750: difference in seconds between @2068-01-19T03:14:06.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1751: duration in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:06.000]
+define D1752: difference in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:06.000]
+define D1753: duration in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:06.000Z]
+define D1754: difference in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:06.000Z]
+define D1755: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000, @2068-01-19T03:14:06.000)
+define D1756: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:06.000Z)
+define D1757: seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:07.000
+define D1758: difference in seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:07.000
+define D1759: seconds between @2068-01-19T03:14:07.000 and @2000-01-01T00:00:00.000
+define D1760: difference in seconds between @2068-01-19T03:14:07.000 and @2000-01-01T00:00:00.000
+define D1761: seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:07.000Z
+define D1762: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:07.000Z
+define D1763: seconds between @2068-01-19T03:14:07.000Z and @2000-01-01T00:00:00.000Z
+define D1764: difference in seconds between @2068-01-19T03:14:07.000Z and @2000-01-01T00:00:00.000Z
+define D1765: seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:07.000+03:00
+define D1766: difference in seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:07.000+03:00
+define D1767: seconds between @2068-01-19T03:14:07.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1768: difference in seconds between @2068-01-19T03:14:07.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1769: duration in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:07.000]
+define D1770: difference in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:07.000]
+define D1771: duration in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:07.000Z]
+define D1772: difference in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:07.000Z]
+define D1773: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000, @2068-01-19T03:14:07.000)
+define D1774: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:07.000Z)
+define D1775: seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:07.999
+define D1776: difference in seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:07.999
+define D1777: seconds between @2068-01-19T03:14:07.999 and @2000-01-01T00:00:00.000
+define D1778: difference in seconds between @2068-01-19T03:14:07.999 and @2000-01-01T00:00:00.000
+define D1779: seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:07.999Z
+define D1780: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:07.999Z
+define D1781: seconds between @2068-01-19T03:14:07.999Z and @2000-01-01T00:00:00.000Z
+define D1782: difference in seconds between @2068-01-19T03:14:07.999Z and @2000-01-01T00:00:00.000Z
+define D1783: seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:07.999+03:00
+define D1784: difference in seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:07.999+03:00
+define D1785: seconds between @2068-01-19T03:14:07.999+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1786: difference in seconds between @2068-01-19T03:14:07.999+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1787: duration in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:07.999]
+define D1788: difference in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:07.999]
+define D1789: duration in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:07.999Z]
+define D1790: difference in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:07.999Z]
+define D1791: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000, @2068-01-19T03:14:07.999)
+define D1792: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:07.999Z)
+define D1793: seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:08.000
+define D1794: difference in seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:08.000
+define D1795: seconds between @2068-01-19T03:14:08.000 and @2000-01-01T00:00:00.000
+define D1796: difference in seconds between @2068-01-19T03:14:08.000 and @2000-01-01T00:00:00.000
+define D1797: seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:08.000Z
+define D1798: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:08.000Z
+define D1799: seconds between @2068-01-19T03:14:08.000Z and @2000-01-01T00:00:00.000Z
+define D1800: difference in seconds between @2068-01-19T03:14:08.000Z and @2000-01-01T00:00:00.000Z
+define D1801: seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:08.000+03:00
+define D1802: difference in seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:08.000+03:00
+define D1803: seconds between @2068-01-19T03:14:08.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1804: difference in seconds between @2068-01-19T03:14:08.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1805: duration in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:08.000]
+define D1806: difference in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:08.000]
+define D1807: duration in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:08.000Z]
+define D1808: difference in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:08.000Z]
+define D1809: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000, @2068-01-19T03:14:08.000)
+define D1810: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:08.000Z)
+define D1811: seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:09.000
+define D1812: difference in seconds between @2000-01-01T00:00:00.000 and @2068-01-19T03:14:09.000
+define D1813: seconds between @2068-01-19T03:14:09.000 and @2000-01-01T00:00:00.000
+define D1814: difference in seconds between @2068-01-19T03:14:09.000 and @2000-01-01T00:00:00.000
+define D1815: seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:09.000Z
+define D1816: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14:09.000Z
+define D1817: seconds between @2068-01-19T03:14:09.000Z and @2000-01-01T00:00:00.000Z
+define D1818: difference in seconds between @2068-01-19T03:14:09.000Z and @2000-01-01T00:00:00.000Z
+define D1819: seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:09.000+03:00
+define D1820: difference in seconds between @2000-01-01T00:00:00.000+03:00 and @2068-01-19T03:14:09.000+03:00
+define D1821: seconds between @2068-01-19T03:14:09.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1822: difference in seconds between @2068-01-19T03:14:09.000+03:00 and @2000-01-01T00:00:00.000+03:00
+define D1823: duration in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:09.000]
+define D1824: difference in seconds of Interval[@2000-01-01T00:00:00.000, @2068-01-19T03:14:09.000]
+define D1825: duration in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:09.000Z]
+define D1826: difference in seconds of Interval[@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:09.000Z]
+define D1827: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000, @2068-01-19T03:14:09.000)
+define D1828: CalculateAgeInSecondsAt(@2000-01-01T00:00:00.000Z, @2068-01-19T03:14:09.000Z)
+define D1829: minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:06:00.000
+define D1830: difference in minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:06:00.000
+define D1831: minutes between @4084-01-24T02:06:00.000 and @0001-01-01T00:00:00.000
+define D1832: difference in minutes between @4084-01-24T02:06:00.000 and @0001-01-01T00:00:00.000
+define D1833: minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:06:00.000Z
+define D1834: difference in minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:06:00.000Z
+define D1835: minutes between @4084-01-24T02:06:00.000Z and @0001-01-01T00:00:00.000Z
+define D1836: difference in minutes between @4084-01-24T02:06:00.000Z and @0001-01-01T00:00:00.000Z
+define D1837: minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:06:00.000+03:00
+define D1838: difference in minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:06:00.000+03:00
+define D1839: minutes between @4084-01-24T02:06:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1840: difference in minutes between @4084-01-24T02:06:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1841: duration in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:06:00.000]
+define D1842: difference in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:06:00.000]
+define D1843: duration in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:06:00.000Z]
+define D1844: difference in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:06:00.000Z]
+define D1845: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000, @4084-01-24T02:06:00.000)
+define D1846: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000Z, @4084-01-24T02:06:00.000Z)
+define D1847: minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:07:00.000
+define D1848: difference in minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:07:00.000
+define D1849: minutes between @4084-01-24T02:07:00.000 and @0001-01-01T00:00:00.000
+define D1850: difference in minutes between @4084-01-24T02:07:00.000 and @0001-01-01T00:00:00.000
+define D1851: minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:07:00.000Z
+define D1852: difference in minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:07:00.000Z
+define D1853: minutes between @4084-01-24T02:07:00.000Z and @0001-01-01T00:00:00.000Z
+define D1854: difference in minutes between @4084-01-24T02:07:00.000Z and @0001-01-01T00:00:00.000Z
+define D1855: minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:07:00.000+03:00
+define D1856: difference in minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:07:00.000+03:00
+define D1857: minutes between @4084-01-24T02:07:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1858: difference in minutes between @4084-01-24T02:07:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1859: duration in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:07:00.000]
+define D1860: difference in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:07:00.000]
+define D1861: duration in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:07:00.000Z]
+define D1862: difference in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:07:00.000Z]
+define D1863: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000, @4084-01-24T02:07:00.000)
+define D1864: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000Z, @4084-01-24T02:07:00.000Z)
+define D1865: minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:07:59.999
+define D1866: difference in minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:07:59.999
+define D1867: minutes between @4084-01-24T02:07:59.999 and @0001-01-01T00:00:00.000
+define D1868: difference in minutes between @4084-01-24T02:07:59.999 and @0001-01-01T00:00:00.000
+define D1869: minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:07:59.999Z
+define D1870: difference in minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:07:59.999Z
+define D1871: minutes between @4084-01-24T02:07:59.999Z and @0001-01-01T00:00:00.000Z
+define D1872: difference in minutes between @4084-01-24T02:07:59.999Z and @0001-01-01T00:00:00.000Z
+define D1873: minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:07:59.999+03:00
+define D1874: difference in minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:07:59.999+03:00
+define D1875: minutes between @4084-01-24T02:07:59.999+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1876: difference in minutes between @4084-01-24T02:07:59.999+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1877: duration in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:07:59.999]
+define D1878: difference in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:07:59.999]
+define D1879: duration in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:07:59.999Z]
+define D1880: difference in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:07:59.999Z]
+define D1881: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000, @4084-01-24T02:07:59.999)
+define D1882: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000Z, @4084-01-24T02:07:59.999Z)
+define D1883: minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:08:00.000
+define D1884: difference in minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:08:00.000
+define D1885: minutes between @4084-01-24T02:08:00.000 and @0001-01-01T00:00:00.000
+define D1886: difference in minutes between @4084-01-24T02:08:00.000 and @0001-01-01T00:00:00.000
+define D1887: minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:08:00.000Z
+define D1888: difference in minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:08:00.000Z
+define D1889: minutes between @4084-01-24T02:08:00.000Z and @0001-01-01T00:00:00.000Z
+define D1890: difference in minutes between @4084-01-24T02:08:00.000Z and @0001-01-01T00:00:00.000Z
+define D1891: minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:08:00.000+03:00
+define D1892: difference in minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:08:00.000+03:00
+define D1893: minutes between @4084-01-24T02:08:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1894: difference in minutes between @4084-01-24T02:08:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1895: duration in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:08:00.000]
+define D1896: difference in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:08:00.000]
+define D1897: duration in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:08:00.000Z]
+define D1898: difference in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:08:00.000Z]
+define D1899: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000, @4084-01-24T02:08:00.000)
+define D1900: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000Z, @4084-01-24T02:08:00.000Z)
+define D1901: minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:09:00.000
+define D1902: difference in minutes between @0001-01-01T00:00:00.000 and @4084-01-24T02:09:00.000
+define D1903: minutes between @4084-01-24T02:09:00.000 and @0001-01-01T00:00:00.000
+define D1904: difference in minutes between @4084-01-24T02:09:00.000 and @0001-01-01T00:00:00.000
+define D1905: minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:09:00.000Z
+define D1906: difference in minutes between @0001-01-01T00:00:00.000Z and @4084-01-24T02:09:00.000Z
+define D1907: minutes between @4084-01-24T02:09:00.000Z and @0001-01-01T00:00:00.000Z
+define D1908: difference in minutes between @4084-01-24T02:09:00.000Z and @0001-01-01T00:00:00.000Z
+define D1909: minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:09:00.000+03:00
+define D1910: difference in minutes between @0001-01-01T00:00:00.000+03:00 and @4084-01-24T02:09:00.000+03:00
+define D1911: minutes between @4084-01-24T02:09:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1912: difference in minutes between @4084-01-24T02:09:00.000+03:00 and @0001-01-01T00:00:00.000+03:00
+define D1913: duration in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:09:00.000]
+define D1914: difference in minutes of Interval[@0001-01-01T00:00:00.000, @4084-01-24T02:09:00.000]
+define D1915: duration in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:09:00.000Z]
+define D1916: difference in minutes of Interval[@0001-01-01T00:00:00.000Z, @4084-01-24T02:09:00.000Z]
+define D1917: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000, @4084-01-24T02:09:00.000)
+define D1918: CalculateAgeInMinutesAt(@0001-01-01T00:00:00.000Z, @4084-01-24T02:09:00.000Z)
+define D1919: milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:29Z
+define D1920: difference in milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:29Z
+define D1921: milliseconds between @2012-01-25T20:29Z and @2012-01-01T00:00:00.000Z
+define D1922: difference in milliseconds between @2012-01-25T20:29Z and @2012-01-01T00:00:00.000Z
+define D1923: milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31Z
+define D1924: difference in milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-25T20:31Z
+define D1925: milliseconds between @2012-01-25T20:31Z and @2012-01-01T00:00:00.000Z
+define D1926: difference in milliseconds between @2012-01-25T20:31Z and @2012-01-01T00:00:00.000Z
+define D1927: milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-26T00:00Z
+define D1928: difference in milliseconds between @2012-01-01T00:00:00.000Z and @2012-01-26T00:00Z
+define D1929: milliseconds between @2012-01-26T00:00Z and @2012-01-01T00:00:00.000Z
+define D1930: difference in milliseconds between @2012-01-26T00:00Z and @2012-01-01T00:00:00.000Z
+define D1931: seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:12Z
+define D1932: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:12Z
+define D1933: seconds between @2068-01-19T03:12Z and @2000-01-01T00:00:00.000Z
+define D1934: difference in seconds between @2068-01-19T03:12Z and @2000-01-01T00:00:00.000Z
+define D1935: seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14Z
+define D1936: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-19T03:14Z
+define D1937: seconds between @2068-01-19T03:14Z and @2000-01-01T00:00:00.000Z
+define D1938: difference in seconds between @2068-01-19T03:14Z and @2000-01-01T00:00:00.000Z
+define D1939: seconds between @2000-01-01T00:00:00.000Z and @2068-01-20T00:00Z
+define D1940: difference in seconds between @2000-01-01T00:00:00.000Z and @2068-01-20T00:00Z
+define D1941: seconds between @2068-01-20T00:00Z and @2000-01-01T00:00:00.000Z
+define D1942: difference in seconds between @2068-01-20T00:00Z and @2000-01-01T00:00:00.000Z
+define D1943: difference in milliseconds between @2012-01T and @2012-01-01T00:00:00.000
+define D1944: difference in milliseconds between @2012-01T and @2012-01-01T
+define D1945: milliseconds between @2012-01T and @2012-02-25T00:00:00.000
+define D1946: seconds between @1950-01-01T00:00:00.000 and @2020-01-01T00:00:00.000
+define D1947: difference in milliseconds between @2012-01-01T00:00:00.000 and @2012-02-01T00:00:00.000

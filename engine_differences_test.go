@@ -272,11 +272,21 @@ func differenceOracle(unit string, a, b diffOperand, frame int) string {
 	index := map[string]int{"years": 0, "months": 1, "weeks": 2, "days": 2, "hours": 3, "minutes": 4, "seconds": 5, "milliseconds": 6}[unit]
 	isTime := a.kind == "time" || b.kind == "time"
 	count := func(x, y int64) int64 { return boundaries(unit, x, y, a.offset, b.offset, frame, isTime) }
+	// A count is an Integer, from -2^31 to 2^31-1, and null past it; so is an
+	// uncertainty with a bound past it, whole (plan 022, decision D1).
+	const limit = 1 << 31
+	fits := func(n int64) bool { return n >= -limit && n < limit }
 	if a.precision >= index && b.precision >= index {
-		return strconv.FormatInt(count(a.start, b.start), 10)
+		if n := count(a.start, b.start); fits(n) {
+			return strconv.FormatInt(n, 10)
+		}
+		return "null"
 	}
 	low, high := count(a.end, b.start), count(a.start, b.end)
-	if low == high {
+	switch {
+	case !fits(low) || !fits(high):
+		return "null"
+	case low == high:
 		return strconv.FormatInt(low, 10)
 	}
 	return fmt.Sprintf("Interval[%d, %d]", low, high)

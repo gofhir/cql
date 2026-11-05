@@ -56,7 +56,7 @@ mutations = [
       "\tif maxLow.IsZero() {\n\t\treturn nil, nil\n\t}\n\tminLowDT := fptypes.NewDateTimeFromTime(minLow)\n"), HAND,
      "minutes between @0001-01-01T00:00Z and @0001-01-01T05:00:00.000Z = null, want Interval[299, 300]"),
     ("the area left out of the manifest",
-     ("engine_snapshot_test.go", '\t{"durationrange", 1675, true},\n', ""), run("TestEveryCorpusIsInTheManifest"),
+     ("engine_snapshot_test.go", '\t{"durationrange", 1948, true},\n', ""), run("TestEveryCorpusIsInTheManifest"),
      "durationrange.cql is not in snapshotAreas"),
     ("a negative span's leftover part of a second not borrowed",
      ("funcs/temporal.go", "\tcase seconds < 0 && nanos > 0:\n", "\tcase false:\n"), run("TestDurationsOverTheCalendarByHand"),

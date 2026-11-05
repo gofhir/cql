@@ -136,6 +136,13 @@ func calendarBetween(low, high fptypes.Value, unit string) (fptypes.Value, error
 	return fptypes.NewInteger(calendarPeriodsBetween(l, h, unit)), nil
 }
 
+// The XBetween functions below (YearsBetween to SecondsBetween, and
+// MillisecondsBetween in datetime_advanced.go) count whole periods and give the
+// number as it is, without the guarantee of an Integer: seconds past 68 years
+// are more than 2^31-1. The result of a CQL duration or difference is
+// DurationBetweenAt's and DifferenceBetweenAt's, which answer null where the
+// count is no Integer (plan 022, docs/plans/022-duration-out-of-range.md).
+
 // YearsBetween calculates the number of whole years between two dates.
 func YearsBetween(low, high fptypes.Value) (fptypes.Value, error) {
 	return calendarBetween(low, high, "year")

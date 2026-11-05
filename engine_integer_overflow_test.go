@@ -40,7 +40,8 @@ func TestAResultPastItsTypeIsNull(t *testing.T) {
 		"Sum({9223372036854775807L, 1L, -1L})": "9223372036854775807",
 		"Product({4611686018427387904L, 2L})":  "null",
 		"3037000499L * 3037000499L":            "9223372030926249001",
-		"milliseconds between @2000-01-01T00:00:00.000Z and @2020-01-01T00:00:00.000Z": "631152000000",
+		// A duration is an Integer too (plan 022): 631152000000 ms are past 2^31-1.
+		"milliseconds between @2000-01-01T00:00:00.000Z and @2020-01-01T00:00:00.000Z": "null",
 		"successor of 2147483647":           "null",
 		"predecessor of (-2147483648)":      "null",
 		"successor of 9223372036854775807L": "null",
