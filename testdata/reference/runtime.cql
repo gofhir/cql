@@ -42,7 +42,7 @@ define CoalesceIntDec: Coalesce(1, 2.5) // control
 define IntervalIntQuantity: start of Interval[100, 200 '1'] // control
 define IfListIntDec: if true then {1} else {2.5} // control
 define ToStringPromoted: ToString(if true then 1 else 2.5) // control
-// A Date among DateTimes is not promoted: see runtime.divergences.md.
+// A Date among DateTimes is promoted to a DateTime, as both references do (plan 019).
 define ListDateDateTime: First({@2020-01-01, @2020-01-01T10:00:00}) is DateTime
 define DistinctQuantity: distinct {1 'm', 100 'cm'} // not a control: see runtime.divergences.md
 define DistinctOffsets: distinct {@2020-01-01T10:00:00Z, @2020-01-01T07:00:00-03:00} // control

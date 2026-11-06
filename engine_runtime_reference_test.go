@@ -199,9 +199,6 @@ var decidedRuntimeAnswers = map[string]struct {
 		"the float 1e-7 is 0.0000000999…, which floors to 0.00000009"},
 	"QuantityDivisionUnscaled": {"Quantity(3.3333333333333333 'mg')", "the Decimal scale is the Decimal " +
 		"type's, and a Quantity keeps its digits: a dose in a small unit does not become 0 in that unit"},
-	"ListDateDateTime": {"Boolean(false)", "the numeric promotions to a list's common type are applied and Date to " +
-		"DateTime is not: a Date compared at the day is read as written and a DateTime is moved to an offset, so " +
-		"promoting it would change what every comparison it reaches answers"},
 }
 
 // disputedRuntimeAnswers are the definitions the references disagree on, each

@@ -38,6 +38,12 @@ type Result struct {
 	// not which node needs it.
 	ConversionsByDefine map[string][]Conversion
 
+	// DatePromotionsByDefine is how many Date to DateTime promotions each
+	// definition holds, the conversions ConversionsByDefine leaves out because
+	// they call no function. It is what the reference translator's ToDateTime
+	// nodes are compared against, definition by definition (plan 019).
+	DatePromotionsByDefine map[string]int
+
 	// Narrowings is the branch a choice-typed operand was read as, keyed by the
 	// node, for the places where the surrounding expression decides which branch
 	// it is asking about.
@@ -111,29 +117,31 @@ func (r *Result) TypeOf(expr ast.Expression) Type {
 // interval tests that need no model at all.
 func Check(lib *ast.Library, m Model) *Result {
 	c := &checker{
-		model:        m,
-		lib:          lib,
-		types:        map[ast.Expression]Type{},
-		conversions:  map[ast.Expression]Conversion{},
-		convByDefine: map[string][]Conversion{},
-		narrowings:   map[ast.Expression]Type{},
-		overloads:    map[ast.Expression]Overload{},
-		defines:      map[string]Type{},
-		defNodes:     map[string]*ast.ExpressionDef{},
-		funcNodes:    map[string][]*ast.FunctionDef{},
-		inProgress:   map[string]bool{},
-		params:       map[string]Type{},
-		terminology:  map[string]Type{},
+		model:          m,
+		lib:            lib,
+		types:          map[ast.Expression]Type{},
+		conversions:    map[ast.Expression]Conversion{},
+		convByDefine:   map[string][]Conversion{},
+		datePromotions: map[string]int{},
+		narrowings:     map[ast.Expression]Type{},
+		overloads:      map[ast.Expression]Overload{},
+		defines:        map[string]Type{},
+		defNodes:       map[string]*ast.ExpressionDef{},
+		funcNodes:      map[string][]*ast.FunctionDef{},
+		inProgress:     map[string]bool{},
+		params:         map[string]Type{},
+		terminology:    map[string]Type{},
 	}
 	c.run()
 	return &Result{
-		Types:               c.types,
-		Conversions:         c.conversions,
-		Narrowings:          c.narrowings,
-		Overloads:           c.overloads,
-		ConversionsByDefine: c.convByDefine,
-		Defines:             c.defines,
-		Diagnostics:         c.diags.sorted(),
+		Types:                  c.types,
+		Conversions:            c.conversions,
+		Narrowings:             c.narrowings,
+		Overloads:              c.overloads,
+		ConversionsByDefine:    c.convByDefine,
+		DatePromotionsByDefine: c.datePromotions,
+		Defines:                c.defines,
+		Diagnostics:            c.diags.sorted(),
 	}
 }
 
@@ -142,12 +150,13 @@ type checker struct {
 	model Model
 	lib   *ast.Library
 
-	types        map[ast.Expression]Type
-	conversions  map[ast.Expression]Conversion
-	narrowings   map[ast.Expression]Type
-	overloads    map[ast.Expression]Overload
-	convByDefine map[string][]Conversion
-	diags        Diagnostics
+	types          map[ast.Expression]Type
+	conversions    map[ast.Expression]Conversion
+	narrowings     map[ast.Expression]Type
+	overloads      map[ast.Expression]Overload
+	convByDefine   map[string][]Conversion
+	datePromotions map[string]int
+	diags          Diagnostics
 
 	defines    map[string]Type
 	defNodes   map[string]*ast.ExpressionDef
@@ -185,6 +194,7 @@ func (c *checker) run() {
 	for _, def := range c.lib.Statements {
 		c.defNodes[def.Name] = def
 	}
+	c.promoteParameterDefaults()
 	// Walk in source order rather than following references, so that a
 	// diagnostic's position is the first place a reader would look. Definitions
 	// referenced before they are declared are resolved on demand and memoized.
@@ -225,6 +235,20 @@ func (c *checker) collectParameters() {
 			c.params[p.Name] = c.infer(p.Default)
 		default:
 			c.params[p.Name] = Unknown
+		}
+	}
+}
+
+// promoteParameterDefaults converts the default of a parameter with a
+// declared type to it, as the translator writes ToDateTime into `parameter MP
+// Interval<DateTime> default Interval[@2020-03-01, @2020-03-05]` (probe019p).
+// Nothing else is checked or converted here: only the Date promotion is, as it
+// is everywhere in plan 019. It runs once every parameter, function and
+// definition is known, since a default may name one declared after it.
+func (c *checker) promoteParameterDefaults() {
+	for _, p := range c.lib.Parameters {
+		if p.Type != nil && p.Default != nil {
+			c.promoteDate(p.Default, c.infer(p.Default), c.params[p.Name])
 		}
 	}
 }
@@ -448,16 +472,27 @@ func (c *checker) convert(expr ast.Expression, conv Conversion) {
 	if c.speculative > 0 {
 		return
 	}
-	// A conversion that names no function is recorded only when it is a
-	// numeric promotion. The reference translator inserts ToDecimal and
-	// ToQuantity for those, and leaving them unrecorded left `{1, 1.0}` holding
-	// an Integer and a Decimal. The other system conversion, Date to DateTime,
-	// stays unrecorded: a Date compared at the day is read as written, and a
-	// DateTime is moved to an offset (see eval.readAsWritten).
-	if conv.Function == "" && !NumericPromotion(c.types[expr], conv.Target) {
+	// A model function followed by a Date promotion is one conversion: the
+	// FHIR.date of `Patient.birthDate` reaches a Date through FHIRHelpers.ToDate
+	// when an operand converts it, and a DateTime next to a DateTime when the
+	// operator it sits in asks for that. The function stays, and the target
+	// becomes the DateTime (see eval.applyPlannedConversion).
+	if prev, already := c.conversions[expr]; already {
+		if prev.Function != "" && DatePromotion(prev.Target, conv.Target) {
+			prev.Target = conv.Target
+			c.conversions[expr] = prev
+			c.retargetByDefine(prev)
+			c.datePromotions[c.currentDefine]++
+		}
 		return
 	}
-	if _, already := c.conversions[expr]; already {
+	// A conversion that names no function is recorded only when it is a
+	// promotion: a numeric one, which the reference translator writes as
+	// ToDecimal and ToQuantity (leaving it unrecorded left `{1, 1.0}` holding an
+	// Integer and a Decimal), or Date to DateTime, which it writes as ToDateTime
+	// next to a DateTime (plan 019; the decision of the #132 to leave it out is
+	// reverted there).
+	if conv.Function == "" && !NumericPromotion(c.types[expr], conv.Target) && !DatePromotion(c.types[expr], conv.Target) {
 		return
 	}
 	c.conversions[expr] = conv
@@ -466,6 +501,21 @@ func (c *checker) convert(expr ast.Expression, conv Conversion) {
 	// calls nothing.
 	if conv.Function != "" {
 		c.convByDefine[c.currentDefine] = append(c.convByDefine[c.currentDefine], conv)
+	}
+	if conv.Function == "" && DatePromotion(c.types[expr], conv.Target) {
+		c.datePromotions[c.currentDefine]++
+	}
+}
+
+// retargetByDefine keeps the conversion listed under its definition in step with
+// the one recorded against its node, which a Date promotion has just retargeted.
+func (c *checker) retargetByDefine(conv Conversion) {
+	list := c.convByDefine[c.currentDefine]
+	for i := range list {
+		if list[i].Function == conv.Function && list[i].Elementwise == conv.Elementwise && DatePromotion(list[i].Target, conv.Target) {
+			list[i].Target = conv.Target
+			return
+		}
 	}
 }
 

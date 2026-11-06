@@ -68,12 +68,10 @@ func (c *checker) infer(expr ast.Expression) Type {
 	case *ast.MembershipExpression:
 		return c.record(e, c.inferMembership(e))
 	case *ast.DurationBetween:
-		c.expectTemporalOrNumeric(e.Low)
-		c.expectTemporalOrNumeric(e.High)
+		c.promoteDatePair(e.Low, c.expectTemporalOrNumeric(e.Low), e.High, c.expectTemporalOrNumeric(e.High))
 		return c.record(e, Integer)
 	case *ast.DifferenceBetween:
-		c.expectTemporalOrNumeric(e.Low)
-		c.expectTemporalOrNumeric(e.High)
+		c.promoteDatePair(e.Low, c.expectTemporalOrNumeric(e.Low), e.High, c.expectTemporalOrNumeric(e.High))
 		return c.record(e, Integer)
 	case *ast.DurationOf:
 		c.inferIntervalOperand(e.Operand, e)
@@ -540,11 +538,12 @@ func (c *checker) inferIntervalConstructor(e *ast.IntervalExpression) Type {
 		return &Interval{Point: Unknown}
 	}
 	// Both bounds reach the point type, as a list's elements reach theirs:
-	// Interval[1, 2.5] is an Interval<Decimal> with a Decimal start. Only a
-	// numeric promotion is recorded here; a bound read from FHIR is converted
-	// where it is used, as it was.
-	c.promoteRecorded(e.Low, point)
-	c.promoteRecorded(e.High, point)
+	// Interval[1, 2.5] is an Interval<Decimal> with a Decimal start, and
+	// Interval[@2020-03-01, @2020-03-01T10:00:00.000] an Interval<DateTime> with
+	// a DateTime start. Only a numeric or a Date promotion is recorded here; a
+	// bound read from FHIR is converted where it is used, as it was.
+	c.promoteRecorded(e.Low, point, true)
+	c.promoteRecorded(e.High, point, true)
 	return &Interval{Point: point}
 }
 
@@ -671,6 +670,9 @@ func (c *checker) inferBetween(e *ast.BetweenExpression) Type {
 	}
 	c.expectTyped(e.Low, low, want)
 	c.expectTyped(e.High, high, want)
+	// A Date operand between DateTime bounds is the DateTime the translator
+	// converts it to, in both comparisons `between` is made of.
+	c.promoteDate(e.Operand, operand, want)
 	return Boolean
 }
 
@@ -702,7 +704,54 @@ func (c *checker) inferTiming(e *ast.TimingExpression) Type {
 		c.narrowChoiceOperand(e.Right, right, iv.Point)
 	}
 	c.recordOverload(e, left, right)
+	c.promoteTiming(e, left, right)
 	return Boolean
+}
+
+// promoteTiming records the Date promotion of a timing expression: whichever
+// operand is a Date, or holds Dates, where the other is a DateTime or holds
+// DateTimes (plan 019). A point and the interval or list that holds it are
+// reconciled only in the direction the translator resolves, the point as the
+// element of `in`, `during` and `included in` and as the second operand of
+// `includes`: it refuses the others (`Interval<DateTime> during Date`), and
+// they are left as they were.
+func (c *checker) promoteTiming(e *ast.TimingExpression, left, right Type) {
+	switch e.Operator.Kind {
+	case ast.TimingIncludes:
+		if c.promoteDateInDirect(e.Right, right, e.Left, left) {
+			return
+		}
+	case ast.TimingIncludedIn, ast.TimingDuring:
+		if c.promoteDateInDirect(e.Left, left, e.Right, right) {
+			return
+		}
+	}
+	c.promoteDatePair(e.Left, left, e.Right, right)
+}
+
+// promoteDateInDirect is promoteDateIn where the container is a list or an
+// interval and the element is not one of the same kind, and reports whether it
+// recorded anything.
+func (c *checker) promoteDateInDirect(element ast.Expression, et Type, container ast.Expression, ct Type) bool {
+	before := len(c.conversions)
+	switch ct.(type) {
+	case *List, *Interval:
+	default:
+		return false
+	}
+	// Two lists, or two intervals, are reconciled as wholes.
+	switch et.(type) {
+	case *List:
+		if _, ok := ct.(*List); ok {
+			return false
+		}
+	case *Interval:
+		if _, ok := ct.(*Interval); ok {
+			return false
+		}
+	}
+	c.promoteDateIn(element, et, container, ct)
+	return len(c.conversions) != before
 }
 
 // inferTimingOperand types one side of a timing expression, converting a model
@@ -815,6 +864,13 @@ func (c *checker) inferMembership(e *ast.MembershipExpression) Type {
 	if iv, isInterval := right.(*Interval); isInterval {
 		c.narrowChoiceOperand(element, left, iv.Point)
 	}
+	// The Date of a membership in DateTimes is converted, or the Dates the
+	// container holds (plan 019).
+	container := e.Right
+	if e.Operator == "contains" {
+		container = e.Left
+	}
+	c.promoteDateIn(element, left, container, right)
 	switch right.(type) {
 	case *List, *Interval, unknownType, nil:
 		return Boolean
@@ -914,17 +970,21 @@ func (c *checker) inferSetAggregate(e *ast.SetAggregateExpression) Type {
 }
 
 // expectTemporalOrNumeric types an operand of a duration or difference, which
-// both need something that can be subtracted.
-func (c *checker) expectTemporalOrNumeric(expr ast.Expression) {
+// both need something that can be subtracted, and answers the type it has once
+// a model type is converted.
+func (c *checker) expectTemporalOrNumeric(expr ast.Expression) Type {
 	if expr == nil {
-		return
+		return Unknown
 	}
 	t := c.infer(expr)
 	if named, ok := t.(*Named); ok && named.Model != systemModel && c.model != nil {
 		// A FHIR dateTime is a System.DateTime once converted, and every
 		// duration between two of them depends on it.
-		c.convertToSystem(expr, named)
+		if converted, ok := c.convertToSystem(expr, named); ok {
+			return converted
+		}
 	}
+	return t
 }
 
 // convertToSystem applies the model's conversion from a model type to a system
@@ -963,14 +1023,56 @@ func (c *checker) coerceRecorded(expr ast.Expression, want Type) {
 	}
 }
 
-// promoteRecorded is coerceRecorded for the places that only promote numbers:
-// it records the conversion when it is a numeric promotion and nothing else.
-func (c *checker) promoteRecorded(expr ast.Expression, want Type) {
+// promoteRecorded is coerceRecorded for the places that only promote: it records
+// the conversion when it is a numeric promotion, or a Date promotion where dates
+// is true, and nothing else.
+func (c *checker) promoteRecorded(expr ast.Expression, want Type, dates bool) {
 	if expr == nil || IsUnknown(want) {
 		return
 	}
-	if got, ok := c.types[expr]; ok && NumericPromotion(got, want) {
+	if got, ok := c.types[expr]; ok && (NumericPromotion(got, want) || dates && DatePromotion(got, want)) {
 		c.coerceRecorded(expr, want)
+	}
+}
+
+// promoteDate records that an expression of type got is promoted from a Date to
+// the DateTime want, directly or inside a list or an interval, and reports
+// whether it was. It records nothing else: the comparison and timing operators
+// work out which side to convert from the types of both, and a numeric or model
+// conversion at those places is not part of plan 019.
+func (c *checker) promoteDate(expr ast.Expression, got, want Type) bool {
+	if expr == nil || !DatePromotion(got, want) {
+		return false
+	}
+	c.convert(expr, Conversion{Cost: costImplicit, Target: want})
+	return true
+}
+
+// promoteDatePair promotes whichever of two operands is the Date where the other
+// is a DateTime, as the reference translator inserts ToDateTime on the Date
+// side of `=`, `<`, `between`, the time phrases, and the operators of two
+// intervals or two lists (plan 019).
+func (c *checker) promoteDatePair(a ast.Expression, at Type, b ast.Expression, bt Type) {
+	if !c.promoteDate(a, at, bt) {
+		c.promoteDate(b, bt, at)
+	}
+}
+
+// promoteDateIn is promoteDatePair for an element and the list or interval that
+// holds it, in the direction the translator resolves: the element is promoted
+// to the container's element type, or the container to one of the element's.
+func (c *checker) promoteDateIn(element ast.Expression, et Type, container ast.Expression, ct Type) {
+	var wanted, widened Type
+	switch k := ct.(type) {
+	case *List:
+		wanted, widened = k.Element, &List{Element: et}
+	case *Interval:
+		wanted, widened = k.Point, &Interval{Point: et}
+	default:
+		return
+	}
+	if !c.promoteDate(element, et, wanted) {
+		c.promoteDate(container, ct, widened)
 	}
 }
 

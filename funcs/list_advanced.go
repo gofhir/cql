@@ -63,22 +63,28 @@ func Mode(c fptypes.Collection) fptypes.Value {
 	// Count occurrences using string representation as key
 	counts := make(map[string]int)
 	valMap := make(map[string]fptypes.Value)
+	var order []string
 	for _, item := range c {
 		if item == nil {
 			continue
 		}
 		key := modeKey(item)
+		if counts[key] == 0 {
+			order = append(order, key)
+			valMap[key] = item
+		}
 		counts[key]++
-		valMap[key] = item
 	}
 	if len(counts) == 0 {
 		return nil
 	}
 	maxKey := ""
 	maxCount := 0
-	for key, count := range counts {
-		if count > maxCount {
-			maxCount = count
+	// A tie goes to the value that comes first, so that the answer does not
+	// depend on the order a map is walked in.
+	for _, key := range order {
+		if counts[key] > maxCount {
+			maxCount = counts[key]
 			maxKey = key
 		}
 	}

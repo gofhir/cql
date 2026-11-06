@@ -148,6 +148,10 @@ func (c *checker) inferComparableOperands(e *ast.BinaryExpression) {
 	if IsUnknown(left) || IsUnknown(right) || Equal(left, Any) || Equal(right, Any) {
 		return
 	}
+	// A Date next to a DateTime is converted, as the translator writes ToDateTime
+	// around the Date of `@2020-03-01 = @2020-03-01T10:00:00.000`, a list of them
+	// or an interval of them (plan 019).
+	c.promoteDatePair(e.Left, left, e.Right, right)
 	if _, ok := Convertible(left, right, c.model); ok {
 		return
 	}
@@ -218,9 +222,14 @@ func (c *checker) inferBinaryMembership(e *ast.BinaryExpression) Type {
 	if e.Operator == ast.OpContains {
 		container = e.Left
 	}
-	c.infer(e.Left)
-	c.infer(e.Right)
+	left := c.infer(e.Left)
+	right := c.infer(e.Right)
 	t := c.types[container]
+	if e.Operator == ast.OpContains {
+		c.promoteDateIn(e.Right, right, e.Left, left)
+	} else {
+		c.promoteDateIn(e.Left, left, e.Right, right)
+	}
 	switch t.(type) {
 	case *List, *Interval, unknownType, nil:
 		return Boolean
@@ -265,6 +274,11 @@ func (c *checker) inferSetOperation(e *ast.BinaryExpression) Type {
 	left, right = c.convertedToInterval(e.Left, left), c.convertedToInterval(e.Right, right)
 	if l, ok := left.(*Interval); ok {
 		if r, ok := right.(*Interval); ok {
+			// The two intervals meet at a type before the operator is applied:
+			// union, intersect and except of an Interval<Date> and an
+			// Interval<DateTime> convert the Date one, as the translator does.
+			// The lists above do not: it resolves them with As to a Choice (plan 019).
+			c.promoteDatePair(e.Left, left, e.Right, right)
 			return &Interval{Point: Common(l.Point, r.Point, c.model)}
 		}
 	}

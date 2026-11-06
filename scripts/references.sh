@@ -25,7 +25,7 @@ trap 'rm -rf "$work"' EXIT
 java_image=maven:3.10.0-eclipse-temurin-25
 node_image=node:24.22.1
 
-areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings quantitystrings decimalliterals suitegaps limits limitsexp conversions durations uncertainty ages differences durationrange intervalbounds"
+areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings quantitystrings decimalliterals suitegaps limits limitsexp conversions durations uncertainty ages differences durationrange intervalbounds mixeddates"
 
 # The harness, built from what it pins.
 docker run --rm -v "$harness":/w -w /w "$java_image" sh -c \
@@ -52,10 +52,10 @@ docker run --rm -v "$harness":/w -v "$work/examples":/x -w /w "$java_image" \
 generate() {
 	out=$1
 	mkdir -p "$out/in/lib" "$out/elm" "$out/testdata/snapshots" "$out/testdata/reference" \
-		"$out/testdata/membership" "$out/testdata/membershipmodel" "$out/testdata/ages"
+		"$out/testdata/membership" "$out/testdata/membershipmodel" "$out/testdata/ages" "$out/testdata/mixeddates"
 	cp "$repo/fhirhelpers/FHIRHelpers-4.0.1.cql" "$out/in/lib/"
 	cp -R "$repo/testdata/snapshots" "$repo/testdata/reference" "$repo/testdata/membership" \
-		"$repo/testdata/membershipmodel" "$repo/testdata/ages" "$out/in/"
+		"$repo/testdata/membershipmodel" "$repo/testdata/ages" "$repo/testdata/mixeddates" "$out/in/"
 	cp "$repo/fhirhelpers/FHIRHelpers-4.0.1.cql" "$out/in/reference/"
 	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" "$java_image" sh -ec '
 		java -cp "out:lib/*" Translate /o/in/lib/FHIRHelpers-4.0.1.cql /o/in/lib > /o/elm/FHIRHelpers.elm.json
@@ -72,6 +72,7 @@ generate() {
 		java -cp "out:lib/*" Translate /o/in/reference/runtime.cql /o/in/reference > /o/elm/runtime.elm.json
 		java -cp "out:lib/*" Translate /o/in/membership/cases.cql /o/in/membership > /o/testdata/membership/cases.elm.json
 		java -cp "out:lib/*" Translate /o/in/ages/cases.cql /o/in/lib > /o/testdata/ages/cases.elm.json
+		java -cp "out:lib/*" Translate /o/in/mixeddates/cases.cql /o/in/lib > /o/testdata/mixeddates/cases.elm.json
 		for d in absent present; do
 			java -cp "out:lib/*" Evaluate -each /o/in/membershipmodel/cases.cql /o/in/lib /o/in/membershipmodel/$d.json \
 				/o/testdata/membershipmodel/cases.elm.json > /o/testdata/membershipmodel/$d.java.json
@@ -86,6 +87,8 @@ generate() {
 		node js/evaluate.js /o/elm/runtime.elm.json /o/in/reference/runtime.cql > /o/testdata/reference/runtime.expected.js.json'
 	(cd "$repo" && go run ./internal/referenceharness/differential/nodes -cql testdata/snapshots/fhirmembership.cql \
 		-elm "$out/elm/fhirmembership.elm.json" > "$out/testdata/snapshots/fhirmembership.nodes.tsv")
+	(cd "$repo" && go run ./internal/referenceharness/differential/nodes -promotions -cql testdata/snapshots/mixeddates.cql \
+		-elm "$out/elm/mixeddates.elm.json" > "$out/testdata/snapshots/mixeddates.promotions.tsv")
 	(cd "$repo" && go run ./internal/referenceharness/fold -in "$out/elm/probe.elm.json" -source probe.cql \
 		-out "$out/testdata/reference/probe.expected.json")
 }
@@ -107,7 +110,7 @@ for f in $(cd "$work/a" && find testdata -type f | sort); do
 	fi
 done
 # A reference in the repository the harness no longer writes is stale too.
-for f in $(cd "$repo" && ls testdata/snapshots/*.java.json testdata/snapshots/*.js.json testdata/snapshots/*.nodes.tsv \
+for f in $(cd "$repo" && ls testdata/snapshots/*.java.json testdata/snapshots/*.js.json testdata/snapshots/*.nodes.tsv testdata/snapshots/*.promotions.tsv testdata/mixeddates/*.elm.json \
 	testdata/reference/*.java.json testdata/reference/*.expected*.json testdata/membership/*.elm.json testdata/ages/*.elm.json \
 	testdata/membershipmodel/*.elm.json testdata/membershipmodel/*.java.json); do
 	if [ ! -f "$work/a/$f" ]; then

@@ -348,3 +348,29 @@ func NumericPromotion(from, to Type) bool {
 	}
 	return false
 }
+
+// DatePromotion reports whether reaching to from from promotes a Date to a
+// DateTime, directly or inside a list or an interval: the one implicit
+// conversion between System types, besides the numeric ones, that names no
+// function. CQL 1.5.3, Developer's Guide, Implicit Conversions, table 3-J, and
+// "ToDateTime(Date) Converts a Date value to a DateTime with all time
+// components unspecified and the timezone offset of the request". A tuple is
+// not walked: the reference translator converts no field of one.
+func DatePromotion(from, to Type) bool {
+	if from == nil || to == nil {
+		return false
+	}
+	switch t := to.(type) {
+	case *List:
+		if f, ok := from.(*List); ok {
+			return DatePromotion(f.Element, t.Element)
+		}
+	case *Interval:
+		if f, ok := from.(*Interval); ok {
+			return DatePromotion(f.Point, t.Point)
+		}
+	case *Named:
+		return Equal(t, DateTime) && Equal(from, Date)
+	}
+	return false
+}

@@ -153,21 +153,6 @@ The Java engine floors these to 8 places as well, and this engine does not:
   the k — checked in decimal — the answer is k/q; anything else floors as the
   Java engine floors it, so `Log(999.999999999999, 10)` is 2.99999999 in both.
 
-## Decided: a Date among DateTimes stays a Date
-
-```cql
-define ListDateDateTime: First({@2020-01-01, @2020-01-01T10:00:00}) is DateTime
-// Java: true   cql-execution: true   this engine: false
-```
-
-The parts of a list, an if or a case reach the type they have in common:
-`{1, 1.0}` is two Decimals and `{1 'mg', 2}` two Quantities, as the reference
-translator makes them. The other implicit conversion it inserts, Date to
-DateTime, this engine does not apply. A Date compared at the day is read as
-written, and a DateTime at an offset is moved to it (see `readAsWritten`), so
-promoting one would change what every comparison it reaches answers. That is a
-larger question than the list's type, and it is left for its own change.
-
 ## Disputed, and settled by the specification: a null operand of union or except
 
 ```cql

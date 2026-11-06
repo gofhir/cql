@@ -167,6 +167,12 @@ func TestCodeOperationsTellCodesApart(t *testing.T) {
 			"Tuple { c: Code { code: 'x' }, n: 1.0 }, Tuple { c: Code { code: 'x' }, n: 2 }, Tuple { c: Code { code: 'x' }, n: 2 }, " +
 			"Tuple { c: Code { code: 'x' }, n: 2 } }).n = 1", "true", modeByADR},
 		{"Mode tells '' from null inside a tuple", "Mode({ Tuple { c: Code { code: 'x' } }, Tuple { c: Code { code: 'x' } }, Tuple { c: Code { code: 'x', system: '' } } }).c.system is null", "true", modeByADR},
+		// The same cases with the minority value first: a tie broken by the first
+		// occurrence (as the Java engine does) hides a key that joins the two
+		// values when the majority comes first.
+		{"Mode tells Codes apart inside a list, the minority first", "Mode({ { Code { code: 'x', version: '2' } }, { Code { code: 'x', version: '1' } }, { Code { code: 'x', version: '1' } } })[0].version", `"1"`, modeByADR},
+		{"Mode tells '' from null inside a tuple, the minority first", "Mode({ Tuple { c: Code { code: 'x', system: '' } }, Tuple { c: Code { code: 'x' } }, Tuple { c: Code { code: 'x' } } }).c.system is null", "true", modeByADR},
+		{"Mode tells '' from null, the minority first", "Mode({ Code { code: 'x' }, Code { code: 'x', system: '' }, Code { code: 'x', system: '' } }).system is null", "false", modeByADR},
 		{"Mode tells displays apart", "Mode({ Code { code: 'x', display: 'a' }, Code { code: 'x', display: 'b' }, Code { code: 'x', display: 'b' } }).display", `"b"`, javaWrong},
 		{"a query's return keeps Codes of two displays", "Count(({ Code { code: 'x', display: 'a' }, Code { code: 'x', display: 'b' } }) C return C)", "Integer 2", ""},
 		{"a query's return keeps '' apart from null", "Count(({ Code { code: 'x', system: '' }, Code { code: 'x' } }) C return C)", "Integer 2", ""},
