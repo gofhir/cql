@@ -230,11 +230,15 @@ func (c *checker) inferFunctionCall(e *ast.FunctionCall) Type {
 	if t, ok := systemFunctionType(e.Name, args, c.model); ok {
 		// Coalesce answers one of its arguments, and each has to reach the type
 		// they have in common, as the parts of a list do: Coalesce(1, 2.5) is a
-		// Decimal whichever argument it answers. Only the numeric promotion is
-		// recorded; a FHIR argument is answered as it was.
+		// Decimal whichever argument it answers. Only the numeric promotion and
+		// the Date promotion are recorded; a FHIR argument is answered as it was.
+		// With a null first the translator resolves Coalesce(null, @2020-03-01,
+		// @2020-03-01T10:00:00.000) to a Choice and converts nothing (elmconv-c
+		// D0, D1), so the dates are promoted only where the first is not a null.
 		if strings.EqualFold(e.Name, "Coalesce") && len(exprs) > 1 {
+			dates := !isAny(c.types[exprs[0]])
 			for _, arg := range exprs {
-				c.promoteRecorded(arg, t)
+				c.promoteRecorded(arg, t, dates)
 			}
 		}
 		// Power with a negative exponent written as one is a Decimal, as the

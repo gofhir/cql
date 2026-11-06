@@ -493,7 +493,8 @@ func (e *Evaluator) evalAndConvert(expr ast.Expression) (fptypes.Value, error) {
 // actually cares, than silently emptied here.
 func (e *Evaluator) applyPlannedConversion(conv sema.Conversion, v fptypes.Value) (fptypes.Value, error) {
 	if conv.Function == "" {
-		return promoteNumbers(v, conv.Target), nil
+		promoted, err := e.promoteDates(promoteNumbers(v, conv.Target), conv.Target)
+		return promoted, err
 	}
 	// A model conversion may be followed by a numeric promotion, and the target
 	// says so: FHIR.integer reaching a Decimal is FHIRHelpers.ToInteger and
@@ -512,10 +513,80 @@ func (e *Evaluator) applyPlannedConversion(conv sema.Conversion, v fptypes.Value
 	if converted == nil {
 		return v, nil
 	}
-	if !promotesNumbers(conv.Target) {
-		return converted, nil
+	// A model function may be followed by a Date promotion as well: a FHIR.date
+	// reaching a DateTime is FHIRHelpers.ToDate and then ToDateTime.
+	if promotesNumbers(conv.Target) {
+		converted = promoteNumbers(converted, conv.Target)
 	}
-	return promoteNumbers(converted, conv.Target), nil
+	return e.promoteDates(converted, conv.Target)
+}
+
+// promoteDates applies the Date promotion the semantic phase recorded, following
+// the shape of the type it promotes to as promoteNumbers does: each element of a
+// list, both bounds of an interval, or the value itself. A Date is converted
+// with ToDateTime and placed at the request's offset like any DateTime entering
+// the engine, as the explicit `ToDateTime` is (plan 019); a value that is not a
+// Date is left as it is.
+func (e *Evaluator) promoteDates(v fptypes.Value, to sema.Type) (fptypes.Value, error) {
+	promoted, _, err := e.promoteDatesIn(v, to)
+	return promoted, err
+}
+
+func (e *Evaluator) promoteDatesIn(v fptypes.Value, to sema.Type) (fptypes.Value, bool, error) {
+	switch t := to.(type) {
+	case *sema.List:
+		list, ok := v.(cqltypes.List)
+		if !ok {
+			return v, false, nil
+		}
+		var out fptypes.Collection
+		for i, el := range list.Values {
+			promoted, changed, err := e.promoteDatesIn(el, t.Element)
+			if err != nil {
+				return nil, false, err
+			}
+			if changed && out == nil {
+				out = make(fptypes.Collection, len(list.Values))
+				copy(out, list.Values[:i])
+			}
+			if out != nil {
+				out[i] = promoted
+			}
+		}
+		if out == nil {
+			return v, false, nil
+		}
+		return cqltypes.NewList(out), true, nil
+	case *sema.Interval:
+		iv, ok := v.(cqltypes.Interval)
+		if !ok {
+			return v, false, nil
+		}
+		low, lowChanged, err := e.promoteDatesIn(iv.Low, t.Point)
+		if err != nil {
+			return nil, false, err
+		}
+		high, highChanged, err := e.promoteDatesIn(iv.High, t.Point)
+		if err != nil {
+			return nil, false, err
+		}
+		if !lowChanged && !highChanged {
+			return v, false, nil
+		}
+		return cqltypes.NewInterval(low, high, iv.LowClosed, iv.HighClosed), true, nil
+	}
+	if !sema.Equal(to, sema.DateTime) {
+		return v, false, nil
+	}
+	date, ok := v.(fptypes.Date)
+	if !ok {
+		return v, false, nil
+	}
+	converted, err := funcs.ToDateTime(date)
+	if err != nil || converted == nil {
+		return v, false, err
+	}
+	return e.situate(converted), true, nil
 }
 
 // promoteNumbers applies a numeric promotion the semantic phase recorded — the

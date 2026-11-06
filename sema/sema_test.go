@@ -524,11 +524,29 @@ func TestANumericPromotionIsRecordedButCallsNothing(t *testing.T) {
 	if promoted != 1 {
 		t.Errorf("%d promotions to Decimal recorded, want 1 (the Integer in {1, 2.5})", promoted)
 	}
-	// Date to DateTime is not a promotion this records.
-	for _, conv := range result.Conversions {
+	// Date to DateTime is recorded too (plan 019, which reverts the decision of
+	// the #132 to leave it out): the reference translator inserts ToDateTime
+	// around the Date bound of `Interval[@2020-03-01, @2020-03-01T10:00:00.000]`
+	// (scratchpad r019, elmconv.tsv D40), CQL 1.5.3 (https://cql.hl7.org/N1A/),
+	// Developer's Guide, Implicit Conversions, table 3-J. It calls no function,
+	// like the numeric one.
+	if got := result.ConversionsByDefine["D"]; len(got) != 0 {
+		t.Errorf("ConversionsByDefine[D] = %+v, want none: a promotion calls no function", got)
+	}
+	datePromoted := 0
+	for node, conv := range result.Conversions {
 		if conv.Function == "" && sema.Equal(conv.Target, sema.DateTime) {
-			t.Errorf("a Date to DateTime conversion was recorded: %+v", conv)
+			datePromoted++
+			if got := result.Types[node]; !sema.Equal(got, sema.Date) {
+				t.Errorf("a Date to DateTime conversion was recorded against a %v: %+v", got, conv)
+			}
 		}
+	}
+	if datePromoted != 1 {
+		t.Errorf("%d promotions to DateTime recorded, want 1 (the Date in Interval[@2020-01-01, @2020-01-02T10:00:00])", datePromoted)
+	}
+	if got := result.DatePromotionsByDefine["D"]; got != 1 {
+		t.Errorf("DatePromotionsByDefine[D] = %d, want 1", got)
 	}
 }
 

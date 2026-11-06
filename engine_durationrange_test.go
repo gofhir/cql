@@ -70,8 +70,6 @@ func TestDurationsOverTheCalendarByHand(t *testing.T) {
 		// Below 292 years, and the difference, which never used a Duration.
 		{"days between @1900-01-01 and @2020-01-01", "43829"},
 		{"hours between @1900-01-01T00:00:00.000 and @2020-01-01T00:00:00.000", "1051896"},
-		// A Date beside a DateTime (plan 019) is a Date at the evaluation's midnight.
-		{"days between @2012-01-01 and @2012-01-05T00:00:00.000", "4"},
 		{"difference in days between @0001-01-01 and @9999-12-31", "3652058"},
 		{"difference in hours between @0001-01-01T00:00:00.000 and @9999-12-31T00:00:00.000", "87649392"},
 	} {
@@ -80,6 +78,21 @@ func TestDurationsOverTheCalendarByHand(t *testing.T) {
 				t.Errorf("imported %v, %s = %s, want %s", imported, tt.expr, got, tt.want)
 			}
 		}
+	}
+	// Compiled only: the ELM this engine exports does not write the implicit
+	// ToDateTime (plan 019, backlog 1c37), so the imported library holds a Date.
+	// A Date beside a DateTime is the DateTime with its time unspecified (plan
+	// 019; CQL 1.5.3, https://cql.hl7.org/N1A/, Developer's Guide, Implicit
+	// Conversions: "ToDateTime(Date) Converts a Date value to a DateTime with
+	// all time components unspecified"), so the days to a time of day are an
+	// uncertainty, as in Appendix B, Duration: `days between @2017-08-07T17:00
+	// and @2017-08-14T` is [6, 7]. cql-execution gives Uncertainty[3, 4] here,
+	// and so does this engine for ToDateTime(@2012-01-01) written out; Java
+	// 5.4.0 gives 4 (snapshot area mixeddates), where the same
+	// uncertainty is [6, 29] in hours.
+	const expr = "days between @2012-01-01 and @2012-01-05T00:00:00.000"
+	if got := differenceAt(t, expr, -3*60, false); got != "Interval[3, 4]" {
+		t.Errorf("%s = %s, want Interval[3, 4]", expr, got)
 	}
 }
 

@@ -153,17 +153,18 @@ func TestDurationOfAnIntervalIsBetweenItsStartAndEnd(t *testing.T) {
 	}
 }
 
-// TestAnIntervalPromotedToDateTimeKeepsItsDate documents a limitation that plan
-// 019 resolves: the compiler types the `if` as Interval<DateTime>, but at run
-// time the interval still holds Dates (sema/check.go does not convert a Date
-// next to a DateTime), so its closed null end is the maximum Date. Java
-// promotes the Date to a DateTime and gives Interval[21, 44], the hours to the
-// maximum DateTime, counted from midnight to 23:59:59.999Z.
-func TestAnIntervalPromotedToDateTimeKeepsItsDate(t *testing.T) {
+// TestAnIntervalPromotedToDateTimeHasDateTimeBounds holds what plan 019 settled:
+// the compiler types the `if` as Interval<DateTime> and the Date interval is
+// promoted to it (CQL 1.5.3, https://cql.hl7.org/N1A/, Developer's Guide,
+// Implicit Conversions, table 3-J: Date to DateTime is implicit), so its closed
+// null end is the maximum DateTime, and the hours to it are counted from the
+// midnight of 9999-12-30 at the evaluation's offset to 23:59:59.999Z.
+// Java 5.4.0 gives Interval[21, 44] (snapshot area intervalbounds, D590);
+// cql-execution Uncertainty[24, 47]. The engine answered 24, holding Dates.
+func TestAnIntervalPromotedToDateTimeHasDateTimeBounds(t *testing.T) {
 	expr := "duration in hours of (if true then Interval[@9999-12-30, null] else Interval[@9999-12-30T00:00:00.000, null])"
-	// Today: 24, from 9999-12-30 to the maximum Date at day precision. Java: Interval[21, 44].
-	if got := differenceAt(t, expr, -3*60, false); got != "24" {
-		t.Errorf("%s = %s, want 24 today (Java: Interval[21, 44]; if plan 019 landed, assert that)", expr, got)
+	if got := differenceAt(t, expr, -3*60, false); got != "Interval[21, 44]" {
+		t.Errorf("%s = %s, want Interval[21, 44]", expr, got)
 	}
 }
 

@@ -544,8 +544,8 @@ D587	Integer 86399999
 D588	Time 00:00:00.000
 D589	Time 23:59:59.999
 D59	Date 2012-01-01
-D590	Integer 24
-D591	Integer 4
+D590	Uncertainty[Integer 21, Integer 44]
+D591	Uncertainty[Integer 3, Integer 4]
 D592	List[Integer 2917556, Integer 2]
 D593	List[Date 9999-12-31, Date 2012-01-04]
 D594	Uncertainty[Integer 91, Integer 121]
