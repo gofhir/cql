@@ -3,6 +3,7 @@ package cql
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 
@@ -134,15 +135,21 @@ func TestWhatIsNotADoor(t *testing.T) {
 			"same, at the other end",
 		},
 		{
-			"a DateTime no finer than the day", "timezoneoffset from ToDateTime(@2020-06-15)", "null",
-			"a value with no hour names a day rather than an instant, so there is nothing for " +
-				"an offset to move — the rule framelessTemporal applies, and fhirpath reports no " +
-				"effective offset for one either",
+			"a DateTime no finer than the day", "timezoneoffset from ToDateTime(@2020-06-15)", "evaluation",
+			"the Author's Guide (Date and Time Operators) says \"the result of extracting the " +
+				"timezone offset component will be the timezone offset of the evaluation request, " +
+				"not null\", whatever the precision; both reference engines answer -3 at -03:00 " +
+				"for timezoneoffset from @2020-01-01T. The value is not placed for comparison, " +
+				"but the extraction answers the offset of the request",
 		},
 	} {
 		for _, hours := range []int{0, -5, 9, 14, -11} {
-			if got := askAtOffset(t, hours, tt.expr); got != tt.want {
-				t.Errorf("%s answers %s at UTC%+d, want %s — %s", tt.what, got, hours, tt.want, tt.why)
+			want := tt.want
+			if want == "evaluation" {
+				want = strconv.Itoa(hours)
+			}
+			if got := askAtOffset(t, hours, tt.expr); got != want {
+				t.Errorf("%s answers %s at UTC%+d, want %s — %s", tt.what, got, hours, want, tt.why)
 			}
 		}
 	}

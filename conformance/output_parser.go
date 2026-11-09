@@ -189,7 +189,7 @@ func (p outputParser) parseDateTimeOrDate(s string) (fptypes.Value, error) {
 		// and an absent one is the evaluation request's. Nothing is written into
 		// the value, so it still prints as the corpus wrote it.
 		if !dt.HasTZ() {
-			dt = dt.WithDefaultOffset(p.assumedOffset)
+			dt = cqltypes.WithDefaultOffset(dt, p.assumedOffset)
 		}
 		return dt, nil
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	cqltypes "github.com/gofhir/cql/types"
 	fptypes "github.com/gofhir/fhirpath/types"
 )
 
@@ -593,7 +594,7 @@ func carryDefaultOffset(from, to fptypes.Value) fptypes.Value {
 	if !ok {
 		return to
 	}
-	return dst.WithDefaultOffset(time.Duration(minutes) * time.Minute)
+	return cqltypes.WithDefaultOffset(dst, time.Duration(minutes)*time.Minute)
 }
 
 // lnOf is the natural logarithm of a positive decimal. A value a float64 holds

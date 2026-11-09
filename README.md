@@ -125,6 +125,11 @@ results, err := engine.EvaluateLibrary(ctx, cqlSource, resource, params)
 // Evaluate a single named expression
 value, err := engine.EvaluateExpression(ctx, cqlSource, "ExpressionName", resource, params)
 
+// A DateTime parameter is passed as it is read (fptypes.NewDateTime). Do not
+// place one coarser than the hour with its WithDefaultOffset: the engine
+// places values itself, from the hour on, and a day or year value placed by
+// the caller cannot be compared with a literal of the same precision.
+
 // Validate CQL syntax without evaluation
 err := engine.Compile(cqlSource)
 

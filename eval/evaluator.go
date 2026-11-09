@@ -884,7 +884,7 @@ func (e *Evaluator) evalLiteral(n *ast.Literal) (fptypes.Value, error) {
 		// is right for FHIRPath and wrong here: FHIRPath makes the default a
 		// policy decision and provides none, CQL names it.
 		_, seconds := e.ctx.EvaluationTimestamp.Zone()
-		return dt.WithDefaultOffset(time.Duration(seconds) * time.Second), nil
+		return cqltypes.WithDefaultOffset(dt, time.Duration(seconds)*time.Second), nil
 	case ast.LiteralTime:
 		// Time carries no finer precision than the millisecond, so anything written past
 		// the third fractional digit is dropped rather than rejected: @T23:59:59.10000 is
@@ -6536,6 +6536,18 @@ func (e *Evaluator) evalDateTimeComponentFrom(n *ast.DateTimeComponentFrom) (fpt
 	if err != nil {
 		return nil, err
 	}
+	// CQL (Author's Guide, Date and Time Operators): where no offset was
+	// supplied, "the result of extracting the timezone offset component will be
+	// the timezone offset of the evaluation request, not null". A DateTime with
+	// a written or effective offset keeps it. One with neither answers the
+	// request's, at every precision, which the comparison placing of
+	// cqltypes.WithDefaultOffset does not cover below the hour.
+	if dt, ok := operand.(fptypes.DateTime); ok && (n.Component == "timezone" || n.Component == "timezoneoffset") {
+		if _, placed := dt.EffectiveOffset(); !placed {
+			_, seconds := e.ctx.EvaluationTimestamp.Zone()
+			return fptypes.NewDecimalFromFloat(float64(seconds) / 3600.0), nil
+		}
+	}
 	return funcs.DateTimeComponentFrom(operand, n.Component)
 }
 
@@ -6750,7 +6762,7 @@ func carryDefaultOffsetTo(from, to fptypes.DateTime) fptypes.Value {
 	if !ok {
 		return to
 	}
-	return to.WithDefaultOffset(time.Duration(minutes) * time.Minute)
+	return cqltypes.WithDefaultOffset(to, time.Duration(minutes)*time.Minute)
 }
 
 // timingCompare orders two points at the precision a phrase states, falling back

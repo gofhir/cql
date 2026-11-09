@@ -70,3 +70,20 @@ Java wraps the count in 32 bits; cql-execution answers a number that is not a CQ
 1. Is null the intended result?
 2. If so, is a partly out-of-range uncertainty null, or does it keep the bounds that fit?
 3. Does the same hold for `AgeIn...` and `CalculateAgeIn...`, which "are defined in terms of a datetime duration calculation"?
+
+### 5. Which precision controls offset normalization in a comparison with no precision?
+
+Every comparison operator in Appendix B says: "When comparing DateTime values with different timezone offsets, implementations should normalize to the timezone offset of the evaluation request timestamp, but only when the comparison precision is hours, minutes, seconds, or milliseconds." For `=` or `<` between a DateTime specified to the day or coarser and one specified to the millisecond with another offset, the text does not say what "the comparison precision" is. It could be the coarser precision of the pair, where the comparison stops, so the values are not normalized. Or it could be the finer one, as Same As uses "the finest precision specified in either input", so they are. Both references answer differently depending on the order of the operands (`mixeddates` area):
+
+| Expression | Java 5.4.0 | cql-execution 3.3.2 |
+|---|---|---|
+| `@2020-03-01 = @2020-03-01T10:00:00.000+14:00` (D185) | false | false |
+| `@2020-03-01T10:00:00.000+14:00 = @2020-03-01` (D186) | null | null |
+| `@2020-03 = @2020-03-01T10:00:00.000+14:00` (D165) | false | false |
+| `@2020-03-01T10:00:00.000+14:00 = @2020-03` (D166) | null | null |
+| `@2020-03-01T10:00:00.000-12:00 = @2020-03-01` (D188) | false | false |
+| `@2020-03-01 = @2020-03-01T10:00:00.000-12:00` (D187) | null | null |
+
+Both references appear to move the right operand to the left operand's offset. Normalizing to the evaluation request's offset puts the +14:00 value on February 29, and the -12:00 one stays on March 1. Equality ought to be symmetric. Our engine answers null in both orders: it compares the components as written and does not normalize below the hour. Questions:
+1. In `=`, `<` and the other comparisons with no precision, is the comparison precision the coarser of the pair, so offsets are not normalized and the answers above are null? Or is it the finer one, so they are normalized and D185, D186, D165 and D166 are false?
+2. When a DateTime written with no offset takes the evaluation request's offset (Literals; ToDateTime of a Date), does that offset take part in such a comparison when the value is coarser than the hour?

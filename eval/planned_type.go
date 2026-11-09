@@ -3,6 +3,7 @@ package eval
 import (
 	"time"
 
+	cqltypes "github.com/gofhir/cql/types"
 	fptypes "github.com/gofhir/fhirpath/types"
 
 	"github.com/gofhir/cql/ast"
@@ -36,7 +37,7 @@ func (e *Evaluator) situate(v fptypes.Value) fptypes.Value {
 		return v
 	}
 	_, seconds := e.ctx.EvaluationTimestamp.Zone()
-	return dt.WithDefaultOffset(time.Duration(seconds) * time.Second)
+	return cqltypes.WithDefaultOffset(dt, time.Duration(seconds)*time.Second)
 }
 
 // situateRefinement places a boundary that is specified more finely than the value
