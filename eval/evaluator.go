@@ -6045,7 +6045,7 @@ func compareValues(a, b fptypes.Value) (int, error) {
 		// component. At UTC+14 that put `DateTime(2012, 1, 1)` in 2012 and
 		// `DateTime(2012, 1, 1, 12)` in 2011, and `sort asc` ordered the finer value
 		// first on the strength of a year the offset had rolled back.
-		aComps, aMaxPrec, bComps, bMaxPrec := componentsAtPrecision(a, b, "")
+		aComps, aMaxPrec, bComps, bMaxPrec := componentsAtPrecision(a, b, "", nil)
 		if aComps != nil && bComps != nil {
 			minPrec := aMaxPrec
 			if bMaxPrec < minPrec {
@@ -6416,7 +6416,7 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 		if n.Operator != "in" {
 			iv, point = left, right
 		}
-		if res, handled := membershipAtPrecision(iv, point, n.Precision); handled {
+		if res, handled := membershipAtPrecision(e.evaluationFrame(), iv, point, n.Precision); handled {
 			return res, nil
 		}
 	}
@@ -6447,7 +6447,7 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 // `during` asks it, so the two cannot drift apart again. An interval operand —
 // `I in day of J`, the spelling the measures use for one period inside another —
 // is already the shape the question wants.
-func membershipAtPrecision(outer, inner fptypes.Value, precision string) (fptypes.Value, bool) {
+func membershipAtPrecision(frame *time.Location, outer, inner fptypes.Value, precision string) (fptypes.Value, bool) {
 	iv, isInterval := outer.(cqltypes.Interval)
 	if !isInterval || inner == nil {
 		return nil, false
@@ -6459,7 +6459,7 @@ func membershipAtPrecision(outer, inner fptypes.Value, precision string) (fptype
 		}
 		innerIv = cqltypes.NewInterval(inner, inner, true, true)
 	}
-	res, err := intervalIncludesAtPrecision(iv, innerIv, precision, false)
+	res, err := intervalIncludesAtPrecision(frame, iv, innerIv, precision, false)
 	if err != nil {
 		return nil, false
 	}
@@ -6769,7 +6769,7 @@ func carryDefaultOffsetTo(from, to fptypes.DateTime) fptypes.Value {
 // to the whole value where it states none.
 func (e *Evaluator) timingCompare(a, b fptypes.Value, precision string) (int, bool) {
 	if precision != "" {
-		return temporalCompareAtPrecision(a, b, precision)
+		return temporalCompareAtPrecision(e.evaluationFrame(), a, b, precision)
 	}
 	cmp, err := cqltypes.CompareTemporal(a, b)
 	if err != nil {
@@ -7166,10 +7166,10 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 	// CQL: properly contains/includes a point means the point is strictly interior
 	// (not equal to either boundary).
 	if leftOk && !rightOk && n.Operator.Kind == ast.TimingIncludes && n.Operator.Properly {
-		return evalIntervalProperlyContainsPoint(leftIv, right, n.Operator.Precision)
+		return evalIntervalProperlyContainsPoint(e.evaluationFrame(), leftIv, right, n.Operator.Precision)
 	}
 	if !leftOk && rightOk && (n.Operator.Kind == ast.TimingIncludedIn || n.Operator.Kind == ast.TimingDuring) && n.Operator.Properly {
-		return evalIntervalProperlyContainsPoint(rightIv, left, n.Operator.Precision)
+		return evalIntervalProperlyContainsPoint(e.evaluationFrame(), rightIv, left, n.Operator.Precision)
 	}
 
 	// Handle scalar vs interval for non-temporal types (e.g., 9 before Interval[11, 20])
@@ -7241,7 +7241,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		// second attempt for when comparing at full precision fails. See
 		// intervalIncludesAtPrecision.
 		if n.Operator.Precision != "" {
-			return intervalIncludesAtPrecision(leftIv, rightIv, n.Operator.Precision, n.Operator.Properly)
+			return intervalIncludesAtPrecision(e.evaluationFrame(), leftIv, rightIv, n.Operator.Precision, n.Operator.Properly)
 		}
 		if n.Operator.Properly {
 			return funcs.IntervalProperlyIncludes(leftIv, rightIv)
@@ -7265,7 +7265,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 				return nil, perr
 			}
 			if n.Operator.Precision != "" {
-				if res, handled := membershipAtPrecision(rightIv, point, n.Operator.Precision); handled {
+				if res, handled := membershipAtPrecision(e.evaluationFrame(), rightIv, point, n.Operator.Precision); handled {
 					return res, nil
 				}
 			}
@@ -7279,7 +7279,7 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 			return fptypes.NewBoolean(ok), nil
 		}
 		if n.Operator.Precision != "" {
-			return intervalIncludesAtPrecision(rightIv, leftIv, n.Operator.Precision, n.Operator.Properly)
+			return intervalIncludesAtPrecision(e.evaluationFrame(), rightIv, leftIv, n.Operator.Precision, n.Operator.Properly)
 		}
 		if n.Operator.Properly {
 			return funcs.IntervalProperlyIncludedIn(leftIv, rightIv)
@@ -7331,7 +7331,7 @@ func listContainsValue(c fptypes.Collection, val fptypes.Value) bool {
 
 // intervalIncludesAtPrecision checks if outer includes inner at the given precision.
 // Compares interval bounds by truncating to the specified precision.
-func intervalIncludesAtPrecision(outer, inner cqltypes.Interval, precision string, properly bool) (fptypes.Value, error) {
+func intervalIncludesAtPrecision(frame *time.Location, outer, inner cqltypes.Interval, precision string, properly bool) (fptypes.Value, error) {
 	pIdx := precisionIndex(precision)
 	if pIdx < 0 {
 		return nil, nil
@@ -7340,7 +7340,7 @@ func intervalIncludesAtPrecision(outer, inner cqltypes.Interval, precision strin
 	cmpAtPrec := func(a, b fptypes.Value) (int, bool) {
 		// Read against each other, so a bound with no timezone frame is not lined
 		// up against a point that has been moved into one. See compareValues.
-		aComps, aMax, bComps, bMax := componentsAtPrecision(a, b, precision)
+		aComps, aMax, bComps, bMax := componentsAtPrecision(a, b, precision, frame)
 		if aComps == nil || bComps == nil {
 			return 0, false
 		}
@@ -7413,7 +7413,7 @@ func intervalIncludesAtPrecision(outer, inner cqltypes.Interval, precision strin
 // evalIntervalProperlyContainsPoint checks if an interval properly contains a point.
 // CQL: point must be contained AND not equal to either boundary.
 // When a precision is specified, comparisons are truncated to that precision.
-func evalIntervalProperlyContainsPoint(iv cqltypes.Interval, point fptypes.Value, precision string) (fptypes.Value, error) {
+func evalIntervalProperlyContainsPoint(frame *time.Location, iv cqltypes.Interval, point fptypes.Value, precision string) (fptypes.Value, error) {
 	if point == nil {
 		return nil, nil
 	}
@@ -7423,7 +7423,7 @@ func evalIntervalProperlyContainsPoint(iv cqltypes.Interval, point fptypes.Value
 	// `Interval[@2020-01-01T10:00Z, …] properly includes day of
 	// @2020-01-01T12:00Z` was true — the instants are apart — where the Java
 	// engine answers false: at the day the point is the start.
-	if res, handled, err := properlyContainsPointAtPrecision(iv, point, precision); handled {
+	if res, handled, err := properlyContainsPointAtPrecision(frame, iv, point, precision); handled {
 		return res, err
 	}
 	contained, err := iv.Contains(point)
@@ -7814,29 +7814,30 @@ func (e *Evaluator) boundarySameAs(a, b fptypes.Value, precision string) (fptype
 			return nil, nil
 		}
 	}
-	return temporalSameAs(a, b, precision)
+	return temporalSameAs(e.evaluationFrame(), a, b, precision)
 }
 
 func (e *Evaluator) evalTemporalComparison(left, right fptypes.Value, op ast.TimingOp) (fptypes.Value, error) {
 	precision := op.Precision
+	frame := e.evaluationFrame()
 
 	switch op.Kind {
 	case ast.TimingSameAs:
 		if op.Before {
 			// same [precision] or before
-			return temporalSameOrBefore(left, right, precision)
+			return temporalSameOrBefore(frame, left, right, precision)
 		}
 		if op.After {
 			// same [precision] or after
-			return temporalSameOrAfter(left, right, precision)
+			return temporalSameOrAfter(frame, left, right, precision)
 		}
 		// same [precision] as
-		return temporalSameAs(left, right, precision)
+		return temporalSameAs(frame, left, right, precision)
 	case ast.TimingBeforeOrAfter:
 		if op.Before {
-			return temporalBefore(left, right, precision)
+			return temporalBefore(frame, left, right, precision)
 		}
-		return temporalAfter(left, right, precision)
+		return temporalAfter(frame, left, right, precision)
 	default:
 		return nil, nil
 	}
@@ -7863,7 +7864,7 @@ func framelessTemporal(v fptypes.Value) bool {
 }
 
 // readAsWritten reports whether two temporals compared at a precision are read
-// in the digits they were written in, rather than both moved to UTC.
+// in the digits they were written in, rather than both moved to one offset.
 //
 // They are when either names no instant (see framelessTemporal), and when the
 // precision is coarser than the hour. Same As says so — "implementations should
@@ -7890,30 +7891,90 @@ func coarserThanHour(precision string) bool {
 }
 
 // componentsAtPrecision reads two temporals for a comparison at a precision,
-// both in their written digits or both moved to UTC, as readAsWritten decides.
-// It is the one place that decision is made: every comparison that lines up
-// components reads them through here, so no two operators can disagree about
-// which frame a pair is compared in.
-func componentsAtPrecision(a, b fptypes.Value, precision string) (aComps []int, aMax int, bComps []int, bMax int) {
-	asWritten := readAsWritten(a, b, precision)
-	aComps, aMax = temporalComponentsAgainst(a, asWritten)
-	bComps, bMax = temporalComponentsAgainst(b, asWritten)
+// both in their written digits or both in one frame, as readingFrameOf
+// decides. It is the one place that decision is made: every
+// comparison that lines up components reads them through here, so no two
+// operators can disagree about which frame a pair is compared in.
+//
+// frame is the offset of the evaluation request, which a DateTime that writes
+// no offset has. A comparison that states no precision is the one
+// types.CompareTemporal makes, and reads instants at UTC.
+func componentsAtPrecision(a, b fptypes.Value, precision string, frame *time.Location) (aComps []int, aMax int, bComps []int, bMax int) {
+	in := readingFrameOf(a, b, precision, frame)
+	aComps, aMax = temporalComponentsAgainst(a, in)
+	bComps, bMax = temporalComponentsAgainst(b, in)
 	return aComps, aMax, bComps, bMax
+}
+
+// readingFrameOf is the offset componentsAtPrecision reads a pair in, nil
+// for the digits as written.
+func readingFrameOf(a, b fptypes.Value, precision string, frame *time.Location) *time.Location {
+	switch {
+	case readAsWritten(a, b, precision):
+		return nil
+	case precision == "":
+		return time.UTC
+	case unplaced(a) || unplaced(b):
+		// A DateTime with no offset at all, which only a caller can pass, could
+		// be at any offset (eval/timing_offset.go). The comparisons resolve it
+		// over that window before reading components; the other readers do not
+		// yet, and keep reading it as they did before plan 024 (backlog of the
+		// plan, code review round 3, M3).
+		return time.UTC
+	case differentOffsets(a, b, frame):
+		return frame
+	}
+	return nil
+}
+
+// unplaced reports whether v is a DateTime with no offset, written or assumed.
+func unplaced(v fptypes.Value) bool {
+	dt, ok := v.(fptypes.DateTime)
+	if !ok {
+		return false
+	}
+	_, known := dt.EffectiveOffset()
+	return !known
+}
+
+// differentOffsets reports whether two DateTimes are not at the same effective
+// offset, a DateTime that writes none having the evaluation's.
+//
+// CQL 1.5.3, Appendix B, Same As (https://cql.hl7.org/N1A/09-b-cqlreference.html):
+// "When comparing DateTime values with different timezone offsets,
+// implementations should normalize to the timezone offset of the evaluation
+// request timestamp, but only when the comparison precision is hours, minutes,
+// seconds, or milliseconds." With one offset on both sides there is nothing to
+// normalize, and the digits written are the components to compare: moving
+// `@T00:50+01:00` and `@T01:10+01:00` to an offset of +05:30 would put them in
+// the same hour.
+func differentOffsets(a, b fptypes.Value, frame *time.Location) bool {
+	return effectiveOffsetMinutes(a, frame) != effectiveOffsetMinutes(b, frame)
+}
+
+func effectiveOffsetMinutes(v fptypes.Value, frame *time.Location) int {
+	if dt, ok := v.(fptypes.DateTime); ok {
+		if minutes, known := dt.EffectiveOffset(); known {
+			return minutes
+		}
+	}
+	_, seconds := time.Date(2000, 1, 1, 0, 0, 0, 0, frame).Zone()
+	return seconds / 60
 }
 
 // temporalComponentsAgainst breaks a temporal into year, month, day, hour,
 // minute, second and millisecond — indices 0 to 6 — and the index of the finest
-// one it carries. A DateTime whose offset is known is moved to UTC unless
-// asWritten keeps it in the digits it was written in. Use componentsAtPrecision
-// to read a pair, so the two are read in one frame.
-func temporalComponentsAgainst(v fptypes.Value, asWritten bool) (components []int, maxPrec int) {
+// one it carries. A DateTime whose offset is known is moved to the offset of in
+// unless in is nil, which keeps it in the digits it was written in. Use
+// componentsAtPrecision to read a pair, so the two are read in one frame.
+func temporalComponentsAgainst(v fptypes.Value, in *time.Location) (components []int, maxPrec int) {
 	switch t := v.(type) {
 	case fptypes.DateTime:
 		maxPrec := int(t.Precision())
 		if maxPrec > 6 {
 			maxPrec = 6
 		}
-		// Normalized to UTC whenever the value's offset is known — stated, or
+		// Moved to in whenever the value's offset is known — stated, or
 		// assumed from the evaluation request — and the caller has not asked for
 		// it as written (see readAsWritten). Asking HasTZ alone meant the timing
 		// operators read the local digits of a value whose offset had been
@@ -7926,14 +7987,14 @@ func temporalComponentsAgainst(v fptypes.Value, asWritten bool) (components []in
 		// Date stayed on the 1st. Where one side is frameless, both are read as
 		// written — and so they are at a precision coarser than the hour. See
 		// readAsWritten.
-		if minutes, ok := t.EffectiveOffset(); ok && !asWritten {
+		if minutes, ok := t.EffectiveOffset(); ok && in != nil {
 			at := t.ToTime()
 			if !t.HasTZ() {
 				at = time.Date(at.Year(), at.Month(), at.Day(), at.Hour(), at.Minute(),
 					at.Second(), at.Nanosecond(), time.FixedZone("", minutes*60))
 			}
-			utc := at.UTC()
-			comps := []int{utc.Year(), int(utc.Month()), utc.Day(), utc.Hour(), utc.Minute(), utc.Second(), utc.Nanosecond() / 1e6}
+			moved := at.In(in)
+			comps := []int{moved.Year(), int(moved.Month()), moved.Day(), moved.Hour(), moved.Minute(), moved.Second(), moved.Nanosecond() / 1e6}
 			return comps, maxPrec
 		}
 		comps := []int{t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
@@ -7985,10 +8046,10 @@ func precisionIndex(precision string) int {
 // comparison runs to the precision the operands carry, and agreeing on everything
 // they share while one is specified more finely leaves the result unknown, which
 // is the rule types.CompareTemporal applies to the ordering operators.
-func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (int, bool) {
+func temporalCompareAtPrecision(frame *time.Location, left, right fptypes.Value, precision string) (int, bool) {
 	// One side writing an offset and the other not is not a pair of components to
-	// line up: reading components moves the written one to UTC and leaves the
-	// other in its local digits, which compares two different frames — the
+	// line up: reading components moves the written one to a frame and leaves
+	// the other in its local digits, which compares two different frames — the
 	// mistake CompareTemporal's own comment warns about. Resolve it before
 	// reading any components.
 	//
@@ -7997,18 +8058,44 @@ func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (in
 	// only saves the two readings. See readAsWritten.
 	if !coarserThanHour(precision) {
 		if lo, hi, asymmetric := offsetWindowOf(left, right); asymmetric {
-			low, lowOK := temporalCompareAtPrecision(lo.left, lo.right, precision)
-			high, highOK := temporalCompareAtPrecision(hi.left, hi.right, precision)
-			// Truncating to a precision is monotonic in the instant, so agreement at
-			// the two ends of the window is agreement across it.
-			if lowOK && highOK && low == high {
-				return low, true
+			// Across the window both values are read in the evaluation offset,
+			// where truncating to a precision is monotonic in the instant, so
+			// agreement at the two ends is agreement across it. The one offset of
+			// the window that equals the other value's is read as written instead
+			// (plan 024), so it is checked on its own.
+			low, lowOK := temporalCompareRead(frame, lo.left, lo.right, precision, true)
+			high, highOK := temporalCompareRead(frame, hi.left, hi.right, precision, true)
+			if !lowOK || !highOK || low != high {
+				return 0, false
 			}
-			return 0, false
+			if same, ok := offsetOfTheOtherOf(left, right); ok {
+				at, atOK := temporalCompareRead(frame, same.left, same.right, precision, false)
+				if !atOK || at != low {
+					return 0, false
+				}
+			}
+			return low, true
 		}
 	}
+	return temporalCompareRead(frame, left, right, precision, false)
+}
 
-	lComps, lMaxPrec, rComps, rMaxPrec := componentsAtPrecision(left, right, precision)
+// temporalCompareRead compares two temporals read one way: in the frame when
+// inFrame is set and the pair is not read as written, otherwise as
+// componentsAtPrecision decides.
+func temporalCompareRead(frame *time.Location, left, right fptypes.Value, precision string, inFrame bool) (int, bool) {
+	in := readingFrameOf(left, right, precision, frame)
+	if inFrame && precision != "" && !readAsWritten(left, right, precision) {
+		in = frame
+	}
+	return compareComponentsIn(left, right, precision, in)
+}
+
+// compareComponentsIn lines up the components of two temporals read in in,
+// nil for as written, up to precision.
+func compareComponentsIn(left, right fptypes.Value, precision string, in *time.Location) (int, bool) {
+	lComps, lMaxPrec := temporalComponentsAgainst(left, in)
+	rComps, rMaxPrec := temporalComponentsAgainst(right, in)
 	if lComps == nil || rComps == nil {
 		return 0, false
 	}
@@ -8047,40 +8134,40 @@ func temporalCompareAtPrecision(left, right fptypes.Value, precision string) (in
 	return 0, true // equal at this precision
 }
 
-func temporalSameAs(left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+func temporalSameAs(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
 	if !certain {
 		return nil, nil
 	}
 	return fptypes.NewBoolean(cmp == 0), nil
 }
 
-func temporalBefore(left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+func temporalBefore(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
 	if !certain {
 		return nil, nil
 	}
 	return fptypes.NewBoolean(cmp < 0), nil
 }
 
-func temporalAfter(left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+func temporalAfter(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
 	if !certain {
 		return nil, nil
 	}
 	return fptypes.NewBoolean(cmp > 0), nil
 }
 
-func temporalSameOrBefore(left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+func temporalSameOrBefore(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
 	if !certain {
 		return nil, nil
 	}
 	return fptypes.NewBoolean(cmp <= 0), nil
 }
 
-func temporalSameOrAfter(left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(left, right, precision)
+func temporalSameOrAfter(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
+	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
 	if !certain {
 		return nil, nil
 	}

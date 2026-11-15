@@ -88,3 +88,25 @@ func atOffset(v fptypes.DateTime, minutes int) (fptypes.DateTime, bool) {
 	}
 	return shifted, true
 }
+
+// offsetOfTheOtherOf is the reading of an asymmetric pair (see offsetWindowOf)
+// where the side that wrote no offset takes the other side's, and ok=false when
+// the pair is not one or that offset cannot be written.
+func offsetOfTheOtherOf(left, right fptypes.Value) (pair offsetPair, ok bool) {
+	l, lIsDateTime := left.(fptypes.DateTime)
+	r, rIsDateTime := right.(fptypes.DateTime)
+	if !lIsDateTime || !rIsDateTime {
+		return pair, false
+	}
+	lMinutes, lKnown := l.EffectiveOffset()
+	rMinutes, rKnown := r.EffectiveOffset()
+	switch {
+	case lKnown && !rKnown:
+		placed, ok := atOffset(r, lMinutes)
+		return offsetPair{left, placed}, ok
+	case rKnown && !lKnown:
+		placed, ok := atOffset(l, rMinutes)
+		return offsetPair{placed, right}, ok
+	}
+	return pair, false
+}

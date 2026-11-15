@@ -144,7 +144,7 @@ mutations = [
      ("engine_snapshot_test.go", '\t{"mixeddates", 1385, true},\n', ""), run("TestEveryCorpusIsInTheManifest"),
      "mixeddates.cql is not in snapshotAreas"),
     ("the area left out of the references",
-     ("scripts/references.sh", " intervalbounds mixeddates\"", " intervalbounds\""), run("TestEveryAreaIsRunByTheReferences"),
+     ("scripts/references.sh", " intervalbounds mixeddates ", " intervalbounds "), run("TestEveryAreaIsRunByTheReferences"),
      "mixeddates is in snapshotAreas and scripts/references.sh does not run it"),
     ("an answer of the area moved away from the oracle",
      ("testdata/snapshots/mixeddates.answers.tsv", f"\n{flip[0]}\t{flip[1]}\n", f"\n{flip[0]}\t{flipped}\n"), ORACLE,

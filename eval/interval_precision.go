@@ -32,7 +32,7 @@ func (e *Evaluator) intervalPhraseAtPrecision(a, b cqltypes.Interval, op ast.Tim
 	if !phraseAtPrecision(op) || !samePointKind(a, b, op.Precision) {
 		return nil, false, nil
 	}
-	pts, err := endpointsOf(a, b, op.Precision)
+	pts, err := endpointsOf(e.evaluationFrame(), a, b, op.Precision)
 	if err != nil {
 		return nil, true, err
 	}
@@ -74,12 +74,12 @@ func samePointKind(a, b cqltypes.Interval, precision string) bool {
 // interval's start and strictly before its end, both at that precision, as the
 // Java engine answers. A point on the start day is not properly inside at the
 // day, though the instants are apart.
-func properlyContainsPointAtPrecision(iv cqltypes.Interval, v fptypes.Value, precision string) (fptypes.Value, bool, error) {
+func properlyContainsPointAtPrecision(frame *time.Location, iv cqltypes.Interval, v fptypes.Value, precision string) (fptypes.Value, bool, error) {
 	at := cqltypes.NewInterval(v, v, true, true)
 	if precisionIndex(precision) < 0 || !samePointKind(iv, at, precision) {
 		return nil, false, nil
 	}
-	pts, err := endpointsOf(iv, at, precision)
+	pts, err := endpointsOf(frame, iv, at, precision)
 	if err != nil {
 		return nil, true, err
 	}
@@ -171,10 +171,12 @@ func temporalExtreme(kind string, maximum bool) (fptypes.Value, error) {
 type endpoints struct {
 	startA, endA, startB, endB fptypes.Value
 	precision                  string
+	// frame is the offset of the evaluation request.
+	frame *time.Location
 }
 
-func endpointsOf(a, b cqltypes.Interval, precision string) (endpoints, error) {
-	pts := endpoints{precision: precision}
+func endpointsOf(frame *time.Location, a, b cqltypes.Interval, precision string) (endpoints, error) {
+	pts := endpoints{precision: precision, frame: frame}
 	var err error
 	if pts.startA, err = startOf(a); err != nil {
 		return pts, err
@@ -192,11 +194,11 @@ func endpointsOf(a, b cqltypes.Interval, precision string) (endpoints, error) {
 // cmp asks one of the point comparisons at the phrase's precision, unknown
 // where either point is. Those comparisons decline rather than fail — an
 // uncertain one is null — so an error from one is read the same way.
-func (p endpoints) cmp(compare func(x, y fptypes.Value, precision string) (fptypes.Value, error), x, y fptypes.Value) fptypes.Value {
+func (p endpoints) cmp(compare func(frame *time.Location, x, y fptypes.Value, precision string) (fptypes.Value, error), x, y fptypes.Value) fptypes.Value {
 	if x == nil || y == nil {
 		return nil
 	}
-	v, err := compare(x, y, p.precision)
+	v, err := compare(p.frame, x, y, p.precision)
 	if err != nil {
 		return nil
 	}
@@ -230,8 +232,8 @@ func (p endpoints) phrase(op ast.TimingOp) fptypes.Value {
 }
 
 func (p endpoints) meets(op ast.TimingOp) fptypes.Value {
-	before := successorAt(p.endA, p.startB, p.precision)
-	after := successorAt(p.endB, p.startA, p.precision)
+	before := successorAt(p.frame, p.endA, p.startB, p.precision)
+	after := successorAt(p.frame, p.endB, p.startA, p.precision)
 	switch {
 	case op.Before:
 		return before
@@ -294,7 +296,7 @@ func temporalKind(v fptypes.Value) string {
 // could be in, as temporalCompareAtPrecision settles it, because truncating is
 // monotonic in the instant; being the next hour is not, and both ends can say
 // no while an offset between them says yes.
-func successorAt(prev, next fptypes.Value, precision string) fptypes.Value {
+func successorAt(frame *time.Location, prev, next fptypes.Value, precision string) fptypes.Value {
 	if prev == nil || next == nil {
 		return nil
 	}
@@ -303,7 +305,7 @@ func successorAt(prev, next fptypes.Value, precision string) fptypes.Value {
 			return nil
 		}
 	}
-	return successorOf(prev, next, precision)
+	return successorOf(frame, prev, next, precision)
 }
 
 // successorOf decides adjacency on the components. A point without the
@@ -312,9 +314,9 @@ func successorAt(prev, next fptypes.Value, precision string) fptypes.Value {
 // 2nd of January to the 1st of January 2021. The next point is the successor
 // where both are single units and equal; it cannot be where the two ranges do
 // not touch; and it might be otherwise.
-func successorOf(prev, next fptypes.Value, precision string) fptypes.Value {
+func successorOf(frame *time.Location, prev, next fptypes.Value, precision string) fptypes.Value {
 	p := precisionIndex(precision)
-	pc, pMax, nc, nMax := componentsAtPrecision(prev, next, precision)
+	pc, pMax, nc, nMax := componentsAtPrecision(prev, next, precision, frame)
 	if pc == nil || nc == nil {
 		return nil
 	}
@@ -434,7 +436,7 @@ func widenForPrecision(rng fptypes.Value, precision string) fptypes.Value {
 		}
 		var moved fptypes.Value
 		var err error
-		if _, written := temporalComponentsAgainst(v, true); written < precisionIndex("day") {
+		if _, written := temporalComponentsAgainst(v, nil); written < precisionIndex("day") {
 			coarser := min(written, precisionIndex(precision))
 			moved, err = funcs.DateAdd(v, 2*sign, []string{"year", "month"}[coarser])
 		} else if moved, err = funcs.DateAdd(v, sign, precision); err == nil {

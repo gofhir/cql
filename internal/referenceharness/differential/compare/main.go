@@ -37,13 +37,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	cql "github.com/gofhir/cql"
 	"github.com/gofhir/cql/eval"
 	"github.com/gofhir/cql/internal/referenceharness/answers"
+	"github.com/gofhir/cql/internal/referenceharness/evaloffset"
 )
 
 // difference is one definition the engines answered differently.
@@ -114,7 +117,7 @@ func main() {
 	check(err)
 	check(json.Unmarshal(raw, &ref))
 
-	engine, patient := newEngine(*dataPath)
+	engine, patient := newEngine(*dataPath, strings.TrimSuffix(filepath.Base(*cqlPath), ".cql"))
 	header, lines := corpusLines(string(src), *cqlPath, *each)
 	var r report
 	unanswered := 0
@@ -181,11 +184,12 @@ func finish(r report, unanswered int, baselinePath, reportPath string, verbose b
 	}
 }
 
-// newEngine is this engine at the evaluation time Evaluate.java uses, and
+// newEngine is this engine at the evaluation time Evaluate.java uses for the
+// area the corpus is of (the file name without .cql; see evaloffset), and
 // deliberately not UTC (see the README), over the resources of a data file
 // when one is given, with its Patient.
-func newEngine(dataPath string) (engine *cql.Engine, patient json.RawMessage) {
-	opts := []cql.Option{cql.WithEvaluationTimestamp(time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", -3*3600)))}
+func newEngine(dataPath, area string) (engine *cql.Engine, patient json.RawMessage) {
+	opts := []cql.Option{cql.WithEvaluationTimestamp(time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", evaloffset.Seconds(area))))}
 	if dataPath != "" {
 		provider, subject := readData(dataPath)
 		opts = append(opts, cql.WithDataProvider(provider))

@@ -19,7 +19,7 @@ import (
 
 // TestECQMDump writes, for every case of the eCQM corpus, the typed answer of
 // every definition of the measure's library, at a fixed evaluation timestamp in
-// two offsets, to the file ECQM_DUMP names. Two revisions of the engine are
+// three offsets, to the file ECQM_DUMP names. Two revisions of the engine are
 // compared by diffing their dumps: TestECQMCases only holds the populations as
 // true or false, so a null that became false, or a change in a definition no
 // population reads, passes it (plan 018, round 2, finding 4).
@@ -86,7 +86,9 @@ func TestECQMDump(t *testing.T) {
 				continue
 			}
 			cases++
-			for _, offset := range []int{-3 * 3600, 14 * 3600} {
+			// Two whole-hour offsets and a fractional one, where hours fall apart
+			// from UTC's (plan 024).
+			for _, offset := range []int{-3 * 3600, 14 * 3600, 5*3600 + 1800} {
 				at := time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", offset))
 				engine := NewEngine(
 					WithDataProvider(&ecqmProvider{byType: byType, term: term, model: mi}),
@@ -95,7 +97,7 @@ func TestECQMDump(t *testing.T) {
 					WithEvaluationTimestamp(at),
 					WithTimeout(60*time.Second),
 				)
-				label := fmt.Sprintf("%s/%s\t%+d", name, filepath.Base(cd), offset/3600)
+				label := fmt.Sprintf("%s/%s\t%+d", name, filepath.Base(cd), offset/60)
 				results, err := engine.EvaluateLibrary(context.Background(), source, patient,
 					map[string]fptypes.Value{"Measurement Period": mp})
 				if err != nil {
@@ -109,7 +111,7 @@ func TestECQMDump(t *testing.T) {
 		}
 	}
 	// The corpus holds 67 cases with a Measure; fewer means the dump lost some.
-	if cases < 67 || len(lines) < 2000 {
+	if cases < 67 || len(lines) < 3000 {
 		t.Fatalf("only %d cases and %d answers dumped", cases, len(lines))
 	}
 	if err := os.WriteFile(out, []byte(strings.Join(lines, "\n")+"\n"), 0o644); err != nil {
