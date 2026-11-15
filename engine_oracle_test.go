@@ -18,6 +18,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/gofhir/cql/internal/referenceharness/answers"
+	"github.com/gofhir/cql/internal/referenceharness/evaloffset"
 )
 
 // updateDivergences rewrites the divergence manifests, keeping the note of
@@ -130,7 +131,7 @@ func snapshotEngineAnswers(t *testing.T, area string) map[string]answers.Answer 
 		t.Fatalf("%s holds no generated definition", area)
 	}
 	header := src[:first[0]]
-	opts := []Option{WithEvaluationTimestamp(time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", -3*3600)))}
+	opts := []Option{WithEvaluationTimestamp(time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", evaloffset.Seconds(area))))}
 	var patient json.RawMessage
 	if readsFHIRData(area) {
 		provider, subject := snapshotProvider(t)

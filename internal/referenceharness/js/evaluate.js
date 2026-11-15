@@ -27,7 +27,10 @@ const cqlfhir = require('cql-exec-fhir');
 // The same instant as Evaluate.java, at the same offset, for the same reason:
 // at UTC an engine that defaulted to UTC instead of the evaluation offset would
 // give the same answers, and the difference would not show.
-const EVALUATION = '2026-01-01T00:00:00.000-03:00';
+//
+// Only an area at a fractional offset changes it, with CQL_EVALUATION_OFFSET
+// (+05:30): see plan 024 and evaloffset.go.
+const EVALUATION = `2026-01-01T00:00:00.000${process.env.CQL_EVALUATION_OFFSET || '-03:00'}`;
 
 const SYSTEM = '{urn:hl7-org:elm-types:r1}';
 

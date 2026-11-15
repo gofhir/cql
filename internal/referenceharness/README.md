@@ -96,6 +96,15 @@ DateTimes without an offset do not depend on the machine. It is deliberately
 not UTC. At UTC, an engine that defaulted to UTC instead of the evaluation
 offset would give the same answers, and the difference would not show.
 
+An area at another offset is told it through `CQL_EVALUATION_OFFSET` (`+05:30`),
+which `scripts/references.sh` sets for that area alone, and the table of
+`evaloffset` gives to the tests and to `differential/compare`. A whole-hour
+offset cuts the hours of the day where UTC does, so only the area
+`fractionaloffset` can tell a comparison that reads the hour at the evaluation's
+offset from one that reads it at UTC (plan 024). cql-execution takes the +05:30
+for +05:00 where it places a value that writes no offset; the Java engine is the
+oracle there.
+
 ## Running the second runtime
 
 `js/evaluate.js` runs the same probe with `cql-execution`, pinned exactly in

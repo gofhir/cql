@@ -25,7 +25,13 @@ trap 'rm -rf "$work"' EXIT
 java_image=maven:3.10.0-eclipse-temurin-25
 node_image=node:24.22.1
 
-areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings quantitystrings decimalliterals suitegaps limits limitsexp conversions durations uncertainty ages differences durationrange intervalbounds mixeddates"
+areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings quantitystrings decimalliterals suitegaps limits limitsexp conversions durations uncertainty ages differences durationrange intervalbounds mixeddates fractionaloffset"
+
+# The areas evaluated at an offset other than -03:00, each with the offset the
+# harness is told through CQL_EVALUATION_OFFSET, and only for that area: one
+# exported for the rest would move every other reference. The same table as
+# internal/referenceharness/evaloffset, which a test holds this line to (plan 024).
+offsets="fractionaloffset=+05:30"
 
 # The harness, built from what it pins.
 docker run --rm -v "$harness":/w -w /w "$java_image" sh -c \
@@ -57,14 +63,20 @@ generate() {
 	cp -R "$repo/testdata/snapshots" "$repo/testdata/reference" "$repo/testdata/membership" \
 		"$repo/testdata/membershipmodel" "$repo/testdata/ages" "$repo/testdata/mixeddates" "$out/in/"
 	cp "$repo/fhirhelpers/FHIRHelpers-4.0.1.cql" "$out/in/reference/"
-	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" "$java_image" sh -ec '
+	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" -e "OFFSETS=$offsets" "$java_image" sh -ec '
 		java -cp "out:lib/*" Translate /o/in/lib/FHIRHelpers-4.0.1.cql /o/in/lib > /o/elm/FHIRHelpers.elm.json
 		for a in $AREAS; do
 			data=-
 			case $a in fhir | fhirmembership | crossmodel) data=/o/in/snapshots/fhir-data.json ;; esac
+			unset CQL_EVALUATION_OFFSET
+			for o in $OFFSETS; do
+				if [ "${o%%=*}" = "$a" ]; then export CQL_EVALUATION_OFFSET=${o#*=}; fi
+			done
 			java -cp "out:lib/*" Evaluate -each /o/in/snapshots/$a.cql /o/in/lib $data /o/elm/$a.elm.json \
 				> /o/testdata/snapshots/$a.java.json
 		done
+		# What follows is at the default offset, whatever area came last.
+		unset CQL_EVALUATION_OFFSET
 		java -cp "out:lib/*" Evaluate -each /o/in/reference/encoder.cql /o/in/lib /o/in/snapshots/fhir-data.json \
 			> /o/testdata/reference/encoder.java.json
 		java -cp "out:lib/*" Translate /o/in/reference/probe.cql /o/in/reference > /o/elm/probe.elm.json
@@ -77,13 +89,19 @@ generate() {
 			java -cp "out:lib/*" Evaluate -each /o/in/membershipmodel/cases.cql /o/in/lib /o/in/membershipmodel/$d.json \
 				/o/testdata/membershipmodel/cases.elm.json > /o/testdata/membershipmodel/$d.java.json
 		done'
-	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" "$node_image" sh -ec '
+	docker run --rm -v "$harness":/w -v "$out":/o -w /w -e "AREAS=$areas" -e "OFFSETS=$offsets" "$node_image" sh -ec '
 		for a in $AREAS; do
 			data=
 			case $a in fhir | fhirmembership | crossmodel) data=/o/in/snapshots/fhir-data.json ;; esac
+			unset CQL_EVALUATION_OFFSET
+			for o in $OFFSETS; do
+				if [ "${o%%=*}" = "$a" ]; then export CQL_EVALUATION_OFFSET=${o#*=}; fi
+			done
 			node js/evaluate.js --each /o/elm/$a.elm.json /o/in/snapshots/$a.cql /o/elm/FHIRHelpers.elm.json $data \
 				> /o/testdata/snapshots/$a.js.json
 		done
+		# What follows is at the default offset, whatever area came last.
+		unset CQL_EVALUATION_OFFSET
 		node js/evaluate.js /o/elm/runtime.elm.json /o/in/reference/runtime.cql > /o/testdata/reference/runtime.expected.js.json'
 	(cd "$repo" && go run ./internal/referenceharness/differential/nodes -cql testdata/snapshots/fhirmembership.cql \
 		-elm "$out/elm/fhirmembership.elm.json" > "$out/testdata/snapshots/fhirmembership.nodes.tsv")

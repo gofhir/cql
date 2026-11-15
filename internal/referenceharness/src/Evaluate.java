@@ -69,7 +69,11 @@ public class Evaluate {
     // Fijo, para que Now() y los DateTime sin offset no dependan de la máquina. No
     // es UTC a propósito: un motor que tomara UTC por defecto en vez del offset de
     // la evaluación respondería lo mismo, y la diferencia no se vería.
-    static final ZonedDateTime EVALUATION = ZonedDateTime.parse("2026-01-01T00:00:00-03:00");
+    // Only an area at a fractional offset changes it, with CQL_EVALUATION_OFFSET
+    // (+05:30): see plan 024 and evaloffset.go.
+    static final ZonedDateTime EVALUATION = ZonedDateTime.parse(
+        "2026-01-01T00:00:00" + (System.getenv("CQL_EVALUATION_OFFSET") != null
+            ? System.getenv("CQL_EVALUATION_OFFSET") : "-03:00"));
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0 && args[0].equals("-each")) {
