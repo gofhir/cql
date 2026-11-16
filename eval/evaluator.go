@@ -6439,12 +6439,12 @@ func (e *Evaluator) evalMembership(n *ast.MembershipExpression) (fptypes.Value, 
 //	DateTime(2020,1,1,12) in day of     Interval[DateTime(2020,1,1), …]   null
 //
 // A stated precision says how far to look, so agreeing that far settles the
-// question — the rule temporalCompareAtPrecision already applies, and the reason
+// question — the rule temporalCompareSet already applies, and the reason
 // `during` could answer. Without one both spellings decline together, which they
 // already did.
 //
-// A point operand is promoted to the interval [p, p] and asked the same way
-// `during` asks it, so the two cannot drift apart again. An interval operand —
+// A point operand is asked as `during` asks it (pointInIntervalAtPrecision), so
+// the two cannot drift apart again. An interval operand —
 // `I in day of J`, the spelling the measures use for one period inside another —
 // is already the shape the question wants.
 func membershipAtPrecision(frame *time.Location, outer, inner fptypes.Value, precision string) (fptypes.Value, bool) {
@@ -6457,7 +6457,11 @@ func membershipAtPrecision(frame *time.Location, outer, inner fptypes.Value, pre
 		if !isTemporalType(inner) {
 			return nil, false
 		}
-		innerIv = cqltypes.NewInterval(inner, inner, true, true)
+		res, err := pointInIntervalAtPrecision(frame, iv, inner, precision)
+		if err != nil {
+			return nil, false
+		}
+		return res, true
 	}
 	res, err := intervalIncludesAtPrecision(frame, iv, innerIv, precision, false)
 	if err != nil {
@@ -6766,16 +6770,14 @@ func carryDefaultOffsetTo(from, to fptypes.DateTime) fptypes.Value {
 }
 
 // timingCompare orders two points at the precision a phrase states, falling back
-// to the whole value where it states none.
-func (e *Evaluator) timingCompare(a, b fptypes.Value, precision string) (int, bool) {
+// to the whole value where it states none. It gives every order the pair can be
+// in (see comparisons), which the phrase applies its predicates to.
+func (e *Evaluator) timingCompare(a, b fptypes.Value, precision string) comparisons {
 	if precision != "" {
-		return temporalCompareAtPrecision(e.evaluationFrame(), a, b, precision)
+		return temporalCompareSet(e.evaluationFrame(), a, b, precision)
 	}
 	cmp, err := cqltypes.CompareTemporal(a, b)
-	if err != nil {
-		return 0, false
-	}
-	return cmp, true
+	return comparisonOf(cmp, err == nil)
 }
 
 // evalOffsetTiming answers a timing phrase that states a quantity offset, which
@@ -6942,42 +6944,48 @@ func (e *Evaluator) evalOffsetTiming(left, right fptypes.Value, op ast.TimingOp)
 	// apart on the same day, so the direction holds there even though the instants
 	// run the other way.
 	near, far := rightPoint, shifted
-	inOrder, ok := e.timingCompare(leftPoint, near, op.Precision)
-	if !ok {
+	sameAllowed := op.Kind == ast.TimingSameAs
+	outOfOrder := func(inOrder int) bool {
+		beyondNear := inOrder > 0
+		if op.After {
+			beyondNear = inOrder < 0
+		}
+		return beyondNear || (inOrder == 0 && !sameAllowed)
+	}
+	// Each predicate is asked of every order the pair can be in, and answers where
+	// they all agree (plan 025): a point that is somewhere in an hour the offset
+	// cuts in two is not on one side of the bound or the other.
+	inOrder := e.timingCompare(leftPoint, near, op.Precision)
+	if inOrder.uncertain {
 		return nil, true, nil
 	}
-	sameAllowed := op.Kind == ast.TimingSameAs
-	beyondNear := inOrder > 0
-	if op.After {
-		beyondNear = inOrder < 0
-	}
-	if beyondNear || (inOrder == 0 && !sameAllowed) {
+	orderOK := inOrder.holds(func(c int) bool { return !outOfOrder(c) })
+	if v, isBool := orderOK.(fptypes.Boolean); isBool && !v.Bool() {
 		return fptypes.NewBoolean(false), true, nil
 	}
 
-	atFar, ok := e.timingCompare(leftPoint, far, op.Precision)
-	if !ok {
-		return nil, true, nil
-	}
+	atFar := e.timingCompare(leftPoint, far, op.Precision)
 	// Past the far end is outside for `or less`, and is exactly what `or more`
 	// asks for.
-	beyondFar := atFar < 0
-	if op.After {
-		beyondFar = atFar > 0
-	}
-	within := !beyondFar
-	switch bound.comparator {
-	case "lessThan":
-		// Strict: the bound itself is outside.
-		within = !beyondFar && atFar != 0
-	case "more":
-		within = beyondFar || atFar == 0
-	case "moreThan":
-		within = beyondFar
-	case "":
-		within = atFar == 0
-	}
-	return fptypes.NewBoolean(within), true, nil
+	within := atFar.holds(func(atFar int) bool {
+		beyondFar := atFar < 0
+		if op.After {
+			beyondFar = atFar > 0
+		}
+		switch bound.comparator {
+		case "lessThan":
+			// Strict: the bound itself is outside.
+			return !beyondFar && atFar != 0
+		case "more":
+			return beyondFar || atFar == 0
+		case "moreThan":
+			return beyondFar
+		case "":
+			return atFar == 0
+		}
+		return !beyondFar
+	})
+	return ThreeValuedAnd(orderOK, within), true, nil
 }
 
 func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, error) {
@@ -7172,6 +7180,25 @@ func (e *Evaluator) evalTimingExpr(n *ast.TimingExpression) (fptypes.Value, erro
 		return evalIntervalProperlyContainsPoint(e.evaluationFrame(), rightIv, left, n.Operator.Precision)
 	}
 
+	// An interval that includes a point at a precision, and a point during or
+	// included in one, ask what `in` asks: the point against the bounds, with an
+	// open bound compared exclusively. Promoted to the unit interval [p, p], the
+	// point would be read as an interval, against the start and end of the other
+	// — the successor of an open bound — and `includes hour of` would answer
+	// otherwise than `in hour of` (plan 025, code review round 1, finding 1).
+	if n.Operator.Precision != "" && !n.Operator.Properly && n.Operator.Boundary == "" {
+		if leftOk && !rightOk && n.Operator.Kind == ast.TimingIncludes {
+			if res, handled := membershipAtPrecision(e.evaluationFrame(), leftIv, right, n.Operator.Precision); handled {
+				return res, nil
+			}
+		}
+		if !leftOk && rightOk && (n.Operator.Kind == ast.TimingIncludedIn || n.Operator.Kind == ast.TimingDuring) {
+			if res, handled := membershipAtPrecision(e.evaluationFrame(), rightIv, left, n.Operator.Precision); handled {
+				return res, nil
+			}
+		}
+	}
+
 	// Handle scalar vs interval for non-temporal types (e.g., 9 before Interval[11, 20])
 	if !leftOk && rightOk {
 		// Promote scalar to point interval [x, x]
@@ -7330,84 +7357,120 @@ func listContainsValue(c fptypes.Collection, val fptypes.Value) bool {
 }
 
 // intervalIncludesAtPrecision checks if outer includes inner at the given precision.
-// Compares interval bounds by truncating to the specified precision.
+//
+// CQL 1.5.3, Appendix B, Includes (https://cql.hl7.org/N1A/09-b-cqlreference.html):
+// "If precision is specified and the point type is a Date, DateTime, or Time
+// type, comparisons used in the operation are performed at the specified
+// precision". They are the comparisons of Same Or Before, so it is those, and a
+// part of the answer is not known only if the part that is not decides nothing:
+// where one bound is out, the other being unknown does not matter (plan 025, D2).
+// The start of the outer interval is the same or before the start of the inner,
+// and the end of the inner is the same or before the end of the outer, with the
+// start and end the intervals have — the successor of an open bound — as the
+// interval phrases read them.
 func intervalIncludesAtPrecision(frame *time.Location, outer, inner cqltypes.Interval, precision string, properly bool) (fptypes.Value, error) {
 	pIdx := precisionIndex(precision)
 	if pIdx < 0 {
 		return nil, nil
 	}
 
-	cmpAtPrec := func(a, b fptypes.Value) (int, bool) {
-		// Read against each other, so a bound with no timezone frame is not lined
-		// up against a point that has been moved into one. See compareValues.
-		aComps, aMax, bComps, bMax := componentsAtPrecision(a, b, precision, frame)
-		if aComps == nil || bComps == nil {
-			return 0, false
-		}
-		// If the requested precision exceeds either operand's precision, result is ambiguous
-		if pIdx > aMax || pIdx > bMax {
-			return 0, false
-		}
-		for i := 0; i <= pIdx; i++ {
-			if aComps[i] < bComps[i] {
-				return -1, true
-			}
-			if aComps[i] > bComps[i] {
-				return 1, true
-			}
-		}
-		return 0, true
+	low, err := boundsCompare(temporalSameOrBefore, frame, effectiveStart(outer), effectiveStart(inner), precision)
+	if err != nil {
+		return nil, err
 	}
+	high, err := boundsCompare(temporalSameOrBefore, frame, effectiveEnd(inner), effectiveEnd(outer), precision)
+	if err != nil {
+		return nil, err
+	}
+	included := ThreeValuedAnd(low, high)
+	if !properly {
+		return included, nil
+	}
+	if isFalse(included) {
+		return included, nil
+	}
+	// Properly: the outer interval is also strictly larger, at the precision, on
+	// the same effective bounds the inclusion read — a start strictly before the
+	// inner's or an end strictly after it. Comparing the written bounds took
+	// (2019-12-31, 2020-01-03] as larger than [2020-01-01, 2020-01-03] at the day,
+	// and gave up on a precision finer than the bounds (plan 025, code review
+	// round 2, finding 1). The two parts combine as `and` does: an inclusion
+	// that is unknown next to a size that is not larger is false (round 3,
+	// finding 1).
+	earlier, err := boundsCompare(temporalBefore, frame, effectiveStart(outer), effectiveStart(inner), precision)
+	if err != nil {
+		return nil, err
+	}
+	later, err := boundsCompare(temporalBefore, frame, effectiveEnd(inner), effectiveEnd(outer), precision)
+	if err != nil {
+		return nil, err
+	}
+	return ThreeValuedAnd(included, ThreeValuedOr(earlier, later)), nil
+}
 
-	// Check outer.Low <= inner.Low (at precision)
-	if outer.Low != nil && inner.Low != nil {
-		cmp, ok := cmpAtPrec(inner.Low, outer.Low)
-		if !ok {
-			return nil, nil
-		}
-		if cmp < 0 {
-			return fptypes.NewBoolean(false), nil
-		}
-		if cmp == 0 && inner.LowClosed && !outer.LowClosed {
-			return fptypes.NewBoolean(false), nil
-		}
+// boundsCompare compares two bounds, where a bound that is not known — an open
+// null — leaves the comparison unknown (plan 025, code review round 3,
+// finding 2; both reference engines answer so).
+func boundsCompare(compare func(*time.Location, fptypes.Value, fptypes.Value, string) (fptypes.Value, error), frame *time.Location, a, b fptypes.Value, precision string) (fptypes.Value, error) {
+	if a == nil || b == nil {
+		return nil, nil
 	}
-	// Check inner.High <= outer.High (at precision)
-	if outer.High != nil && inner.High != nil {
-		cmp, ok := cmpAtPrec(inner.High, outer.High)
-		if !ok {
-			return nil, nil
-		}
-		if cmp > 0 {
-			return fptypes.NewBoolean(false), nil
-		}
-		if cmp == 0 && inner.HighClosed && !outer.HighClosed {
-			return fptypes.NewBoolean(false), nil
-		}
-	}
+	return compare(frame, a, b, precision)
+}
 
-	if properly {
-		// For properly includes, outer must be strictly larger.
-		// Check that at least one bound is strictly different.
-		outerEqualsInner := true
-		if outer.Low != nil && inner.Low != nil {
-			cmp, ok := cmpAtPrec(outer.Low, inner.Low)
-			if ok && cmp != 0 {
-				outerEqualsInner = false
-			}
-		}
-		if outerEqualsInner && outer.High != nil && inner.High != nil {
-			cmp, ok := cmpAtPrec(outer.High, inner.High)
-			if ok && cmp != 0 {
-				outerEqualsInner = false
-			}
-		}
-		if outerEqualsInner {
-			return fptypes.NewBoolean(false), nil
-		}
+// effectiveStart and effectiveEnd are the first and last point an interval
+// includes: the successor or predecessor of an open bound, and the minimum or
+// maximum of the point type for a closed null (see startOf). An open null is
+// unknown, and nil. A bound whose neighbor is out of the calendar is the bound
+// itself.
+func effectiveStart(iv cqltypes.Interval) fptypes.Value {
+	if start, err := startOf(iv); err == nil {
+		return start
 	}
+	return iv.Low
+}
 
-	return fptypes.NewBoolean(true), nil
+func effectiveEnd(iv cqltypes.Interval) fptypes.Value {
+	if end, err := endOf(iv); err == nil {
+		return end
+	}
+	return iv.High
+}
+
+// pointInIntervalAtPrecision is intervalIncludesAtPrecision for a point: its
+// comparison with an open bound is exclusive, the point being after the start
+// of the interval and before its end at the precision, and with a closed one the
+// same or after, and the same or before.
+func pointInIntervalAtPrecision(frame *time.Location, iv cqltypes.Interval, point fptypes.Value, precision string) (fptypes.Value, error) {
+	if precisionIndex(precision) < 0 {
+		return nil, nil
+	}
+	// A closed null is the minimum or the maximum of the point type, and an open
+	// one is unknown (plan 025, code review round 3, finding 2).
+	lowBound, highBound := iv.Low, iv.High
+	if lowBound == nil && iv.LowClosed {
+		lowBound = extremeLike(iv.High, false)
+	}
+	if highBound == nil && iv.HighClosed {
+		highBound = extremeLike(iv.Low, true)
+	}
+	compare := temporalBefore
+	if iv.LowClosed {
+		compare = temporalSameOrBefore
+	}
+	low, err := boundsCompare(compare, frame, lowBound, point, precision)
+	if err != nil {
+		return nil, err
+	}
+	compare = temporalBefore
+	if iv.HighClosed {
+		compare = temporalSameOrBefore
+	}
+	high, err := boundsCompare(compare, frame, point, highBound, precision)
+	if err != nil {
+		return nil, err
+	}
+	return ThreeValuedAnd(low, high), nil
 }
 
 // evalIntervalProperlyContainsPoint checks if an interval properly contains a point.
@@ -7916,10 +7979,10 @@ func readingFrameOf(a, b fptypes.Value, precision string, frame *time.Location) 
 		return time.UTC
 	case unplaced(a) || unplaced(b):
 		// A DateTime with no offset at all, which only a caller can pass, could
-		// be at any offset (eval/timing_offset.go). The comparisons resolve it
-		// over that window before reading components; the other readers do not
-		// yet, and keep reading it as they did before plan 024 (backlog of the
-		// plan, code review round 3, M3).
+		// be at any offset (eval/timing_offset.go). The comparisons, `in`,
+		// `includes` and `during` resolve it over that window before reading
+		// components (temporalCompareSet); `properly includes` with a precision
+		// does not, and keeps reading it as it did before plan 024 (backlog 1c52).
 		return time.UTC
 	case differentOffsets(a, b, frame):
 		return frame
@@ -7987,15 +8050,8 @@ func temporalComponentsAgainst(v fptypes.Value, in *time.Location) (components [
 		// Date stayed on the 1st. Where one side is frameless, both are read as
 		// written — and so they are at a precision coarser than the hour. See
 		// readAsWritten.
-		if minutes, ok := t.EffectiveOffset(); ok && in != nil {
-			at := t.ToTime()
-			if !t.HasTZ() {
-				at = time.Date(at.Year(), at.Month(), at.Day(), at.Hour(), at.Minute(),
-					at.Second(), at.Nanosecond(), time.FixedZone("", minutes*60))
-			}
-			moved := at.In(in)
-			comps := []int{moved.Year(), int(moved.Month()), moved.Day(), moved.Hour(), moved.Minute(), moved.Second(), moved.Nanosecond() / 1e6}
-			return comps, maxPrec
+		if at, ok := instantOf(t); ok && in != nil {
+			return componentsOf(at.In(in)), maxPrec
 		}
 		comps := []int{t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Millisecond()}
 		return comps, maxPrec
@@ -8035,60 +8091,6 @@ func precisionIndex(precision string) int {
 	default:
 		return -1
 	}
-}
-
-// temporalCompareAtPrecision compares two temporal values up to the given precision.
-// Returns -1, 0, or 1. If the comparison is uncertain (one operand doesn't have
-// enough precision), returns (0, false).
-//
-// An explicit precision states how far to look, so agreeing that far settles the
-// question: `@T15:59:59 same second as @T15:59:59.999` is true. Without one the
-// comparison runs to the precision the operands carry, and agreeing on everything
-// they share while one is specified more finely leaves the result unknown, which
-// is the rule types.CompareTemporal applies to the ordering operators.
-func temporalCompareAtPrecision(frame *time.Location, left, right fptypes.Value, precision string) (int, bool) {
-	// One side writing an offset and the other not is not a pair of components to
-	// line up: reading components moves the written one to a frame and leaves
-	// the other in its local digits, which compares two different frames — the
-	// mistake CompareTemporal's own comment warns about. Resolve it before
-	// reading any components.
-	//
-	// Skipped at a precision coarser than the hour. Both ends of the window would
-	// be read as written and agree anyway — atOffset keeps the digits — so this
-	// only saves the two readings. See readAsWritten.
-	if !coarserThanHour(precision) {
-		if lo, hi, asymmetric := offsetWindowOf(left, right); asymmetric {
-			// Across the window both values are read in the evaluation offset,
-			// where truncating to a precision is monotonic in the instant, so
-			// agreement at the two ends is agreement across it. The one offset of
-			// the window that equals the other value's is read as written instead
-			// (plan 024), so it is checked on its own.
-			low, lowOK := temporalCompareRead(frame, lo.left, lo.right, precision, true)
-			high, highOK := temporalCompareRead(frame, hi.left, hi.right, precision, true)
-			if !lowOK || !highOK || low != high {
-				return 0, false
-			}
-			if same, ok := offsetOfTheOtherOf(left, right); ok {
-				at, atOK := temporalCompareRead(frame, same.left, same.right, precision, false)
-				if !atOK || at != low {
-					return 0, false
-				}
-			}
-			return low, true
-		}
-	}
-	return temporalCompareRead(frame, left, right, precision, false)
-}
-
-// temporalCompareRead compares two temporals read one way: in the frame when
-// inFrame is set and the pair is not read as written, otherwise as
-// componentsAtPrecision decides.
-func temporalCompareRead(frame *time.Location, left, right fptypes.Value, precision string, inFrame bool) (int, bool) {
-	in := readingFrameOf(left, right, precision, frame)
-	if inFrame && precision != "" && !readAsWritten(left, right, precision) {
-		in = frame
-	}
-	return compareComponentsIn(left, right, precision, in)
 }
 
 // compareComponentsIn lines up the components of two temporals read in in,
@@ -8134,44 +8136,27 @@ func compareComponentsIn(left, right fptypes.Value, precision string, in *time.L
 	return 0, true // equal at this precision
 }
 
+// The five predicates answer over every result the pair can come to (see
+// comparisons): a comparison at a precision is true or false only where it is
+// for all of them.
 func temporalSameAs(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
-	if !certain {
-		return nil, nil
-	}
-	return fptypes.NewBoolean(cmp == 0), nil
+	return temporalCompareSet(frame, left, right, precision).holds(func(cmp int) bool { return cmp == 0 }), nil
 }
 
 func temporalBefore(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
-	if !certain {
-		return nil, nil
-	}
-	return fptypes.NewBoolean(cmp < 0), nil
+	return temporalCompareSet(frame, left, right, precision).holds(func(cmp int) bool { return cmp < 0 }), nil
 }
 
 func temporalAfter(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
-	if !certain {
-		return nil, nil
-	}
-	return fptypes.NewBoolean(cmp > 0), nil
+	return temporalCompareSet(frame, left, right, precision).holds(func(cmp int) bool { return cmp > 0 }), nil
 }
 
 func temporalSameOrBefore(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
-	if !certain {
-		return nil, nil
-	}
-	return fptypes.NewBoolean(cmp <= 0), nil
+	return temporalCompareSet(frame, left, right, precision).holds(func(cmp int) bool { return cmp <= 0 }), nil
 }
 
 func temporalSameOrAfter(frame *time.Location, left, right fptypes.Value, precision string) (fptypes.Value, error) {
-	cmp, certain := temporalCompareAtPrecision(frame, left, right, precision)
-	if !certain {
-		return nil, nil
-	}
-	return fptypes.NewBoolean(cmp >= 0), nil
+	return temporalCompareSet(frame, left, right, precision).holds(func(cmp int) bool { return cmp >= 0 }), nil
 }
 
 func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Value, error) {

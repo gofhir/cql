@@ -46,8 +46,11 @@ func TestTheWindowOfAnUnplacedDateTimeIsReadInTheEvaluationOffset(t *testing.T) 
 }
 
 // An unplaced DateTime next to one that writes an offset is not read in the
-// evaluation's offset by the readers of components: they keep the reading
-// they had before plan 024 (see readingFrameOf).
+// evaluation's offset by the readers of components that do not resolve the
+// window — `properly includes` with a precision, which plan 025 leaves as it
+// was (backlog 1c52): they keep the reading they had before plan 024 (see
+// readingFrameOf). The comparisons, `in`, `includes` and `during` resolve the
+// window instead (plan 025, temporalCompareSet).
 func TestAnUnplacedDateTimeIsAtTheOffsetOfTheEvaluation(t *testing.T) {
 	unplaced, err := fptypes.NewDateTime("2020-01-01T00:10:00")
 	if err != nil {

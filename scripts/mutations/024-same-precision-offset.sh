@@ -61,8 +61,8 @@ mutations = [
      "want"),
     ("a value with no offset is read in the evaluation's offset by the readers of components",
      (EV, "\tcase unplaced(a) || unplaced(b):", "\tcase false:"),
-     run("TestAnUnplacedValueInAnIntervalIsReadAsBefore"),
-     "want true, as before plan 024"),
+     UNPLACED,
+     "as before plan 024"),
     # Each caller of the frame.
     ("the point phrases pass UTC",
      (EV, "\tframe := e.evaluationFrame()\n\n\tswitch op.Kind {", "\tframe := time.UTC\n\n\tswitch op.Kind {"), PHRASES,
@@ -71,7 +71,7 @@ mutations = [
      (EV, "return temporalSameAs(e.evaluationFrame(), a, b, precision)", "return temporalSameAs(time.UTC, a, b, precision)"), PHRASES,
      "same hour as Interval"),
     ("the timing offset phrase passes UTC",
-     (EV, "return temporalCompareAtPrecision(e.evaluationFrame(), a, b, precision)", "return temporalCompareAtPrecision(time.UTC, a, b, precision)"), PHRASES,
+     (EV, "return temporalCompareSet(e.evaluationFrame(), a, b, precision)", "return temporalCompareSet(time.UTC, a, b, precision)"), PHRASES,
      "or less before hour of"),
     ("`in` at a precision passes UTC",
      (EV, "membershipAtPrecision(e.evaluationFrame(), iv, point, n.Precision)", "membershipAtPrecision(time.UTC, iv, point, n.Precision)"), PHRASES,
@@ -102,8 +102,8 @@ mutations = [
      (IP, "return successorOf(frame, prev, next, precision)", "return successorOf(time.UTC, prev, next, precision)"), PHRASES,
      "meets hour of"),
     ("the window of an unplaced DateTime is read at UTC at its latest end",
-     (EV, "high, highOK := temporalCompareRead(frame, hi.left, hi.right, precision, true)",
-      "high, highOK := temporalCompareRead(time.UTC, hi.left, hi.right, precision, true)"), WINDOW,
+     ("eval/compare_set.go", "union(temporalCompareRead(frame, hi.left, hi.right, precision, true))",
+      "union(temporalCompareRead(time.UTC, hi.left, hi.right, precision, true))"), WINDOW,
      "before hour of at +05:30"),
     # The harness and the area.
     ("the table gives -03:00 to the new area",
@@ -166,7 +166,7 @@ mutations.append(
 # and the offset cleared after each loop of areas.
 mutations.append(
     ("the window checks only its two ends",
-     ("eval/evaluator.go", "if same, ok := offsetOfTheOtherOf(left, right); ok {",
+     ("eval/compare_set.go", "if same, ok := offsetOfTheOtherOf(left, right); ok {",
       "if same, ok := offsetOfTheOtherOf(left, right); ok && false {"),
      run("TestAnUnplacedValueIsUncertainWhereTheWindowDisagrees"),
      "= true; want null"))

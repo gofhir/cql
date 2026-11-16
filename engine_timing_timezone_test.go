@@ -6,7 +6,7 @@ import "testing"
 // review of the timezone work found and that work deliberately left open.
 //
 // `before`, `after`, `same as` and `same day as` reach the temporal comparison by
-// their own route — temporalCompareAtPrecision, over its component reader — and so
+// their own route — temporalCompareSet, over its component reader — and so
 // never saw the offset rule. Inside the 26-hour window `<` declined while
 // `before` answered true.
 //

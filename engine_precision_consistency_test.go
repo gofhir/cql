@@ -31,7 +31,7 @@ func TestPrecisionUncertainty_ConsistentAcrossOperators(t *testing.T) {
 		// Equality, which has no error channel of its own
 		"@2017-09-01T00:00:00 = @2017-09-01T00:00:00.000",
 		"@2017-09-01T00:00:00 != @2017-09-01T00:00:00.000",
-		// Timing operators, through temporalCompareAtPrecision
+		// Timing operators, through temporalCompareSet
 		"@T15:59:59 before @T15:59:59.999",
 		"@T15:59:59 after @T15:59:59.999",
 		"@T15:59:59 same as @T15:59:59.999",

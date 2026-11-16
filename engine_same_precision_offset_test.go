@@ -174,6 +174,9 @@ func TestEveryPhraseWithAPrecisionReadsTheHourInTheEvaluationOffset(t *testing.T
 		{"Interval[{l:00:20:00}, {l:00:50:00}] included in hour of Interval[{r:00:30:00}, {r:00:30:00}]", "true"},
 		{"Interval[{l:00:00:00}, {l:00:59:00}] includes hour of Interval[{r:00:20:00}, {r:00:50:00}]", "true"},
 		{"Interval[{l:00:00:00}, {l:00:30:00}] includes hour of {r:00:50:00}", "true"},
+		// Between intervals: 00:20 and 00:50 are one local hour and, at the
+		// fractional offsets, two UTC hours (plan 025 sends a point to `in`).
+		{"Interval[{l:00:00:00}, {l:00:20:00}] includes hour of Interval[{r:00:10:00}, {r:00:50:00}]", "true"},
 		{"Interval[{l:00:50:00}, {l:00:50:00}] overlaps hour of Interval[{r:01:10:00}, {r:01:10:00}]", "false"},
 		{"Interval[{l:00:50:00}, {l:00:50:00}] starts hour of Interval[{r:01:10:00}, {r:01:10:00}]", "false"},
 		{"Interval[{l:00:50:00}, {l:00:50:00}] ends hour of Interval[{r:01:10:00}, {r:01:10:00}]", "false"},
@@ -286,32 +289,6 @@ func TestAnUnplacedValueIsUncertainWhereTheWindowDisagrees(t *testing.T) {
 		}
 		if got := answerText(v); got != tt.want {
 			t.Errorf("P = %s: %s = %s; want %s", tt.p, tt.expr, got, tt.want)
-		}
-	}
-}
-
-// TestAnUnplacedValueInAnIntervalIsReadAsBefore: the readers of components
-// behind `in`, `includes` and `during` do not resolve a DateTime that writes no
-// offset over the window of offsets, as the comparisons do, and read it as they
-// did before plan 024. The answer is a known defect: 00:50 at an offset from
-// -12:00 to +14:00 may or may not fall in the hour of 00Z, so it is unknown,
-// where main and this engine answer true (plan 024, code review round 3, M3;
-// backlog). The test holds that plan 024 does not move it.
-func TestAnUnplacedValueInAnIntervalIsReadAsBefore(t *testing.T) {
-	unplacedValue, err := fptypes.NewDateTime("2020-01-01T00:50")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, offset := range []int{minus0300, plus0530} {
-		at := time.Date(2026, 1, 1, 0, 0, 0, 0, time.FixedZone("", offset))
-		v, err := NewEngine(WithEvaluationTimestamp(at)).EvaluateExpression(t.Context(),
-			"library P\nparameter P DateTime\ndefine X: P in hour of Interval[@2020-01-01T00:00Z, @2020-01-01T01:00Z]",
-			"X", nil, map[string]fptypes.Value{"P": unplacedValue})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got := answerText(v); got != "true" {
-			t.Errorf("at %+ds: P in hour of Interval[00Z, 01Z] = %s; want true, as before plan 024", offset, got)
 		}
 	}
 }

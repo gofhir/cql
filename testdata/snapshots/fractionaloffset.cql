@@ -1454,3 +1454,1393 @@ define D1441: Interval[@2019-12-31T23:59:59.999+05:30, @2020-01-01T00:00:00.000+
 define D1442: Interval[@2019-12-31T23:59:59.999+05:30, @2020-01-01T00:00:00.000+05:30] during millisecond of Interval[@2019-12-31T15:30:00.000-03:00, @2019-12-31T15:30:00.001-03:00]
 define D1443: Interval[@2019-12-31T23:59:59.999+05:30, @2020-01-01T00:00:00.000+05:30] includes millisecond of Interval[@2019-12-31T15:30:00.000-03:00, @2019-12-31T15:30:00.001-03:00]
 define D1444: @2019-12-31T23:59:59.999+05:30 in millisecond of Interval[@2019-12-31T15:30:00.000-03:00, @2019-12-31T15:30:00.001-03:00]
+define D1445: @2020-01-01T00Z same hour as @2019-12-31T22Z
+define D1446: @2020-01-01T04+05:30 same minute as @2020-01-01T00Z
+define D1447: @2020-01-01T00Z same hour or before @2019-12-31T19-03:00
+define D1448: @2019-12-31T22:53Z same minute or before @2020-01-01T00Z
+define D1449: @2020-01-01T00Z same hour or after @2020-01-01T04:23+05:30
+define D1450: @2019-12-31T19:53-03:00 same minute or after @2020-01-01T00Z
+define D1451: @2020-01-01T00Z before hour of @2019-12-31T22:53:20Z
+define D1452: @2020-01-01T04:23:20+05:30 before minute of @2020-01-01T00Z
+define D1453: @2020-01-01T00Z after hour of @2019-12-31T19:53:20-03:00
+define D1454: @2019-12-31T23Z after minute of @2020-01-01T00Z
+define D1455: @2020-01-01T00Z same hour as @2020-01-01T05+05:30
+define D1456: @2019-12-31T20-03:00 same minute as @2020-01-01T00Z
+define D1457: @2020-01-01T00Z same hour or before @2019-12-31T23:59Z
+define D1458: @2020-01-01T05:29+05:30 same minute or before @2020-01-01T00Z
+define D1459: @2020-01-01T00Z same hour or after @2019-12-31T20:59-03:00
+define D1460: @2019-12-31T23:59:59Z same minute or after @2020-01-01T00Z
+define D1461: @2020-01-01T00Z before hour of @2020-01-01T05:29:59+05:30
+define D1462: @2019-12-31T20:59:59-03:00 before minute of @2020-01-01T00Z
+define D1463: @2020-01-01T00Z after hour of @2020-01-01T00Z
+define D1464: @2020-01-01T05+05:30 after minute of @2020-01-01T00Z
+define D1465: @2020-01-01T00Z same hour as @2019-12-31T21-03:00
+define D1466: @2020-01-01T00:00Z same minute as @2020-01-01T00Z
+define D1467: @2020-01-01T00Z same hour or before @2020-01-01T05:30+05:30
+define D1468: @2019-12-31T21:00-03:00 same minute or before @2020-01-01T00Z
+define D1469: @2020-01-01T00Z same hour or after @2020-01-01T00:00:00Z
+define D1470: @2020-01-01T05:30:00+05:30 same minute or after @2020-01-01T00Z
+define D1471: @2020-01-01T00Z before hour of @2019-12-31T21:00:00-03:00
+define D1472: @2020-01-01T00Z before minute of @2020-01-01T00Z
+define D1473: @2020-01-01T00Z after hour of @2020-01-01T06+05:30
+define D1474: @2019-12-31T21-03:00 after minute of @2020-01-01T00Z
+define D1475: @2020-01-01T00Z same hour as @2020-01-01T00:30Z
+define D1476: @2020-01-01T06:00+05:30 same minute as @2020-01-01T00Z
+define D1477: @2020-01-01T00Z same hour or before @2019-12-31T21:30-03:00
+define D1478: @2020-01-01T00:30:00Z same minute or before @2020-01-01T00Z
+define D1479: @2020-01-01T00Z same hour or after @2020-01-01T06:00:00+05:30
+define D1480: @2019-12-31T21:30:00-03:00 same minute or after @2020-01-01T00Z
+define D1481: @2020-01-01T00Z before hour of @2020-01-01T00Z
+define D1482: @2020-01-01T06+05:30 before minute of @2020-01-01T00Z
+define D1483: @2020-01-01T00Z after hour of @2019-12-31T21-03:00
+define D1484: @2020-01-01T00:59Z after minute of @2020-01-01T00Z
+define D1485: @2020-01-01T00Z same hour as @2020-01-01T06:29+05:30
+define D1486: @2019-12-31T21:59-03:00 same minute as @2020-01-01T00Z
+define D1487: @2020-01-01T00Z same hour or before @2020-01-01T00:59:59Z
+define D1488: @2020-01-01T06:29:59+05:30 same minute or before @2020-01-01T00Z
+define D1489: @2020-01-01T00Z same hour or after @2019-12-31T21:59:59-03:00
+define D1490: @2020-01-01T01Z same minute or after @2020-01-01T00Z
+define D1491: @2020-01-01T00Z before hour of @2020-01-01T06+05:30
+define D1492: @2019-12-31T22-03:00 before minute of @2020-01-01T00Z
+define D1493: @2020-01-01T00Z after hour of @2020-01-01T01:00Z
+define D1494: @2020-01-01T06:30+05:30 after minute of @2020-01-01T00Z
+define D1495: @2020-01-01T00Z same hour as @2019-12-31T22:00-03:00
+define D1496: @2020-01-01T01:00:00Z same minute as @2020-01-01T00Z
+define D1497: @2020-01-01T00Z same hour or before @2020-01-01T06:30:00+05:30
+define D1498: @2019-12-31T22:00:00-03:00 same minute or before @2020-01-01T00Z
+define D1499: @2020-01-01T00Z same hour or after @2020-01-01T01Z
+define D1500: @2020-01-01T06+05:30 same minute or after @2020-01-01T00Z
+define D1501: @2020-01-01T00Z before hour of @2019-12-31T22-03:00
+define D1502: @2020-01-01T01:06Z before minute of @2020-01-01T00Z
+define D1503: @2020-01-01T00Z after hour of @2020-01-01T06:36+05:30
+define D1504: @2019-12-31T22:06-03:00 after minute of @2020-01-01T00Z
+define D1505: @2020-01-01T00Z same hour as @2020-01-01T01:06:40Z
+define D1506: @2020-01-01T06:36:40+05:30 same minute as @2020-01-01T00Z
+define D1507: @2020-01-01T00Z same hour or before @2019-12-31T22:06:40-03:00
+define D1508: @2019-12-31T16Z same minute or before @2019-12-31T18Z
+define D1509: @2019-12-31T18Z same hour or after @2019-12-31T22+05:30
+define D1510: @2019-12-31T13-03:00 same minute or after @2019-12-31T18Z
+define D1511: @2019-12-31T18Z before hour of @2019-12-31T16:53Z
+define D1512: @2019-12-31T22:23+05:30 before minute of @2019-12-31T18Z
+define D1513: @2019-12-31T18Z after hour of @2019-12-31T13:53-03:00
+define D1514: @2019-12-31T16:53:20Z after minute of @2019-12-31T18Z
+define D1515: @2019-12-31T18Z same hour as @2019-12-31T22:23:20+05:30
+define D1516: @2019-12-31T13:53:20-03:00 same minute as @2019-12-31T18Z
+define D1517: @2019-12-31T18Z same hour or before @2019-12-31T17Z
+define D1518: @2019-12-31T23+05:30 same minute or before @2019-12-31T18Z
+define D1519: @2019-12-31T18Z same hour or after @2019-12-31T14-03:00
+define D1520: @2019-12-31T17:59Z same minute or after @2019-12-31T18Z
+define D1521: @2019-12-31T18Z before hour of @2019-12-31T23:29+05:30
+define D1522: @2019-12-31T14:59-03:00 before minute of @2019-12-31T18Z
+define D1523: @2019-12-31T18Z after hour of @2019-12-31T17:59:59Z
+define D1524: @2019-12-31T23:29:59+05:30 after minute of @2019-12-31T18Z
+define D1525: @2019-12-31T18Z same hour as @2019-12-31T14:59:59-03:00
+define D1526: @2019-12-31T18Z same minute as @2019-12-31T18Z
+define D1527: @2019-12-31T18Z same hour or before @2019-12-31T23+05:30
+define D1528: @2019-12-31T15-03:00 same minute or before @2019-12-31T18Z
+define D1529: @2019-12-31T18Z same hour or after @2019-12-31T18:00Z
+define D1530: @2019-12-31T23:30+05:30 same minute or after @2019-12-31T18Z
+define D1531: @2019-12-31T18Z before hour of @2019-12-31T15:00-03:00
+define D1532: @2019-12-31T18:00:00Z before minute of @2019-12-31T18Z
+define D1533: @2019-12-31T18Z after hour of @2019-12-31T23:30:00+05:30
+define D1534: @2019-12-31T15:00:00-03:00 after minute of @2019-12-31T18Z
+define D1535: @2019-12-31T18Z same hour as @2019-12-31T18Z
+define D1536: @2020-01-01T00+05:30 same minute as @2019-12-31T18Z
+define D1537: @2019-12-31T18Z same hour or before @2019-12-31T15-03:00
+define D1538: @2019-12-31T18:30Z same minute or before @2019-12-31T18Z
+define D1539: @2019-12-31T18Z same hour or after @2020-01-01T00:00+05:30
+define D1540: @2019-12-31T15:30-03:00 same minute or after @2019-12-31T18Z
+define D1541: @2019-12-31T18Z before hour of @2019-12-31T18:30:00Z
+define D1542: @2020-01-01T00:00:00+05:30 before minute of @2019-12-31T18Z
+define D1543: @2019-12-31T18Z after hour of @2019-12-31T15:30:00-03:00
+define D1544: @2019-12-31T18Z after minute of @2019-12-31T18Z
+define D1545: @2019-12-31T18Z same hour as @2020-01-01T00+05:30
+define D1546: @2019-12-31T15-03:00 same minute as @2019-12-31T18Z
+define D1547: @2019-12-31T18Z same hour or before @2019-12-31T18:59Z
+define D1548: @2020-01-01T00:29+05:30 same minute or before @2019-12-31T18Z
+define D1549: @2019-12-31T18Z same hour or after @2019-12-31T15:59-03:00
+define D1550: @2019-12-31T18:59:59Z same minute or after @2019-12-31T18Z
+define D1551: @2019-12-31T18Z before hour of @2020-01-01T00:29:59+05:30
+define D1552: @2019-12-31T15:59:59-03:00 before minute of @2019-12-31T18Z
+define D1553: @2019-12-31T18Z after hour of @2019-12-31T19Z
+define D1554: @2020-01-01T00+05:30 after minute of @2019-12-31T18Z
+define D1555: @2019-12-31T18Z same hour as @2019-12-31T16-03:00
+define D1556: @2019-12-31T19:00Z same minute as @2019-12-31T18Z
+define D1557: @2019-12-31T18Z same hour or before @2020-01-01T00:30+05:30
+define D1558: @2019-12-31T16:00-03:00 same minute or before @2019-12-31T18Z
+define D1559: @2019-12-31T18Z same hour or after @2019-12-31T19:00:00Z
+define D1560: @2020-01-01T00:30:00+05:30 same minute or after @2019-12-31T18Z
+define D1561: @2019-12-31T18Z before hour of @2019-12-31T16:00:00-03:00
+define D1562: @2019-12-31T19Z before minute of @2019-12-31T18Z
+define D1563: @2019-12-31T18Z after hour of @2020-01-01T00+05:30
+define D1564: @2019-12-31T16-03:00 after minute of @2019-12-31T18Z
+define D1565: @2019-12-31T18Z same hour as @2019-12-31T19:06Z
+define D1566: @2020-01-01T00:36+05:30 same minute as @2019-12-31T18Z
+define D1567: @2019-12-31T18Z same hour or before @2019-12-31T16:06-03:00
+define D1568: @2019-12-31T19:06:40Z same minute or before @2019-12-31T18Z
+define D1569: @2019-12-31T18Z same hour or after @2020-01-01T00:36:40+05:30
+define D1570: @2019-12-31T16:06:40-03:00 same minute or after @2019-12-31T18Z
+define D1571: @2020-01-01T01+01:00 before hour of @2019-12-31T22Z
+define D1572: @2020-01-01T04+05:30 before minute of @2020-01-01T01+01:00
+define D1573: @2020-01-01T01+01:00 after hour of @2019-12-31T19-03:00
+define D1574: @2019-12-31T22:53Z after minute of @2020-01-01T01+01:00
+define D1575: @2020-01-01T01+01:00 same hour as @2020-01-01T04:23+05:30
+define D1576: @2019-12-31T19:53-03:00 same minute as @2020-01-01T01+01:00
+define D1577: @2020-01-01T01+01:00 same hour or before @2019-12-31T22:53:20Z
+define D1578: @2020-01-01T04:23:20+05:30 same minute or before @2020-01-01T01+01:00
+define D1579: @2020-01-01T01+01:00 same hour or after @2019-12-31T19:53:20-03:00
+define D1580: @2019-12-31T23Z same minute or after @2020-01-01T01+01:00
+define D1581: @2020-01-01T01+01:00 before hour of @2020-01-01T05+05:30
+define D1582: @2019-12-31T20-03:00 before minute of @2020-01-01T01+01:00
+define D1583: @2020-01-01T01+01:00 after hour of @2019-12-31T23:59Z
+define D1584: @2020-01-01T05:29+05:30 after minute of @2020-01-01T01+01:00
+define D1585: @2020-01-01T01+01:00 same hour as @2019-12-31T20:59-03:00
+define D1586: @2019-12-31T23:59:59Z same minute as @2020-01-01T01+01:00
+define D1587: @2020-01-01T01+01:00 same hour or before @2020-01-01T05:29:59+05:30
+define D1588: @2019-12-31T20:59:59-03:00 same minute or before @2020-01-01T01+01:00
+define D1589: @2020-01-01T01+01:00 same hour or after @2020-01-01T00Z
+define D1590: @2020-01-01T05+05:30 same minute or after @2020-01-01T01+01:00
+define D1591: @2020-01-01T01+01:00 before hour of @2019-12-31T21-03:00
+define D1592: @2020-01-01T00:00Z before minute of @2020-01-01T01+01:00
+define D1593: @2020-01-01T01+01:00 after hour of @2020-01-01T05:30+05:30
+define D1594: @2019-12-31T21:00-03:00 after minute of @2020-01-01T01+01:00
+define D1595: @2020-01-01T01+01:00 same hour as @2020-01-01T00:00:00Z
+define D1596: @2020-01-01T05:30:00+05:30 same minute as @2020-01-01T01+01:00
+define D1597: @2020-01-01T01+01:00 same hour or before @2019-12-31T21:00:00-03:00
+define D1598: @2020-01-01T00Z same minute or before @2020-01-01T01+01:00
+define D1599: @2020-01-01T01+01:00 same hour or after @2020-01-01T06+05:30
+define D1600: @2019-12-31T21-03:00 same minute or after @2020-01-01T01+01:00
+define D1601: @2020-01-01T01+01:00 before hour of @2020-01-01T00:30Z
+define D1602: @2020-01-01T06:00+05:30 before minute of @2020-01-01T01+01:00
+define D1603: @2020-01-01T01+01:00 after hour of @2019-12-31T21:30-03:00
+define D1604: @2020-01-01T00:30:00Z after minute of @2020-01-01T01+01:00
+define D1605: @2020-01-01T01+01:00 same hour as @2020-01-01T06:00:00+05:30
+define D1606: @2019-12-31T21:30:00-03:00 same minute as @2020-01-01T01+01:00
+define D1607: @2020-01-01T01+01:00 same hour or before @2020-01-01T00Z
+define D1608: @2020-01-01T06+05:30 same minute or before @2020-01-01T01+01:00
+define D1609: @2020-01-01T01+01:00 same hour or after @2019-12-31T21-03:00
+define D1610: @2020-01-01T00:59Z same minute or after @2020-01-01T01+01:00
+define D1611: @2020-01-01T01+01:00 before hour of @2020-01-01T06:29+05:30
+define D1612: @2019-12-31T21:59-03:00 before minute of @2020-01-01T01+01:00
+define D1613: @2020-01-01T01+01:00 after hour of @2020-01-01T00:59:59Z
+define D1614: @2020-01-01T06:29:59+05:30 after minute of @2020-01-01T01+01:00
+define D1615: @2020-01-01T01+01:00 same hour as @2019-12-31T21:59:59-03:00
+define D1616: @2020-01-01T01Z same minute as @2020-01-01T01+01:00
+define D1617: @2020-01-01T01+01:00 same hour or before @2020-01-01T06+05:30
+define D1618: @2019-12-31T22-03:00 same minute or before @2020-01-01T01+01:00
+define D1619: @2020-01-01T01+01:00 same hour or after @2020-01-01T01:00Z
+define D1620: @2020-01-01T06:30+05:30 same minute or after @2020-01-01T01+01:00
+define D1621: @2020-01-01T01+01:00 before hour of @2019-12-31T22:00-03:00
+define D1622: @2020-01-01T01:00:00Z before minute of @2020-01-01T01+01:00
+define D1623: @2020-01-01T01+01:00 after hour of @2020-01-01T06:30:00+05:30
+define D1624: @2019-12-31T22:00:00-03:00 after minute of @2020-01-01T01+01:00
+define D1625: @2020-01-01T01+01:00 same hour as @2020-01-01T01Z
+define D1626: @2020-01-01T06+05:30 same minute as @2020-01-01T01+01:00
+define D1627: @2020-01-01T01+01:00 same hour or before @2019-12-31T22-03:00
+define D1628: @2020-01-01T01:06Z same minute or before @2020-01-01T01+01:00
+define D1629: @2020-01-01T01+01:00 same hour or after @2020-01-01T06:36+05:30
+define D1630: @2019-12-31T22:06-03:00 same minute or after @2020-01-01T01+01:00
+define D1631: @2020-01-01T01+01:00 before hour of @2020-01-01T01:06:40Z
+define D1632: @2020-01-01T06:36:40+05:30 before minute of @2020-01-01T01+01:00
+define D1633: @2020-01-01T01+01:00 after hour of @2019-12-31T22:06:40-03:00
+define D1634: @2019-12-31T16Z after minute of @2019-12-31T19+01:00
+define D1635: @2019-12-31T19+01:00 same hour as @2019-12-31T22+05:30
+define D1636: @2019-12-31T13-03:00 same minute as @2019-12-31T19+01:00
+define D1637: @2019-12-31T19+01:00 same hour or before @2019-12-31T16:53Z
+define D1638: @2019-12-31T22:23+05:30 same minute or before @2019-12-31T19+01:00
+define D1639: @2019-12-31T19+01:00 same hour or after @2019-12-31T13:53-03:00
+define D1640: @2019-12-31T16:53:20Z same minute or after @2019-12-31T19+01:00
+define D1641: @2019-12-31T19+01:00 before hour of @2019-12-31T22:23:20+05:30
+define D1642: @2019-12-31T13:53:20-03:00 before minute of @2019-12-31T19+01:00
+define D1643: @2019-12-31T19+01:00 after hour of @2019-12-31T17Z
+define D1644: @2019-12-31T23+05:30 after minute of @2019-12-31T19+01:00
+define D1645: @2019-12-31T19+01:00 same hour as @2019-12-31T14-03:00
+define D1646: @2019-12-31T17:59Z same minute as @2019-12-31T19+01:00
+define D1647: @2019-12-31T19+01:00 same hour or before @2019-12-31T23:29+05:30
+define D1648: @2019-12-31T14:59-03:00 same minute or before @2019-12-31T19+01:00
+define D1649: @2019-12-31T19+01:00 same hour or after @2019-12-31T17:59:59Z
+define D1650: @2019-12-31T23:29:59+05:30 same minute or after @2019-12-31T19+01:00
+define D1651: @2019-12-31T19+01:00 before hour of @2019-12-31T14:59:59-03:00
+define D1652: @2019-12-31T18Z before minute of @2019-12-31T19+01:00
+define D1653: @2019-12-31T19+01:00 after hour of @2019-12-31T23+05:30
+define D1654: @2019-12-31T15-03:00 after minute of @2019-12-31T19+01:00
+define D1655: @2019-12-31T19+01:00 same hour as @2019-12-31T18:00Z
+define D1656: @2019-12-31T23:30+05:30 same minute as @2019-12-31T19+01:00
+define D1657: @2019-12-31T19+01:00 same hour or before @2019-12-31T15:00-03:00
+define D1658: @2019-12-31T18:00:00Z same minute or before @2019-12-31T19+01:00
+define D1659: @2019-12-31T19+01:00 same hour or after @2019-12-31T23:30:00+05:30
+define D1660: @2019-12-31T15:00:00-03:00 same minute or after @2019-12-31T19+01:00
+define D1661: @2019-12-31T19+01:00 before hour of @2019-12-31T18Z
+define D1662: @2020-01-01T00+05:30 before minute of @2019-12-31T19+01:00
+define D1663: @2019-12-31T19+01:00 after hour of @2019-12-31T15-03:00
+define D1664: @2019-12-31T18:30Z after minute of @2019-12-31T19+01:00
+define D1665: @2019-12-31T19+01:00 same hour as @2020-01-01T00:00+05:30
+define D1666: @2019-12-31T15:30-03:00 same minute as @2019-12-31T19+01:00
+define D1667: @2019-12-31T19+01:00 same hour or before @2019-12-31T18:30:00Z
+define D1668: @2020-01-01T00:00:00+05:30 same minute or before @2019-12-31T19+01:00
+define D1669: @2019-12-31T19+01:00 same hour or after @2019-12-31T15:30:00-03:00
+define D1670: @2019-12-31T18Z same minute or after @2019-12-31T19+01:00
+define D1671: @2019-12-31T19+01:00 before hour of @2020-01-01T00+05:30
+define D1672: @2019-12-31T15-03:00 before minute of @2019-12-31T19+01:00
+define D1673: @2019-12-31T19+01:00 after hour of @2019-12-31T18:59Z
+define D1674: @2020-01-01T00:29+05:30 after minute of @2019-12-31T19+01:00
+define D1675: @2019-12-31T19+01:00 same hour as @2019-12-31T15:59-03:00
+define D1676: @2019-12-31T18:59:59Z same minute as @2019-12-31T19+01:00
+define D1677: @2019-12-31T19+01:00 same hour or before @2020-01-01T00:29:59+05:30
+define D1678: @2019-12-31T15:59:59-03:00 same minute or before @2019-12-31T19+01:00
+define D1679: @2019-12-31T19+01:00 same hour or after @2019-12-31T19Z
+define D1680: @2020-01-01T00+05:30 same minute or after @2019-12-31T19+01:00
+define D1681: @2019-12-31T19+01:00 before hour of @2019-12-31T16-03:00
+define D1682: @2019-12-31T19:00Z before minute of @2019-12-31T19+01:00
+define D1683: @2019-12-31T19+01:00 after hour of @2020-01-01T00:30+05:30
+define D1684: @2019-12-31T16:00-03:00 after minute of @2019-12-31T19+01:00
+define D1685: @2019-12-31T19+01:00 same hour as @2019-12-31T19:00:00Z
+define D1686: @2020-01-01T00:30:00+05:30 same minute as @2019-12-31T19+01:00
+define D1687: @2019-12-31T19+01:00 same hour or before @2019-12-31T16:00:00-03:00
+define D1688: @2019-12-31T19Z same minute or before @2019-12-31T19+01:00
+define D1689: @2019-12-31T19+01:00 same hour or after @2020-01-01T00+05:30
+define D1690: @2019-12-31T16-03:00 same minute or after @2019-12-31T19+01:00
+define D1691: @2019-12-31T19+01:00 before hour of @2019-12-31T19:06Z
+define D1692: @2020-01-01T00:36+05:30 before minute of @2019-12-31T19+01:00
+define D1693: @2019-12-31T19+01:00 after hour of @2019-12-31T16:06-03:00
+define D1694: @2019-12-31T19:06:40Z after minute of @2019-12-31T19+01:00
+define D1695: @2019-12-31T19+01:00 same hour as @2020-01-01T00:36:40+05:30
+define D1696: @2019-12-31T16:06:40-03:00 same minute as @2019-12-31T19+01:00
+define D1697: @2020-01-01T05+05:30 same hour or before @2019-12-31T22Z
+define D1698: @2020-01-01T03+05:30 same minute or before @2020-01-01T05+05:30
+define D1699: @2020-01-01T05+05:30 same hour or after @2019-12-31T19-03:00
+define D1700: @2019-12-31T22:23Z same minute or after @2020-01-01T05+05:30
+define D1701: @2020-01-01T05+05:30 before hour of @2020-01-01T03:53+05:30
+define D1702: @2019-12-31T19:23-03:00 before minute of @2020-01-01T05+05:30
+define D1703: @2020-01-01T05+05:30 after hour of @2019-12-31T22:23:20Z
+define D1704: @2020-01-01T03:53:20+05:30 after minute of @2020-01-01T05+05:30
+define D1705: @2020-01-01T05+05:30 same hour as @2019-12-31T19:23:20-03:00
+define D1706: @2019-12-31T23Z same minute as @2020-01-01T05+05:30
+define D1707: @2020-01-01T05+05:30 same hour or before @2020-01-01T04+05:30
+define D1708: @2019-12-31T20-03:00 same minute or before @2020-01-01T05+05:30
+define D1709: @2020-01-01T05+05:30 same hour or after @2019-12-31T23:29Z
+define D1710: @2020-01-01T04:59+05:30 same minute or after @2020-01-01T05+05:30
+define D1711: @2020-01-01T05+05:30 before hour of @2019-12-31T20:29-03:00
+define D1712: @2019-12-31T23:29:59Z before minute of @2020-01-01T05+05:30
+define D1713: @2020-01-01T05+05:30 after hour of @2020-01-01T04:59:59+05:30
+define D1714: @2019-12-31T20:29:59-03:00 after minute of @2020-01-01T05+05:30
+define D1715: @2020-01-01T05+05:30 same hour as @2019-12-31T23Z
+define D1716: @2020-01-01T05+05:30 same minute as @2020-01-01T05+05:30
+define D1717: @2020-01-01T05+05:30 same hour or before @2019-12-31T20-03:00
+define D1718: @2019-12-31T23:30Z same minute or before @2020-01-01T05+05:30
+define D1719: @2020-01-01T05+05:30 same hour or after @2020-01-01T05:00+05:30
+define D1720: @2019-12-31T20:30-03:00 same minute or after @2020-01-01T05+05:30
+define D1721: @2020-01-01T05+05:30 before hour of @2019-12-31T23:30:00Z
+define D1722: @2020-01-01T05:00:00+05:30 before minute of @2020-01-01T05+05:30
+define D1723: @2020-01-01T05+05:30 after hour of @2019-12-31T20:30:00-03:00
+define D1724: @2020-01-01T00Z after minute of @2020-01-01T05+05:30
+define D1725: @2020-01-01T05+05:30 same hour as @2020-01-01T05+05:30
+define D1726: @2019-12-31T21-03:00 same minute as @2020-01-01T05+05:30
+define D1727: @2020-01-01T05+05:30 same hour or before @2020-01-01T00:00Z
+define D1728: @2020-01-01T05:30+05:30 same minute or before @2020-01-01T05+05:30
+define D1729: @2020-01-01T05+05:30 same hour or after @2019-12-31T21:00-03:00
+define D1730: @2020-01-01T00:00:00Z same minute or after @2020-01-01T05+05:30
+define D1731: @2020-01-01T05+05:30 before hour of @2020-01-01T05:30:00+05:30
+define D1732: @2019-12-31T21:00:00-03:00 before minute of @2020-01-01T05+05:30
+define D1733: @2020-01-01T05+05:30 after hour of @2020-01-01T00Z
+define D1734: @2020-01-01T05+05:30 after minute of @2020-01-01T05+05:30
+define D1735: @2020-01-01T05+05:30 same hour as @2019-12-31T21-03:00
+define D1736: @2020-01-01T00:29Z same minute as @2020-01-01T05+05:30
+define D1737: @2020-01-01T05+05:30 same hour or before @2020-01-01T05:59+05:30
+define D1738: @2019-12-31T21:29-03:00 same minute or before @2020-01-01T05+05:30
+define D1739: @2020-01-01T05+05:30 same hour or after @2020-01-01T00:29:59Z
+define D1740: @2020-01-01T05:59:59+05:30 same minute or after @2020-01-01T05+05:30
+define D1741: @2020-01-01T05+05:30 before hour of @2019-12-31T21:29:59-03:00
+define D1742: @2020-01-01T00Z before minute of @2020-01-01T05+05:30
+define D1743: @2020-01-01T05+05:30 after hour of @2020-01-01T06+05:30
+define D1744: @2019-12-31T21-03:00 after minute of @2020-01-01T05+05:30
+define D1745: @2020-01-01T05+05:30 same hour as @2020-01-01T00:30Z
+define D1746: @2020-01-01T06:00+05:30 same minute as @2020-01-01T05+05:30
+define D1747: @2020-01-01T05+05:30 same hour or before @2019-12-31T21:30-03:00
+define D1748: @2020-01-01T00:30:00Z same minute or before @2020-01-01T05+05:30
+define D1749: @2020-01-01T05+05:30 same hour or after @2020-01-01T06:00:00+05:30
+define D1750: @2019-12-31T21:30:00-03:00 same minute or after @2020-01-01T05+05:30
+define D1751: @2020-01-01T05+05:30 before hour of @2020-01-01T00Z
+define D1752: @2020-01-01T06+05:30 before minute of @2020-01-01T05+05:30
+define D1753: @2020-01-01T05+05:30 after hour of @2019-12-31T21-03:00
+define D1754: @2020-01-01T00:36Z after minute of @2020-01-01T05+05:30
+define D1755: @2020-01-01T05+05:30 same hour as @2020-01-01T06:06+05:30
+define D1756: @2019-12-31T21:36-03:00 same minute as @2020-01-01T05+05:30
+define D1757: @2020-01-01T05+05:30 same hour or before @2020-01-01T00:36:40Z
+define D1758: @2020-01-01T06:06:40+05:30 same minute or before @2020-01-01T05+05:30
+define D1759: @2020-01-01T05+05:30 same hour or after @2019-12-31T21:36:40-03:00
+define D1760: @2019-12-31T16Z same minute or after @2019-12-31T23+05:30
+define D1761: @2019-12-31T23+05:30 before hour of @2019-12-31T21+05:30
+define D1762: @2019-12-31T13-03:00 before minute of @2019-12-31T23+05:30
+define D1763: @2019-12-31T23+05:30 after hour of @2019-12-31T16:23Z
+define D1764: @2019-12-31T21:53+05:30 after minute of @2019-12-31T23+05:30
+define D1765: @2019-12-31T23+05:30 same hour as @2019-12-31T13:23-03:00
+define D1766: @2019-12-31T16:23:20Z same minute as @2019-12-31T23+05:30
+define D1767: @2019-12-31T23+05:30 same hour or before @2019-12-31T21:53:20+05:30
+define D1768: @2019-12-31T13:23:20-03:00 same minute or before @2019-12-31T23+05:30
+define D1769: @2019-12-31T23+05:30 same hour or after @2019-12-31T17Z
+define D1770: @2019-12-31T22+05:30 same minute or after @2019-12-31T23+05:30
+define D1771: @2019-12-31T23+05:30 before hour of @2019-12-31T14-03:00
+define D1772: @2019-12-31T17:29Z before minute of @2019-12-31T23+05:30
+define D1773: @2019-12-31T23+05:30 after hour of @2019-12-31T22:59+05:30
+define D1774: @2019-12-31T14:29-03:00 after minute of @2019-12-31T23+05:30
+define D1775: @2019-12-31T23+05:30 same hour as @2019-12-31T17:29:59Z
+define D1776: @2019-12-31T22:59:59+05:30 same minute as @2019-12-31T23+05:30
+define D1777: @2019-12-31T23+05:30 same hour or before @2019-12-31T14:29:59-03:00
+define D1778: @2019-12-31T17Z same minute or before @2019-12-31T23+05:30
+define D1779: @2019-12-31T23+05:30 same hour or after @2019-12-31T23+05:30
+define D1780: @2019-12-31T14-03:00 same minute or after @2019-12-31T23+05:30
+define D1781: @2019-12-31T23+05:30 before hour of @2019-12-31T17:30Z
+define D1782: @2019-12-31T23:00+05:30 before minute of @2019-12-31T23+05:30
+define D1783: @2019-12-31T23+05:30 after hour of @2019-12-31T14:30-03:00
+define D1784: @2019-12-31T17:30:00Z after minute of @2019-12-31T23+05:30
+define D1785: @2019-12-31T23+05:30 same hour as @2019-12-31T23:00:00+05:30
+define D1786: @2019-12-31T14:30:00-03:00 same minute as @2019-12-31T23+05:30
+define D1787: @2019-12-31T23+05:30 same hour or before @2019-12-31T18Z
+define D1788: @2019-12-31T23+05:30 same minute or before @2019-12-31T23+05:30
+define D1789: @2019-12-31T23+05:30 same hour or after @2019-12-31T15-03:00
+define D1790: @2019-12-31T18:00Z same minute or after @2019-12-31T23+05:30
+define D1791: @2019-12-31T23+05:30 before hour of @2019-12-31T23:30+05:30
+define D1792: @2019-12-31T15:00-03:00 before minute of @2019-12-31T23+05:30
+define D1793: @2019-12-31T23+05:30 after hour of @2019-12-31T18:00:00Z
+define D1794: @2019-12-31T23:30:00+05:30 after minute of @2019-12-31T23+05:30
+define D1795: @2019-12-31T23+05:30 same hour as @2019-12-31T15:00:00-03:00
+define D1796: @2019-12-31T18Z same minute as @2019-12-31T23+05:30
+define D1797: @2019-12-31T23+05:30 same hour or before @2019-12-31T23+05:30
+define D1798: @2019-12-31T15-03:00 same minute or before @2019-12-31T23+05:30
+define D1799: @2019-12-31T23+05:30 same hour or after @2019-12-31T18:29Z
+define D1800: @2019-12-31T23:59+05:30 same minute or after @2019-12-31T23+05:30
+define D1801: @2019-12-31T23+05:30 before hour of @2019-12-31T15:29-03:00
+define D1802: @2019-12-31T18:29:59Z before minute of @2019-12-31T23+05:30
+define D1803: @2019-12-31T23+05:30 after hour of @2019-12-31T23:59:59+05:30
+define D1804: @2019-12-31T15:29:59-03:00 after minute of @2019-12-31T23+05:30
+define D1805: @2019-12-31T23+05:30 same hour as @2019-12-31T18Z
+define D1806: @2020-01-01T00+05:30 same minute as @2019-12-31T23+05:30
+define D1807: @2019-12-31T23+05:30 same hour or before @2019-12-31T15-03:00
+define D1808: @2019-12-31T18:30Z same minute or before @2019-12-31T23+05:30
+define D1809: @2019-12-31T23+05:30 same hour or after @2020-01-01T00:00+05:30
+define D1810: @2019-12-31T15:30-03:00 same minute or after @2019-12-31T23+05:30
+define D1811: @2019-12-31T23+05:30 before hour of @2019-12-31T18:30:00Z
+define D1812: @2020-01-01T00:00:00+05:30 before minute of @2019-12-31T23+05:30
+define D1813: @2019-12-31T23+05:30 after hour of @2019-12-31T15:30:00-03:00
+define D1814: @2019-12-31T18Z after minute of @2019-12-31T23+05:30
+define D1815: @2019-12-31T23+05:30 same hour as @2020-01-01T00+05:30
+define D1816: @2019-12-31T15-03:00 same minute as @2019-12-31T23+05:30
+define D1817: @2019-12-31T23+05:30 same hour or before @2019-12-31T18:36Z
+define D1818: @2020-01-01T00:06+05:30 same minute or before @2019-12-31T23+05:30
+define D1819: @2019-12-31T23+05:30 same hour or after @2019-12-31T15:36-03:00
+define D1820: @2019-12-31T18:36:40Z same minute or after @2019-12-31T23+05:30
+define D1821: @2019-12-31T23+05:30 before hour of @2020-01-01T00:06:40+05:30
+define D1822: @2019-12-31T15:36:40-03:00 before minute of @2019-12-31T23+05:30
+define D1823: @2020-01-01T05+05:45 after hour of @2019-12-31T22Z
+define D1824: @2020-01-01T03+05:30 after minute of @2020-01-01T05+05:45
+define D1825: @2020-01-01T05+05:45 same hour as @2019-12-31T19-03:00
+define D1826: @2019-12-31T22:08Z same minute as @2020-01-01T05+05:45
+define D1827: @2020-01-01T05+05:45 same hour or before @2020-01-01T03:38+05:30
+define D1828: @2019-12-31T19:08-03:00 same minute or before @2020-01-01T05+05:45
+define D1829: @2020-01-01T05+05:45 same hour or after @2019-12-31T22:08:20Z
+define D1830: @2020-01-01T03:38:20+05:30 same minute or after @2020-01-01T05+05:45
+define D1831: @2020-01-01T05+05:45 before hour of @2019-12-31T19:08:20-03:00
+define D1832: @2019-12-31T23Z before minute of @2020-01-01T05+05:45
+define D1833: @2020-01-01T05+05:45 after hour of @2020-01-01T04+05:30
+define D1834: @2019-12-31T20-03:00 after minute of @2020-01-01T05+05:45
+define D1835: @2020-01-01T05+05:45 same hour as @2019-12-31T23:14Z
+define D1836: @2020-01-01T04:44+05:30 same minute as @2020-01-01T05+05:45
+define D1837: @2020-01-01T05+05:45 same hour or before @2019-12-31T20:14-03:00
+define D1838: @2019-12-31T23:14:59Z same minute or before @2020-01-01T05+05:45
+define D1839: @2020-01-01T05+05:45 same hour or after @2020-01-01T04:44:59+05:30
+define D1840: @2019-12-31T20:14:59-03:00 same minute or after @2020-01-01T05+05:45
+define D1841: @2020-01-01T05+05:45 before hour of @2019-12-31T23Z
+define D1842: @2020-01-01T04+05:30 before minute of @2020-01-01T05+05:45
+define D1843: @2020-01-01T05+05:45 after hour of @2019-12-31T20-03:00
+define D1844: @2019-12-31T23:15Z after minute of @2020-01-01T05+05:45
+define D1845: @2020-01-01T05+05:45 same hour as @2020-01-01T04:45+05:30
+define D1846: @2019-12-31T20:15-03:00 same minute as @2020-01-01T05+05:45
+define D1847: @2020-01-01T05+05:45 same hour or before @2019-12-31T23:15:00Z
+define D1848: @2020-01-01T04:45:00+05:30 same minute or before @2020-01-01T05+05:45
+define D1849: @2020-01-01T05+05:45 same hour or after @2019-12-31T20:15:00-03:00
+define D1850: @2019-12-31T23Z same minute or after @2020-01-01T05+05:45
+define D1851: @2020-01-01T05+05:45 before hour of @2020-01-01T05+05:30
+define D1852: @2019-12-31T20-03:00 before minute of @2020-01-01T05+05:45
+define D1853: @2020-01-01T05+05:45 after hour of @2019-12-31T23:45Z
+define D1854: @2020-01-01T05:15+05:30 after minute of @2020-01-01T05+05:45
+define D1855: @2020-01-01T05+05:45 same hour as @2019-12-31T20:45-03:00
+define D1856: @2019-12-31T23:45:00Z same minute as @2020-01-01T05+05:45
+define D1857: @2020-01-01T05+05:45 same hour or before @2020-01-01T05:15:00+05:30
+define D1858: @2019-12-31T20:45:00-03:00 same minute or before @2020-01-01T05+05:45
+define D1859: @2020-01-01T05+05:45 same hour or after @2020-01-01T00Z
+define D1860: @2020-01-01T05+05:30 same minute or after @2020-01-01T05+05:45
+define D1861: @2020-01-01T05+05:45 before hour of @2019-12-31T21-03:00
+define D1862: @2020-01-01T00:14Z before minute of @2020-01-01T05+05:45
+define D1863: @2020-01-01T05+05:45 after hour of @2020-01-01T05:44+05:30
+define D1864: @2019-12-31T21:14-03:00 after minute of @2020-01-01T05+05:45
+define D1865: @2020-01-01T05+05:45 same hour as @2020-01-01T00:14:59Z
+define D1866: @2020-01-01T05:44:59+05:30 same minute as @2020-01-01T05+05:45
+define D1867: @2020-01-01T05+05:45 same hour or before @2019-12-31T21:14:59-03:00
+define D1868: @2020-01-01T00Z same minute or before @2020-01-01T05+05:45
+define D1869: @2020-01-01T05+05:45 same hour or after @2020-01-01T05+05:30
+define D1870: @2019-12-31T21-03:00 same minute or after @2020-01-01T05+05:45
+define D1871: @2020-01-01T05+05:45 before hour of @2020-01-01T00:15Z
+define D1872: @2020-01-01T05:45+05:30 before minute of @2020-01-01T05+05:45
+define D1873: @2020-01-01T05+05:45 after hour of @2019-12-31T21:15-03:00
+define D1874: @2020-01-01T00:15:00Z after minute of @2020-01-01T05+05:45
+define D1875: @2020-01-01T05+05:45 same hour as @2020-01-01T05:45:00+05:30
+define D1876: @2019-12-31T21:15:00-03:00 same minute as @2020-01-01T05+05:45
+define D1877: @2020-01-01T05+05:45 same hour or before @2020-01-01T00Z
+define D1878: @2020-01-01T05+05:30 same minute or before @2020-01-01T05+05:45
+define D1879: @2020-01-01T05+05:45 same hour or after @2019-12-31T21-03:00
+define D1880: @2020-01-01T00:21Z same minute or after @2020-01-01T05+05:45
+define D1881: @2020-01-01T05+05:45 before hour of @2020-01-01T05:51+05:30
+define D1882: @2019-12-31T21:21-03:00 before minute of @2020-01-01T05+05:45
+define D1883: @2020-01-01T05+05:45 after hour of @2020-01-01T00:21:40Z
+define D1884: @2020-01-01T05:51:40+05:30 after minute of @2020-01-01T05+05:45
+define D1885: @2020-01-01T05+05:45 same hour as @2019-12-31T21:21:40-03:00
+define D1886: @2019-12-31T16Z same minute as @2019-12-31T23+05:45
+define D1887: @2019-12-31T23+05:45 same hour or before @2019-12-31T21+05:30
+define D1888: @2019-12-31T13-03:00 same minute or before @2019-12-31T23+05:45
+define D1889: @2019-12-31T23+05:45 same hour or after @2019-12-31T16:08Z
+define D1890: @2019-12-31T21:38+05:30 same minute or after @2019-12-31T23+05:45
+define D1891: @2019-12-31T23+05:45 before hour of @2019-12-31T13:08-03:00
+define D1892: @2019-12-31T16:08:20Z before minute of @2019-12-31T23+05:45
+define D1893: @2019-12-31T23+05:45 after hour of @2019-12-31T21:38:20+05:30
+define D1894: @2019-12-31T13:08:20-03:00 after minute of @2019-12-31T23+05:45
+define D1895: @2019-12-31T23+05:45 same hour as @2019-12-31T17Z
+define D1896: @2019-12-31T22+05:30 same minute as @2019-12-31T23+05:45
+define D1897: @2019-12-31T23+05:45 same hour or before @2019-12-31T14-03:00
+define D1898: @2019-12-31T17:14Z same minute or before @2019-12-31T23+05:45
+define D1899: @2019-12-31T23+05:45 same hour or after @2019-12-31T22:44+05:30
+define D1900: @2019-12-31T14:14-03:00 same minute or after @2019-12-31T23+05:45
+define D1901: @2019-12-31T23+05:45 before hour of @2019-12-31T17:14:59Z
+define D1902: @2019-12-31T22:44:59+05:30 before minute of @2019-12-31T23+05:45
+define D1903: @2019-12-31T23+05:45 after hour of @2019-12-31T14:14:59-03:00
+define D1904: @2019-12-31T17Z after minute of @2019-12-31T23+05:45
+define D1905: @2019-12-31T23+05:45 same hour as @2019-12-31T22+05:30
+define D1906: @2019-12-31T14-03:00 same minute as @2019-12-31T23+05:45
+define D1907: @2019-12-31T23+05:45 same hour or before @2019-12-31T17:15Z
+define D1908: @2019-12-31T22:45+05:30 same minute or before @2019-12-31T23+05:45
+define D1909: @2019-12-31T23+05:45 same hour or after @2019-12-31T14:15-03:00
+define D1910: @2019-12-31T17:15:00Z same minute or after @2019-12-31T23+05:45
+define D1911: @2019-12-31T23+05:45 before hour of @2019-12-31T22:45:00+05:30
+define D1912: @2019-12-31T14:15:00-03:00 before minute of @2019-12-31T23+05:45
+define D1913: @2019-12-31T23+05:45 after hour of @2019-12-31T17Z
+define D1914: @2019-12-31T23+05:30 after minute of @2019-12-31T23+05:45
+define D1915: @2019-12-31T23+05:45 same hour as @2019-12-31T14-03:00
+define D1916: @2019-12-31T17:45Z same minute as @2019-12-31T23+05:45
+define D1917: @2019-12-31T23+05:45 same hour or before @2019-12-31T23:15+05:30
+define D1918: @2019-12-31T14:45-03:00 same minute or before @2019-12-31T23+05:45
+define D1919: @2019-12-31T23+05:45 same hour or after @2019-12-31T17:45:00Z
+define D1920: @2019-12-31T23:15:00+05:30 same minute or after @2019-12-31T23+05:45
+define D1921: @2019-12-31T23+05:45 before hour of @2019-12-31T14:45:00-03:00
+define D1922: @2019-12-31T18Z before minute of @2019-12-31T23+05:45
+define D1923: @2019-12-31T23+05:45 after hour of @2019-12-31T23+05:30
+define D1924: @2019-12-31T15-03:00 after minute of @2019-12-31T23+05:45
+define D1925: @2019-12-31T23+05:45 same hour as @2019-12-31T18:14Z
+define D1926: @2019-12-31T23:44+05:30 same minute as @2019-12-31T23+05:45
+define D1927: @2019-12-31T23+05:45 same hour or before @2019-12-31T15:14-03:00
+define D1928: @2019-12-31T18:14:59Z same minute or before @2019-12-31T23+05:45
+define D1929: @2019-12-31T23+05:45 same hour or after @2019-12-31T23:44:59+05:30
+define D1930: @2019-12-31T15:14:59-03:00 same minute or after @2019-12-31T23+05:45
+define D1931: @2019-12-31T23+05:45 before hour of @2019-12-31T18Z
+define D1932: @2019-12-31T23+05:30 before minute of @2019-12-31T23+05:45
+define D1933: @2019-12-31T23+05:45 after hour of @2019-12-31T15-03:00
+define D1934: @2019-12-31T18:15Z after minute of @2019-12-31T23+05:45
+define D1935: @2019-12-31T23+05:45 same hour as @2019-12-31T23:45+05:30
+define D1936: @2019-12-31T15:15-03:00 same minute as @2019-12-31T23+05:45
+define D1937: @2019-12-31T23+05:45 same hour or before @2019-12-31T18:15:00Z
+define D1938: @2019-12-31T23:45:00+05:30 same minute or before @2019-12-31T23+05:45
+define D1939: @2019-12-31T23+05:45 same hour or after @2019-12-31T15:15:00-03:00
+define D1940: @2019-12-31T18Z same minute or after @2019-12-31T23+05:45
+define D1941: @2019-12-31T23+05:45 before hour of @2019-12-31T23+05:30
+define D1942: @2019-12-31T15-03:00 before minute of @2019-12-31T23+05:45
+define D1943: @2019-12-31T23+05:45 after hour of @2019-12-31T18:21Z
+define D1944: @2019-12-31T23:51+05:30 after minute of @2019-12-31T23+05:45
+define D1945: @2019-12-31T23+05:45 same hour as @2019-12-31T15:21-03:00
+define D1946: @2019-12-31T18:21:40Z same minute as @2019-12-31T23+05:45
+define D1947: @2019-12-31T23+05:45 same hour or before @2019-12-31T23:51:40+05:30
+define D1948: @2019-12-31T15:21:40-03:00 same minute or before @2019-12-31T23+05:45
+define D1949: @2019-12-31T21-03:00 same hour or after @2019-12-31T22Z
+define D1950: @2020-01-01T04+05:30 same minute or after @2019-12-31T21-03:00
+define D1951: @2019-12-31T21-03:00 before hour of @2019-12-31T19-03:00
+define D1952: @2019-12-31T22:53Z before minute of @2019-12-31T21-03:00
+define D1953: @2019-12-31T21-03:00 after hour of @2020-01-01T04:23+05:30
+define D1954: @2019-12-31T19:53-03:00 after minute of @2019-12-31T21-03:00
+define D1955: @2019-12-31T21-03:00 same hour as @2019-12-31T22:53:20Z
+define D1956: @2020-01-01T04:23:20+05:30 same minute as @2019-12-31T21-03:00
+define D1957: @2019-12-31T21-03:00 same hour or before @2019-12-31T19:53:20-03:00
+define D1958: @2019-12-31T23Z same minute or before @2019-12-31T21-03:00
+define D1959: @2019-12-31T21-03:00 same hour or after @2020-01-01T05+05:30
+define D1960: @2019-12-31T20-03:00 same minute or after @2019-12-31T21-03:00
+define D1961: @2019-12-31T21-03:00 before hour of @2019-12-31T23:59Z
+define D1962: @2020-01-01T05:29+05:30 before minute of @2019-12-31T21-03:00
+define D1963: @2019-12-31T21-03:00 after hour of @2019-12-31T20:59-03:00
+define D1964: @2019-12-31T23:59:59Z after minute of @2019-12-31T21-03:00
+define D1965: @2019-12-31T21-03:00 same hour as @2020-01-01T05:29:59+05:30
+define D1966: @2019-12-31T20:59:59-03:00 same minute as @2019-12-31T21-03:00
+define D1967: @2019-12-31T21-03:00 same hour or before @2020-01-01T00Z
+define D1968: @2020-01-01T05+05:30 same minute or before @2019-12-31T21-03:00
+define D1969: @2019-12-31T21-03:00 same hour or after @2019-12-31T21-03:00
+define D1970: @2020-01-01T00:00Z same minute or after @2019-12-31T21-03:00
+define D1971: @2019-12-31T21-03:00 before hour of @2020-01-01T05:30+05:30
+define D1972: @2019-12-31T21:00-03:00 before minute of @2019-12-31T21-03:00
+define D1973: @2019-12-31T21-03:00 after hour of @2020-01-01T00:00:00Z
+define D1974: @2020-01-01T05:30:00+05:30 after minute of @2019-12-31T21-03:00
+define D1975: @2019-12-31T21-03:00 same hour as @2019-12-31T21:00:00-03:00
+define D1976: @2020-01-01T00Z same minute as @2019-12-31T21-03:00
+define D1977: @2019-12-31T21-03:00 same hour or before @2020-01-01T06+05:30
+define D1978: @2019-12-31T21-03:00 same minute or before @2019-12-31T21-03:00
+define D1979: @2019-12-31T21-03:00 same hour or after @2020-01-01T00:30Z
+define D1980: @2020-01-01T06:00+05:30 same minute or after @2019-12-31T21-03:00
+define D1981: @2019-12-31T21-03:00 before hour of @2019-12-31T21:30-03:00
+define D1982: @2020-01-01T00:30:00Z before minute of @2019-12-31T21-03:00
+define D1983: @2019-12-31T21-03:00 after hour of @2020-01-01T06:00:00+05:30
+define D1984: @2019-12-31T21:30:00-03:00 after minute of @2019-12-31T21-03:00
+define D1985: @2019-12-31T21-03:00 same hour as @2020-01-01T00Z
+define D1986: @2020-01-01T06+05:30 same minute as @2019-12-31T21-03:00
+define D1987: @2019-12-31T21-03:00 same hour or before @2019-12-31T21-03:00
+define D1988: @2020-01-01T00:59Z same minute or before @2019-12-31T21-03:00
+define D1989: @2019-12-31T21-03:00 same hour or after @2020-01-01T06:29+05:30
+define D1990: @2019-12-31T21:59-03:00 same minute or after @2019-12-31T21-03:00
+define D1991: @2019-12-31T21-03:00 before hour of @2020-01-01T00:59:59Z
+define D1992: @2020-01-01T06:29:59+05:30 before minute of @2019-12-31T21-03:00
+define D1993: @2019-12-31T21-03:00 after hour of @2019-12-31T21:59:59-03:00
+define D1994: @2020-01-01T01Z after minute of @2019-12-31T21-03:00
+define D1995: @2019-12-31T21-03:00 same hour as @2020-01-01T06+05:30
+define D1996: @2019-12-31T22-03:00 same minute as @2019-12-31T21-03:00
+define D1997: @2019-12-31T21-03:00 same hour or before @2020-01-01T01:00Z
+define D1998: @2020-01-01T06:30+05:30 same minute or before @2019-12-31T21-03:00
+define D1999: @2019-12-31T21-03:00 same hour or after @2019-12-31T22:00-03:00
+define D2000: @2020-01-01T01:00:00Z same minute or after @2019-12-31T21-03:00
+define D2001: @2019-12-31T21-03:00 before hour of @2020-01-01T06:30:00+05:30
+define D2002: @2019-12-31T22:00:00-03:00 before minute of @2019-12-31T21-03:00
+define D2003: @2019-12-31T21-03:00 after hour of @2020-01-01T01Z
+define D2004: @2020-01-01T06+05:30 after minute of @2019-12-31T21-03:00
+define D2005: @2019-12-31T21-03:00 same hour as @2019-12-31T22-03:00
+define D2006: @2020-01-01T01:06Z same minute as @2019-12-31T21-03:00
+define D2007: @2019-12-31T21-03:00 same hour or before @2020-01-01T06:36+05:30
+define D2008: @2019-12-31T22:06-03:00 same minute or before @2019-12-31T21-03:00
+define D2009: @2019-12-31T21-03:00 same hour or after @2020-01-01T01:06:40Z
+define D2010: @2020-01-01T06:36:40+05:30 same minute or after @2019-12-31T21-03:00
+define D2011: @2019-12-31T21-03:00 before hour of @2019-12-31T22:06:40-03:00
+define D2012: @2019-12-31T16Z before minute of @2019-12-31T15-03:00
+define D2013: @2019-12-31T15-03:00 after hour of @2019-12-31T22+05:30
+define D2014: @2019-12-31T13-03:00 after minute of @2019-12-31T15-03:00
+define D2015: @2019-12-31T15-03:00 same hour as @2019-12-31T16:53Z
+define D2016: @2019-12-31T22:23+05:30 same minute as @2019-12-31T15-03:00
+define D2017: @2019-12-31T15-03:00 same hour or before @2019-12-31T13:53-03:00
+define D2018: @2019-12-31T16:53:20Z same minute or before @2019-12-31T15-03:00
+define D2019: @2019-12-31T15-03:00 same hour or after @2019-12-31T22:23:20+05:30
+define D2020: @2019-12-31T13:53:20-03:00 same minute or after @2019-12-31T15-03:00
+define D2021: @2019-12-31T15-03:00 before hour of @2019-12-31T17Z
+define D2022: @2019-12-31T23+05:30 before minute of @2019-12-31T15-03:00
+define D2023: @2019-12-31T15-03:00 after hour of @2019-12-31T14-03:00
+define D2024: @2019-12-31T17:59Z after minute of @2019-12-31T15-03:00
+define D2025: @2019-12-31T15-03:00 same hour as @2019-12-31T23:29+05:30
+define D2026: @2019-12-31T14:59-03:00 same minute as @2019-12-31T15-03:00
+define D2027: @2019-12-31T15-03:00 same hour or before @2019-12-31T17:59:59Z
+define D2028: @2019-12-31T23:29:59+05:30 same minute or before @2019-12-31T15-03:00
+define D2029: @2019-12-31T15-03:00 same hour or after @2019-12-31T14:59:59-03:00
+define D2030: @2019-12-31T18Z same minute or after @2019-12-31T15-03:00
+define D2031: @2019-12-31T15-03:00 before hour of @2019-12-31T23+05:30
+define D2032: @2019-12-31T15-03:00 before minute of @2019-12-31T15-03:00
+define D2033: @2019-12-31T15-03:00 after hour of @2019-12-31T18:00Z
+define D2034: @2019-12-31T23:30+05:30 after minute of @2019-12-31T15-03:00
+define D2035: @2019-12-31T15-03:00 same hour as @2019-12-31T15:00-03:00
+define D2036: @2019-12-31T18:00:00Z same minute as @2019-12-31T15-03:00
+define D2037: @2019-12-31T15-03:00 same hour or before @2019-12-31T23:30:00+05:30
+define D2038: @2019-12-31T15:00:00-03:00 same minute or before @2019-12-31T15-03:00
+define D2039: @2019-12-31T15-03:00 same hour or after @2019-12-31T18Z
+define D2040: @2020-01-01T00+05:30 same minute or after @2019-12-31T15-03:00
+define D2041: @2019-12-31T15-03:00 before hour of @2019-12-31T15-03:00
+define D2042: @2019-12-31T18:30Z before minute of @2019-12-31T15-03:00
+define D2043: @2019-12-31T15-03:00 after hour of @2020-01-01T00:00+05:30
+define D2044: @2019-12-31T15:30-03:00 after minute of @2019-12-31T15-03:00
+define D2045: @2019-12-31T15-03:00 same hour as @2019-12-31T18:30:00Z
+define D2046: @2020-01-01T00:00:00+05:30 same minute as @2019-12-31T15-03:00
+define D2047: @2019-12-31T15-03:00 same hour or before @2019-12-31T15:30:00-03:00
+define D2048: @2019-12-31T18Z same minute or before @2019-12-31T15-03:00
+define D2049: @2019-12-31T15-03:00 same hour or after @2020-01-01T00+05:30
+define D2050: @2019-12-31T15-03:00 same minute or after @2019-12-31T15-03:00
+define D2051: @2019-12-31T15-03:00 before hour of @2019-12-31T18:59Z
+define D2052: @2020-01-01T00:29+05:30 before minute of @2019-12-31T15-03:00
+define D2053: @2019-12-31T15-03:00 after hour of @2019-12-31T15:59-03:00
+define D2054: @2019-12-31T18:59:59Z after minute of @2019-12-31T15-03:00
+define D2055: @2019-12-31T15-03:00 same hour as @2020-01-01T00:29:59+05:30
+define D2056: @2019-12-31T15:59:59-03:00 same minute as @2019-12-31T15-03:00
+define D2057: @2019-12-31T15-03:00 same hour or before @2019-12-31T19Z
+define D2058: @2020-01-01T00+05:30 same minute or before @2019-12-31T15-03:00
+define D2059: @2019-12-31T15-03:00 same hour or after @2019-12-31T16-03:00
+define D2060: @2019-12-31T19:00Z same minute or after @2019-12-31T15-03:00
+define D2061: @2019-12-31T15-03:00 before hour of @2020-01-01T00:30+05:30
+define D2062: @2019-12-31T16:00-03:00 before minute of @2019-12-31T15-03:00
+define D2063: @2019-12-31T15-03:00 after hour of @2019-12-31T19:00:00Z
+define D2064: @2020-01-01T00:30:00+05:30 after minute of @2019-12-31T15-03:00
+define D2065: @2019-12-31T15-03:00 same hour as @2019-12-31T16:00:00-03:00
+define D2066: @2019-12-31T19Z same minute as @2019-12-31T15-03:00
+define D2067: @2019-12-31T15-03:00 same hour or before @2020-01-01T00+05:30
+define D2068: @2019-12-31T16-03:00 same minute or before @2019-12-31T15-03:00
+define D2069: @2019-12-31T15-03:00 same hour or after @2019-12-31T19:06Z
+define D2070: @2020-01-01T00:36+05:30 same minute or after @2019-12-31T15-03:00
+define D2071: @2019-12-31T15-03:00 before hour of @2019-12-31T16:06-03:00
+define D2072: @2019-12-31T19:06:40Z before minute of @2019-12-31T15-03:00
+define D2073: @2019-12-31T15-03:00 after hour of @2020-01-01T00:36:40+05:30
+define D2074: @2019-12-31T16:06:40-03:00 after minute of @2019-12-31T15-03:00
+define D2075: @2019-12-31T14-09:30 same hour as @2019-12-31T22Z
+define D2076: @2020-01-01T03+05:30 same minute as @2019-12-31T14-09:30
+define D2077: @2019-12-31T14-09:30 same hour or before @2019-12-31T19-03:00
+define D2078: @2019-12-31T22:23Z same minute or before @2019-12-31T14-09:30
+define D2079: @2019-12-31T14-09:30 same hour or after @2020-01-01T03:53+05:30
+define D2080: @2019-12-31T19:23-03:00 same minute or after @2019-12-31T14-09:30
+define D2081: @2019-12-31T14-09:30 before hour of @2019-12-31T22:23:20Z
+define D2082: @2020-01-01T03:53:20+05:30 before minute of @2019-12-31T14-09:30
+define D2083: @2019-12-31T14-09:30 after hour of @2019-12-31T19:23:20-03:00
+define D2084: @2019-12-31T23Z after minute of @2019-12-31T14-09:30
+define D2085: @2019-12-31T14-09:30 same hour as @2020-01-01T04+05:30
+define D2086: @2019-12-31T20-03:00 same minute as @2019-12-31T14-09:30
+define D2087: @2019-12-31T14-09:30 same hour or before @2019-12-31T23:29Z
+define D2088: @2020-01-01T04:59+05:30 same minute or before @2019-12-31T14-09:30
+define D2089: @2019-12-31T14-09:30 same hour or after @2019-12-31T20:29-03:00
+define D2090: @2019-12-31T23:29:59Z same minute or after @2019-12-31T14-09:30
+define D2091: @2019-12-31T14-09:30 before hour of @2020-01-01T04:59:59+05:30
+define D2092: @2019-12-31T20:29:59-03:00 before minute of @2019-12-31T14-09:30
+define D2093: @2019-12-31T14-09:30 after hour of @2019-12-31T23Z
+define D2094: @2020-01-01T05+05:30 after minute of @2019-12-31T14-09:30
+define D2095: @2019-12-31T14-09:30 same hour as @2019-12-31T20-03:00
+define D2096: @2019-12-31T23:30Z same minute as @2019-12-31T14-09:30
+define D2097: @2019-12-31T14-09:30 same hour or before @2020-01-01T05:00+05:30
+define D2098: @2019-12-31T20:30-03:00 same minute or before @2019-12-31T14-09:30
+define D2099: @2019-12-31T14-09:30 same hour or after @2019-12-31T23:30:00Z
+define D2100: @2020-01-01T05:00:00+05:30 same minute or after @2019-12-31T14-09:30
+define D2101: @2019-12-31T14-09:30 before hour of @2019-12-31T20:30:00-03:00
+define D2102: @2020-01-01T00Z before minute of @2019-12-31T14-09:30
+define D2103: @2019-12-31T14-09:30 after hour of @2020-01-01T05+05:30
+define D2104: @2019-12-31T21-03:00 after minute of @2019-12-31T14-09:30
+define D2105: @2019-12-31T14-09:30 same hour as @2020-01-01T00:00Z
+define D2106: @2020-01-01T05:30+05:30 same minute as @2019-12-31T14-09:30
+define D2107: @2019-12-31T14-09:30 same hour or before @2019-12-31T21:00-03:00
+define D2108: @2020-01-01T00:00:00Z same minute or before @2019-12-31T14-09:30
+define D2109: @2019-12-31T14-09:30 same hour or after @2020-01-01T05:30:00+05:30
+define D2110: @2019-12-31T21:00:00-03:00 same minute or after @2019-12-31T14-09:30
+define D2111: @2019-12-31T14-09:30 before hour of @2020-01-01T00Z
+define D2112: @2020-01-01T05+05:30 before minute of @2019-12-31T14-09:30
+define D2113: @2019-12-31T14-09:30 after hour of @2019-12-31T21-03:00
+define D2114: @2020-01-01T00:29Z after minute of @2019-12-31T14-09:30
+define D2115: @2019-12-31T14-09:30 same hour as @2020-01-01T05:59+05:30
+define D2116: @2019-12-31T21:29-03:00 same minute as @2019-12-31T14-09:30
+define D2117: @2019-12-31T14-09:30 same hour or before @2020-01-01T00:29:59Z
+define D2118: @2020-01-01T05:59:59+05:30 same minute or before @2019-12-31T14-09:30
+define D2119: @2019-12-31T14-09:30 same hour or after @2019-12-31T21:29:59-03:00
+define D2120: @2020-01-01T00Z same minute or after @2019-12-31T14-09:30
+define D2121: @2019-12-31T14-09:30 before hour of @2020-01-01T06+05:30
+define D2122: @2019-12-31T21-03:00 before minute of @2019-12-31T14-09:30
+define D2123: @2019-12-31T14-09:30 after hour of @2020-01-01T00:30Z
+define D2124: @2020-01-01T06:00+05:30 after minute of @2019-12-31T14-09:30
+define D2125: @2019-12-31T14-09:30 same hour as @2019-12-31T21:30-03:00
+define D2126: @2020-01-01T00:30:00Z same minute as @2019-12-31T14-09:30
+define D2127: @2019-12-31T14-09:30 same hour or before @2020-01-01T06:00:00+05:30
+define D2128: @2019-12-31T21:30:00-03:00 same minute or before @2019-12-31T14-09:30
+define D2129: @2019-12-31T14-09:30 same hour or after @2020-01-01T00Z
+define D2130: @2020-01-01T06+05:30 same minute or after @2019-12-31T14-09:30
+define D2131: @2019-12-31T14-09:30 before hour of @2019-12-31T21-03:00
+define D2132: @2020-01-01T00:36Z before minute of @2019-12-31T14-09:30
+define D2133: @2019-12-31T14-09:30 after hour of @2020-01-01T06:06+05:30
+define D2134: @2019-12-31T21:36-03:00 after minute of @2019-12-31T14-09:30
+define D2135: @2019-12-31T14-09:30 same hour as @2020-01-01T00:36:40Z
+define D2136: @2020-01-01T06:06:40+05:30 same minute as @2019-12-31T14-09:30
+define D2137: @2019-12-31T14-09:30 same hour or before @2019-12-31T21:36:40-03:00
+define D2138: @2019-12-31T16Z same minute or before @2019-12-31T08-09:30
+define D2139: @2019-12-31T08-09:30 same hour or after @2019-12-31T21+05:30
+define D2140: @2019-12-31T13-03:00 same minute or after @2019-12-31T08-09:30
+define D2141: @2019-12-31T08-09:30 before hour of @2019-12-31T16:23Z
+define D2142: @2019-12-31T21:53+05:30 before minute of @2019-12-31T08-09:30
+define D2143: @2019-12-31T08-09:30 after hour of @2019-12-31T13:23-03:00
+define D2144: @2019-12-31T16:23:20Z after minute of @2019-12-31T08-09:30
+define D2145: @2019-12-31T08-09:30 same hour as @2019-12-31T21:53:20+05:30
+define D2146: @2019-12-31T13:23:20-03:00 same minute as @2019-12-31T08-09:30
+define D2147: @2019-12-31T08-09:30 same hour or before @2019-12-31T17Z
+define D2148: @2019-12-31T22+05:30 same minute or before @2019-12-31T08-09:30
+define D2149: @2019-12-31T08-09:30 same hour or after @2019-12-31T14-03:00
+define D2150: @2019-12-31T17:29Z same minute or after @2019-12-31T08-09:30
+define D2151: @2019-12-31T08-09:30 before hour of @2019-12-31T22:59+05:30
+define D2152: @2019-12-31T14:29-03:00 before minute of @2019-12-31T08-09:30
+define D2153: @2019-12-31T08-09:30 after hour of @2019-12-31T17:29:59Z
+define D2154: @2019-12-31T22:59:59+05:30 after minute of @2019-12-31T08-09:30
+define D2155: @2019-12-31T08-09:30 same hour as @2019-12-31T14:29:59-03:00
+define D2156: @2019-12-31T17Z same minute as @2019-12-31T08-09:30
+define D2157: @2019-12-31T08-09:30 same hour or before @2019-12-31T23+05:30
+define D2158: @2019-12-31T14-03:00 same minute or before @2019-12-31T08-09:30
+define D2159: @2019-12-31T08-09:30 same hour or after @2019-12-31T17:30Z
+define D2160: @2019-12-31T23:00+05:30 same minute or after @2019-12-31T08-09:30
+define D2161: @2019-12-31T08-09:30 before hour of @2019-12-31T14:30-03:00
+define D2162: @2019-12-31T17:30:00Z before minute of @2019-12-31T08-09:30
+define D2163: @2019-12-31T08-09:30 after hour of @2019-12-31T23:00:00+05:30
+define D2164: @2019-12-31T14:30:00-03:00 after minute of @2019-12-31T08-09:30
+define D2165: @2019-12-31T08-09:30 same hour as @2019-12-31T18Z
+define D2166: @2019-12-31T23+05:30 same minute as @2019-12-31T08-09:30
+define D2167: @2019-12-31T08-09:30 same hour or before @2019-12-31T15-03:00
+define D2168: @2019-12-31T18:00Z same minute or before @2019-12-31T08-09:30
+define D2169: @2019-12-31T08-09:30 same hour or after @2019-12-31T23:30+05:30
+define D2170: @2019-12-31T15:00-03:00 same minute or after @2019-12-31T08-09:30
+define D2171: @2019-12-31T08-09:30 before hour of @2019-12-31T18:00:00Z
+define D2172: @2019-12-31T23:30:00+05:30 before minute of @2019-12-31T08-09:30
+define D2173: @2019-12-31T08-09:30 after hour of @2019-12-31T15:00:00-03:00
+define D2174: @2019-12-31T18Z after minute of @2019-12-31T08-09:30
+define D2175: @2019-12-31T08-09:30 same hour as @2019-12-31T23+05:30
+define D2176: @2019-12-31T15-03:00 same minute as @2019-12-31T08-09:30
+define D2177: @2019-12-31T08-09:30 same hour or before @2019-12-31T18:29Z
+define D2178: @2019-12-31T23:59+05:30 same minute or before @2019-12-31T08-09:30
+define D2179: @2019-12-31T08-09:30 same hour or after @2019-12-31T15:29-03:00
+define D2180: @2019-12-31T18:29:59Z same minute or after @2019-12-31T08-09:30
+define D2181: @2019-12-31T08-09:30 before hour of @2019-12-31T23:59:59+05:30
+define D2182: @2019-12-31T15:29:59-03:00 before minute of @2019-12-31T08-09:30
+define D2183: @2019-12-31T08-09:30 after hour of @2019-12-31T18Z
+define D2184: @2020-01-01T00+05:30 after minute of @2019-12-31T08-09:30
+define D2185: @2019-12-31T08-09:30 same hour as @2019-12-31T15-03:00
+define D2186: @2019-12-31T18:30Z same minute as @2019-12-31T08-09:30
+define D2187: @2019-12-31T08-09:30 same hour or before @2020-01-01T00:00+05:30
+define D2188: @2019-12-31T15:30-03:00 same minute or before @2019-12-31T08-09:30
+define D2189: @2019-12-31T08-09:30 same hour or after @2019-12-31T18:30:00Z
+define D2190: @2020-01-01T00:00:00+05:30 same minute or after @2019-12-31T08-09:30
+define D2191: @2019-12-31T08-09:30 before hour of @2019-12-31T15:30:00-03:00
+define D2192: @2019-12-31T18Z before minute of @2019-12-31T08-09:30
+define D2193: @2019-12-31T08-09:30 after hour of @2020-01-01T00+05:30
+define D2194: @2019-12-31T15-03:00 after minute of @2019-12-31T08-09:30
+define D2195: @2019-12-31T08-09:30 same hour as @2019-12-31T18:36Z
+define D2196: @2020-01-01T00:06+05:30 same minute as @2019-12-31T08-09:30
+define D2197: @2019-12-31T08-09:30 same hour or before @2019-12-31T15:36-03:00
+define D2198: @2019-12-31T18:36:40Z same minute or before @2019-12-31T08-09:30
+define D2199: @2019-12-31T08-09:30 same hour or after @2020-01-01T00:06:40+05:30
+define D2200: @2019-12-31T15:36:40-03:00 same minute or after @2019-12-31T08-09:30
+define D2201: @2020-01-01T00Z in hour of Interval[@2019-12-31T22:00Z, @2019-12-31T22:53Z]
+define D2202: Interval[@2019-12-31T22:00Z, @2019-12-31T22:53Z] includes hour of @2020-01-01T00Z
+define D2203: @2020-01-01T00Z in minute of Interval[@2019-12-31T22:00Z, @2019-12-31T22:53Z]
+define D2204: Interval[@2019-12-31T22:00Z, @2019-12-31T22:53Z] includes minute of @2020-01-01T00Z
+define D2205: @2020-01-01T00Z in hour of Interval[@2020-01-01T03:30+05:30, @2020-01-01T05:30+05:30]
+define D2206: Interval[@2020-01-01T03:30+05:30, @2020-01-01T05:30+05:30] includes hour of @2020-01-01T00Z
+define D2207: @2020-01-01T00Z in minute of Interval[@2020-01-01T03:30+05:30, @2020-01-01T05:30+05:30]
+define D2208: Interval[@2020-01-01T03:30+05:30, @2020-01-01T05:30+05:30] includes minute of @2020-01-01T00Z
+define D2209: @2020-01-01T00Z in hour of Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:30-03:00]
+define D2210: Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:30-03:00] includes hour of @2020-01-01T00Z
+define D2211: @2020-01-01T00Z in minute of Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:30-03:00]
+define D2212: Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:30-03:00] includes minute of @2020-01-01T00Z
+define D2213: @2020-01-01T00Z in hour of Interval[@2020-01-01T00:00Z, @2020-01-01T02:00Z]
+define D2214: Interval[@2020-01-01T00:00Z, @2020-01-01T02:00Z] includes hour of @2020-01-01T00Z
+define D2215: @2020-01-01T00Z in minute of Interval[@2020-01-01T00:00Z, @2020-01-01T02:00Z]
+define D2216: Interval[@2020-01-01T00:00Z, @2020-01-01T02:00Z] includes minute of @2020-01-01T00Z
+define D2217: @2020-01-01T00Z in hour of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:30+05:30]
+define D2218: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:30+05:30] includes hour of @2020-01-01T00Z
+define D2219: @2020-01-01T00Z in minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:30+05:30]
+define D2220: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:30+05:30] includes minute of @2020-01-01T00Z
+define D2221: @2020-01-01T00Z in hour of Interval[@2019-12-31T22:00-03:00, @2019-12-31T23:00-03:00]
+define D2222: Interval[@2019-12-31T22:00-03:00, @2019-12-31T23:00-03:00] includes hour of @2020-01-01T00Z
+define D2223: @2020-01-01T00Z in minute of Interval[@2019-12-31T22:00-03:00, @2019-12-31T23:00-03:00]
+define D2224: Interval[@2019-12-31T22:00-03:00, @2019-12-31T23:00-03:00] includes minute of @2020-01-01T00Z
+define D2225: @2020-01-01T00Z in hour of Interval[@2019-12-31T22:00Z, @2020-01-01T02:00Z]
+define D2226: Interval[@2019-12-31T22:00Z, @2020-01-01T02:00Z] includes hour of @2020-01-01T00Z
+define D2227: @2020-01-01T00Z in minute of Interval[@2019-12-31T22:00Z, @2020-01-01T02:00Z]
+define D2228: Interval[@2019-12-31T22:00Z, @2020-01-01T02:00Z] includes minute of @2020-01-01T00Z
+define D2229: @2020-01-01T00Z in hour of Interval[@2020-01-01T06:31+05:30, @2020-01-01T08:00+05:30]
+define D2230: Interval[@2020-01-01T06:31+05:30, @2020-01-01T08:00+05:30] includes hour of @2020-01-01T00Z
+define D2231: @2020-01-01T00Z in minute of Interval[@2020-01-01T06:31+05:30, @2020-01-01T08:00+05:30]
+define D2232: Interval[@2020-01-01T06:31+05:30, @2020-01-01T08:00+05:30] includes minute of @2020-01-01T00Z
+define D2233: @2019-12-31T18Z in hour of Interval[@2019-12-31T13:00-03:00, @2019-12-31T13:53-03:00]
+define D2234: Interval[@2019-12-31T13:00-03:00, @2019-12-31T13:53-03:00] includes hour of @2019-12-31T18Z
+define D2235: @2019-12-31T18Z in minute of Interval[@2019-12-31T13:00-03:00, @2019-12-31T13:53-03:00]
+define D2236: Interval[@2019-12-31T13:00-03:00, @2019-12-31T13:53-03:00] includes minute of @2019-12-31T18Z
+define D2237: @2019-12-31T18Z in hour of Interval[@2019-12-31T16:00Z, @2019-12-31T18:00Z]
+define D2238: Interval[@2019-12-31T16:00Z, @2019-12-31T18:00Z] includes hour of @2019-12-31T18Z
+define D2239: @2019-12-31T18Z in minute of Interval[@2019-12-31T16:00Z, @2019-12-31T18:00Z]
+define D2240: Interval[@2019-12-31T16:00Z, @2019-12-31T18:00Z] includes minute of @2019-12-31T18Z
+define D2241: @2019-12-31T18Z in hour of Interval[@2019-12-31T21:30+05:30, @2020-01-01T00:00+05:30]
+define D2242: Interval[@2019-12-31T21:30+05:30, @2020-01-01T00:00+05:30] includes hour of @2019-12-31T18Z
+define D2243: @2019-12-31T18Z in minute of Interval[@2019-12-31T21:30+05:30, @2020-01-01T00:00+05:30]
+define D2244: Interval[@2019-12-31T21:30+05:30, @2020-01-01T00:00+05:30] includes minute of @2019-12-31T18Z
+define D2245: @2019-12-31T18Z in hour of Interval[@2019-12-31T15:00-03:00, @2019-12-31T17:00-03:00]
+define D2246: Interval[@2019-12-31T15:00-03:00, @2019-12-31T17:00-03:00] includes hour of @2019-12-31T18Z
+define D2247: @2019-12-31T18Z in minute of Interval[@2019-12-31T15:00-03:00, @2019-12-31T17:00-03:00]
+define D2248: Interval[@2019-12-31T15:00-03:00, @2019-12-31T17:00-03:00] includes minute of @2019-12-31T18Z
+define D2249: @2019-12-31T18Z in hour of Interval[@2019-12-31T18:30Z, @2019-12-31T20:00Z]
+define D2250: Interval[@2019-12-31T18:30Z, @2019-12-31T20:00Z] includes hour of @2019-12-31T18Z
+define D2251: @2019-12-31T18Z in minute of Interval[@2019-12-31T18:30Z, @2019-12-31T20:00Z]
+define D2252: Interval[@2019-12-31T18:30Z, @2019-12-31T20:00Z] includes minute of @2019-12-31T18Z
+define D2253: @2019-12-31T18Z in hour of Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30]
+define D2254: Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30] includes hour of @2019-12-31T18Z
+define D2255: @2019-12-31T18Z in minute of Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30]
+define D2256: Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30] includes minute of @2019-12-31T18Z
+define D2257: @2019-12-31T18Z in hour of Interval[@2019-12-31T13:00-03:00, @2019-12-31T17:00-03:00]
+define D2258: Interval[@2019-12-31T13:00-03:00, @2019-12-31T17:00-03:00] includes hour of @2019-12-31T18Z
+define D2259: @2019-12-31T18Z in minute of Interval[@2019-12-31T13:00-03:00, @2019-12-31T17:00-03:00]
+define D2260: Interval[@2019-12-31T13:00-03:00, @2019-12-31T17:00-03:00] includes minute of @2019-12-31T18Z
+define D2261: @2019-12-31T18Z in hour of Interval[@2019-12-31T19:01Z, @2019-12-31T20:30Z]
+define D2262: Interval[@2019-12-31T19:01Z, @2019-12-31T20:30Z] includes hour of @2019-12-31T18Z
+define D2263: @2019-12-31T18Z in minute of Interval[@2019-12-31T19:01Z, @2019-12-31T20:30Z]
+define D2264: Interval[@2019-12-31T19:01Z, @2019-12-31T20:30Z] includes minute of @2019-12-31T18Z
+define D2265: @2020-01-01T01+01:00 in hour of Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30]
+define D2266: Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30] includes hour of @2020-01-01T01+01:00
+define D2267: @2020-01-01T01+01:00 in minute of Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30]
+define D2268: Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30] includes minute of @2020-01-01T01+01:00
+define D2269: @2020-01-01T01+01:00 in hour of Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00]
+define D2270: Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00] includes hour of @2020-01-01T01+01:00
+define D2271: @2020-01-01T01+01:00 in minute of Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00]
+define D2272: Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00] includes minute of @2020-01-01T01+01:00
+define D2273: @2020-01-01T01+01:00 in hour of Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z]
+define D2274: Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z] includes hour of @2020-01-01T01+01:00
+define D2275: @2020-01-01T01+01:00 in minute of Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z]
+define D2276: Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z] includes minute of @2020-01-01T01+01:00
+define D2277: @2020-01-01T01+01:00 in hour of Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30]
+define D2278: Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30] includes hour of @2020-01-01T01+01:00
+define D2279: @2020-01-01T01+01:00 in minute of Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30]
+define D2280: Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30] includes minute of @2020-01-01T01+01:00
+define D2281: @2020-01-01T01+01:00 in hour of Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00]
+define D2282: Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00] includes hour of @2020-01-01T01+01:00
+define D2283: @2020-01-01T01+01:00 in minute of Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00]
+define D2284: Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00] includes minute of @2020-01-01T01+01:00
+define D2285: @2020-01-01T01+01:00 in hour of Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z]
+define D2286: Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z] includes hour of @2020-01-01T01+01:00
+define D2287: @2020-01-01T01+01:00 in minute of Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z]
+define D2288: Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z] includes minute of @2020-01-01T01+01:00
+define D2289: @2020-01-01T01+01:00 in hour of Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30]
+define D2290: Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30] includes hour of @2020-01-01T01+01:00
+define D2291: @2020-01-01T01+01:00 in minute of Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30]
+define D2292: Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30] includes minute of @2020-01-01T01+01:00
+define D2293: @2020-01-01T01+01:00 in hour of Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00]
+define D2294: Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00] includes hour of @2020-01-01T01+01:00
+define D2295: @2020-01-01T01+01:00 in minute of Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00]
+define D2296: Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00] includes minute of @2020-01-01T01+01:00
+define D2297: @2019-12-31T19+01:00 in hour of Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z]
+define D2298: Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z] includes hour of @2019-12-31T19+01:00
+define D2299: @2019-12-31T19+01:00 in minute of Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z]
+define D2300: Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z] includes minute of @2019-12-31T19+01:00
+define D2301: @2019-12-31T19+01:00 in hour of Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30]
+define D2302: Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30] includes hour of @2019-12-31T19+01:00
+define D2303: @2019-12-31T19+01:00 in minute of Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30]
+define D2304: Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30] includes minute of @2019-12-31T19+01:00
+define D2305: @2019-12-31T19+01:00 in hour of Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00]
+define D2306: Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00] includes hour of @2019-12-31T19+01:00
+define D2307: @2019-12-31T19+01:00 in minute of Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00]
+define D2308: Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00] includes minute of @2019-12-31T19+01:00
+define D2309: @2019-12-31T19+01:00 in hour of Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z]
+define D2310: Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z] includes hour of @2019-12-31T19+01:00
+define D2311: @2019-12-31T19+01:00 in minute of Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z]
+define D2312: Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z] includes minute of @2019-12-31T19+01:00
+define D2313: @2019-12-31T19+01:00 in hour of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30]
+define D2314: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30] includes hour of @2019-12-31T19+01:00
+define D2315: @2019-12-31T19+01:00 in minute of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30]
+define D2316: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30] includes minute of @2019-12-31T19+01:00
+define D2317: @2019-12-31T19+01:00 in hour of Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00]
+define D2318: Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00] includes hour of @2019-12-31T19+01:00
+define D2319: @2019-12-31T19+01:00 in minute of Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00]
+define D2320: Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00] includes minute of @2019-12-31T19+01:00
+define D2321: @2019-12-31T19+01:00 in hour of Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z]
+define D2322: Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z] includes hour of @2019-12-31T19+01:00
+define D2323: @2019-12-31T19+01:00 in minute of Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z]
+define D2324: Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z] includes minute of @2019-12-31T19+01:00
+define D2325: @2019-12-31T19+01:00 in hour of Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30]
+define D2326: Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30] includes hour of @2019-12-31T19+01:00
+define D2327: @2019-12-31T19+01:00 in minute of Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30]
+define D2328: Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30] includes minute of @2019-12-31T19+01:00
+define D2329: @2020-01-01T05+05:30 in hour of Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00]
+define D2330: Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00] includes hour of @2020-01-01T05+05:30
+define D2331: @2020-01-01T05+05:30 in minute of Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00]
+define D2332: Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00] includes minute of @2020-01-01T05+05:30
+define D2333: @2020-01-01T05+05:30 in hour of Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z]
+define D2334: Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z] includes hour of @2020-01-01T05+05:30
+define D2335: @2020-01-01T05+05:30 in minute of Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z]
+define D2336: Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z] includes minute of @2020-01-01T05+05:30
+define D2337: @2020-01-01T05+05:30 in hour of Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30]
+define D2338: Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30] includes hour of @2020-01-01T05+05:30
+define D2339: @2020-01-01T05+05:30 in minute of Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30]
+define D2340: Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30] includes minute of @2020-01-01T05+05:30
+define D2341: @2020-01-01T05+05:30 in hour of Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00]
+define D2342: Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00] includes hour of @2020-01-01T05+05:30
+define D2343: @2020-01-01T05+05:30 in minute of Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00]
+define D2344: Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00] includes minute of @2020-01-01T05+05:30
+define D2345: @2020-01-01T05+05:30 in hour of Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z]
+define D2346: Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z] includes hour of @2020-01-01T05+05:30
+define D2347: @2020-01-01T05+05:30 in minute of Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z]
+define D2348: Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z] includes minute of @2020-01-01T05+05:30
+define D2349: @2020-01-01T05+05:30 in hour of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2350: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] includes hour of @2020-01-01T05+05:30
+define D2351: @2020-01-01T05+05:30 in minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2352: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] includes minute of @2020-01-01T05+05:30
+define D2353: @2020-01-01T05+05:30 in hour of Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00]
+define D2354: Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00] includes hour of @2020-01-01T05+05:30
+define D2355: @2020-01-01T05+05:30 in minute of Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00]
+define D2356: Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00] includes minute of @2020-01-01T05+05:30
+define D2357: @2020-01-01T05+05:30 in hour of Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z]
+define D2358: Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z] includes hour of @2020-01-01T05+05:30
+define D2359: @2020-01-01T05+05:30 in minute of Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z]
+define D2360: Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z] includes minute of @2020-01-01T05+05:30
+define D2361: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30]
+define D2362: Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30] includes hour of @2019-12-31T23+05:30
+define D2363: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30]
+define D2364: Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30] includes minute of @2019-12-31T23+05:30
+define D2365: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00]
+define D2366: Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00] includes hour of @2019-12-31T23+05:30
+define D2367: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00]
+define D2368: Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00] includes minute of @2019-12-31T23+05:30
+define D2369: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z]
+define D2370: Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z] includes hour of @2019-12-31T23+05:30
+define D2371: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z]
+define D2372: Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z] includes minute of @2019-12-31T23+05:30
+define D2373: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30]
+define D2374: Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30] includes hour of @2019-12-31T23+05:30
+define D2375: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30]
+define D2376: Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30] includes minute of @2019-12-31T23+05:30
+define D2377: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00]
+define D2378: Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00] includes hour of @2019-12-31T23+05:30
+define D2379: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00]
+define D2380: Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00] includes minute of @2019-12-31T23+05:30
+define D2381: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2382: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] includes hour of @2019-12-31T23+05:30
+define D2383: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2384: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] includes minute of @2019-12-31T23+05:30
+define D2385: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30]
+define D2386: Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30] includes hour of @2019-12-31T23+05:30
+define D2387: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30]
+define D2388: Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30] includes minute of @2019-12-31T23+05:30
+define D2389: @2019-12-31T23+05:30 in hour of Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00]
+define D2390: Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00] includes hour of @2019-12-31T23+05:30
+define D2391: @2019-12-31T23+05:30 in minute of Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00]
+define D2392: Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00] includes minute of @2019-12-31T23+05:30
+define D2393: @2020-01-01T05+05:45 in hour of Interval[@2019-12-31T21:15Z, @2019-12-31T22:08Z]
+define D2394: Interval[@2019-12-31T21:15Z, @2019-12-31T22:08Z] includes hour of @2020-01-01T05+05:45
+define D2395: @2020-01-01T05+05:45 in minute of Interval[@2019-12-31T21:15Z, @2019-12-31T22:08Z]
+define D2396: Interval[@2019-12-31T21:15Z, @2019-12-31T22:08Z] includes minute of @2020-01-01T05+05:45
+define D2397: @2020-01-01T05+05:45 in hour of Interval[@2020-01-01T02:45+05:30, @2020-01-01T04:45+05:30]
+define D2398: Interval[@2020-01-01T02:45+05:30, @2020-01-01T04:45+05:30] includes hour of @2020-01-01T05+05:45
+define D2399: @2020-01-01T05+05:45 in minute of Interval[@2020-01-01T02:45+05:30, @2020-01-01T04:45+05:30]
+define D2400: Interval[@2020-01-01T02:45+05:30, @2020-01-01T04:45+05:30] includes minute of @2020-01-01T05+05:45
+define D2401: @2020-01-01T05+05:45 in hour of Interval[@2019-12-31T18:15-03:00, @2019-12-31T20:45-03:00]
+define D2402: Interval[@2019-12-31T18:15-03:00, @2019-12-31T20:45-03:00] includes hour of @2020-01-01T05+05:45
+define D2403: @2020-01-01T05+05:45 in minute of Interval[@2019-12-31T18:15-03:00, @2019-12-31T20:45-03:00]
+define D2404: Interval[@2019-12-31T18:15-03:00, @2019-12-31T20:45-03:00] includes minute of @2020-01-01T05+05:45
+define D2405: @2020-01-01T05+05:45 in hour of Interval[@2019-12-31T23:15Z, @2020-01-01T01:15Z]
+define D2406: Interval[@2019-12-31T23:15Z, @2020-01-01T01:15Z] includes hour of @2020-01-01T05+05:45
+define D2407: @2020-01-01T05+05:45 in minute of Interval[@2019-12-31T23:15Z, @2020-01-01T01:15Z]
+define D2408: Interval[@2019-12-31T23:15Z, @2020-01-01T01:15Z] includes minute of @2020-01-01T05+05:45
+define D2409: @2020-01-01T05+05:45 in hour of Interval[@2020-01-01T05:15+05:30, @2020-01-01T06:45+05:30]
+define D2410: Interval[@2020-01-01T05:15+05:30, @2020-01-01T06:45+05:30] includes hour of @2020-01-01T05+05:45
+define D2411: @2020-01-01T05+05:45 in minute of Interval[@2020-01-01T05:15+05:30, @2020-01-01T06:45+05:30]
+define D2412: Interval[@2020-01-01T05:15+05:30, @2020-01-01T06:45+05:30] includes minute of @2020-01-01T05+05:45
+define D2413: @2020-01-01T05+05:45 in hour of Interval[@2019-12-31T21:15-03:00, @2019-12-31T22:15-03:00]
+define D2414: Interval[@2019-12-31T21:15-03:00, @2019-12-31T22:15-03:00] includes hour of @2020-01-01T05+05:45
+define D2415: @2020-01-01T05+05:45 in minute of Interval[@2019-12-31T21:15-03:00, @2019-12-31T22:15-03:00]
+define D2416: Interval[@2019-12-31T21:15-03:00, @2019-12-31T22:15-03:00] includes minute of @2020-01-01T05+05:45
+define D2417: @2020-01-01T05+05:45 in hour of Interval[@2019-12-31T21:15Z, @2020-01-01T01:15Z]
+define D2418: Interval[@2019-12-31T21:15Z, @2020-01-01T01:15Z] includes hour of @2020-01-01T05+05:45
+define D2419: @2020-01-01T05+05:45 in minute of Interval[@2019-12-31T21:15Z, @2020-01-01T01:15Z]
+define D2420: Interval[@2019-12-31T21:15Z, @2020-01-01T01:15Z] includes minute of @2020-01-01T05+05:45
+define D2421: @2020-01-01T05+05:45 in hour of Interval[@2020-01-01T05:46+05:30, @2020-01-01T07:15+05:30]
+define D2422: Interval[@2020-01-01T05:46+05:30, @2020-01-01T07:15+05:30] includes hour of @2020-01-01T05+05:45
+define D2423: @2020-01-01T05+05:45 in minute of Interval[@2020-01-01T05:46+05:30, @2020-01-01T07:15+05:30]
+define D2424: Interval[@2020-01-01T05:46+05:30, @2020-01-01T07:15+05:30] includes minute of @2020-01-01T05+05:45
+define D2425: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T12:15-03:00, @2019-12-31T13:08-03:00]
+define D2426: Interval[@2019-12-31T12:15-03:00, @2019-12-31T13:08-03:00] includes hour of @2019-12-31T23+05:45
+define D2427: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T12:15-03:00, @2019-12-31T13:08-03:00]
+define D2428: Interval[@2019-12-31T12:15-03:00, @2019-12-31T13:08-03:00] includes minute of @2019-12-31T23+05:45
+define D2429: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T15:15Z, @2019-12-31T17:15Z]
+define D2430: Interval[@2019-12-31T15:15Z, @2019-12-31T17:15Z] includes hour of @2019-12-31T23+05:45
+define D2431: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T15:15Z, @2019-12-31T17:15Z]
+define D2432: Interval[@2019-12-31T15:15Z, @2019-12-31T17:15Z] includes minute of @2019-12-31T23+05:45
+define D2433: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T20:45+05:30, @2019-12-31T23:15+05:30]
+define D2434: Interval[@2019-12-31T20:45+05:30, @2019-12-31T23:15+05:30] includes hour of @2019-12-31T23+05:45
+define D2435: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T20:45+05:30, @2019-12-31T23:15+05:30]
+define D2436: Interval[@2019-12-31T20:45+05:30, @2019-12-31T23:15+05:30] includes minute of @2019-12-31T23+05:45
+define D2437: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T14:15-03:00, @2019-12-31T16:15-03:00]
+define D2438: Interval[@2019-12-31T14:15-03:00, @2019-12-31T16:15-03:00] includes hour of @2019-12-31T23+05:45
+define D2439: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T14:15-03:00, @2019-12-31T16:15-03:00]
+define D2440: Interval[@2019-12-31T14:15-03:00, @2019-12-31T16:15-03:00] includes minute of @2019-12-31T23+05:45
+define D2441: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T17:45Z, @2019-12-31T19:15Z]
+define D2442: Interval[@2019-12-31T17:45Z, @2019-12-31T19:15Z] includes hour of @2019-12-31T23+05:45
+define D2443: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T17:45Z, @2019-12-31T19:15Z]
+define D2444: Interval[@2019-12-31T17:45Z, @2019-12-31T19:15Z] includes minute of @2019-12-31T23+05:45
+define D2445: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T23:45+05:30, @2020-01-01T00:45+05:30]
+define D2446: Interval[@2019-12-31T23:45+05:30, @2020-01-01T00:45+05:30] includes hour of @2019-12-31T23+05:45
+define D2447: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T23:45+05:30, @2020-01-01T00:45+05:30]
+define D2448: Interval[@2019-12-31T23:45+05:30, @2020-01-01T00:45+05:30] includes minute of @2019-12-31T23+05:45
+define D2449: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T12:15-03:00, @2019-12-31T16:15-03:00]
+define D2450: Interval[@2019-12-31T12:15-03:00, @2019-12-31T16:15-03:00] includes hour of @2019-12-31T23+05:45
+define D2451: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T12:15-03:00, @2019-12-31T16:15-03:00]
+define D2452: Interval[@2019-12-31T12:15-03:00, @2019-12-31T16:15-03:00] includes minute of @2019-12-31T23+05:45
+define D2453: @2019-12-31T23+05:45 in hour of Interval[@2019-12-31T18:16Z, @2019-12-31T19:45Z]
+define D2454: Interval[@2019-12-31T18:16Z, @2019-12-31T19:45Z] includes hour of @2019-12-31T23+05:45
+define D2455: @2019-12-31T23+05:45 in minute of Interval[@2019-12-31T18:16Z, @2019-12-31T19:45Z]
+define D2456: Interval[@2019-12-31T18:16Z, @2019-12-31T19:45Z] includes minute of @2019-12-31T23+05:45
+define D2457: @2019-12-31T21-03:00 in hour of Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30]
+define D2458: Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30] includes hour of @2019-12-31T21-03:00
+define D2459: @2019-12-31T21-03:00 in minute of Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30]
+define D2460: Interval[@2020-01-01T03:30+05:30, @2020-01-01T04:23+05:30] includes minute of @2019-12-31T21-03:00
+define D2461: @2019-12-31T21-03:00 in hour of Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00]
+define D2462: Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00] includes hour of @2019-12-31T21-03:00
+define D2463: @2019-12-31T21-03:00 in minute of Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00]
+define D2464: Interval[@2019-12-31T19:00-03:00, @2019-12-31T21:00-03:00] includes minute of @2019-12-31T21-03:00
+define D2465: @2019-12-31T21-03:00 in hour of Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z]
+define D2466: Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z] includes hour of @2019-12-31T21-03:00
+define D2467: @2019-12-31T21-03:00 in minute of Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z]
+define D2468: Interval[@2019-12-31T22:00Z, @2020-01-01T00:30Z] includes minute of @2019-12-31T21-03:00
+define D2469: @2019-12-31T21-03:00 in hour of Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30]
+define D2470: Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30] includes hour of @2019-12-31T21-03:00
+define D2471: @2019-12-31T21-03:00 in minute of Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30]
+define D2472: Interval[@2020-01-01T05:30+05:30, @2020-01-01T07:30+05:30] includes minute of @2019-12-31T21-03:00
+define D2473: @2019-12-31T21-03:00 in hour of Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00]
+define D2474: Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00] includes hour of @2019-12-31T21-03:00
+define D2475: @2019-12-31T21-03:00 in minute of Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00]
+define D2476: Interval[@2019-12-31T21:30-03:00, @2019-12-31T23:00-03:00] includes minute of @2019-12-31T21-03:00
+define D2477: @2019-12-31T21-03:00 in hour of Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z]
+define D2478: Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z] includes hour of @2019-12-31T21-03:00
+define D2479: @2019-12-31T21-03:00 in minute of Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z]
+define D2480: Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z] includes minute of @2019-12-31T21-03:00
+define D2481: @2019-12-31T21-03:00 in hour of Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30]
+define D2482: Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30] includes hour of @2019-12-31T21-03:00
+define D2483: @2019-12-31T21-03:00 in minute of Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30]
+define D2484: Interval[@2020-01-01T03:30+05:30, @2020-01-01T07:30+05:30] includes minute of @2019-12-31T21-03:00
+define D2485: @2019-12-31T21-03:00 in hour of Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00]
+define D2486: Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00] includes hour of @2019-12-31T21-03:00
+define D2487: @2019-12-31T21-03:00 in minute of Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00]
+define D2488: Interval[@2019-12-31T22:01-03:00, @2019-12-31T23:30-03:00] includes minute of @2019-12-31T21-03:00
+define D2489: @2019-12-31T15-03:00 in hour of Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z]
+define D2490: Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z] includes hour of @2019-12-31T15-03:00
+define D2491: @2019-12-31T15-03:00 in minute of Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z]
+define D2492: Interval[@2019-12-31T16:00Z, @2019-12-31T16:53Z] includes minute of @2019-12-31T15-03:00
+define D2493: @2019-12-31T15-03:00 in hour of Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30]
+define D2494: Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30] includes hour of @2019-12-31T15-03:00
+define D2495: @2019-12-31T15-03:00 in minute of Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30]
+define D2496: Interval[@2019-12-31T21:30+05:30, @2019-12-31T23:30+05:30] includes minute of @2019-12-31T15-03:00
+define D2497: @2019-12-31T15-03:00 in hour of Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00]
+define D2498: Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00] includes hour of @2019-12-31T15-03:00
+define D2499: @2019-12-31T15-03:00 in minute of Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00]
+define D2500: Interval[@2019-12-31T13:00-03:00, @2019-12-31T15:30-03:00] includes minute of @2019-12-31T15-03:00
+define D2501: @2019-12-31T15-03:00 in hour of Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z]
+define D2502: Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z] includes hour of @2019-12-31T15-03:00
+define D2503: @2019-12-31T15-03:00 in minute of Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z]
+define D2504: Interval[@2019-12-31T18:00Z, @2019-12-31T20:00Z] includes minute of @2019-12-31T15-03:00
+define D2505: @2019-12-31T15-03:00 in hour of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30]
+define D2506: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30] includes hour of @2019-12-31T15-03:00
+define D2507: @2019-12-31T15-03:00 in minute of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30]
+define D2508: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:30+05:30] includes minute of @2019-12-31T15-03:00
+define D2509: @2019-12-31T15-03:00 in hour of Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00]
+define D2510: Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00] includes hour of @2019-12-31T15-03:00
+define D2511: @2019-12-31T15-03:00 in minute of Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00]
+define D2512: Interval[@2019-12-31T16:00-03:00, @2019-12-31T17:00-03:00] includes minute of @2019-12-31T15-03:00
+define D2513: @2019-12-31T15-03:00 in hour of Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z]
+define D2514: Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z] includes hour of @2019-12-31T15-03:00
+define D2515: @2019-12-31T15-03:00 in minute of Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z]
+define D2516: Interval[@2019-12-31T16:00Z, @2019-12-31T20:00Z] includes minute of @2019-12-31T15-03:00
+define D2517: @2019-12-31T15-03:00 in hour of Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30]
+define D2518: Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30] includes hour of @2019-12-31T15-03:00
+define D2519: @2019-12-31T15-03:00 in minute of Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30]
+define D2520: Interval[@2020-01-01T00:31+05:30, @2020-01-01T02:00+05:30] includes minute of @2019-12-31T15-03:00
+define D2521: @2019-12-31T14-09:30 in hour of Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00]
+define D2522: Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00] includes hour of @2019-12-31T14-09:30
+define D2523: @2019-12-31T14-09:30 in minute of Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00]
+define D2524: Interval[@2019-12-31T18:30-03:00, @2019-12-31T19:23-03:00] includes minute of @2019-12-31T14-09:30
+define D2525: @2019-12-31T14-09:30 in hour of Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z]
+define D2526: Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z] includes hour of @2019-12-31T14-09:30
+define D2527: @2019-12-31T14-09:30 in minute of Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z]
+define D2528: Interval[@2019-12-31T21:30Z, @2019-12-31T23:30Z] includes minute of @2019-12-31T14-09:30
+define D2529: @2019-12-31T14-09:30 in hour of Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30]
+define D2530: Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30] includes hour of @2019-12-31T14-09:30
+define D2531: @2019-12-31T14-09:30 in minute of Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30]
+define D2532: Interval[@2020-01-01T03:00+05:30, @2020-01-01T05:30+05:30] includes minute of @2019-12-31T14-09:30
+define D2533: @2019-12-31T14-09:30 in hour of Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00]
+define D2534: Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00] includes hour of @2019-12-31T14-09:30
+define D2535: @2019-12-31T14-09:30 in minute of Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00]
+define D2536: Interval[@2019-12-31T20:30-03:00, @2019-12-31T22:30-03:00] includes minute of @2019-12-31T14-09:30
+define D2537: @2019-12-31T14-09:30 in hour of Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z]
+define D2538: Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z] includes hour of @2019-12-31T14-09:30
+define D2539: @2019-12-31T14-09:30 in minute of Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z]
+define D2540: Interval[@2020-01-01T00:00Z, @2020-01-01T01:30Z] includes minute of @2019-12-31T14-09:30
+define D2541: @2019-12-31T14-09:30 in hour of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2542: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] includes hour of @2019-12-31T14-09:30
+define D2543: @2019-12-31T14-09:30 in minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2544: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] includes minute of @2019-12-31T14-09:30
+define D2545: @2019-12-31T14-09:30 in hour of Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00]
+define D2546: Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00] includes hour of @2019-12-31T14-09:30
+define D2547: @2019-12-31T14-09:30 in minute of Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00]
+define D2548: Interval[@2019-12-31T18:30-03:00, @2019-12-31T22:30-03:00] includes minute of @2019-12-31T14-09:30
+define D2549: @2019-12-31T14-09:30 in hour of Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z]
+define D2550: Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z] includes hour of @2019-12-31T14-09:30
+define D2551: @2019-12-31T14-09:30 in minute of Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z]
+define D2552: Interval[@2020-01-01T00:31Z, @2020-01-01T02:00Z] includes minute of @2019-12-31T14-09:30
+define D2553: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30]
+define D2554: Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30] includes hour of @2019-12-31T08-09:30
+define D2555: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30]
+define D2556: Interval[@2019-12-31T21:00+05:30, @2019-12-31T21:53+05:30] includes minute of @2019-12-31T08-09:30
+define D2557: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00]
+define D2558: Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00] includes hour of @2019-12-31T08-09:30
+define D2559: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00]
+define D2560: Interval[@2019-12-31T12:30-03:00, @2019-12-31T14:30-03:00] includes minute of @2019-12-31T08-09:30
+define D2561: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z]
+define D2562: Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z] includes hour of @2019-12-31T08-09:30
+define D2563: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z]
+define D2564: Interval[@2019-12-31T15:30Z, @2019-12-31T18:00Z] includes minute of @2019-12-31T08-09:30
+define D2565: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30]
+define D2566: Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30] includes hour of @2019-12-31T08-09:30
+define D2567: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30]
+define D2568: Interval[@2019-12-31T23:00+05:30, @2020-01-01T01:00+05:30] includes minute of @2019-12-31T08-09:30
+define D2569: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00]
+define D2570: Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00] includes hour of @2019-12-31T08-09:30
+define D2571: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00]
+define D2572: Interval[@2019-12-31T15:00-03:00, @2019-12-31T16:30-03:00] includes minute of @2019-12-31T08-09:30
+define D2573: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2574: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] includes hour of @2019-12-31T08-09:30
+define D2575: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2576: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] includes minute of @2019-12-31T08-09:30
+define D2577: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30]
+define D2578: Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30] includes hour of @2019-12-31T08-09:30
+define D2579: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30]
+define D2580: Interval[@2019-12-31T21:00+05:30, @2020-01-01T01:00+05:30] includes minute of @2019-12-31T08-09:30
+define D2581: @2019-12-31T08-09:30 in hour of Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00]
+define D2582: Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00] includes hour of @2019-12-31T08-09:30
+define D2583: @2019-12-31T08-09:30 in minute of Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00]
+define D2584: Interval[@2019-12-31T15:31-03:00, @2019-12-31T17:00-03:00] includes minute of @2019-12-31T08-09:30
+define D2585: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets hour of Interval[@2019-12-31T22:53Z, @2019-12-31T23:53Z]
+define D2586: Interval[@2019-12-31T22:53Z, @2019-12-31T23:53Z] meets hour of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2587: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets minute of Interval[@2020-01-01T04:23+05:30, @2020-01-01T05:23+05:30]
+define D2588: Interval[@2020-01-01T04:23+05:30, @2020-01-01T05:23+05:30] meets minute of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2589: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets hour of Interval[@2019-12-31T23:59Z, @2020-01-01T00:59Z]
+define D2590: Interval[@2019-12-31T23:59Z, @2020-01-01T00:59Z] meets hour of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2591: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets minute of Interval[@2020-01-01T05:29+05:30, @2020-01-01T06:29+05:30]
+define D2592: Interval[@2020-01-01T05:29+05:30, @2020-01-01T06:29+05:30] meets minute of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2593: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets hour of Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z]
+define D2594: Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z] meets hour of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2595: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2596: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] meets minute of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2597: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets hour of Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z]
+define D2598: Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z] meets hour of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2599: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets minute of Interval[@2020-01-01T06:30+05:30, @2020-01-01T07:30+05:30]
+define D2600: Interval[@2020-01-01T06:30+05:30, @2020-01-01T07:30+05:30] meets minute of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2601: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets hour of Interval[@2020-01-01T01:06Z, @2020-01-01T02:06Z]
+define D2602: Interval[@2020-01-01T01:06Z, @2020-01-01T02:06Z] meets hour of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2603: Interval[@2019-12-31T23Z, @2020-01-01T00Z] meets minute of Interval[@2020-01-01T06:36+05:30, @2020-01-01T07:36+05:30]
+define D2604: Interval[@2020-01-01T06:36+05:30, @2020-01-01T07:36+05:30] meets minute of Interval[@2020-01-01T00Z, @2020-01-01T01Z]
+define D2605: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets hour of Interval[@2019-12-31T16:53Z, @2019-12-31T17:53Z]
+define D2606: Interval[@2019-12-31T16:53Z, @2019-12-31T17:53Z] meets hour of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2607: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets minute of Interval[@2019-12-31T22:23+05:30, @2019-12-31T23:23+05:30]
+define D2608: Interval[@2019-12-31T22:23+05:30, @2019-12-31T23:23+05:30] meets minute of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2609: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets hour of Interval[@2019-12-31T17:59Z, @2019-12-31T18:59Z]
+define D2610: Interval[@2019-12-31T17:59Z, @2019-12-31T18:59Z] meets hour of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2611: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets minute of Interval[@2019-12-31T23:29+05:30, @2020-01-01T00:29+05:30]
+define D2612: Interval[@2019-12-31T23:29+05:30, @2020-01-01T00:29+05:30] meets minute of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2613: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets hour of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2614: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] meets hour of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2615: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets minute of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30]
+define D2616: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30] meets minute of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2617: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets hour of Interval[@2019-12-31T19:00Z, @2019-12-31T20:00Z]
+define D2618: Interval[@2019-12-31T19:00Z, @2019-12-31T20:00Z] meets hour of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2619: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets minute of Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30]
+define D2620: Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30] meets minute of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2621: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets hour of Interval[@2019-12-31T19:06Z, @2019-12-31T20:06Z]
+define D2622: Interval[@2019-12-31T19:06Z, @2019-12-31T20:06Z] meets hour of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2623: Interval[@2019-12-31T17Z, @2019-12-31T18Z] meets minute of Interval[@2020-01-01T00:36+05:30, @2020-01-01T01:36+05:30]
+define D2624: Interval[@2020-01-01T00:36+05:30, @2020-01-01T01:36+05:30] meets minute of Interval[@2019-12-31T18Z, @2019-12-31T19Z]
+define D2625: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets hour of Interval[@2019-12-31T22:53Z, @2019-12-31T23:53Z]
+define D2626: Interval[@2019-12-31T22:53Z, @2019-12-31T23:53Z] meets hour of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2627: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets minute of Interval[@2020-01-01T04:23+05:30, @2020-01-01T05:23+05:30]
+define D2628: Interval[@2020-01-01T04:23+05:30, @2020-01-01T05:23+05:30] meets minute of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2629: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets hour of Interval[@2019-12-31T23:59Z, @2020-01-01T00:59Z]
+define D2630: Interval[@2019-12-31T23:59Z, @2020-01-01T00:59Z] meets hour of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2631: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets minute of Interval[@2020-01-01T05:29+05:30, @2020-01-01T06:29+05:30]
+define D2632: Interval[@2020-01-01T05:29+05:30, @2020-01-01T06:29+05:30] meets minute of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2633: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets hour of Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z]
+define D2634: Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z] meets hour of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2635: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2636: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] meets minute of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2637: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets hour of Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z]
+define D2638: Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z] meets hour of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2639: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets minute of Interval[@2020-01-01T06:30+05:30, @2020-01-01T07:30+05:30]
+define D2640: Interval[@2020-01-01T06:30+05:30, @2020-01-01T07:30+05:30] meets minute of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2641: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets hour of Interval[@2020-01-01T01:06Z, @2020-01-01T02:06Z]
+define D2642: Interval[@2020-01-01T01:06Z, @2020-01-01T02:06Z] meets hour of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2643: Interval[@2020-01-01T00+01:00, @2020-01-01T01+01:00] meets minute of Interval[@2020-01-01T06:36+05:30, @2020-01-01T07:36+05:30]
+define D2644: Interval[@2020-01-01T06:36+05:30, @2020-01-01T07:36+05:30] meets minute of Interval[@2020-01-01T01+01:00, @2020-01-01T02+01:00]
+define D2645: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets hour of Interval[@2019-12-31T16:53Z, @2019-12-31T17:53Z]
+define D2646: Interval[@2019-12-31T16:53Z, @2019-12-31T17:53Z] meets hour of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2647: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets minute of Interval[@2019-12-31T22:23+05:30, @2019-12-31T23:23+05:30]
+define D2648: Interval[@2019-12-31T22:23+05:30, @2019-12-31T23:23+05:30] meets minute of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2649: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets hour of Interval[@2019-12-31T17:59Z, @2019-12-31T18:59Z]
+define D2650: Interval[@2019-12-31T17:59Z, @2019-12-31T18:59Z] meets hour of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2651: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets minute of Interval[@2019-12-31T23:29+05:30, @2020-01-01T00:29+05:30]
+define D2652: Interval[@2019-12-31T23:29+05:30, @2020-01-01T00:29+05:30] meets minute of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2653: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets hour of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2654: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] meets hour of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2655: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets minute of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30]
+define D2656: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30] meets minute of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2657: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets hour of Interval[@2019-12-31T19:00Z, @2019-12-31T20:00Z]
+define D2658: Interval[@2019-12-31T19:00Z, @2019-12-31T20:00Z] meets hour of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2659: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets minute of Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30]
+define D2660: Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30] meets minute of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2661: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets hour of Interval[@2019-12-31T19:06Z, @2019-12-31T20:06Z]
+define D2662: Interval[@2019-12-31T19:06Z, @2019-12-31T20:06Z] meets hour of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2663: Interval[@2019-12-31T18+01:00, @2019-12-31T19+01:00] meets minute of Interval[@2020-01-01T00:36+05:30, @2020-01-01T01:36+05:30]
+define D2664: Interval[@2020-01-01T00:36+05:30, @2020-01-01T01:36+05:30] meets minute of Interval[@2019-12-31T19+01:00, @2019-12-31T20+01:00]
+define D2665: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets hour of Interval[@2019-12-31T22:23Z, @2019-12-31T23:23Z]
+define D2666: Interval[@2019-12-31T22:23Z, @2019-12-31T23:23Z] meets hour of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2667: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets minute of Interval[@2020-01-01T03:53+05:30, @2020-01-01T04:53+05:30]
+define D2668: Interval[@2020-01-01T03:53+05:30, @2020-01-01T04:53+05:30] meets minute of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2669: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets hour of Interval[@2019-12-31T23:29Z, @2020-01-01T00:29Z]
+define D2670: Interval[@2019-12-31T23:29Z, @2020-01-01T00:29Z] meets hour of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2671: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets minute of Interval[@2020-01-01T04:59+05:30, @2020-01-01T05:59+05:30]
+define D2672: Interval[@2020-01-01T04:59+05:30, @2020-01-01T05:59+05:30] meets minute of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2673: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets hour of Interval[@2020-01-01T00:00Z, @2020-01-01T01:00Z]
+define D2674: Interval[@2020-01-01T00:00Z, @2020-01-01T01:00Z] meets hour of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2675: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets minute of Interval[@2020-01-01T05:30+05:30, @2020-01-01T06:30+05:30]
+define D2676: Interval[@2020-01-01T05:30+05:30, @2020-01-01T06:30+05:30] meets minute of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2677: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets hour of Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z]
+define D2678: Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z] meets hour of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2679: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2680: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] meets minute of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2681: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets hour of Interval[@2020-01-01T00:36Z, @2020-01-01T01:36Z]
+define D2682: Interval[@2020-01-01T00:36Z, @2020-01-01T01:36Z] meets hour of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2683: Interval[@2020-01-01T04+05:30, @2020-01-01T05+05:30] meets minute of Interval[@2020-01-01T06:06+05:30, @2020-01-01T07:06+05:30]
+define D2684: Interval[@2020-01-01T06:06+05:30, @2020-01-01T07:06+05:30] meets minute of Interval[@2020-01-01T05+05:30, @2020-01-01T06+05:30]
+define D2685: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets hour of Interval[@2019-12-31T16:23Z, @2019-12-31T17:23Z]
+define D2686: Interval[@2019-12-31T16:23Z, @2019-12-31T17:23Z] meets hour of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2687: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets minute of Interval[@2019-12-31T21:53+05:30, @2019-12-31T22:53+05:30]
+define D2688: Interval[@2019-12-31T21:53+05:30, @2019-12-31T22:53+05:30] meets minute of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2689: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets hour of Interval[@2019-12-31T17:29Z, @2019-12-31T18:29Z]
+define D2690: Interval[@2019-12-31T17:29Z, @2019-12-31T18:29Z] meets hour of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2691: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets minute of Interval[@2019-12-31T22:59+05:30, @2019-12-31T23:59+05:30]
+define D2692: Interval[@2019-12-31T22:59+05:30, @2019-12-31T23:59+05:30] meets minute of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2693: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets hour of Interval[@2019-12-31T18:00Z, @2019-12-31T19:00Z]
+define D2694: Interval[@2019-12-31T18:00Z, @2019-12-31T19:00Z] meets hour of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2695: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets minute of Interval[@2019-12-31T23:30+05:30, @2020-01-01T00:30+05:30]
+define D2696: Interval[@2019-12-31T23:30+05:30, @2020-01-01T00:30+05:30] meets minute of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2697: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets hour of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2698: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] meets hour of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2699: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets minute of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30]
+define D2700: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30] meets minute of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2701: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets hour of Interval[@2019-12-31T18:36Z, @2019-12-31T19:36Z]
+define D2702: Interval[@2019-12-31T18:36Z, @2019-12-31T19:36Z] meets hour of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2703: Interval[@2019-12-31T22+05:30, @2019-12-31T23+05:30] meets minute of Interval[@2020-01-01T00:06+05:30, @2020-01-01T01:06+05:30]
+define D2704: Interval[@2020-01-01T00:06+05:30, @2020-01-01T01:06+05:30] meets minute of Interval[@2019-12-31T23+05:30, @2020-01-01T00+05:30]
+define D2705: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets hour of Interval[@2019-12-31T22:08Z, @2019-12-31T23:08Z]
+define D2706: Interval[@2019-12-31T22:08Z, @2019-12-31T23:08Z] meets hour of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2707: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets minute of Interval[@2020-01-01T03:38+05:30, @2020-01-01T04:38+05:30]
+define D2708: Interval[@2020-01-01T03:38+05:30, @2020-01-01T04:38+05:30] meets minute of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2709: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets hour of Interval[@2019-12-31T23:14Z, @2020-01-01T00:14Z]
+define D2710: Interval[@2019-12-31T23:14Z, @2020-01-01T00:14Z] meets hour of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2711: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets minute of Interval[@2020-01-01T04:44+05:30, @2020-01-01T05:44+05:30]
+define D2712: Interval[@2020-01-01T04:44+05:30, @2020-01-01T05:44+05:30] meets minute of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2713: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets hour of Interval[@2019-12-31T23:45Z, @2020-01-01T00:45Z]
+define D2714: Interval[@2019-12-31T23:45Z, @2020-01-01T00:45Z] meets hour of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2715: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets minute of Interval[@2020-01-01T05:15+05:30, @2020-01-01T06:15+05:30]
+define D2716: Interval[@2020-01-01T05:15+05:30, @2020-01-01T06:15+05:30] meets minute of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2717: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets hour of Interval[@2020-01-01T00:15Z, @2020-01-01T01:15Z]
+define D2718: Interval[@2020-01-01T00:15Z, @2020-01-01T01:15Z] meets hour of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2719: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets minute of Interval[@2020-01-01T05:45+05:30, @2020-01-01T06:45+05:30]
+define D2720: Interval[@2020-01-01T05:45+05:30, @2020-01-01T06:45+05:30] meets minute of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2721: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets hour of Interval[@2020-01-01T00:21Z, @2020-01-01T01:21Z]
+define D2722: Interval[@2020-01-01T00:21Z, @2020-01-01T01:21Z] meets hour of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2723: Interval[@2020-01-01T04+05:45, @2020-01-01T05+05:45] meets minute of Interval[@2020-01-01T05:51+05:30, @2020-01-01T06:51+05:30]
+define D2724: Interval[@2020-01-01T05:51+05:30, @2020-01-01T06:51+05:30] meets minute of Interval[@2020-01-01T05+05:45, @2020-01-01T06+05:45]
+define D2725: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets hour of Interval[@2019-12-31T16:08Z, @2019-12-31T17:08Z]
+define D2726: Interval[@2019-12-31T16:08Z, @2019-12-31T17:08Z] meets hour of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2727: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets minute of Interval[@2019-12-31T21:38+05:30, @2019-12-31T22:38+05:30]
+define D2728: Interval[@2019-12-31T21:38+05:30, @2019-12-31T22:38+05:30] meets minute of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2729: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets hour of Interval[@2019-12-31T17:14Z, @2019-12-31T18:14Z]
+define D2730: Interval[@2019-12-31T17:14Z, @2019-12-31T18:14Z] meets hour of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2731: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets minute of Interval[@2019-12-31T22:44+05:30, @2019-12-31T23:44+05:30]
+define D2732: Interval[@2019-12-31T22:44+05:30, @2019-12-31T23:44+05:30] meets minute of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2733: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets hour of Interval[@2019-12-31T17:45Z, @2019-12-31T18:45Z]
+define D2734: Interval[@2019-12-31T17:45Z, @2019-12-31T18:45Z] meets hour of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2735: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets minute of Interval[@2019-12-31T23:15+05:30, @2020-01-01T00:15+05:30]
+define D2736: Interval[@2019-12-31T23:15+05:30, @2020-01-01T00:15+05:30] meets minute of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2737: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets hour of Interval[@2019-12-31T18:15Z, @2019-12-31T19:15Z]
+define D2738: Interval[@2019-12-31T18:15Z, @2019-12-31T19:15Z] meets hour of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2739: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets minute of Interval[@2019-12-31T23:45+05:30, @2020-01-01T00:45+05:30]
+define D2740: Interval[@2019-12-31T23:45+05:30, @2020-01-01T00:45+05:30] meets minute of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2741: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets hour of Interval[@2019-12-31T18:21Z, @2019-12-31T19:21Z]
+define D2742: Interval[@2019-12-31T18:21Z, @2019-12-31T19:21Z] meets hour of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2743: Interval[@2019-12-31T22+05:45, @2019-12-31T23+05:45] meets minute of Interval[@2019-12-31T23:51+05:30, @2020-01-01T00:51+05:30]
+define D2744: Interval[@2019-12-31T23:51+05:30, @2020-01-01T00:51+05:30] meets minute of Interval[@2019-12-31T23+05:45, @2020-01-01T00+05:45]
+define D2745: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets hour of Interval[@2019-12-31T22:53Z, @2019-12-31T23:53Z]
+define D2746: Interval[@2019-12-31T22:53Z, @2019-12-31T23:53Z] meets hour of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2747: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets minute of Interval[@2020-01-01T04:23+05:30, @2020-01-01T05:23+05:30]
+define D2748: Interval[@2020-01-01T04:23+05:30, @2020-01-01T05:23+05:30] meets minute of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2749: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets hour of Interval[@2019-12-31T23:59Z, @2020-01-01T00:59Z]
+define D2750: Interval[@2019-12-31T23:59Z, @2020-01-01T00:59Z] meets hour of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2751: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets minute of Interval[@2020-01-01T05:29+05:30, @2020-01-01T06:29+05:30]
+define D2752: Interval[@2020-01-01T05:29+05:30, @2020-01-01T06:29+05:30] meets minute of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2753: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets hour of Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z]
+define D2754: Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z] meets hour of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2755: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2756: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] meets minute of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2757: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets hour of Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z]
+define D2758: Interval[@2020-01-01T01:00Z, @2020-01-01T02:00Z] meets hour of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2759: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets minute of Interval[@2020-01-01T06:30+05:30, @2020-01-01T07:30+05:30]
+define D2760: Interval[@2020-01-01T06:30+05:30, @2020-01-01T07:30+05:30] meets minute of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2761: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets hour of Interval[@2020-01-01T01:06Z, @2020-01-01T02:06Z]
+define D2762: Interval[@2020-01-01T01:06Z, @2020-01-01T02:06Z] meets hour of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2763: Interval[@2019-12-31T20-03:00, @2019-12-31T21-03:00] meets minute of Interval[@2020-01-01T06:36+05:30, @2020-01-01T07:36+05:30]
+define D2764: Interval[@2020-01-01T06:36+05:30, @2020-01-01T07:36+05:30] meets minute of Interval[@2019-12-31T21-03:00, @2019-12-31T22-03:00]
+define D2765: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets hour of Interval[@2019-12-31T16:53Z, @2019-12-31T17:53Z]
+define D2766: Interval[@2019-12-31T16:53Z, @2019-12-31T17:53Z] meets hour of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2767: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets minute of Interval[@2019-12-31T22:23+05:30, @2019-12-31T23:23+05:30]
+define D2768: Interval[@2019-12-31T22:23+05:30, @2019-12-31T23:23+05:30] meets minute of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2769: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets hour of Interval[@2019-12-31T17:59Z, @2019-12-31T18:59Z]
+define D2770: Interval[@2019-12-31T17:59Z, @2019-12-31T18:59Z] meets hour of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2771: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets minute of Interval[@2019-12-31T23:29+05:30, @2020-01-01T00:29+05:30]
+define D2772: Interval[@2019-12-31T23:29+05:30, @2020-01-01T00:29+05:30] meets minute of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2773: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets hour of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2774: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] meets hour of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2775: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets minute of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30]
+define D2776: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30] meets minute of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2777: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets hour of Interval[@2019-12-31T19:00Z, @2019-12-31T20:00Z]
+define D2778: Interval[@2019-12-31T19:00Z, @2019-12-31T20:00Z] meets hour of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2779: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets minute of Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30]
+define D2780: Interval[@2020-01-01T00:30+05:30, @2020-01-01T01:30+05:30] meets minute of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2781: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets hour of Interval[@2019-12-31T19:06Z, @2019-12-31T20:06Z]
+define D2782: Interval[@2019-12-31T19:06Z, @2019-12-31T20:06Z] meets hour of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2783: Interval[@2019-12-31T14-03:00, @2019-12-31T15-03:00] meets minute of Interval[@2020-01-01T00:36+05:30, @2020-01-01T01:36+05:30]
+define D2784: Interval[@2020-01-01T00:36+05:30, @2020-01-01T01:36+05:30] meets minute of Interval[@2019-12-31T15-03:00, @2019-12-31T16-03:00]
+define D2785: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets hour of Interval[@2019-12-31T22:23Z, @2019-12-31T23:23Z]
+define D2786: Interval[@2019-12-31T22:23Z, @2019-12-31T23:23Z] meets hour of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2787: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets minute of Interval[@2020-01-01T03:53+05:30, @2020-01-01T04:53+05:30]
+define D2788: Interval[@2020-01-01T03:53+05:30, @2020-01-01T04:53+05:30] meets minute of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2789: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets hour of Interval[@2019-12-31T23:29Z, @2020-01-01T00:29Z]
+define D2790: Interval[@2019-12-31T23:29Z, @2020-01-01T00:29Z] meets hour of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2791: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets minute of Interval[@2020-01-01T04:59+05:30, @2020-01-01T05:59+05:30]
+define D2792: Interval[@2020-01-01T04:59+05:30, @2020-01-01T05:59+05:30] meets minute of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2793: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets hour of Interval[@2020-01-01T00:00Z, @2020-01-01T01:00Z]
+define D2794: Interval[@2020-01-01T00:00Z, @2020-01-01T01:00Z] meets hour of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2795: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets minute of Interval[@2020-01-01T05:30+05:30, @2020-01-01T06:30+05:30]
+define D2796: Interval[@2020-01-01T05:30+05:30, @2020-01-01T06:30+05:30] meets minute of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2797: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets hour of Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z]
+define D2798: Interval[@2020-01-01T00:30Z, @2020-01-01T01:30Z] meets hour of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2799: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets minute of Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30]
+define D2800: Interval[@2020-01-01T06:00+05:30, @2020-01-01T07:00+05:30] meets minute of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2801: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets hour of Interval[@2020-01-01T00:36Z, @2020-01-01T01:36Z]
+define D2802: Interval[@2020-01-01T00:36Z, @2020-01-01T01:36Z] meets hour of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2803: Interval[@2019-12-31T13-09:30, @2019-12-31T14-09:30] meets minute of Interval[@2020-01-01T06:06+05:30, @2020-01-01T07:06+05:30]
+define D2804: Interval[@2020-01-01T06:06+05:30, @2020-01-01T07:06+05:30] meets minute of Interval[@2019-12-31T14-09:30, @2019-12-31T15-09:30]
+define D2805: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets hour of Interval[@2019-12-31T16:23Z, @2019-12-31T17:23Z]
+define D2806: Interval[@2019-12-31T16:23Z, @2019-12-31T17:23Z] meets hour of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2807: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets minute of Interval[@2019-12-31T21:53+05:30, @2019-12-31T22:53+05:30]
+define D2808: Interval[@2019-12-31T21:53+05:30, @2019-12-31T22:53+05:30] meets minute of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2809: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets hour of Interval[@2019-12-31T17:29Z, @2019-12-31T18:29Z]
+define D2810: Interval[@2019-12-31T17:29Z, @2019-12-31T18:29Z] meets hour of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2811: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets minute of Interval[@2019-12-31T22:59+05:30, @2019-12-31T23:59+05:30]
+define D2812: Interval[@2019-12-31T22:59+05:30, @2019-12-31T23:59+05:30] meets minute of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2813: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets hour of Interval[@2019-12-31T18:00Z, @2019-12-31T19:00Z]
+define D2814: Interval[@2019-12-31T18:00Z, @2019-12-31T19:00Z] meets hour of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2815: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets minute of Interval[@2019-12-31T23:30+05:30, @2020-01-01T00:30+05:30]
+define D2816: Interval[@2019-12-31T23:30+05:30, @2020-01-01T00:30+05:30] meets minute of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2817: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets hour of Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z]
+define D2818: Interval[@2019-12-31T18:30Z, @2019-12-31T19:30Z] meets hour of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2819: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets minute of Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30]
+define D2820: Interval[@2020-01-01T00:00+05:30, @2020-01-01T01:00+05:30] meets minute of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2821: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets hour of Interval[@2019-12-31T18:36Z, @2019-12-31T19:36Z]
+define D2822: Interval[@2019-12-31T18:36Z, @2019-12-31T19:36Z] meets hour of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2823: Interval[@2019-12-31T07-09:30, @2019-12-31T08-09:30] meets minute of Interval[@2020-01-01T00:06+05:30, @2020-01-01T01:06+05:30]
+define D2824: Interval[@2020-01-01T00:06+05:30, @2020-01-01T01:06+05:30] meets minute of Interval[@2019-12-31T08-09:30, @2019-12-31T09-09:30]
+define D2825: @2020-01-01T00Z same day as @2019-12-31T23:00-03:00
+define D2826: @2020-01-01T00Z same day as @2020-01-01T09:30+05:30
+define D2827: @2020-01-01T00Z before day of @2020-01-01T09:30+05:30
+define D2828: @2020-01-01T00Z same minute as @2020-01-01T00:30Z
+define D2829: @2020-01-01T00Z before hour of @2020-01-01T01:10Z
+define D2830: @2020-01-01T00+01:00 before minute of @2020-01-01T01:30+01:00
+define D2831: @2020-01-01T00+01:00 after minute of @2020-01-01T01:30+01:00
+define D2832: @2020-01-01T00-09:30 same hour as @2020-01-01T15:30Z
+define D2833: @2020-01-01T00-09:30 same minute as @2020-01-01T15:30Z
+define D2834: @2020-01-01T00-09:30 before hour of @2020-01-01T15:30Z
