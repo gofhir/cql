@@ -115,7 +115,7 @@ var snapshotAreas = []struct {
 	// cases of docs/plans/024-same-precision-offset.md, where a comparison at the
 	// hour or finer reads two DateTimes with different offsets in the offset of
 	// the evaluation request, and a pair with one offset in the digits written.
-	{"fractionaloffset", 1444, true},
+	{"fractionaloffset", 2834, true},
 }
 
 // TestAnswersMatchTheSnapshots holds this engine to the answers it gave over

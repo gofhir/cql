@@ -576,10 +576,15 @@ func TestAStatedPrecisionIsTheComparison(t *testing.T) {
 		{"@2020-01-01T05:00:00 in day of " + iv, "false"},
 		{"@2020-01-06T05:00:00 in day of " + iv, "false"},
 
-		// A precision finer than the values are specified to is still unknown: the
-		// bounds are written to the second, so nothing can be settled at the
-		// millisecond.
-		{"@2020-01-02T05:00:00 in millisecond of " + iv, "null"},
+		// A precision finer than the values are specified to does not make the
+		// answer unknown where the components it reaches already decide it: 05 is
+		// before the boundary's 10, as `before millisecond of` says of the same two
+		// values (plan 025, D2: the early null of `in` is gone).
+		{"@2020-01-02T05:00:00 in millisecond of " + iv, "false"},
+		{"@2020-01-02T05:00:00 before millisecond of @2020-01-02T10:00:00", "true"},
+		// Where they do not decide it the answer is unknown: the same hour and the
+		// same minute, and a component the values do not have.
+		{"@2020-01-02T10:00:00 in millisecond of " + iv, "null"},
 	} {
 		for _, hours := range []int{0, -5, 14, -11} {
 			if got := askAtOffset(t, hours, tt.expr); got != tt.want {

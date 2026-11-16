@@ -293,7 +293,7 @@ func temporalKind(v fptypes.Value) string {
 //
 // At the hour and finer, a pair where only one side states an offset is
 // unknown. An ordering can be settled at the two ends of the window the other
-// could be in, as temporalCompareAtPrecision settles it, because truncating is
+// could be in, as temporalCompareSet settles it, because truncating is
 // monotonic in the instant; being the next hour is not, and both ends can say
 // no while an offset between them says yes.
 func successorAt(frame *time.Location, prev, next fptypes.Value, precision string) fptypes.Value {
@@ -316,7 +316,9 @@ func successorAt(frame *time.Location, prev, next fptypes.Value, precision strin
 // not touch; and it might be otherwise.
 func successorOf(frame *time.Location, prev, next fptypes.Value, precision string) fptypes.Value {
 	p := precisionIndex(precision)
-	pc, pMax, nc, nMax := componentsAtPrecision(prev, next, precision, frame)
+	in := readingFrameOf(prev, next, precision, frame)
+	pc, pMax := temporalComponentsAgainst(prev, in)
+	nc, nMax := temporalComponentsAgainst(next, in)
 	if pc == nil || nc == nil {
 		return nil
 	}
@@ -328,8 +330,21 @@ func successorOf(frame *time.Location, prev, next fptypes.Value, precision strin
 		pc = append([]int{2000, 1, 1}, pc[3:]...)
 		nc = append([]int{2000, 1, 1}, nc[3:]...)
 	}
-	succLow := addOneAt(completion(pc, pMax, false), p)
-	succHigh := addOneAt(completion(pc, pMax, true), p)
+	// The units a point can be: the first and last it could be, and whether it is
+	// one. A DateTime to the hour that the offset cuts in two is its exact span,
+	// from its first instant to its last, truncated at the precision where it is
+	// compared — not the two whole hours it touches — and is never one unit
+	// (plan 025).
+	prevLow, prevHigh, prevOne := completion(pc, pMax, false), completion(pc, pMax, true), pMax >= p
+	if first, last, spread := hourSpread(prev, in); spread {
+		prevLow, prevHigh, prevOne = componentsOf(first.In(in)), componentsOf(last.In(in)), false
+	}
+	nextLow, nextHigh, nextOne := completion(nc, nMax, false), completion(nc, nMax, true), nMax >= p
+	if first, last, spread := hourSpread(next, in); spread {
+		nextLow, nextHigh, nextOne = componentsOf(first.In(in)), componentsOf(last.In(in)), false
+	}
+	succLow := addOneAt(prevLow, p)
+	succHigh := addOneAt(prevHigh, p)
 	if isTime {
 		// Past the end of the day a time has no successor.
 		if pastTheDay(succLow) {
@@ -339,11 +354,10 @@ func successorOf(frame *time.Location, prev, next fptypes.Value, precision strin
 			succHigh = completion(pc[:3:3], 2, true)
 		}
 	}
-	nextLow, nextHigh := completion(nc, nMax, false), completion(nc, nMax, true)
 	if lessFrom(succHigh, nextLow, from, p) || lessFrom(nextHigh, succLow, from, p) {
 		return fptypes.NewBoolean(false)
 	}
-	if pMax >= p && nMax >= p {
+	if prevOne && nextOne {
 		return fptypes.NewBoolean(true)
 	}
 	return nil

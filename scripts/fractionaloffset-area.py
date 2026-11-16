@@ -21,6 +21,15 @@
 # over pairs of values with no offset, with one offset on both sides, with
 # different offsets, and across a day boundary.
 #
+# After those, appended so that the names of the rows above stay as they were, the
+# enumeration of plan 025 (docs/plans/025-hour-spread-by-offset.md): a DateTime to
+# the hour that the offset of the evaluation cuts in two, `@2020-01-01T00Z` being
+# 05:30 to 06:29 at +05:30, is its span of instants and not the hour 5 or the 6.
+# Hour values with offsets Z, +01:00, +05:30, +05:45, -03:00 and -09:30, against
+# values to the hour, the minute and the second at positions before, at the edges
+# of, inside and after the span, with the five point operators, `in`, `includes`
+# and `meets`, at the hour and the minute, across a change of day.
+#
 # The oracle is pure Python and shares nothing with the engine. A DateTime that
 # writes no offset has the evaluation's. Two with one offset are compared in the
 # digits written; two with different offsets are both moved to the offset of the
@@ -230,7 +239,272 @@ def build():
                     rows.append((expr, {m.name: interval(op.split()[0], A, (b, c), p, m) for m in MODELS}))
                 expr = f"{lit(*a)} in {p} of Interval[{lit(*b)}, {lit(*c)}]"
                 rows.append((expr, {m.name: ge2(a, b, c, p, m) for m in MODELS}))
+    return rows + build_hour_spread()
+
+
+# ---------------------------------------------------------------------------
+# Plan 025: hour values cut in two by an offset.
+#
+# A value is its span of instants, from its first to its last millisecond, as long
+# as its precision. A pair with one offset is read in the digits written, and a
+# pair with different offsets in the offset of the evaluation request; a value to
+# the hour that that offset does not start on the hour is a spread, and is
+# compared by the two ends of its span, which have every component. The
+# comparison is truncated at the precision of the operator, the results of the
+# corners are filled between the least and the greatest (truncating is
+# monotonic and the span is continuous), and a predicate answers where it gives
+# one answer for every result and nothing is unknown: a component the operator
+# asks for that a value does not have.
+# Read in the digits written where the precision is coarser than the hour.
+# ---------------------------------------------------------------------------
+EPOCH = datetime(1970, 1, 1)
+PREC_MS = {3: 3600000, 4: 60000, 5: 1000, 6: 1}
+SPAN_MS = {3: 3600000, 4: 60000, 5: 1000, 6: 1}
+
+
+class V:
+    """A DateTime with an offset: its wall clock, offset in minutes, and its
+    precision as a component index (3 hour, 4 minute, 5 second)."""
+
+    def __init__(self, wall, off, prec):
+        self.wall, self.off, self.prec = wall, off, prec
+
+    @property
+    def first(self):  # the first instant, as a naive UTC time
+        return self.wall - timedelta(minutes=self.off)
+
+    @property
+    def last(self):
+        return self.first + timedelta(milliseconds=SPAN_MS[self.prec] - 1)
+
+    def lit(self):
+        text = {3: "%Y-%m-%dT%H", 4: "%Y-%m-%dT%H:%M", 5: "%Y-%m-%dT%H:%M:%S"}[self.prec]
+        o = self.off
+        return "@" + self.wall.strftime(text) + ("Z" if o == 0 else "%s%02d:%02d" % ("-" if o < 0 else "+", abs(o) // 60, abs(o) % 60))
+
+
+def at(instant, off, prec):
+    """The value that starts at (or, to the unit, contains) an instant, as the
+    wall clock of an offset written to a precision."""
+    wall = instant + timedelta(minutes=off)
+    unit = {3: dict(minute=0, second=0, microsecond=0), 4: dict(second=0, microsecond=0), 5: dict(microsecond=0)}[prec]
+    return V(wall.replace(**unit), off, prec)
+
+
+def components(w):
+    return (w.year, w.month, w.day, w.hour, w.minute, w.second, w.microsecond // 1000)
+
+
+def frames_of(a, b, p, mode):
+    """The offset each of a pair is read in, and whether a spread is told from a
+    unit. 'rule' is the plan: written digits for one offset or a precision coarser
+    than the hour, the offset of the evaluation otherwise. The other modes are
+    how a reference reads: in the offset of an operand, or at UTC, a value to the
+    hour that does not start on the hour read as its first instant's hour."""
+    if mode in ("alwaysutc", "oldutc"):
+        return 0, 0, False
+    if p < 3 or a.off == b.off:
+        return a.off, b.off, mode in ("rule", "frame", "js-rule")
+    target = {"rule": EVAL, "frame": EVAL, "js-rule": EVAL, "left": a.off, "js-left": a.off,
+              "right": b.off, "js-right": b.off, "utc": 0}[mode]
+    return target, target, mode in ("rule", "frame", "js-rule")
+
+
+def corners(v, frame, p, spans):
+    """What to compare of a value read in a frame: (components, finest) for each
+    corner of its span if it is a spread, else for the unit it was written to."""
+    first = v.first + timedelta(minutes=frame)
+    if spans and p >= 3 and v.prec == 3 and (first.minute or first.second or first.microsecond):
+        last = v.last + timedelta(minutes=frame)
+        return [(components(first), 6), (components(last), 6)]
+    return [(components(first), v.prec)]
+
+
+def fill(results):
+    return set(range(min(results), max(results) + 1)) if results else set()
+
+
+def results_of(a, b, p, mode="rule"):
+    """The results a pair at precision p (an index) can come to, and whether any
+    part of it is unknown."""
+    fa, fb, spans = frames_of(a, b, p, mode)
+    out, unknown = [], False
+    for x, mx in corners(a, fa, p, spans):
+        for y, my in corners(b, fb, p, spans):
+            level = min(p, mx, my)
+            cx, cy = x[:level + 1], y[:level + 1]
+            if cx != cy:
+                out.append((cx > cy) - (cx < cy))
+            elif level < p:
+                unknown = True
+            else:
+                out.append(0)
+    return fill(out), unknown
+
+
+def holds(res, test):
+    results, unknown = res
+    if unknown or not results:
+        return None
+    answers = {test(c) for c in results}
+    return answers.pop() if len(answers) == 1 else None
+
+
+def and3(x, y):
+    if x is False or y is False:
+        return False
+    return None if x is None or y is None else True
+
+
+def or3(x, y):
+    if x is True or y is True:
+        return True
+    return None if x is None or y is None else False
+
+
+POINT_TESTS = {"same": lambda c: c == 0, "sob": lambda c: c <= 0, "soa": lambda c: c >= 0,
+               "before": lambda c: c < 0, "after": lambda c: c > 0}
+
+
+def point3(op, a, b, p, mode="rule"):
+    return holds(results_of(a, b, p, mode), POINT_TESTS[op])
+
+
+def units(v, frame, p, spans):
+    """The first and last unit at precision p the value can be in, as integers
+    counting from 1970, and whether it is one."""
+    first = v.first + timedelta(minutes=frame)
+    last = v.last + timedelta(minutes=frame)
+    step = PREC_MS[p]
+    lo = int((first - EPOCH) / timedelta(milliseconds=1)) // step
+    hi = int((last - EPOCH) / timedelta(milliseconds=1)) // step
+    if not spans and v.prec == 3 and p >= 3:
+        # read as its first instant's hour, a unit to the hour as written
+        hi = lo if p == 3 else hi
+    return lo, hi, lo == hi
+
+
+def meets3(a, b, p, mode="rule"):
+    """Whether b's unit can only be the one after a's."""
+    fa, fb, spans = frames_of(a, b, p, mode)
+    alo, ahi, aone = units(a, fa, p, spans)
+    blo, bhi, bone = units(b, fb, p, spans)
+    if ahi + 1 < blo or bhi < alo + 1:
+        return False
+    return True if aone and bone else None
+
+
+def meets_either(A, B, p, mode="rule"):
+    return or3(meets3(A[1], B[0], p, mode), meets3(B[1], A[0], p, mode))
+
+
+def within3(x, lo, hi, p, mode="rule"):
+    return and3(point3("sob", lo, x, p, mode), point3("sob", x, hi, p, mode))
+
+
+# Where the other value is, from the first instant of the span, in seconds: before
+# it, at its first instant, inside, at its last, just after it, well after it.
+POSITIONS = [-4000, -1, 0, 1800, 3599, 3600, 4000]
+# The hour values that are the spread: the instant they start at, which is the
+# hour at Z and 05:30 to 06:29 at +05:30, and the same a day earlier so that the
+# span crosses midnight at +05:30 (18:00Z is 23:30 there).
+STARTS = [datetime(2020, 1, 1, 0, 0), datetime(2019, 12, 31, 18, 0)]
+SPREAD_OFFSETS = [0, 60, 330, 345, -180, -570]
+OTHER_OFFSETS = [0, 330, -180]
+PLAN025 = "docs/plans/025-hour-spread-by-offset.md"
+
+def guards():
+    """Pairs that are not a spread, read as written: a precision coarser than the
+    hour, one offset on both sides, and a value that the offset cuts on the hour."""
+    z, m30, p1 = 0, 330, 60
+    rows = [
+        (V(datetime(2020, 1, 1, 0), z, 3), V(datetime(2019, 12, 31, 23, 0), -180, 4), "same", 2),
+        (V(datetime(2020, 1, 1, 0), z, 3), V(datetime(2020, 1, 1, 9, 30), m30, 4), "same", 2),
+        (V(datetime(2020, 1, 1, 0), z, 3), V(datetime(2020, 1, 1, 9, 30), m30, 4), "before", 2),
+        (V(datetime(2020, 1, 1, 0), z, 3), V(datetime(2020, 1, 1, 0, 30), z, 4), "same", 4),
+        (V(datetime(2020, 1, 1, 0), z, 3), V(datetime(2020, 1, 1, 1, 10), z, 4), "before", 3),
+        (V(datetime(2020, 1, 1, 0), p1, 3), V(datetime(2020, 1, 1, 1, 30), p1, 4), "before", 4),
+        (V(datetime(2020, 1, 1, 0), p1, 3), V(datetime(2020, 1, 1, 1, 30), p1, 4), "after", 4),
+        (V(datetime(2020, 1, 1, 0), -570, 3), V(datetime(2020, 1, 1, 15, 30), z, 4), "same", 3),
+        (V(datetime(2020, 1, 1, 0), -570, 3), V(datetime(2020, 1, 1, 15, 30), z, 4), "same", 4),
+        (V(datetime(2020, 1, 1, 0), -570, 3), V(datetime(2020, 1, 1, 15, 30), z, 4), "before", 3),
+    ]
     return rows
+
+
+PHRASES = {"same": "same {u} as", "sob": "same {u} or before", "soa": "same {u} or after",
+           "before": "before {u} of", "after": "after {u} of"}
+UNIT_NAMES = {2: "day", 3: "hour", 4: "minute"}
+
+
+def build_hour_spread():
+    """The rows of plan 025: (expression, {model: answer}), the answer true, false
+    or None for null."""
+    rows = []
+    modes = [m.name for m in MODELS]
+    combos = [(PHRASES[op], op, p) for op in PHRASES for p in (3, 4)]
+    n = 0
+    # The pair of a spread and another value at each position, one operator and
+    # precision for each (rotating through the ten), and the operands in each order.
+    for off in SPREAD_OFFSETS:
+        for start in STARTS:
+            span = at(start, off, 3)
+            for pos in POSITIONS:
+                for prec in (3, 4, 5):
+                    for ooff in OTHER_OFFSETS:
+                        other = at(span.first + timedelta(seconds=pos), ooff, prec)
+                        ph, op, p = combos[n % len(combos)]
+                        a, b = (span, other) if n % 2 == 0 else (other, span)
+                        unit = UNITS[p - 3]
+                        expr = f"{a.lit()} {ph.format(u=unit)} {b.lit()}"
+                        rows.append((expr, {m: point3(op, a, b, p, m) for m in modes}))
+                        n += 1
+    # A spread inside an interval, and an interval around a spread, with bounds at
+    # the minute: the bounds are before, at the edges of, inside and after it.
+    layouts = [(-7200, -4000), (-7200, 0), (-7200, 1800), (0, 7200), (1800, 7200),
+               (3600, 7200), (-7200, 7200), (3700, 9000)]
+    k = 0
+    for off in SPREAD_OFFSETS:
+        for start in STARTS:
+            span = at(start, off, 3)
+            for lo_s, hi_s in layouts:
+                boff = [0, 330, -180][k % 3]
+                lo = at(span.first + timedelta(seconds=lo_s), boff, 4)
+                hi = at(span.first + timedelta(seconds=hi_s), boff, 4)
+                for p in (3, 4):
+                    unit = UNITS[p - 3]
+                    expr = f"{span.lit()} in {unit} of Interval[{lo.lit()}, {hi.lit()}]"
+                    rows.append((expr, {m: within3(span, lo, hi, p, m) for m in modes}))
+                    expr = f"Interval[{lo.lit()}, {hi.lit()}] includes {unit} of {span.lit()}"
+                    rows.append((expr, {m: within3(span, lo, hi, p, m) for m in modes}))
+                k += 1
+    # An interval that ends in a spread, or begins in one, against one that begins or
+    # ends at each position: the successor of a span is not two whole hours.
+    for off in SPREAD_OFFSETS:
+        for start in STARTS:
+            span = at(start, off, 3)
+            before_span = at(span.first - timedelta(hours=1), off, 3)
+            after_span = at(span.first + timedelta(hours=1), off, 3)
+            for pos in (-4000, -1, 1800, 3600, 4000):
+                for p in (3, 4):
+                    unit = UNITS[p - 3]
+                    boff = [0, 330][k % 2]
+                    k += 1
+                    nxt = at(span.first + timedelta(seconds=pos), boff, 4)
+                    nxt2 = at(nxt.first + timedelta(hours=1), boff, 4)
+                    A, B = (before_span, span), (nxt, nxt2)
+                    expr = (f"Interval[{A[0].lit()}, {A[1].lit()}] meets {unit} of "
+                            f"Interval[{B[0].lit()}, {B[1].lit()}]")
+                    rows.append((expr, {m: meets_either(A, B, p, m) for m in modes}))
+                    A, B = (nxt, nxt2), (span, after_span)
+                    expr = (f"Interval[{A[0].lit()}, {A[1].lit()}] meets {unit} of "
+                            f"Interval[{B[0].lit()}, {B[1].lit()}]")
+                    rows.append((expr, {m: meets_either(A, B, p, m) for m in modes}))
+    for a, b, op, p in guards():
+        expr = f"{a.lit()} {PHRASES[op].format(u=UNIT_NAMES[p])} {b.lit()}"
+        rows.append((expr, {m: point3(op, a, b, p, m) for m in modes}))
+    return rows
+
 
 
 def ge2(a, b, c, p, m):
@@ -247,6 +521,7 @@ define function G(x Interval<DateTime>): x"""
 
 
 PLAN = "docs/plans/024-same-precision-offset.md"
+PLAN25 = "docs/plans/025-hour-spread-by-offset.md"
 SPEC = ("CQL 1.5.3 (https://cql.hl7.org/N1A/09-b-cqlreference.html), Appendix B, Same As: \"When comparing DateTime "
         "values with different timezone offsets, implementations should normalize to the timezone offset of the "
         "evaluation request timestamp, but only when the comparison precision is hours, minutes, seconds, or "
@@ -294,6 +569,10 @@ PROBE_VERDICTS = {
 }
 
 
+def text(answer):
+    return "null" if answer is None else "true" if answer else "false"
+
+
 def verdicts(path):
     """Gives the divergences of the area their verdict, from what each model of
     the reading answers: the rule of the plan (which is this engine's, and the
@@ -301,6 +580,7 @@ def verdicts(path):
     +05:00 that cql-execution takes the +05:30 of the evaluation for."""
     names = [m.name for m in MODELS]
     answers = {f"D{i}": ans for i, (_, ans) in enumerate(rows, 1) if ans is not None}
+    first_spread = len(rows) - len(build_hour_spread()) + 1
     exprs = {f"D{i}": e for i, (e, _) in enumerate(rows, 1)}
     out, counts = [], {}
     for line in open(path).read().split("\n"):
@@ -312,14 +592,41 @@ def verdicts(path):
         refans, eng = f[5], f[6]
         expr = exprs[name]
         if name in answers:
-            model = {n: "true" if answers[name][n] else "false" for n in names}
+            model = {n: text(answers[name][n]) for n in names}
             assert model["rule"] == eng, (name, model, eng)
             hits = [n for n in names if model[n] == refans and n.startswith("js") == (ref == "js")]
-            assert hits, (name, refans, model)
             # A pair whose only written offset is the evaluation's has one offset
             # on both sides: what cql-execution answers apart is its truncation
             # alone, whichever reading it lands on (code review of plan 024,
             # round 1, finding 3).
+            if int(name[1:]) < first_spread:
+                assert hits, (name, refans, model)
+            if int(name[1:]) >= first_spread:
+                # The rows of plan 025, every offset written. The references read
+                # a pair in the offset of an operand and a value to the hour as the
+                # hour its first instant is in there; this engine reads a pair
+                # with different offsets in the offset of the evaluation request
+                # (plan 024) and a value to the hour that offset cuts in two as its
+                # span (plan 025).
+                reads = ", ".join(h for h in hits if h not in ("utc", "oldutc"))
+                # Only `meets` at the minute with a bound to the hour is left without
+                # a reading that gives the answer of the reference: it declines or
+                # refuses to place a unit it has no minute for, where this engine
+                # compares the units the span can be in (plan 025, successorOf).
+                unplaced_unit = (f"{'the Java engine' if ref == 'java' else 'cql-execution'} answers {refans} "
+                                 "for a bound to the hour at the minute, which no reading of this script gives")
+                if not hits:
+                    assert " meets minute of " in exprs[name], (name, refans, model)
+                cls, ev = "deliberate", (
+                    f"decided in {PLAN25} (decision D1 of 15-11-2026, the span of an hour that the offset cuts in two, "
+                    f"read as the plan 008 reads it for `<` and `=`; and {PLAN} for a pair with different offsets, read "
+                    f"in the offset of the evaluation request, +05:30); {name} is such a row; {SPEC}; "
+                    f"{'the Java engine' if ref == 'java' else 'cql-execution'} reads both in the offset of an operand "
+                    + (f"({reads}), a value to the hour as the hour its first instant is in, and answers {refans}"
+                       if hits else unplaced_unit))
+                counts[(ref, cls)] = counts.get((ref, cls), 0) + 1
+                out.append("\t".join([name, ref, cls, eng, ev, refans, eng]))
+                continue
             only_evaluation_offset = set(re.findall(r"[+-]\d\d:\d\d|Z", expr)) <= {"+05:30"}
             if ref == "js" and NO_OFFSET.search(expr) and ("js-rule" in hits or only_evaluation_offset):
                 cls, ev = "reference defect", (
@@ -351,14 +658,14 @@ rows = build()
 if "--oracle" in sys.argv:
     for i, (_, ans) in enumerate(rows, 1):
         if ans is not None:
-            print(f"D{i}\tBoolean {'true' if ans['rule'] else 'false'}")
+            print(f"D{i}\t" + ("null" if ans["rule"] is None else f"Boolean {'true' if ans['rule'] else 'false'}"))
     sys.exit(0)
 if "--models" in sys.argv:
     names = [m.name for m in MODELS]
     print("name\t" + "\t".join(names))
     for i, (_, ans) in enumerate(rows, 1):
         if ans is not None:
-            print(f"D{i}\t" + "\t".join('true' if ans[n] else 'false' for n in names))
+            print(f"D{i}\t" + "\t".join(text(ans[n]) for n in names))
     sys.exit(0)
 
 if "--verdicts" in sys.argv:
