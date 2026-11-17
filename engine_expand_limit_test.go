@@ -51,8 +51,9 @@ func TestExpandPastItsLimitFails(t *testing.T) {
 	})
 
 	t.Run("the list overload is limited as a whole", func(t *testing.T) {
-		// Each interval is under the limit; the two together are past it.
-		_, err := evaluate(t, NewEngine(), "expand { Interval[1, 60000], Interval[1, 60000] }")
+		// Each interval is under the limit; the two together are past it. They are
+		// apart, since a list's intervals that overlap are merged first (plan 026).
+		_, err := evaluate(t, NewEngine(), "expand { Interval[1, 60000], Interval[70001, 130000] }")
 		tooCostly(t, err, "two intervals of 60000")
 	})
 

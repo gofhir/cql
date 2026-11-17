@@ -8190,36 +8190,18 @@ func (e *Evaluator) evalSetAggregate(n *ast.SetAggregateExpression) (fptypes.Val
 			}
 			return cqltypes.NewList(points), nil
 		}
-		// List-of-intervals overload — returns unit intervals
-		c := toCollection(operand)
-		var result fptypes.Collection
-		limit := e.ctx.MaxExpandSize
-		for _, item := range c {
-			iv, ok := item.(cqltypes.Interval)
-			if !ok {
-				continue
+		// List-of-intervals overload — returns unit intervals. The limit is on
+		// the whole expand, and the whole list is expanded together: the
+		// partitions are counted from the first interval.
+		var intervals []cqltypes.Interval
+		for _, item := range toCollection(operand) {
+			if iv, ok := item.(cqltypes.Interval); ok {
+				intervals = append(intervals, iv)
 			}
-			// The limit is on the whole expand: ten intervals of ninety
-			// thousand units are past it together. Each interval gets what is
-			// left of it, so no more than the limit is ever built; with nothing
-			// left, it gets one, and one element is still past the total, which
-			// the check after it catches.
-			budget := limit
-			if limit > 0 {
-				budget = max(limit-len(result), 1)
-			}
-			intervals, err := funcs.IntervalExpandIntervalsUpTo(iv, perVal, budget)
-			if err != nil {
-				if limit > 0 && errors.Is(err, funcs.ErrExpandTooLarge) {
-					// Reported against the whole limit, not this interval's share.
-					return nil, funcs.ExpandLimitError(limit)
-				}
-				return nil, err
-			}
-			result = append(result, intervals...)
-			if limit > 0 && len(result) > limit {
-				return nil, funcs.ExpandLimitError(limit)
-			}
+		}
+		result, err := funcs.ExpandIntervalsUpTo(intervals, perVal, e.ctx.MaxExpandSize)
+		if err != nil {
+			return nil, err
 		}
 		return cqltypes.NewList(result), nil
 	case "collapse":
