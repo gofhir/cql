@@ -17,7 +17,7 @@ D22	Quantity 1 'g'
 D23	Quantity 500 'mg'
 D24	Quantity 100 'cm'
 D25	Quantity 100 'cm'
-D26	List[Quantity 100 'cm', Quantity 150 'cm', Quantity 200 'cm']
+D26	List[Quantity 100 'cm', Quantity 150 'cm']
 D27	List[Interval[Quantity 1 'g', Quantity 3000 'mg']]
 D28	Quantity 100.00000001 'cm'
 D29	Quantity 1000.99999999 'mg'

@@ -25,7 +25,7 @@ trap 'rm -rf "$work"' EXIT
 java_image=maven:3.10.0-eclipse-temurin-25
 node_image=node:24.22.1
 
-areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings quantitystrings decimalliterals suitegaps limits limitsexp conversions durations uncertainty ages differences durationrange intervalbounds mixeddates fractionaloffset"
+areas="arithmetic integer scope types fhir codes codesets membership fhirmembership division units temporal crossmodel decimalstrings quantitystrings decimalliterals suitegaps limits limitsexp conversions durations uncertainty ages differences durationrange intervalbounds mixeddates fractionaloffset expansions"
 
 # The areas evaluated at an offset other than -03:00, each with the offset the
 # harness is told through CQL_EVALUATION_OFFSET, and only for that area: one

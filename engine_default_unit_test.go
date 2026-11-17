@@ -666,7 +666,9 @@ func TestWidthAndExpandAnswerInTheMostGranularUnit(t *testing.T) {
 	if got := evalDefaultUnit(t, "width of Interval[1 'm', 200 'cm']"); got != "100 'cm'" {
 		t.Errorf("width = %s, want 100 'cm' whichever bound holds the finer unit", got)
 	}
-	if got := evalDefaultUnit(t, "expand Interval[100 'cm', 2 'm'] per 50 'cm'"); got != "{100 'cm', 150 'cm', 200 'cm'}" {
+	// Only the whole pieces of 50 cm: [200 cm, 249 cm] ends past 2 m (CQL 1.5.3,
+	// Expand, «end on or before the upper boundary»; plan 026).
+	if got := evalDefaultUnit(t, "expand Interval[100 'cm', 2 'm'] per 50 'cm'"); got != "{100 'cm', 150 'cm'}" {
 		t.Errorf("expand = %s, want centimeters — the unit it starts walking from", got)
 	}
 	if got := evalDefaultUnit(t, "width of Interval[100 'cm', 2 'm'] = 1 'm'"); got != "true" {
